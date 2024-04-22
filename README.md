@@ -5,6 +5,7 @@ Self-Supervised Pre-Training on Imbalanced Datasets using OOD Detection and Diff
 
 ## File Structure
 
+```
 ├── experiment
 │   ├── __main__.py                             # Main file that runs SSL and finetuning
 │   ├── dataset                                 # SSL datasets (ImageNet)
@@ -42,3 +43,4 @@ Self-Supervised Pre-Training on Imbalanced Datasets using OOD Detection and Diff
 ├── jobs                                        # All job scripts go here
 │   ├── environment.sh                          # Use this script to load env
 │                                               # in an interactive session
+```
