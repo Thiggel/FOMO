@@ -12,5 +12,5 @@ module purge
 module load 2023
 module load Anaconda3/2023.05
 
-cd $HOME/Cephalometry/
-conda env create -f cephalometry.yml
+cd $HOME/FOMO/
+conda env create -f environment.yml
