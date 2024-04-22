@@ -12,25 +12,27 @@ python experiment [... arguments]
 *Options*:
 
 ```
---root_dir ROOT_DIR
+--root_dir
+
 --model_name {ResNet18,ResNet50,ViTSmall,ViTBase}
 --ssl_method {SimCLR}
---lr LR
---temperature TEMPERATURE
---weight_decay WEIGHT_DECAY
---max_epochs MAX_EPOCHS
---splits SPLITS
---batch_size BATCH_SIZE
+
+--lr
+--temperature
+--weight_decay
+--max_epochs
+
+--splits
+--batch_size
 --early_stopping_patience
 --checkpoint
---pretrain
---no-pretrain
---finetune
---no-finetune
---num_runs NUM_RUNS
+--num_runs
 --max_hours_per_run
---logger
---no-logger
+
+--logger, --no-logger
+
+--pretrain, --no-pretrain
+--finetune, --no-finetune
 ```
 
 ## File Structure
