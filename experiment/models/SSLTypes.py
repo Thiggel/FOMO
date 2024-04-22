@@ -27,7 +27,6 @@ class SSLTypes(Enum):
                     max_epochs, \
                     *args, **kwargs: SimCLR(
                         model=model,
-                        hidden_dim=hidden_dim,
                         lr=lr,
                         temperature=temperature,
                         weight_decay=weight_decay,
