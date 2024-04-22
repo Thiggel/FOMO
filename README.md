@@ -3,6 +3,36 @@ Self-Supervised Pre-Training on Imbalanced Datasets using OOD Detection and Diff
 
 # How to work with this repo
 
+## How to run the experiment
+
+```
+python experiment [... arguments]
+```
+
+*Options*:
+
+```
+--root_dir ROOT_DIR
+--model_name {ResNet18,ResNet50,ViTSmall,ViTBase}
+--ssl_method {SimCLR}
+--lr LR
+--temperature TEMPERATURE
+--weight_decay WEIGHT_DECAY
+--max_epochs MAX_EPOCHS
+--splits SPLITS
+--batch_size BATCH_SIZE
+--early_stopping_patience
+--checkpoint
+--pretrain
+--no-pretrain
+--finetune
+--no-finetune
+--num_runs NUM_RUNS
+--max_hours_per_run
+--logger
+--no-logger
+```
+
 ## File Structure
 
 ```
@@ -44,3 +74,24 @@ Self-Supervised Pre-Training on Imbalanced Datasets using OOD Detection and Diff
 │   ├── environment.sh                          # Use this script to load env
 │                                               # in an interactive session
 ```
+
+## How do I make changes to this repo?
+
+1. Check out and pull the latest changes from main
+2. Create a new branch with a meaningful name (`git checkout -b branchname`). This name should reflect a task in Jira
+3. After the feature is complete, create a pull request
+4. Check whether all tests pass
+5. Wait for (or ask) Filipe to review your code (possible back and forth)
+6. Filipe merges your branch into main
+
+## Rules
+
+- Never work directly on main (should not be possible anyways)
+- Each piece of functionality should have a test script in `experiment/tests`
+    - Refer to the Pytest docs for help
+    - Each test-file/directory/function needs to start with 'test_', otherwise Pytest will ignore it
+    - One test function per file
+    - Multiple tests that belong together should be grouped in a sub-directory
+- Always commit small chunks, i.e., only one new function or piece of functionality per commit
+- Always do proper work, do not write dirty code because you want to get something done
+- Please don't be mad if I ask you to do changes to your pull-request. I need to have an overview of how all features fit together and might therefore ask you to restructure your code according to common design patterns (i.e. one function has only one purpose, don't repeat yourself, etc.)

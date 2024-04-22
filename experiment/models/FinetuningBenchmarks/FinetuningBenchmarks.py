@@ -1,4 +1,4 @@
-from CIFAR10FineTuner import CIFAR10FineTuner
+from models.FinetuningBenchmarks.CIFAR10FineTuner import CIFAR10FineTuner
 
 
 class FinetuningBenchmarks:
