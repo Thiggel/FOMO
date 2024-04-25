@@ -11,3 +11,4 @@ transformers
 albumentations
 psutil
 pytest
+datasets

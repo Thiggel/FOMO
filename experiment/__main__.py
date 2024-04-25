@@ -16,6 +16,7 @@ from dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
 from models.ModelTypes import ModelTypes
 from models.SSLTypes import SSLTypes
 from models.FinetuningBenchmarks import FinetuningBenchmarks
+from dataset.ImageNetVariants import ImageNetVariants
 
 mp.set_start_method('spawn')
 
@@ -27,13 +28,22 @@ def get_args() -> dict:
     parser.add_argument(
         '--model_name',
         type=str,
-        choices=ModelTypes.get_model_types()
+        choices=ModelTypes.get_model_types(),
+        default=ModelTypes.get_default_model_type()
+    )
+
+    parser.add_argument(
+        '--imagenet_variant',
+        type=str,
+        choices=ImageNetVariants.get_variants(),
+        default=ImageNetVariants.get_default_variant()
     )
 
     parser.add_argument(
         '--ssl_method',
         type=str,
-        choices=SSLTypes.get_ssl_types()
+        choices=SSLTypes.get_ssl_types(),
+        default=SSLTypes.get_default_ssl_type()
     )
 
     parser.add_argument('--lr', type=float, default=1e-4)
@@ -103,7 +113,7 @@ def run(args: dict, seed: int = 42) -> dict:
     model_type = ModelTypes.get_model_type(args.model_name)
 
     datamodule = ImbalancedImageNetDataModule(
-        root_dir=args.root_dir,
+        dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
         splits=args.splits,
         batch_size=args.batch_size,
         resized_image_size=model_type.resized_image_size,

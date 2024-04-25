@@ -46,3 +46,7 @@ class SSLTypes(Enum):
             lambda x: x,
             list(SSLTypes.ssl_types().keys())
         ))
+
+    @staticmethod
+    def get_default_ssl_type() -> str:
+        return SSLTypes.get_ssl_types()[0]

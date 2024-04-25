@@ -65,3 +65,7 @@ class ModelTypes(Enum):
             lambda x: x,
             list(ModelTypes.model_types().keys())
         ))
+
+    @staticmethod
+    def get_default_model_type() -> str:
+        return ModelTypes.get_model_types()[0]

@@ -2,42 +2,46 @@ import os
 import lightning as L
 from torch.utils.data import random_split, DataLoader, Dataset
 from typing import Callable
+from datasets import load_dataset
+from dataset.ImageNetVariants import ImageNetVariants
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
     def __init__(
         self,
-        root_dir: str,
+        dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
         transform: Callable = None,
         splits: tuple[int, int, int] = (0.8, 0.1, 0.1),
         batch_size: int = 32,
         # TODO: define degree of imbalance in some way
         # (below is just a suggestion)
         imbalance: float = 0.1,
+        resized_image_size: tuple[int, int] = (224, 224),
     ):
         super().__init__()
 
-        self.dataset = self._load_dataset(imbalance, splits)
+        self.dataset = self._load_dataset(dataset_variant, imbalance, splits)
         self.batch_size = batch_size
 
     def _load_dataset(
         self,
-        imbalance: float, splits: tuple[float, float, float]
+        dataset_variant: ImageNetVariants,
+        imbalance: float,
+        splits: tuple[float, float, float]
     ):
-        raise NotImplementedError
-
-        # TODO: load ImageNet-100 dataset
-        # (important: this should be interchangeable with e.g. ImageNet-1k)
-        # by only swapping the root dir (or some other sensible way)
-        dataset = ...
+        dataset = load_dataset(dataset_variant.value.path)
 
         dataset = self._make_imbalanced(dataset, imbalance)
 
         return self._split_dataset(dataset, splits)
 
     def _make_imbalanced(self, dataset: Dataset, imbalance: float) -> Dataset:
-        # TODO: make dataset imbalanced in some way
-        raise NotImplementedError
+        """
+        Randomly pick a class from the dataset and remove a fracton of "imbalance"
+        of its samples.
+        """
+        print(dataset)
+        exit()
 
         return dataset
 
