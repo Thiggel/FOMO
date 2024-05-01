@@ -11,12 +11,16 @@ class ImbalancedTraining:
         ssl_method: L.LightningModule,
         datamodule: L.LightningDataModule,
         checkpoint_callback: L.Callback,
+        reload_every_n: int,
+        max_cycles: int,
     ):
         self.args = args
         self.trainer = L.Trainer(**trainer_args)
         self.ssl_method = ssl_method
         self.datamodule = datamodule
         self.checkpoint_callback = checkpoint_callback
+        self.reload_every_n = reload_every_n
+        self.max_cycles = max_cycles
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -33,35 +37,34 @@ class ImbalancedTraining:
 
     def pretrain_cycle(
         self,
-        trainer: L.Trainer,
-        val_loader: DataLoader,
-        n_epochs: int,
     ) -> None:
         """
         1. Fit for n epochs
         2. assess OOD samples
         3. generate new data for OOD
         """
-        trainer.fit(model=ssl_method, datamodule=datamodule)
+        self.trainer.fit(
+            model=self.ssl_method,
+            datamodule=self.datamodule,
+            epochs=self.reload_every_n,
+        )
+
+        val_loader = self.datamodule.val_dataloader()
 
         for batch, batch_idx in val_loader:
-            ood_samples = check_ood(batch)
+            ood_samples = self.check_ood(batch)
 
-            augmented_data = generate_new_data(
+            augmented_data = self.generate_new_data(
                 ood_sample
             )
 
-            datamodule.update_dataset(
+            self.datamodule.update_dataset(
                 augmented_data
             )
 
 
     def pretrain_imbalanced(
         self,
-        trainer: L.Trainer,
-        datamodule: L.LightningDataModule,
-        reload_every_n: int,
-        max_cycles: int,
     ) -> None:
         """
         1. Fit for reload_every_n epochs, 
@@ -69,12 +72,8 @@ class ImbalancedTraining:
         3. Generate augmentations for OOD samples
         4. Restart
         """
-        val_loader = datamodule.val_dataloader()
-
-        for cycle_idx in range(max_cycles):
-            pretrain_cycle(
-                trainer, val_loader, reload_every_n
-            )
+        for cycle_idx in range(self.max_cycles):
+            self.pretrain_cycle()
 
     def finetune(self) -> dict:
         benchmarks = FinetuningBenchmarks.benchmarks
