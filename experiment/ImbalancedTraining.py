@@ -41,11 +41,6 @@ class ImbalancedTraining:
         1. Fit for n epochs
         2. assess OOD samples
         3. generate new data for OOD
-        
-        Questions:
-            - do I have to restart everything every time
-            including loading the model and dataset 
-            (in that case save checkpoint every time)
         """
         trainer.fit(model=ssl_method, datamodule=datamodule)
 
