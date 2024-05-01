@@ -13,10 +13,12 @@ import torch.multiprocessing as mp
 
 from utils.set_seed import set_seed
 from dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
+from dataset.ContrastiveTransformations import ContrastiveTransformations
 from models.ModelTypes import ModelTypes
 from models.SSLTypes import SSLTypes
 from models.FinetuningBenchmarks import FinetuningBenchmarks
 from dataset.ImageNetVariants import ImageNetVariants
+from torchvision import transforms
 
 
 mp.set_start_method('spawn')
@@ -116,12 +118,36 @@ def run(args: dict, seed: int = 42) -> dict:
 
     model_type = ModelTypes.get_model_type(args.model_name)
 
-    datamodule = ImbalancedImageNetDataModule(
-        dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
-        splits=args.splits,
-        batch_size=args.batch_size,
-        resized_image_size=model_type.resized_image_size,
-    )
+    if args.model_name == 'SimCLR':
+        contrast_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                          transforms.RandomResizedCrop(size=96),
+                                          transforms.RandomApply([
+                                              transforms.ColorJitter(brightness=0.5, 
+                                                                     contrast=0.5, 
+                                                                     saturation=0.5, 
+                                                                     hue=0.1)
+                                          ], p=0.8),
+                                          transforms.RandomGrayscale(p=0.2),
+                                          transforms.GaussianBlur(kernel_size=9),
+                                          transforms.ToTensor(),
+                                          transforms.Normalize((0.5,), (0.5,))
+                                         ])
+        
+        datamodule = ImbalancedImageNetDataModule(
+            dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
+            splits=args.splits,
+            batch_size=args.batch_size,
+            resized_image_size=model_type.resized_image_size,
+            transform=ContrastiveTransformations(contrast_transforms, n_views=2)
+        )
+    else:
+        datamodule = ImbalancedImageNetDataModule(
+            dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
+            splits=args.splits,
+            batch_size=args.batch_size,
+            resized_image_size=model_type.resized_image_size
+        )
+
 
     #I know this is terrible please help me fix it
     #this needs to be removed for some reason 'model_name': args.model_name,
