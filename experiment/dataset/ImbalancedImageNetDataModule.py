@@ -1,16 +1,29 @@
 import os
 import lightning as L
-from torch.utils.data import random_split, DataLoader, Dataset
+from torch.utils.data import random_split, DataLoader, Dataset, ConcatDataset
 from typing import Callable
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from dataset.ImageNetVariants import ImageNetVariants
+from torchvision import transforms
+from PIL import Image
+
+# Define default transformations for ImageNet
+default_transforms = transforms.Compose([
+    transforms.Resize(256),         # Resize the input image to 256x256
+    transforms.CenterCrop(224),     # Crop the center 224x224 region
+    transforms.ToTensor(),        # Convert PIL image to tensor (H x W x C) in the range [0, 255] to (C x H x W) in the range [0.0, 1.0]
+    transforms.Normalize(           # Normalize with ImageNet statistics
+        mean=[0.485, 0.456, 0.406],  # Mean of ImageNet dataset
+        std=[0.229, 0.224, 0.225]     # Standard deviation of ImageNet dataset
+    ),
+])
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
     def __init__(
         self,
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
-        transform: Callable = None,
+        transform: Callable = default_transforms,
         splits: tuple[int, int, int] = (0.8, 0.1, 0.1),
         batch_size: int = 32,
         # TODO: define degree of imbalance in some way
@@ -20,8 +33,13 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
     ):
         super().__init__()
 
-        self.dataset = self._load_dataset(dataset_variant, imbalance, splits)
+        self.transforms = transform
+
+        self.train_dataset, self.val_dataset, self.test_dataset = self._load_dataset(dataset_variant, imbalance, splits)
         self.batch_size = batch_size
+        print(len(self.train_dataset))
+        print(len(self.val_dataset))
+        print(len(self.test_dataset))
 
     def _load_dataset(
         self,
@@ -29,11 +47,14 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         imbalance: float,
         splits: tuple[float, float, float]
     ):
-        dataset = load_dataset(dataset_variant.value.path)
+        dataset_train = HuggingFaceDatasetWrapper(dataset_variant.value.path, split='train', transform=self.transforms)
+        dataset_test = HuggingFaceDatasetWrapper(dataset_variant.value.path, split='validation', transform=self.transforms)
+        # Combine train and validation datasets
+        dataset = ConcatDataset([dataset_train, dataset_test])
 
-        dataset = self._make_imbalanced(dataset, imbalance)
-
+        self._make_imbalanced(dataset, imbalance)
         return self._split_dataset(dataset, splits)
+
 
     def _make_imbalanced(self, dataset: Dataset, imbalance: float) -> Dataset:
         """
@@ -41,7 +62,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         of its samples.
         """
         print(dataset)
-        exit()
+        #exit()
 
         return dataset
 
@@ -51,15 +72,16 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         splits: tuple[float, float, float]
     ) -> tuple[Dataset, Dataset, Dataset]:
         return random_split(
-            self.dataset,
-            self._get_splits(splits)
+            dataset,
+            self._get_splits(dataset, splits)
         )
 
     def _get_splits(
         self,
+        dataset: Dataset,
         splits: tuple[int, int, int]
     ) -> tuple[int, int, int]:
-        size = len(self.dataset)
+        size = len(dataset)
 
         train_size = int(splits[0] * size)
         val_size = int(splits[1] * size)
@@ -92,3 +114,20 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
+
+class HuggingFaceDatasetWrapper(Dataset):
+    def __init__(self, dataset_name, split='train', transform=None):
+        super().__init__()
+        self.dataset = load_dataset(dataset_name, split=split)
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        item = self.dataset[idx]
+        image = item['image']  # Assuming the image data is stored directly in 'image'
+        label = item['label']  # Assuming the label is stored in 'label' field
+        if self.transform:
+            image = self.transform(image)
+        return image, label

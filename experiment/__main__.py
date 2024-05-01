@@ -18,6 +18,7 @@ from models.SSLTypes import SSLTypes
 from models.FinetuningBenchmarks import FinetuningBenchmarks
 from dataset.ImageNetVariants import ImageNetVariants
 
+
 mp.set_start_method('spawn')
 
 
@@ -51,7 +52,7 @@ def get_args() -> dict:
     parser.add_argument('--weight_decay', type=float, default=1e-6)
     parser.add_argument('--max_epochs', type=int, default=500)
 
-    parser.add_argument('--splits', type=tuple, default=(0.8, 0.1, 0.1))
+    parser.add_argument('--splits', nargs = '+', type = float, default=[0.8, 0.1, 0.1])
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--early_stopping_patience', type=int, default=100)
     parser.add_argument('--checkpoint', type=str, default=None)
@@ -69,9 +70,12 @@ def get_args() -> dict:
 
     parser.add_argument('--logger', action='store_true')
     parser.add_argument('--no-logger', action='store_false', dest='logger')
+    parser.add_argument('--csv_file', type=str, default='default.csv',
+                    help='CSV file name')
     parser.set_defaults(logger=True)
 
     args = parser.parse_args()
+    args.splits = tuple(args.splits)
 
     return args
 
@@ -119,10 +123,12 @@ def run(args: dict, seed: int = 42) -> dict:
         resized_image_size=model_type.resized_image_size,
     )
 
+    #I know this is terrible please help me fix it
+    #this needs to be removed for some reason 'model_name': args.model_name,
+    #'resized_image_size': model_type.resized_image_size,
+    #    'batch_size': args.batch_size,
     model_args = {
-        'model_name': args.model_name,
-        'resized_image_size': model_type.resized_image_size,
-        'batch_size': args.batch_size,
+        'output_size': int(args.imagenet_variant), 
     }
 
     model = model_type.initialize(**model_args)
