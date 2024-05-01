@@ -1,4 +1,4 @@
-import pytorch_lightning as L
+import lightning as L
 import torch
 from torch import nn
 from torch.optim import AdamW, Optimizer
@@ -23,7 +23,7 @@ class SimCLR(L.LightningModule):
             self.hparams.temperature > 0.0, \
             "The temperature must be a positive float!"
 
-        self.model - model
+        self.model = model
 
     def configure_optimizers(
         self

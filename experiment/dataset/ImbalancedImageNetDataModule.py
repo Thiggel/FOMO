@@ -6,6 +6,7 @@ from datasets import load_dataset, concatenate_datasets
 from dataset.ImageNetVariants import ImageNetVariants
 from torchvision import transforms
 from PIL import Image
+import torch
 
 # Define default transformations for ImageNet
 default_transforms = transforms.Compose([
@@ -99,6 +100,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
+            collate_fn = my_collate
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -106,6 +108,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            collate_fn = my_collate
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -113,6 +116,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            collate_fn = my_collate
         )
 
 class HuggingFaceDatasetWrapper(Dataset):
@@ -128,6 +132,26 @@ class HuggingFaceDatasetWrapper(Dataset):
         item = self.dataset[idx]
         image = item['image']  # Assuming the image data is stored directly in 'image'
         label = item['label']  # Assuming the label is stored in 'label' field
+
         if self.transform:
             image = self.transform(image)
         return image, label
+
+def my_collate(batch):
+    num_images = len(batch[0][0])
+
+    outer_list = []
+    for i in range(num_images):
+      data = [item[0][i].repeat(3, 1, 1) if item[0][i].size(0) == 1 else item[0][i][:3] for item in batch]  # Extract data (list of tensors)
+      #print(len(data))
+      
+      data = torch.stack(data)
+      outer_list.append(data)
+    
+    data = tuple(outer_list)
+    labels = [item[1] for item in batch]  # Extract labels (list of integers)
+    
+    # Convert labels to a tensor
+    stacked_labels = torch.tensor(labels)
+    
+    return data, stacked_labels

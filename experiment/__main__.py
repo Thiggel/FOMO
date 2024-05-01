@@ -118,20 +118,24 @@ def run(args: dict, seed: int = 42) -> dict:
 
     model_type = ModelTypes.get_model_type(args.model_name)
 
-    if args.model_name == 'SimCLR':
-        contrast_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                          transforms.RandomResizedCrop(size=96),
-                                          transforms.RandomApply([
-                                              transforms.ColorJitter(brightness=0.5, 
-                                                                     contrast=0.5, 
-                                                                     saturation=0.5, 
-                                                                     hue=0.1)
-                                          ], p=0.8),
-                                          transforms.RandomGrayscale(p=0.2),
-                                          transforms.GaussianBlur(kernel_size=9),
-                                          transforms.ToTensor(),
-                                          transforms.Normalize((0.5,), (0.5,))
-                                         ])
+    if args.ssl_method == 'SimCLR':
+        print('SimCLR augmentation used')
+        contrast_transforms = transforms.Compose([
+                                transforms.Resize(256), 
+                                transforms.CenterCrop(224),     # Crop the center 224x224 region
+                                transforms.RandomHorizontalFlip(),
+                                transforms.RandomResizedCrop(size=96),
+                                transforms.RandomApply([
+                                    transforms.ColorJitter(brightness=0.5, 
+                                                            contrast=0.5, 
+                                                            saturation=0.5, 
+                                                            hue=0.1)
+                                ], p=0.8),
+                                transforms.RandomGrayscale(p=0.2),
+                                transforms.GaussianBlur(kernel_size=9),
+                                transforms.ToTensor(),
+                                transforms.Normalize((0.5,), (0.5,))
+                                ])
         
         datamodule = ImbalancedImageNetDataModule(
             dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
@@ -141,6 +145,7 @@ def run(args: dict, seed: int = 42) -> dict:
             transform=ContrastiveTransformations(contrast_transforms, n_views=2)
         )
     else:
+        print('standard augmentation used')
         datamodule = ImbalancedImageNetDataModule(
             dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
             splits=args.splits,
@@ -187,7 +192,7 @@ def run(args: dict, seed: int = 42) -> dict:
     )
 
     if args.checkpoint is not None:
-        model.load_state_dict(
+        ssl_method.model.load_state_dict(
             torch.load(
                 args.checkpoint,
                 map_location=torch.device(
@@ -221,7 +226,7 @@ def run(args: dict, seed: int = 42) -> dict:
     if args.pretrain:
         trainer.fit(model=ssl_method, datamodule=datamodule)
 
-        model.load_state_dict(
+        ssl_method.model.load_state_dict(
             torch.load(checkpoint_callback.best_model_path)['state_dict']
         )
 

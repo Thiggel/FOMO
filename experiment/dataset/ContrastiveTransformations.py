@@ -8,5 +8,5 @@ class ContrastiveTransformations:
         self.n_views = n_views
 
     def __call__(self, x):
-        #I decided to put the default tranforms like resize and totensor here. I think its 
-        return [self.base_transforms(x) for i in range(self.n_views)]
+         
+        return tuple([self.base_transforms(x) for i in range(self.n_views)])
