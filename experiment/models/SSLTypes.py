@@ -3,7 +3,7 @@ from enum import Enum
 import torch.nn as nn
 from torchvision import models
 
-from models.SSLMethods.SimCLR import SimCLR
+from experiment.models.SSLMethods.SimCLR import SimCLR
 
 
 @dataclass

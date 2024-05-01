@@ -16,7 +16,7 @@ class CIFAR10FineTuner(L.LightningModule):
         output_size: int,
     ):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=['model'])
 
         (
             self.train_dataset,

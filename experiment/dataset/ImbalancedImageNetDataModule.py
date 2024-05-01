@@ -1,9 +1,10 @@
 import os
-import lightning as L
+import lightning.pytorch as L
 from torch.utils.data import random_split, DataLoader, Dataset
 from typing import Callable
-from datasets import load_dataset
-from dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.ImbalancedImageNet import ImbalancedImageNet
+from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods, ImbalanceMethod
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
@@ -11,61 +12,74 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self,
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
         transform: Callable = None,
-        splits: tuple[int, int, int] = (0.8, 0.1, 0.1),
+        splits: tuple[int, int] = (0.9, 0.1),
         batch_size: int = 32,
-        # TODO: define degree of imbalance in some way
-        # (below is just a suggestion)
-        imbalance: float = 0.1,
+        imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         resized_image_size: tuple[int, int] = (224, 224),
+        checkpoint_filename: str = None,
     ):
         super().__init__()
 
-        self.dataset = self._load_dataset(dataset_variant, imbalance, splits)
+        (
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset,
+            self.num_classes
+        ) = self._load_dataset(
+            dataset_variant,
+            imbalance_method,
+            splits,
+            checkpoint_filename
+        )
+
         self.batch_size = batch_size
 
     def _load_dataset(
         self,
         dataset_variant: ImageNetVariants,
-        imbalance: float,
-        splits: tuple[float, float, float]
+        imbalance_method: ImbalanceMethod,
+        splits: tuple[float, float],
+        checkpoint_filename: str
     ):
-        dataset = load_dataset(dataset_variant.value.path)
+        dataset = ImbalancedImageNet(
+            dataset_variant.value.path,
+            imbalance_method=imbalance_method.value,
+            checkpoint_filename=checkpoint_filename
+        )
 
-        dataset = self._make_imbalanced(dataset, imbalance)
+        num_classes = dataset.num_classes
 
-        return self._split_dataset(dataset, splits)
+        train_dataset, val_dataset = self._split_dataset(dataset, splits)
 
-    def _make_imbalanced(self, dataset: Dataset, imbalance: float) -> Dataset:
-        """
-        Randomly pick a class from the dataset and remove a fracton of "imbalance"
-        of its samples.
-        """
-        print(dataset)
-        exit()
+        test_dataset = ImbalancedImageNet(
+            dataset_variant.value.path,
+            split='test',
+            imbalance_method=imbalance_method.value
+        )
 
-        return dataset
+        return train_dataset, val_dataset, test_dataset, num_classes
 
     def _split_dataset(
         self,
         dataset: Dataset,
-        splits: tuple[float, float, float]
+        splits: tuple[float, float],
     ) -> tuple[Dataset, Dataset, Dataset]:
         return random_split(
-            self.dataset,
-            self._get_splits(splits)
+            dataset,
+            self._get_splits(splits, dataset)
         )
 
     def _get_splits(
         self,
-        splits: tuple[int, int, int]
+        splits: tuple[float, float],
+        dataset: Dataset
     ) -> tuple[int, int, int]:
-        size = len(self.dataset)
+        size = len(dataset)
 
         train_size = int(splits[0] * size)
-        val_size = int(splits[1] * size)
-        test_size = size - train_size - val_size
+        val_size = size - train_size
 
-        return train_size, val_size, test_size
+        return train_size, val_size
 
     @property
     def num_workers(self) -> int:
@@ -84,6 +98,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
 
     def test_dataloader(self) -> DataLoader:

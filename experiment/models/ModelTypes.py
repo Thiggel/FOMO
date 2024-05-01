@@ -3,7 +3,7 @@ from enum import Enum
 import torch.nn as nn
 from torchvision import models
 
-from models.backbones.ViT import ViT
+from experiment.models.backbones.ViT import ViT
 
 
 @dataclass
@@ -25,7 +25,6 @@ class ModelTypes(Enum):
                     models.resnet18(
                         pretrained=False,
                         num_classes=output_size,
-                        *args, **kwargs
                     ),
             ),
             'ResNet50': ModelType(
@@ -34,7 +33,6 @@ class ModelTypes(Enum):
                     models.resnet50(
                         pretrained=False,
                         num_classes=output_size,
-                        *args, **kwargs
                     ),
             ),
             'ViTSmall': ModelType(
