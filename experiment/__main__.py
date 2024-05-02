@@ -31,8 +31,10 @@ mp.set_start_method('spawn')
 def init_datamodule(
     args: dict,
     checkpoint_filename: str,
+    ssl_method: L.LightningModule
 ) -> L.LightningDataModule:
     model_type = ModelTypes.get_model_type(args.model_name)
+    ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
     return ImbalancedImageNetDataModule(
         dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
@@ -41,6 +43,7 @@ def init_datamodule(
         batch_size=args.batch_size,
         resized_image_size=model_type.resized_image_size,
         checkpoint_filename=checkpoint_filename,
+        transform=ssl_method.transforms,
     )
 
 
@@ -92,7 +95,9 @@ def run(args: dict, seed: int = 42) -> dict:
         args,
         checkpoint_filename,
     )
+
     model = init_model(args, datamodule)
+
     ssl_type = init_ssl_type(args, model)
 
     checkpoint_callback = ModelCheckpoint(
@@ -139,7 +144,6 @@ def run(args: dict, seed: int = 42) -> dict:
     )
 
     return imbalanced_training.run()
-
 
 def main():
     args = get_training_args()

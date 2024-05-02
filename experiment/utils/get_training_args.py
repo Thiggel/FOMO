@@ -43,7 +43,7 @@ def get_training_args() -> dict:
     parser.add_argument('--weight_decay', type=float, default=1e-6)
     parser.add_argument('--max_epochs', type=int, default=500)
 
-    parser.add_argument('--splits', type=tuple, default=(0.8, 0.1, 0.1))
+    parser.add_argument('--splits', nargs='+', type=float, default=[0.8, 0.1, 0.1])
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--early_stopping_patience', type=int, default=100)
     parser.add_argument('--checkpoint', type=str, default=None)
@@ -64,6 +64,8 @@ def get_training_args() -> dict:
     parser.set_defaults(logger=True)
 
     args = parser.parse_args()
+
+    args.split = tuple(args.splits)
 
     return args
 

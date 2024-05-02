@@ -22,9 +22,11 @@ class ImbalancedImageNet(Dataset):
         split: str = 'train',
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
+        transform=None
     ):
         split = 'train' if split == 'train' else 'validation'
         self.dataset = load_dataset(dataset_path, split=split)
+        self.transform = transform
         self.classes = self.dataset.features['label'].names
         self.num_classes = len(self.classes)
         self.imbalancedness = imbalance_method.impl(len(self.classes))
@@ -107,6 +109,11 @@ class ImbalancedImageNet(Dataset):
         to an index in the original dataset.
         We return the sample at the index in the original dataset.
         """
-        return self.dataset[self.indices[idx]] \
+        datapoint = self.dataset[self.indices[idx]] \
             if idx < len(self.indices) \
             else self._load_additional_datapoint(idx - len(self.indices))
+
+        if self.transform:
+            datapoint['image'] = self.transform(datapoint['image'])
+
+        return datapoint['image'], datapoint['label']
