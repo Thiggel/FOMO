@@ -1,7 +1,7 @@
 from typing import TypedDict
 from PIL import Image
 from random import random
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, ConcatDataset
 from tqdm import tqdm
 import pickle
 
@@ -19,15 +19,24 @@ class ImbalancedImageNet(Dataset):
     def __init__(
         self,
         dataset_path: str,
-        split: str = 'train',
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
+        transform=None
     ):
-        split = 'train' if split == 'train' else 'validation'
-        self.dataset = load_dataset(dataset_path, split=split)
-        self.classes = self.dataset.features['label'].names
+        super().__init__()
+
+        self.train_dataset = load_dataset(dataset_path, split='train')
+        self.val_dataset = load_dataset(dataset_path, split='validation')
+
+        self.dataset = ConcatDataset([
+            self.train_dataset,
+            self.val_dataset
+        ])
+
+        self.transform = transform
+        self.classes = self.train_dataset.features['label'].names
         self.num_classes = len(self.classes)
-        self.imbalancedness = imbalance_method.impl(len(self.classes))
+        self.imbalancedness = imbalance_method.value.impl(len(self.classes))
         self.indices = self._load_or_create_indices()
         self.checkpoint_filename = checkpoint_filename
         self.additional_data = self._create_or_load_additional_data()
@@ -107,6 +116,11 @@ class ImbalancedImageNet(Dataset):
         to an index in the original dataset.
         We return the sample at the index in the original dataset.
         """
-        return self.dataset[self.indices[idx]] \
+        datapoint = self.dataset[self.indices[idx]] \
             if idx < len(self.indices) \
             else self._load_additional_datapoint(idx - len(self.indices))
+
+        if self.transform:
+            datapoint['image'] = self.transform(datapoint['image'])
+
+        return datapoint['image'], datapoint['label']

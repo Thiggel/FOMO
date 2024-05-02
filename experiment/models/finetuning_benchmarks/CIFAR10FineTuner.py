@@ -25,6 +25,7 @@ class CIFAR10FineTuner(L.LightningModule):
         ) = self.get_datasets()
 
         self.model = model
+        self.max_epochs = 10
 
         num_ftrs = self.model.fc.in_features
         self.model.fc = nn.Linear(num_ftrs, 10)

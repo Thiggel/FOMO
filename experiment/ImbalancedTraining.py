@@ -11,23 +11,18 @@ class ImbalancedTraining:
         ssl_method: L.LightningModule,
         datamodule: L.LightningDataModule,
         checkpoint_callback: L.Callback,
-        reload_every_n: int,
-        max_cycles: int,
     ):
         self.args = args
-        self.trainer = L.Trainer(**trainer_args)
+        self.trainer_args = trainer_args
         self.ssl_method = ssl_method
         self.datamodule = datamodule
         self.checkpoint_callback = checkpoint_callback
-        self.reload_every_n = reload_every_n
-        self.max_cycles = max_cycles
+        self.n_epochs_per_cycle = args.n_epochs_per_cycle
+        self.max_cycles = args.max_cycles
 
     def run(self) -> dict:
         if self.args.pretrain:
-            self.trainer.fit(
-                model=self.ssl_method,
-                datamodule=self.datamodule
-            )
+            self.pretrain_imbalanced()
 
             self.ssl_method.model.load_state_dict(
                 torch.load(self.checkpoint_callback.best_model_path)['state_dict']
@@ -43,10 +38,11 @@ class ImbalancedTraining:
         2. assess OOD samples
         3. generate new data for OOD
         """
-        self.trainer.fit(
+        trainer = L.Trainer(**self.trainer_args)
+
+        trainer.fit(
             model=self.ssl_method,
             datamodule=self.datamodule,
-            epochs=self.reload_every_n,
         )
 
         val_loader = self.datamodule.val_dataloader()
@@ -55,7 +51,7 @@ class ImbalancedTraining:
             ood_samples = self.check_ood(batch)
 
             augmented_data = self.generate_new_data(
-                ood_sample
+                ood_samples
             )
 
             self.datamodule.update_dataset(
@@ -67,7 +63,7 @@ class ImbalancedTraining:
         self,
     ) -> None:
         """
-        1. Fit for reload_every_n epochs, 
+        1. Fit for n_epochs_per_cycle epochs, 
         2. Use validation set to determine OOD samples
         3. Generate augmentations for OOD samples
         4. Restart
@@ -84,6 +80,9 @@ class ImbalancedTraining:
                 model=self.ssl_method.model,
                 lr=self.args.lr,
             )
+
+            self.trainer_args['max_epochs'] = benchmark.max_epochs
+            
             trainer = L.Trainer(
                 **self.trainer_args
             )
