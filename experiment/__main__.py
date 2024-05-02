@@ -1,7 +1,7 @@
 from datetime import date
 import time
 import argparse
-import lightning as L
+import lightning.pytorch as L
 from lightning.pytorch.callbacks import (
         ModelCheckpoint,
         EarlyStopping,
@@ -9,137 +9,100 @@ from lightning.pytorch.callbacks import (
     )
 from lightning.pytorch.loggers import TensorBoardLogger
 import torch
+from torch import nn
 import torch.multiprocessing as mp
 
-from utils.set_seed import set_seed
-from dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
-from models.ModelTypes import ModelTypes
-from models.SSLTypes import SSLTypes
-from models.FinetuningBenchmarks import FinetuningBenchmarks
-from dataset.ImageNetVariants import ImageNetVariants
+from experiment.utils.set_seed import set_seed
+from experiment.utils.print_mean_std import print_mean_std
+from experiment.utils.get_training_args import get_training_args
+from experiment.utils.get_model_name import get_model_name
+
+from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
+from experiment.models.ModelTypes import ModelTypes
+from experiment.models.SSLTypes import SSLTypes
+from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import FinetuningBenchmarks
+from experiment.dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
+from experiment.ImbalancedTraining import ImbalancedTraining
 
 mp.set_start_method('spawn')
 
 
-def get_args() -> dict:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--root_dir', type=str, default='dataset/novel')
-
-    parser.add_argument(
-        '--model_name',
-        type=str,
-        choices=ModelTypes.get_model_types(),
-        default=ModelTypes.get_default_model_type()
-    )
-
-    parser.add_argument(
-        '--imagenet_variant',
-        type=str,
-        choices=ImageNetVariants.get_variants(),
-        default=ImageNetVariants.get_default_variant()
-    )
-
-    parser.add_argument(
-        '--ssl_method',
-        type=str,
-        choices=SSLTypes.get_ssl_types(),
-        default=SSLTypes.get_default_ssl_type()
-    )
-
-    parser.add_argument('--lr', type=float, default=1e-4)
-    parser.add_argument('--temperature', type=float, default=0.5)
-    parser.add_argument('--weight_decay', type=float, default=1e-6)
-    parser.add_argument('--max_epochs', type=int, default=500)
-
-    parser.add_argument('--splits', type=tuple, default=(0.8, 0.1, 0.1))
-    parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--early_stopping_patience', type=int, default=100)
-    parser.add_argument('--checkpoint', type=str, default=None)
-
-    parser.add_argument('--pretrain', action='store_true')
-    parser.add_argument('--no-pretrain', action='store_false', dest='pretrain')
-    parser.set_defaults(pretrain=True)
-
-    parser.add_argument('--finetune', action='store_true')
-    parser.add_argument('--no-finetune', action='store_false', dest='finetune')
-    parser.set_defaults(finetune=True)
-
-    parser.add_argument('--num_runs', type=int, default=1)
-    parser.add_argument('--max_hours_per_run', type=int, default=5)
-
-    parser.add_argument('--logger', action='store_true')
-    parser.add_argument('--no-logger', action='store_false', dest='logger')
-    parser.set_defaults(logger=True)
-
-    args = parser.parse_args()
-
-    return args
-
-
-def get_model_name(module: L.LightningModule) -> str:
-    if not hasattr(module, 'model'):
-        return module.__class__.__name__
-
-    return module.model.__class__.__name__
-
-
-def finetune(
+def init_datamodule(
     args: dict,
-    trainer_args: dict,
-    model: L.LightningModule,
-) -> dict:
-    benchmarks = FinetuningBenchmarks.benchmarks
-    results = {}
-
-    for benchmark in benchmarks:
-        finetuner = benchmark(
-            model=model.model,
-            lr=args.lr,
-        )
-        trainer = L.Trainer(
-            **trainer_args
-        )
-
-        trainer.fit(model=finetuner)
-
-        results.update(trainer.test(model=finetuner))
-
-    return results
-
-
-def run(args: dict, seed: int = 42) -> dict:
-    set_seed(seed)
-
+    checkpoint_filename: str,
+    ssl_method: L.LightningModule
+) -> L.LightningDataModule:
     model_type = ModelTypes.get_model_type(args.model_name)
+    ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
-    datamodule = ImbalancedImageNetDataModule(
+    return ImbalancedImageNetDataModule(
         dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
+        imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
         splits=args.splits,
         batch_size=args.batch_size,
         resized_image_size=model_type.resized_image_size,
+        checkpoint_filename=checkpoint_filename,
+        transform=ssl_method.transforms,
     )
+
+
+def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
+    model_type = ModelTypes.get_model_type(args.model_name)
 
     model_args = {
         'model_name': args.model_name,
         'resized_image_size': model_type.resized_image_size,
         'batch_size': args.batch_size,
+        'output_size': datamodule.num_classes,
     }
 
     model = model_type.initialize(**model_args)
+    
+    if args.checkpoint is not None:
+        model.load_state_dict(
+            torch.load(
+                args.checkpoint,
+                map_location=torch.device(
+                    'cuda' if torch.cuda.is_available() else 'cpu'
+                )
+            )['state_dict']
+        )
 
+    return model
+
+def init_ssl_type(args: dict, model: nn.Module) -> L.LightningModule:
     ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
     ssl_args = {
         'model': model,
         'lr': args.lr,
         'temperature': args.temperature,
         'weight_decay': args.weight_decay,
-        'max_epochs': args.max_epochs,
+        'max_epochs': args.max_cycles * args.n_epochs_per_cycle,
     }
-    ssl_method = ssl_type.initialize(**ssl_args)
+
+    return ssl_type.initialize(**ssl_args)
+
+
+def run(args: dict, seed: int = 42) -> dict:
+    set_seed(seed)
+
+    checkpoint_filename = args.model_name + ' ' + args.root_dir + '-{epoch}-{val_loss:.2f}' \
+        if args.checkpoint is None \
+        else args.checkpoint
+
+    datamodule = init_datamodule(
+        args,
+        checkpoint_filename,
+    )
+
+    model = init_model(args, datamodule)
+
+    ssl_type = init_ssl_type(args, model)
 
     checkpoint_callback = ModelCheckpoint(
         dirpath='checkpoints/',
-        filename=args.model_name + ' ' + args.root_dir + '-{epoch}-{val_loss:.2f}',
+        filename=checkpoint_filename,
         monitor='val_loss',
     )
 
@@ -151,18 +114,8 @@ def run(args: dict, seed: int = 42) -> dict:
 
     tensorboard_logger = TensorBoardLogger(
         'logs/',
-        name=args.model_name + ' ' + args.csv_file
+        name=args.model_name
     )
-
-    if args.checkpoint is not None:
-        model.load_state_dict(
-            torch.load(
-                args.checkpoint,
-                map_location=torch.device(
-                    'cuda' if torch.cuda.is_available() else 'cpu'
-                )
-            )['state_dict']
-        )
 
     stats_monitor = DeviceStatsMonitor()
 
@@ -174,7 +127,7 @@ def run(args: dict, seed: int = 42) -> dict:
 
     trainer_args = {
         'max_time': {'hours': args.max_hours_per_run},
-        'max_epochs': args.max_epochs,
+        'max_epochs': args.n_epochs_per_cycle,
         'callbacks': callbacks,
         'enable_checkpointing': True,
         'logger': tensorboard_logger if args.logger else None,
@@ -182,38 +135,18 @@ def run(args: dict, seed: int = 42) -> dict:
         'devices': 'auto',
     }
 
-    trainer = L.Trainer(
-        **trainer_args
+    imbalanced_training = ImbalancedTraining(
+        args,
+        trainer_args,
+        ssl_type,
+        datamodule,
+        checkpoint_callback,
     )
 
-    if args.pretrain:
-        trainer.fit(model=ssl_method, datamodule=datamodule)
+    return imbalanced_training.run()
 
-        model.load_state_dict(
-            torch.load(checkpoint_callback.best_model_path)['state_dict']
-        )
-
-    if args.finetune:
-        results = finetune(args, trainer_args, model)
-
-        return results
-
-    else:
-        return {}
-
-
-def print_mean_std(results: list[dict]) -> None:
-    tensor_data = torch.tensor([list(d.values()) for d in results])
-
-    mean = tensor_data.mean(dim=0)
-    std_dev = tensor_data.std(dim=0)
-
-    for key, m, s in zip(results[0].keys(), mean, std_dev):
-        print(f'{key} - Mean: {m.item()}, Std: {s.item()}')
-
-
-if __name__ == '__main__':
-    args = get_args()
+def main():
+    args = get_training_args()
 
     all_results = []
 
@@ -232,3 +165,7 @@ if __name__ == '__main__':
         all_results.append(results)
 
     print_mean_std(all_results)
+
+
+if __name__ == '__main__':
+    main()

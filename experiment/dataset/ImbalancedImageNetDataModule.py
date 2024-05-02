@@ -1,65 +1,84 @@
 import os
-import lightning as L
+import lightning.pytorch as L
+import torch
+from torch import Tensor
 from torch.utils.data import random_split, DataLoader, Dataset
 from typing import Callable
-from datasets import load_dataset
-from dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.ImbalancedImageNet import ImbalancedImageNet
+from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods, ImbalanceMethod
+from PIL import Image
+from torchvision import transforms
+from typing import Callable
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
     def __init__(
         self,
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
-        transform: Callable = None,
-        splits: tuple[int, int, int] = (0.8, 0.1, 0.1),
+        transform: Callable = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            ),
+        ]),
+        splits: tuple[int, int] = (0.8, 0.1, 0.1),
         batch_size: int = 32,
-        # TODO: define degree of imbalance in some way
-        # (below is just a suggestion)
-        imbalance: float = 0.1,
+        imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         resized_image_size: tuple[int, int] = (224, 224),
+        checkpoint_filename: str = None,
     ):
         super().__init__()
 
-        self.dataset = self._load_dataset(dataset_variant, imbalance, splits)
+        self.transform = transform
         self.batch_size = batch_size
+
+        (
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset,
+            self.num_classes
+        ) = self._load_dataset(
+            dataset_variant,
+            imbalance_method,
+            splits,
+            checkpoint_filename
+        )
 
     def _load_dataset(
         self,
         dataset_variant: ImageNetVariants,
-        imbalance: float,
-        splits: tuple[float, float, float]
+        imbalance_method: ImbalanceMethod,
+        splits: tuple[float, float],
+        checkpoint_filename: str
     ):
-        dataset = load_dataset(dataset_variant.value.path)
+        dataset = ImbalancedImageNet(
+            dataset_variant.value.path,
+            transform=self.transform,
+            imbalance_method=imbalance_method,
+        )
 
-        dataset = self._make_imbalanced(dataset, imbalance)
-
-        return self._split_dataset(dataset, splits)
-
-    def _make_imbalanced(self, dataset: Dataset, imbalance: float) -> Dataset:
-        """
-        Randomly pick a class from the dataset and remove a fracton of "imbalance"
-        of its samples.
-        """
-        print(dataset)
-        exit()
-
-        return dataset
+        return self._split_dataset(dataset, splits) + [dataset.num_classes]
 
     def _split_dataset(
         self,
         dataset: Dataset,
-        splits: tuple[float, float, float]
+        splits: tuple[float, float, float],
     ) -> tuple[Dataset, Dataset, Dataset]:
         return random_split(
-            self.dataset,
-            self._get_splits(splits)
+            dataset,
+            self._get_splits(dataset, splits)
         )
 
     def _get_splits(
         self,
-        splits: tuple[int, int, int]
+        dataset: Dataset
+        splits: tuple[float, float, float],
     ) -> tuple[int, int, int]:
-        size = len(self.dataset)
+        size = len(dataset)
 
         train_size = int(splits[0] * size)
         val_size = int(splits[1] * size)
@@ -76,7 +95,9 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=self.num_workers,
+            #num_workers=self.num_workers,
+            #persistent_workers=True,
+            collate_fn=self.collate
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -84,6 +105,8 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
+            collate_fn=self.collate,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -91,4 +114,27 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
+            collate_fn=self.collate
         )
+
+    def collate(self, batch: list) -> tuple[list[tensor], tensor]:
+        num_images = len(batch[0][0])
+
+        outer_list = []
+        for i in range(num_images):
+            data = torch.stack([
+                item[0][i].repeat(3, 1, 1)
+                if item[0][i].size(0) == 1
+                else item[0][i][:3] 
+                for item in batch
+            ])
+
+            outer_list.append(data)
+        
+        data = tuple(outer_list)
+        labels = [item[1] for item in batch]
+        
+        stacked_labels = torch.tensor(labels)
+        
+        return data, stacked_labels

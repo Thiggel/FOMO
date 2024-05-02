@@ -1,14 +1,17 @@
+from typing import Callable
 from dataclasses import dataclass
 from enum import Enum
 import torch.nn as nn
-from torchvision import models
+from torchvision import models, transforms
 
-from models.SSLMethods.SimCLR import SimCLR
+from experiment.dataset.ContrastiveTransformations import ContrastiveTransformations
+from experiment.models.SSLMethods.SimCLR import SimCLR
 
 
 @dataclass
 class SSLType:
     module: nn.Module
+    transforms: Callable
 
     def initialize(self, *args, **kwargs) -> nn.Module:
         return self.module(*args, **kwargs)
@@ -32,7 +35,28 @@ class SSLTypes(Enum):
                         weight_decay=weight_decay,
                         max_epochs=max_epochs,
                         *args, **kwargs
-                    )
+                    ),
+                transforms=ContrastiveTransformations(
+                    transforms.Compose([
+                        transforms.Resize(256), 
+                        transforms.CenterCrop(224),
+                        transforms.RandomHorizontalFlip(),
+                        transforms.RandomResizedCrop(size=96),
+                        transforms.RandomApply([
+                            transforms.ColorJitter(
+                                brightness=0.5, 
+                                contrast=0.5, 
+                                saturation=0.5, 
+                                hue=0.1
+                            )
+                        ], p=0.8),
+                        transforms.RandomGrayscale(p=0.2),
+                        transforms.GaussianBlur(kernel_size=9),
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.5,), (0.5,))
+                    ]),
+                    n_views=2,
+                )
             ),
         }
 
