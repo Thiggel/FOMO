@@ -63,7 +63,6 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
         return self._split_dataset(dataset, splits) + [dataset.num_classes]
 
-
     def _split_dataset(
         self,
         dataset: Dataset,
@@ -76,7 +75,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
     def _get_splits(
         self,
-        dataset: Dataset,
+        dataset: Dataset
         splits: tuple[float, float, float],
     ) -> tuple[int, int, int]:
         size = len(dataset)
@@ -119,7 +118,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             collate_fn=self.collate
         )
 
-    def collate(self, batch: list) -> tuple[list[Tensor], Tensor]:
+    def collate(self, batch: list) -> tuple[list[tensor], tensor]:
         num_images = len(batch[0][0])
 
         outer_list = []
