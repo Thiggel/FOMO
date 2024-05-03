@@ -25,6 +25,9 @@ class ImbalancedImageNet(Dataset):
     ):
         super().__init__()
 
+        self.checkpoint_filename = checkpoint_filename
+        self.transform = transform
+
         self.train_dataset = load_dataset(dataset_path, split='train')
         self.val_dataset = load_dataset(dataset_path, split='validation')
 
@@ -33,12 +36,10 @@ class ImbalancedImageNet(Dataset):
             self.val_dataset
         ])
 
-        self.transform = transform
         self.classes = self.train_dataset.features['label'].names
         self.num_classes = len(self.classes)
-        self.imbalancedness = imbalance_method.value.impl(len(self.classes))
+        self.imbalancedness = imbalance_method.value.impl(self.num_classes)
         self.indices = self._load_or_create_indices()
-        self.checkpoint_filename = checkpoint_filename
         self.additional_data = self._create_or_load_additional_data()
 
     def _save_additional_datapoint(self, filename: str, label: int):
@@ -51,12 +52,16 @@ class ImbalancedImageNet(Dataset):
         except FileNotFoundError:
             return []
 
+    @property
+    def _additional_data_filename(self):
+        return f'{self.checkpoint_filename}_additional_data.pkl'
+
     def _save_additional_data_to_pickle(self):
-        with open('additional_data.pkl', 'wb') as f:
+        with open(self._additional_data_filename, 'wb') as f:
             pickle.dump(self.additional_data, f)
 
     def _load_additional_data_from_pickle(self):
-        with open('additional_data.pkl', 'rb') as f:
+        with open(self._additional_data_filename, 'rb') as f:
             return pickle.load(f)
 
     def _create_indices(self) -> list[int]:
@@ -76,12 +81,16 @@ class ImbalancedImageNet(Dataset):
 
         return indices
 
+    @property
+    def _indices_filename(self):
+        return f'{self.checkpoint_filename}_indices.pkl'
+
     def _save_indices_to_pickle(self, indices: list[int]):
-        with open('indices.pkl', 'wb') as f:
+        with open(self._indices_filename, 'wb') as f:
             pickle.dump(indices, f)
 
     def _load_indices_from_pickle(self):
-        with open('indices.pkl', 'rb') as f:
+        with open(self._indices_filename, 'rb') as f:
             return pickle.load(f)
 
     def _load_or_create_indices(self):

@@ -87,7 +87,10 @@ def init_ssl_type(args: dict, model: nn.Module) -> L.LightningModule:
 def run(args: dict, seed: int = 42) -> dict:
     set_seed(seed)
 
-    checkpoint_filename = args.model_name + ' ' + args.root_dir + '-{epoch}-{val_loss:.2f}' \
+    checkpoint_filename = args.model_name + \
+        '_' + args.imagenet_variant + \
+        '_' + args.imbalance_method + \
+        '-{epoch}-{val_loss:.2f}' \
         if args.checkpoint is None \
         else args.checkpoint
 

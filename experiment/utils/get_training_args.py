@@ -8,8 +8,6 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 
 def get_training_args() -> dict:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root_dir', type=str, default='dataset/novel')
-
     parser.add_argument(
         '--model_name',
         type=str,
