@@ -13,31 +13,27 @@ class SimCLR(L.LightningModule):
         lr: float,
         temperature: float,
         weight_decay: float,
-        max_epochs: int = 500
+        max_epochs: int = 500,
     ):
         super().__init__()
 
-        self.save_hyperparameters(ignore=['model'])
+        self.save_hyperparameters(ignore=["model"])
 
-        assert \
-            self.hparams.temperature > 0.0, \
-            "The temperature must be a positive float!"
+        assert (
+            self.hparams.temperature > 0.0
+        ), "The temperature must be a positive float!"
 
         self.model = model
 
-    def configure_optimizers(
-        self
-    ) -> tuple[list[Optimizer], list[LRScheduler]]:
+    def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer = AdamW(
             self.parameters(),
             lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay
+            weight_decay=self.hparams.weight_decay,
         )
 
         lr_scheduler = CosineAnnealingLR(
-            optimizer,
-            T_max=self.hparams.max_epochs,
-            eta_min=self.hparams.lr / 50
+            optimizer, T_max=self.hparams.max_epochs, eta_min=self.hparams.lr / 50
         )
 
         return [optimizer], [lr_scheduler]
@@ -48,11 +44,7 @@ class SimCLR(L.LightningModule):
 
         feats = self.model(imgs)
 
-        cos_sim = F.cosine_similarity(
-            feats[:, None, :],
-            feats[None, :, :],
-            dim=-1
-        )
+        cos_sim = F.cosine_similarity(feats[:, None, :], feats[None, :, :], dim=-1)
 
         # Mask out cosine similarity to itself
         self_mask = torch.eye(cos_sim.shape[0], dtype=torch.bool, device=cos_sim.device)
@@ -71,7 +63,10 @@ class SimCLR(L.LightningModule):
 
         # Get ranking position of positive example
         comb_sim = torch.cat(
-            [cos_sim[pos_mask][:, None], cos_sim.masked_fill(pos_mask, -9e15)],  # First position positive example
+            [
+                cos_sim[pos_mask][:, None],
+                cos_sim.masked_fill(pos_mask, -9e15),
+            ],  # First position positive example
             dim=-1,
         )
 

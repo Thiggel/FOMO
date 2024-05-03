@@ -6,7 +6,10 @@ from torch.utils.data import random_split, DataLoader, Dataset
 from typing import Callable
 from experiment.dataset.ImageNetVariants import ImageNetVariants
 from experiment.dataset.ImbalancedImageNet import ImbalancedImageNet
-from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods, ImbalanceMethod
+from experiment.dataset.imbalancedness.ImbalanceMethods import (
+    ImbalanceMethods,
+    ImbalanceMethod,
+)
 from PIL import Image
 from torchvision import transforms
 from typing import Callable
@@ -16,15 +19,16 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
     def __init__(
         self,
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
-        transform: Callable = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225]
-            ),
-        ]),
+        transform: Callable = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        ),
         splits: tuple[int, int] = (0.8, 0.1, 0.1),
         batch_size: int = 32,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
@@ -36,16 +40,10 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self.transform = transform
         self.batch_size = batch_size
 
-        (
-            self.train_dataset,
-            self.val_dataset,
-            self.test_dataset,
-            self.num_classes
-        ) = self._load_dataset(
-            dataset_variant,
-            imbalance_method,
-            splits,
-            checkpoint_filename
+        (self.train_dataset, self.val_dataset, self.test_dataset, self.num_classes) = (
+            self._load_dataset(
+                dataset_variant, imbalance_method, splits, checkpoint_filename
+            )
         )
 
     def _load_dataset(
@@ -53,7 +51,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         dataset_variant: ImageNetVariants,
         imbalance_method: ImbalanceMethod,
         splits: tuple[float, float],
-        checkpoint_filename: str
+        checkpoint_filename: str,
     ):
         dataset = ImbalancedImageNet(
             dataset_variant.value.path,
@@ -68,10 +66,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         dataset: Dataset,
         splits: tuple[float, float, float],
     ) -> tuple[Dataset, Dataset, Dataset]:
-        return random_split(
-            dataset,
-            self._get_splits(dataset, splits)
-        )
+        return random_split(dataset, self._get_splits(dataset, splits))
 
     def _get_splits(
         self,
@@ -95,9 +90,9 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            #num_workers=self.num_workers,
-            #persistent_workers=True,
-            collate_fn=self.collate
+            # num_workers=self.num_workers,
+            # persistent_workers=True,
+            collate_fn=self.collate,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -115,7 +110,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=True,
-            collate_fn=self.collate
+            collate_fn=self.collate,
         )
 
     def collate(self, batch: list) -> tuple[list[Tensor], Tensor]:
@@ -123,18 +118,22 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
         outer_list = []
         for i in range(num_images):
-            data = torch.stack([
-                item[0][i].repeat(3, 1, 1)
-                if item[0][i].size(0) == 1
-                else item[0][i][:3] 
-                for item in batch
-            ])
+            data = torch.stack(
+                [
+                    (
+                        item[0][i].repeat(3, 1, 1)
+                        if item[0][i].size(0) == 1
+                        else item[0][i][:3]
+                    )
+                    for item in batch
+                ]
+            )
 
             outer_list.append(data)
-        
+
         data = tuple(outer_list)
         labels = [item[1] for item in batch]
-        
+
         stacked_labels = torch.tensor(labels)
-        
+
         return data, stacked_labels

@@ -1,17 +1,19 @@
 from enum import Enum
 from dataclasses import dataclass
 
+
 @dataclass
 class ImageNetVariant:
     name: str
     path: str
+
 
 class ImageNetVariants(Enum):
     ImageNet100 = ImageNetVariant(
         name="100",
         path="clane9/imagenet-100",
     )
-    
+
     ImageNet1k = ImageNetVariant(
         name="1k",
         path="imagenet-1k",
@@ -19,9 +21,7 @@ class ImageNetVariants(Enum):
 
     @staticmethod
     def init_variant(variant: str):
-        return {
-            member.value.name: member for member in ImageNetVariants
-        }[variant]
+        return {member.value.name: member for member in ImageNetVariants}[variant]
 
     @staticmethod
     def get_variants():

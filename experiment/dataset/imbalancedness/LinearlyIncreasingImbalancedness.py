@@ -13,4 +13,3 @@ class LinearlyIncreasingImbalancedness(Imbalancedness):
         and class num_classes - 1 has an imbalance score of 0.9.
         """
         return 0.9 * class_index / self.num_classes
-

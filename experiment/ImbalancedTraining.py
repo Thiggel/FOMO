@@ -25,7 +25,7 @@ class ImbalancedTraining:
             self.pretrain_imbalanced()
 
             self.ssl_method.model.load_state_dict(
-                torch.load(self.checkpoint_callback.best_model_path)['state_dict']
+                torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
             )
 
         return self.finetune() if self.args.finetune else {}
@@ -50,20 +50,15 @@ class ImbalancedTraining:
         for batch, batch_idx in val_loader:
             ood_samples = self.check_ood(batch)
 
-            augmented_data = self.generate_new_data(
-                ood_samples
-            )
+            augmented_data = self.generate_new_data(ood_samples)
 
-            self.datamodule.update_dataset(
-                augmented_data
-            )
-
+            self.datamodule.update_dataset(augmented_data)
 
     def pretrain_imbalanced(
         self,
     ) -> None:
         """
-        1. Fit for n_epochs_per_cycle epochs, 
+        1. Fit for n_epochs_per_cycle epochs,
         2. Use validation set to determine OOD samples
         3. Generate augmentations for OOD samples
         4. Restart
@@ -81,11 +76,9 @@ class ImbalancedTraining:
                 lr=self.args.lr,
             )
 
-            self.trainer_args['max_epochs'] = benchmark.max_epochs
-            
-            trainer = L.Trainer(
-                **self.trainer_args
-            )
+            self.trainer_args["max_epochs"] = benchmark.max_epochs
+
+            trainer = L.Trainer(**self.trainer_args)
 
             trainer.fit(model=finetuner)
 

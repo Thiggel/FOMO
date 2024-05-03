@@ -6,8 +6,10 @@ from tqdm import tqdm
 import pickle
 
 from datasets import load_dataset
-from experiment.dataset.imbalancedness.ImbalanceMethods import \
-    ImbalanceMethods, ImbalanceMethod
+from experiment.dataset.imbalancedness.ImbalanceMethods import (
+    ImbalanceMethods,
+    ImbalanceMethod,
+)
 
 
 class DataPoint(TypedDict):
@@ -21,22 +23,19 @@ class ImbalancedImageNet(Dataset):
         dataset_path: str,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
-        transform=None
+        transform=None,
     ):
         super().__init__()
 
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
 
-        self.train_dataset = load_dataset(dataset_path, split='train')
-        self.val_dataset = load_dataset(dataset_path, split='validation')
+        self.train_dataset = load_dataset(dataset_path, split="train")
+        self.val_dataset = load_dataset(dataset_path, split="validation")
 
-        self.dataset = ConcatDataset([
-            self.train_dataset,
-            self.val_dataset
-        ])
+        self.dataset = ConcatDataset([self.train_dataset, self.val_dataset])
 
-        self.classes = self.train_dataset.features['label'].names
+        self.classes = self.train_dataset.features["label"].names
         self.num_classes = len(self.classes)
         self.imbalancedness = imbalance_method.value.impl(self.num_classes)
         self.indices = self._load_or_create_indices()
@@ -54,14 +53,14 @@ class ImbalancedImageNet(Dataset):
 
     @property
     def _additional_data_filename(self):
-        return f'{self.checkpoint_filename}_additional_data.pkl'
+        return f"{self.checkpoint_filename}_additional_data.pkl"
 
     def _save_additional_data_to_pickle(self):
-        with open(self._additional_data_filename, 'wb') as f:
+        with open(self._additional_data_filename, "wb") as f:
             pickle.dump(self.additional_data, f)
 
     def _load_additional_data_from_pickle(self):
-        with open(self._additional_data_filename, 'rb') as f:
+        with open(self._additional_data_filename, "rb") as f:
             return pickle.load(f)
 
     def _create_indices(self) -> list[int]:
@@ -73,8 +72,12 @@ class ImbalancedImageNet(Dataset):
         """
         indices = []
 
-        for index, sample in tqdm(enumerate(self.dataset), total=len(self.dataset), desc='Making dataset imbalanced'):
-            if self.imbalancedness.get_imbalance(sample['label']) < random():
+        for index, sample in tqdm(
+            enumerate(self.dataset),
+            total=len(self.dataset),
+            desc="Making dataset imbalanced",
+        ):
+            if self.imbalancedness.get_imbalance(sample["label"]) < random():
                 indices.append(index)
 
         self._save_indices_to_pickle(indices)
@@ -83,14 +86,14 @@ class ImbalancedImageNet(Dataset):
 
     @property
     def _indices_filename(self):
-        return f'{self.checkpoint_filename}_indices.pkl'
+        return f"{self.checkpoint_filename}_indices.pkl"
 
     def _save_indices_to_pickle(self, indices: list[int]):
-        with open(self._indices_filename, 'wb') as f:
+        with open(self._indices_filename, "wb") as f:
             pickle.dump(indices, f)
 
     def _load_indices_from_pickle(self):
-        with open(self._indices_filename, 'rb') as f:
+        with open(self._indices_filename, "rb") as f:
             return pickle.load(f)
 
     def _load_or_create_indices(self):
@@ -114,10 +117,7 @@ class ImbalancedImageNet(Dataset):
         """
         filename, label = self.additional_data[idx]
 
-        return {
-            'image': Image.open(filename),
-            'label': label
-        }
+        return {"image": Image.open(filename), "label": label}
 
     def __getitem__(self, idx) -> DataPoint:
         """
@@ -125,11 +125,13 @@ class ImbalancedImageNet(Dataset):
         to an index in the original dataset.
         We return the sample at the index in the original dataset.
         """
-        datapoint = self.dataset[self.indices[idx]] \
-            if idx < len(self.indices) \
+        datapoint = (
+            self.dataset[self.indices[idx]]
+            if idx < len(self.indices)
             else self._load_additional_datapoint(idx - len(self.indices))
+        )
 
         if self.transform:
-            datapoint['image'] = self.transform(datapoint['image'])
+            datapoint["image"] = self.transform(datapoint["image"])
 
-        return datapoint['image'], datapoint['label']
+        return datapoint["image"], datapoint["label"]

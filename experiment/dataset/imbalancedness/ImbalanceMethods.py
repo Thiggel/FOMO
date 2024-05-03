@@ -1,10 +1,12 @@
 from typing import Callable
 from enum import Enum
 from dataclasses import dataclass
-from experiment.dataset.imbalancedness.LinearlyIncreasingImbalancedness \
-    import LinearlyIncreasingImbalancedness
-from experiment.dataset.imbalancedness.ExponentiallyIncreasingImbalancedness \
-    import ExponentiallyIncreasingImbalancedness
+from experiment.dataset.imbalancedness.LinearlyIncreasingImbalancedness import (
+    LinearlyIncreasingImbalancedness,
+)
+from experiment.dataset.imbalancedness.ExponentiallyIncreasingImbalancedness import (
+    ExponentiallyIncreasingImbalancedness,
+)
 from experiment.dataset.imbalancedness.NoImbalancedness import NoImbalancedness
 
 
@@ -19,7 +21,7 @@ class ImbalanceMethods(Enum):
         name="linearly_increasing",
         impl=LinearlyIncreasingImbalancedness,
     )
-    
+
     ExponentiallyIncreasing = ImbalanceMethod(
         name="exponentially_increasing",
         impl=ExponentiallyIncreasingImbalancedness,
@@ -32,9 +34,7 @@ class ImbalanceMethods(Enum):
 
     @staticmethod
     def init_method(variant: str):
-        return {
-            member.value.name: member for member in ImbalanceMethods
-        }[variant]
+        return {member.value.name: member for member in ImbalanceMethods}[variant]
 
     @staticmethod
     def get_methods():
