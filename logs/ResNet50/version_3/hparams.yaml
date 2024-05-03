@@ -1,0 +1,4 @@
+lr: 0.0001
+max_epochs: 400
+temperature: 0.5
+weight_decay: 1.0e-06

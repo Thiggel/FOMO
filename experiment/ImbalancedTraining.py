@@ -1,6 +1,9 @@
 import torch
 from torch.utils.data import DataLoader
 import lightning.pytorch as L
+from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
+    FinetuningBenchmarks,
+)
 
 
 class ImbalancedTraining:

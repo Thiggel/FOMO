@@ -12,7 +12,6 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
 )
 from PIL import Image
 from torchvision import transforms
-from typing import Callable
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
@@ -40,10 +39,13 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self.transform = transform
         self.batch_size = batch_size
 
-        (self.train_dataset, self.val_dataset, self.test_dataset, self.num_classes) = (
-            self._load_dataset(
-                dataset_variant, imbalance_method, splits, checkpoint_filename
-            )
+        (
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset,
+            self.num_classes,
+        ) = self._load_dataset(
+            dataset_variant, imbalance_method, splits, checkpoint_filename
         )
 
     def _load_dataset(
@@ -57,6 +59,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             dataset_variant.value.path,
             transform=self.transform,
             imbalance_method=imbalance_method,
+            checkpoint_filename=checkpoint_filename,
         )
 
         return self._split_dataset(dataset, splits) + [dataset.num_classes]

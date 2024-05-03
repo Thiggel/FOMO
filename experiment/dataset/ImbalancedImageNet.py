@@ -53,7 +53,7 @@ class ImbalancedImageNet(Dataset):
 
     @property
     def _additional_data_filename(self):
-        return f"{self.checkpoint_filename}_additional_data.pkl"
+        return f"dataset_pickles/{self.checkpoint_filename}_additional_data.pkl"
 
     def _save_additional_data_to_pickle(self):
         with open(self._additional_data_filename, "wb") as f:
@@ -86,7 +86,7 @@ class ImbalancedImageNet(Dataset):
 
     @property
     def _indices_filename(self):
-        return f"{self.checkpoint_filename}_indices.pkl"
+        return f"dataset_pickles/{self.checkpoint_filename}_indices.pkl"
 
     def _save_indices_to_pickle(self, indices: list[int]):
         with open(self._indices_filename, "wb") as f:
