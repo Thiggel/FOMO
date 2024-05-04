@@ -67,7 +67,6 @@ def get_training_args() -> dict:
     #I-Jepa Args
 
     # Data
-    parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--color_jitter_strength', type=float, default=0.0)
     parser.add_argument('--crop_scale', type=float, nargs=2, default=[0.3, 1.0])
     parser.add_argument('--crop_size', type=int, default=448)

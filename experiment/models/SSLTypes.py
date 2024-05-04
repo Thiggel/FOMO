@@ -6,7 +6,7 @@ from torchvision import models, transforms
 
 from experiment.dataset.ContrastiveTransformations import ContrastiveTransformations
 from experiment.models.SSLMethods.SimCLR import SimCLR
-from experiment.models.SSLMethods.Ijepa import IJepa
+from experiment.models.SSLMethods.IJepa import IJepa
 from experiment.utils.collate_functions import simclr_collate
 
 from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
