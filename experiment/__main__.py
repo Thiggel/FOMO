@@ -31,12 +31,13 @@ mp.set_start_method("spawn")
 
 
 def init_datamodule(
-    args: dict, checkpoint_filename: str, ssl_method: L.LightningModule
+    args: dict, checkpoint_filename: str, ssl_method: L.LightningModule, #TODO I think ssl_method should be removed from the args here?
 ) -> L.LightningDataModule:
     model_type = ModelTypes.get_model_type(args.model_name)
     ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
     return ImbalancedImageNetDataModule(
+        collate_fn=ssl_method.collate_fn,
         dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
         imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
         splits=args.splits,
@@ -80,6 +81,7 @@ def init_ssl_type(args: dict, model: nn.Module) -> L.LightningModule:
         "temperature": args.temperature,
         "weight_decay": args.weight_decay,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
+        "parserargs": args
     }
 
     return ssl_type.initialize(**ssl_args)

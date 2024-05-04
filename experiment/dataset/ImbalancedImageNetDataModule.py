@@ -17,6 +17,7 @@ from torchvision import transforms
 class ImbalancedImageNetDataModule(L.LightningDataModule):
     def __init__(
         self,
+        collate_fn: Callable,
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
         transform: Callable = transforms.Compose(
             [
@@ -37,6 +38,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         super().__init__()
 
         self.transform = transform
+        self.collate_fn = collate_fn
         self.batch_size = batch_size
 
         (
@@ -95,7 +97,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             shuffle=True,
             # num_workers=self.num_workers,
             # persistent_workers=True,
-            collate_fn=self.collate,
+            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -104,7 +106,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=True,
-            collate_fn=self.collate,
+            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -113,30 +115,5 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=True,
-            collate_fn=self.collate,
+            collate_fn=self.collate_fn,
         )
-
-    def collate(self, batch: list) -> tuple[list[Tensor], Tensor]:
-        num_images = len(batch[0][0])
-
-        outer_list = []
-        for i in range(num_images):
-            data = torch.stack(
-                [
-                    (
-                        item[0][i].repeat(3, 1, 1)
-                        if item[0][i].size(0) == 1
-                        else item[0][i][:3]
-                    )
-                    for item in batch
-                ]
-            )
-
-            outer_list.append(data)
-
-        data = tuple(outer_list)
-        labels = [item[1] for item in batch]
-
-        stacked_labels = torch.tensor(labels)
-
-        return data, stacked_labels

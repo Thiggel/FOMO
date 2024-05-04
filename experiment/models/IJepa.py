@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import copy
 import numpy as np
 
-from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
+
 from experiment.models.SSLMethods.masks.utils import apply_masks
 
 from experiment.models.SSLMethods.utils.tensors import repeat_interleave_batch
@@ -16,7 +16,6 @@ from experiment.models.SSLMethods.helper import (
     load_checkpoint,
     init_model,
     init_opt)
-from experiment.dataset.transforms import make_transforms
 
 
 class IJepa(L.LightningModule):
