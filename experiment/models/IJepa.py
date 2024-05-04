@@ -30,7 +30,7 @@ class IJepa(L.LightningModule):
     ):
         super().__init__()
 
-        device = "gpu" if torch.cuda.is_available() else "cpu"
+        self.device = "gpu" if torch.cuda.is_available() else "cpu"
 
         self.save_hyperparameters(ignore=["model"])
         self.ipe = ipe
@@ -91,7 +91,15 @@ class IJepa(L.LightningModule):
         _new_wd = self.wd_scheduler.step()
 
         # Create the collate function and datamodule in such a way that this is true. 
-        imgs, masks_enc, masks_pred = batch
+        udata, masks_enc, masks_pred = batch
+
+        def load_imgs():
+                # -- unsupervised imgs
+                imgs = udata[0].to(self.device)
+                masks_1 = [u.to(self.device) for u in masks_enc]
+                masks_2 = [u.to(self.device) for u in masks_pred]
+                return (imgs, masks_1, masks_2)
+        imgs, masks_enc, masks_pred = load_imgs()
 
         def forward_target():
             with torch.no_grad():
