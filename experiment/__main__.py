@@ -73,7 +73,7 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
     return model
 
 
-def init_ssl_type(args: dict, model: nn.Module) -> L.LightningModule:
+def init_ssl_type(args: dict, model: nn.Module, ipe) -> L.LightningModule:
     ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
     ssl_args = {
         "model": model,
@@ -81,7 +81,8 @@ def init_ssl_type(args: dict, model: nn.Module) -> L.LightningModule:
         "temperature": args.temperature,
         "weight_decay": args.weight_decay,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
-        "parserargs": args
+        "parserargs": args,
+        "ipe": ipe
     }
 
     return ssl_type.initialize(**ssl_args)
@@ -106,7 +107,7 @@ def run(args: dict, seed: int = 42) -> dict:
         checkpoint_filename,
     )
 
-    model = init_model(args, datamodule)
+    model = init_model(args, datamodule, len(datamodule.train_dataloader()))
 
     ssl_type = init_ssl_type(args, model)
 

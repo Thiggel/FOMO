@@ -25,6 +25,7 @@ class IJepa(L.LightningModule):
         lr: float,
         weight_decay: float,
         args,
+        ipe,
         max_epochs: int = 500,
     ):
         super().__init__()
@@ -32,6 +33,7 @@ class IJepa(L.LightningModule):
         device = "gpu" if torch.cuda.is_available() else "cpu"
 
         self.save_hyperparameters(ignore=["model"])
+        self.ipe = ipe
 
         self.encoder, self.predictor = init_model(
             device=device,
@@ -44,27 +46,6 @@ class IJepa(L.LightningModule):
         self.target_encoder = copy.deepcopy(self.encoder)
         for p in self.target_encoder.parameters():
             p.requires_grad = False
-
-
-        # -- make data transforms these two functions should not be here actually, but in the datamodule.
-        mask_collator = MBMaskCollator(
-            input_size=args.crop_size,
-            patch_size=args.patch_size,
-            pred_mask_scale=args.pred_mask_scale,
-            enc_mask_scale=args.enc_mask_scale,
-            aspect_ratio=args.aspect_ratio,
-            nenc=args.num_enc_masks,
-            npred=args.num_pred_masks,
-            allow_overlap=args.allow_overlap,
-            min_keep=args.min_keep)
-
-        transform = make_transforms(
-            crop_size=args.crop_size,
-            crop_scale=args.crop_scale,
-            gaussian_blur=args.use_gaussian_blur,
-            horizontal_flip=args.use_horizontal_flip,
-            color_distortion=args.use_color_distortion,
-            color_jitter=args.color_jitter)
         
         self.args = args
 
@@ -76,7 +57,7 @@ class IJepa(L.LightningModule):
             start_lr= self.args.start_lr,
             ref_lr= self.args.lr,
             final_lr= self.args.final_lr,
-            iterations_per_epoch= self.args.ipe,
+            iterations_per_epoch= self.ipe,
             warmup=self.args.warmup,
             num_epochs=self.args.num_epochs,
             ipe_scale=self.args.ipe_scale,
@@ -97,7 +78,7 @@ class IJepa(L.LightningModule):
             start_lr= self.args.start_lr,
             ref_lr= self.args.lr,
             final_lr= self.args.final_lr,
-            iterations_per_epoch= self.args.ipe,
+            iterations_per_epoch= self.ipe,
             warmup=self.args.warmup,
             num_epochs=self.args.num_epochs,
             ipe_scale=self.args.ipe_scale,
