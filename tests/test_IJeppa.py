@@ -1,4 +1,4 @@
-from experiment.SSLMethods.IJepa import IJepa
+from experiment.models.SSLMethods.IJepa import IJepa
 
 import pytest
 import torch
