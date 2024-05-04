@@ -107,9 +107,9 @@ def run(args: dict, seed: int = 42) -> dict:
         checkpoint_filename,
     )
 
-    model = init_model(args, datamodule, len(datamodule.train_dataloader()))
+    model = init_model(args, datamodule)
 
-    ssl_type = init_ssl_type(args, model)
+    ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
 
     checkpoint_callback = ModelCheckpoint(
         dirpath="checkpoints/",
