@@ -17,7 +17,7 @@ from torchvision import transforms
 class ImbalancedImageNetDataModule(L.LightningDataModule):
     def __init__(
         self,
-        collate_fn: Callable,
+        collate_fn: Callable = torch.utils.data._utils.collate.default_collate,
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
         transform: Callable = transforms.Compose(
             [

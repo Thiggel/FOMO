@@ -30,13 +30,11 @@ class IJepa(L.LightningModule):
     ):
         super().__init__()
 
-        self.device = "gpu" if torch.cuda.is_available() else "cpu"
-
         self.save_hyperparameters(ignore=["model"])
         self.ipe = ipe
 
         self.encoder, self.predictor = init_model(
-            device=device,
+            device=self.device,
             patch_size=args.patch_size,
             crop_size=args.crop_size,
             pred_depth=args.pred_depth,
@@ -48,39 +46,40 @@ class IJepa(L.LightningModule):
             p.requires_grad = False
         
         self.args = args
+        self.max_epochs = max_epochs
 
         _, _, _, self.wd_scheduler = init_opt(
-            encoder=self.args.encoder,
-            predictor=self.args.predictor,
-            wd=self.args.wd,
-            final_wd= self.args.final_wd,
+            encoder=self.encoder,
+            predictor=self.predictor,
+            wd=self.args.weight_decay,
+            final_wd= self.args.final_weight_decay,
             start_lr= self.args.start_lr,
             ref_lr= self.args.lr,
             final_lr= self.args.final_lr,
             iterations_per_epoch= self.ipe,
             warmup=self.args.warmup,
-            num_epochs=self.args.num_epochs,
+            num_epochs=self.max_epochs,
             ipe_scale=self.args.ipe_scale,
             use_bfloat16=self.args.use_bfloat16
         )
 
         self.momentum_scheduler = (self.ema[0] + i*(self.ema[1]-self.ema[0])/(self.ipe*self.num_epochs*self.ipe_scale)
-                          for i in range(int(self.ipe*self.num_epochs*self.ipe_scale)+1))
-
+                          for i in range(int(self.ipe*self.max_epochs*self.args.ipe_scale)+1))
+        
 
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer, scaler, scheduler, wd_scheduler = init_opt(
-            encoder=self.args.encoder,
-            predictor=self.args.predictor,
-            wd=self.args.wd,
-            final_wd= self.args.final_wd,
+            encoder=self.encoder,
+            predictor=self.predictor,
+            wd=self.args.weight_decay,
+            final_wd= self.args.final_weight_decay,
             start_lr= self.args.start_lr,
             ref_lr= self.args.lr,
             final_lr= self.args.final_lr,
             iterations_per_epoch= self.ipe,
             warmup=self.args.warmup,
-            num_epochs=self.args.num_epochs,
+            num_epochs= self.max_epochs, #not entirely the same but fine maybe
             ipe_scale=self.args.ipe_scale,
             use_bfloat16=self.args.use_bfloat16
         )
@@ -122,7 +121,7 @@ class IJepa(L.LightningModule):
 
         # Step 1. Forward
         #idk if I should keep the casting
-        with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=self.use_bfloat16):
+        with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=self.args.use_bfloat16):
             h = forward_target()
             z = forward_context()
             loss = loss_fn(z, h)

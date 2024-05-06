@@ -2,7 +2,6 @@ from experiment.models.SSLMethods.IJepa import IJepa
 
 import pytest
 import torch
-import pytorch_lightning as pl
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
@@ -37,10 +36,16 @@ from experiment.dataset.ImageNetVariants import ImageNetVariants
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.ImbalancedTraining import ImbalancedTraining
 
+from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
+from experiment.dataset.transforms import make_transforms
+
 @pytest.fixture
-def model():
+def model(monkeypatch, balanced_datamodule):
     # Define your model initialization here
+    monkeypatch.setattr('sys.argv', ['program_name'])  # Provide some default value
     args = get_training_args()
+    args.model_name = 'ViTTinyJeppa'
+    args.ssl_method = 'I-Jepa'
     checkpoint_filename = (
         args.model_name
         + "_"
@@ -52,53 +57,46 @@ def model():
         else args.checkpoint
     )
 
-    datamodule = init_datamodule(
-        args,
-        checkpoint_filename,
-    )
-
-    model = init_model(args, datamodule)
-
-    ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
+    model = init_model(args, )
+    ssl_type = init_ssl_type(args, model, len(balanced_datamodule.train_dataloader()))
 
     return ssl_type
 
 @pytest.fixture
-def train_loader():
-    # Define your train dataloader initialization here
-    return torch.utils.data.DataLoader(torch.randn(10, 10), batch_size=2)
+def balanced_datamodule(monkeypatch):
+  monkeypatch.setattr('sys.argv', ['program_name'])
+  args = get_training_args()
+  args.model_name = 'ViTTinyJeppa'
+  args.ssl_method = 'I-Jepa'
+  collate_fn= MBMaskCollator(
+                    input_size=args.crop_size,
+                    patch_size=args.patch_size,
+                    pred_mask_scale=args.pred_mask_scale,
+                    enc_mask_scale=args.enc_mask_scale,
+                    aspect_ratio=args.aspect_ratio,
+                    nenc=args.num_enc_masks,
+                    npred=args.num_pred_masks,
+                    allow_overlap=args.allow_overlap,
+                    min_keep=args.min_keep),
 
-@pytest.fixture
-def val_loader():
-    # Define your validation dataloader initialization here
-    return torch.utils.data.DataLoader(torch.randn(10, 10), batch_size=2)
+  transforms= make_transforms()
 
-def init_datamodule(
-    args: dict, checkpoint_filename: str, ssl_method: L.LightningModule, #TODO I think ssl_method should be removed from the args here?
-) -> L.LightningDataModule:
-    model_type = ModelTypes.get_model_type(args.model_name)
-    ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
-
-    return ImbalancedImageNetDataModule(
-        collate_fn=ssl_method.collate_fn,
-        dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
-        imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
-        splits=args.splits,
-        batch_size=args.batch_size,
-        resized_image_size=model_type.resized_image_size,
-        checkpoint_filename=checkpoint_filename,
-        transform=ssl_method.transforms,
+  balanced_datamodule = ImbalancedImageNetDataModule(
+        imbalance_method=ImbalanceMethods.NoImbalance,
+        checkpoint_filename="test_balanced_dataset",
+        collate_fn = collate_fn,
+        transform = transforms
     )
+  return balanced_datamodule
 
-
-def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
+def init_model(args: dict) -> nn.Module:
     model_type = ModelTypes.get_model_type(args.model_name)
 
     model_args = {
         "model_name": args.model_name,
         "resized_image_size": model_type.resized_image_size,
         "batch_size": args.batch_size,
-        "output_size": datamodule.num_classes,
+        "output_size": 100,
     }
 
     model = model_type.initialize(**model_args)
@@ -130,12 +128,14 @@ def init_ssl_type(args: dict, model: nn.Module, ipe) -> L.LightningModule:
 
     return ssl_type.initialize(**ssl_args)
 
-def test_model_training_step(model, train_loader):
-    trainer = pl.Trainer()
-    output = trainer.fit(model, train_loader)
-    assert output == 1  # Trainer.fit() should return 1 upon successful completion
+def test_model_training_step(model, balanced_datamodule):
+    trainer = L.Trainer(max_steps = 1)
 
-def test_model_validation_step(model, val_loader):
-    trainer = pl.Trainer()
-    output = trainer.validate(model, val_loader)
+    output = trainer.fit(model, balanced_datamodule)
+    assert output == 1 # Trainer.fit() should return 1 upon successful completion
+
+def test_model_validation_step(model, balanced_datamodule):
+    trainer = L.Trainer(max_steps = 1)
+    
+    output = trainer.validate(model, balanced_datamodule)
     assert output == 1  # Trainer.validate() should return 1 upon successful completio

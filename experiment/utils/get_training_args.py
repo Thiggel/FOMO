@@ -73,7 +73,7 @@ def get_training_args() -> dict:
     parser.add_argument('--image_folder', type=str, default='imagenet_full_size/061417/')
     parser.add_argument('--num_workers', type=int, default=10)
     parser.add_argument('--pin_mem', type=bool, default=True)
-    parser.add_argument('--root_path', type=str, default='$replace_this_with_absolute_path_to_your_datasets_directory') #idk if I can make this nicer somehow. 
+    #parser.add_argument('--root_path', type=str, default='$replace_this_with_absolute_path_to_your_datasets_directory') #idk if I can make this nicer somehow. 
     parser.add_argument('--use_color_distortion', type=bool, default=False)
     parser.add_argument('--use_gaussian_blur', type=bool, default=False)
     parser.add_argument('--use_horizontal_flip', type=bool, default=False)
@@ -99,10 +99,10 @@ def get_training_args() -> dict:
     parser.add_argument('--final_lr', type=float, default=1.0e-06)
     parser.add_argument('--final_weight_decay', type=float, default=0.4)
     parser.add_argument('--ipe_scale', type=float, default=1.0)
-    parser.add_argument('--lr', type=float, default=0.001)
+    #parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--start_lr', type=float, default=0.0002)
     parser.add_argument('--warmup', type=int, default=40)
-    parser.add_argument('--weight_decay', type=float, default=0.04)
+    #parser.add_argument('--weight_decay', type=float, default=0.04)
 
     args = parser.parse_args()
 

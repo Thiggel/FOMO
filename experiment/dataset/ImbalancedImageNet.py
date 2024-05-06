@@ -131,6 +131,9 @@ class ImbalancedImageNet(Dataset):
             else self._load_additional_datapoint(idx - len(self.indices))
         )
 
+        datapoint["image"] = datapoint["image"].repeat(3, 1, 1) if datapoint["image"] == 1 else datapoint["image"][:3]
+
+
         if self.transform:
             datapoint["image"] = self.transform(datapoint["image"])
 

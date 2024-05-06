@@ -71,7 +71,6 @@ class SSLTypes(Enum):
                     model=model,
                     lr=lr,
                     args = parserargs,
-                    temperature=temperature,
                     weight_decay=weight_decay,
                     max_epochs=max_epochs,
                     ipe = ipe,
