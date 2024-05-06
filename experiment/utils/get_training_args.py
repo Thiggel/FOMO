@@ -69,7 +69,7 @@ def get_training_args() -> dict:
     # Data
     parser.add_argument('--color_jitter_strength', type=float, default=0.0)
     parser.add_argument('--crop_scale', type=float, nargs=2, default=[0.3, 1.0])
-    parser.add_argument('--crop_size', type=int, default=448)
+    parser.add_argument('--crop_size', type=int, default=224)
     parser.add_argument('--image_folder', type=str, default='imagenet_full_size/061417/')
     parser.add_argument('--num_workers', type=int, default=10)
     parser.add_argument('--pin_mem', type=bool, default=True)
@@ -91,7 +91,7 @@ def get_training_args() -> dict:
     # Meta
     parser.add_argument('--pred_depth', type=int, default=12)
     parser.add_argument('--pred_emb_dim', type=int, default=384)
-    parser.add_argument('--use_bfloat16', type=bool, default=True)
+    parser.add_argument('--use_bfloat16', type=bool, default=False)
 
     # Optimization
     parser.add_argument('--ema', type=float, nargs=2, default=[0.996, 1.0])

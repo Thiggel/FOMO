@@ -63,7 +63,7 @@ class IJepa(L.LightningModule):
             use_bfloat16=self.args.use_bfloat16
         )
 
-        self.momentum_scheduler = (self.ema[0] + i*(self.ema[1]-self.ema[0])/(self.ipe*self.num_epochs*self.ipe_scale)
+        self.momentum_scheduler = (self.args.ema[0] + i*(self.args.ema[1]-self.args.ema[0])/(self.ipe*self.max_epochs*self.args.ipe_scale)
                           for i in range(int(self.ipe*self.max_epochs*self.args.ipe_scale)+1))
         
 
@@ -127,9 +127,9 @@ class IJepa(L.LightningModule):
             loss = loss_fn(z, h)
         
         #logging
-        self.log(mode + "_loss", loss)
+        self.log(mode + "_loss", loss, prog_bar=True)
 
-        assert not np.isnan(loss), 'loss is nan'
+        assert not torch.isnan(loss), 'loss is nan'
 
         return loss
 

@@ -6,10 +6,9 @@
 #
 
 import math
+from torch.optim.lr_scheduler import _LRScheduler
 
-
-class WarmupCosineSchedule(object):
-
+class WarmupCosineSchedule(_LRScheduler):
     def __init__(
         self,
         optimizer,
@@ -27,6 +26,7 @@ class WarmupCosineSchedule(object):
         self.warmup_steps = warmup_steps
         self.T_max = T_max - warmup_steps
         self._step = 0.
+        super(WarmupCosineSchedule, self).__init__(optimizer, last_epoch)
 
     def step(self):
         self._step += 1

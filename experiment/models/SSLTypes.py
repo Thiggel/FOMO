@@ -77,7 +77,7 @@ class SSLTypes(Enum):
                     *args,
                     **kwargs
                 ),
-                transforms= lambda parserargs: MBMaskCollator(
+                collate_fn= lambda parserargs: MBMaskCollator(
                     input_size=parserargs.crop_size,
                     patch_size=parserargs.patch_size,
                     pred_mask_scale=parserargs.pred_mask_scale,
@@ -88,13 +88,13 @@ class SSLTypes(Enum):
                     allow_overlap=parserargs.allow_overlap,
                     min_keep=parserargs.min_keep),
 
-                collate_fn= lambda parserargs: make_transforms(
+                transforms= lambda parserargs: make_transforms(
                     crop_size=parserargs.crop_size,
                     crop_scale=parserargs.crop_scale,
                     gaussian_blur=parserargs.use_gaussian_blur,
                     horizontal_flip=parserargs.use_horizontal_flip,
                     color_distortion=parserargs.use_color_distortion,
-                    color_jitter=parserargs.color_jitter)
+                    color_jitter=parserargs.color_jitter_strength)
             )
         }
 

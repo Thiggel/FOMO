@@ -15,6 +15,19 @@ import torchvision.transforms as transforms
 _GLOBAL_SEED = 0
 logger = getLogger()
 
+class ChannelTransform(object):
+    def __init__(self, out_channels):
+        self.out_channels = out_channels
+
+    def __call__(self, image):
+        # Check if image is 4D tensor with multiple channels
+        if image.size(0) > self.out_channels:
+           image = image[:self.out_channels3]
+        elif image.size(0) == 1:
+            image = image.repeat(self.out_channels, 1, 1) 
+
+        return image
+
 
 def make_transforms(
     crop_size=224,
@@ -47,6 +60,7 @@ def make_transforms(
     if gaussian_blur:
         transform_list += [GaussianBlur(p=0.5)]
     transform_list += [transforms.ToTensor()]
+    transform_list += [ChannelTransform(3)]
     transform_list += [transforms.Normalize(normalization[0], normalization[1])]
 
     transform = transforms.Compose(transform_list)
