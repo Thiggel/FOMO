@@ -2,9 +2,8 @@ from experiment.dataset.imbalancedness.Imbalancedness import Imbalancedness
 
 
 class PowerLawImbalancedness(Imbalancedness):
-    def __init__(self, num_classes: int, tau: float = 0.25):
+    def __init__(self, num_classes: int):
         super().__init__(num_classes)
-        self.tau = tau
 
     def get_imbalance(self, class_index: int) -> float:
         """
@@ -16,4 +15,4 @@ class PowerLawImbalancedness(Imbalancedness):
         
         (I think its fine to not use numclasses here)
         """
-        return 1/((class_index + 1) ** (self.tau))
+        return 1/((class_index + 1) ** (0.25))
