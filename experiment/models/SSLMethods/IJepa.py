@@ -25,13 +25,13 @@ class IJepa(L.LightningModule):
         lr: float,
         weight_decay: float,
         args,
-        ipe,
+        iterations_per_epoch,
         max_epochs: int = 500,
     ):
         super().__init__()
 
         self.save_hyperparameters(ignore=["model"])
-        self.ipe = ipe
+        self.iterations_per_epoch = iterations_per_epoch
 
         self.encoder, self.predictor = init_model(
             device=self.device,
@@ -56,15 +56,15 @@ class IJepa(L.LightningModule):
             start_lr= self.args.start_lr,
             ref_lr= self.args.lr,
             final_lr= self.args.final_lr,
-            iterations_per_epoch= self.ipe,
+            iterations_per_epoch= self.iterations_per_epoch,
             warmup=self.args.warmup,
             num_epochs=self.max_epochs,
             ipe_scale=self.args.ipe_scale,
             use_bfloat16=self.args.use_bfloat16
         )
 
-        self.momentum_scheduler = (self.args.ema[0] + i*(self.args.ema[1]-self.args.ema[0])/(self.ipe*self.max_epochs*self.args.ipe_scale)
-                          for i in range(int(self.ipe*self.max_epochs*self.args.ipe_scale)+1))
+        self.momentum_scheduler = (self.args.ema[0] + i*(self.args.ema[1]-self.args.ema[0])/(self.iterations_per_epoch*self.max_epochs*self.args.ipe_scale)
+                          for i in range(int(self.iterations_per_epoch*self.max_epochs*self.args.ipe_scale)+1))
         
 
 
@@ -77,7 +77,7 @@ class IJepa(L.LightningModule):
             start_lr= self.args.start_lr,
             ref_lr= self.args.lr,
             final_lr= self.args.final_lr,
-            iterations_per_epoch= self.ipe,
+            iterations_per_epoch= self.iterations_per_epoch,
             warmup=self.args.warmup,
             num_epochs= self.max_epochs, #not entirely the same but fine maybe
             ipe_scale=self.args.ipe_scale,

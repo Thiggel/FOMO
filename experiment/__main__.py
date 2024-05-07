@@ -73,7 +73,7 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
     return model
 
 
-def init_ssl_type(args: dict, model: nn.Module, ipe) -> L.LightningModule:
+def init_ssl_type(args: dict, model: nn.Module, iterations_per_epoch) -> L.LightningModule:
     ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
     ssl_args = {
         "model": model,
@@ -82,7 +82,7 @@ def init_ssl_type(args: dict, model: nn.Module, ipe) -> L.LightningModule:
         "weight_decay": args.weight_decay,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
         "parserargs": args,
-        "ipe": ipe
+        "iterations_per_epoch": iterations_per_epoch
     }
 
     return ssl_type.initialize(**ssl_args)

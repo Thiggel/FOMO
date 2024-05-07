@@ -67,13 +67,13 @@ class SSLTypes(Enum):
                 collate_fn=simclr_collate
             ),
             "I-Jepa": SSLType(
-                module=lambda model, lr, temperature, weight_decay, max_epochs, parserargs, ipe, *args, **kwargs: IJepa(
+                module=lambda model, lr, temperature, weight_decay, max_epochs, parserargs, iterations_per_epoch, *args, **kwargs: IJepa(
                     model=model,
                     lr=lr,
                     args = parserargs,
                     weight_decay=weight_decay,
                     max_epochs=max_epochs,
-                    ipe = ipe,
+                    iterations_per_epoch = iterations_per_epoch,
                     *args,
                     **kwargs
                 ),
