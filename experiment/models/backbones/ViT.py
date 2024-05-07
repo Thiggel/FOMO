@@ -41,14 +41,17 @@ class ViT(nn.Module):
         self.downscale = downscale
         self.downscaling = Downscaling()
         self.model, self.config = self._load_model(model_name)
-        self.head = nn.Linear(self.config.hidden_size, 2 * output_size) \
-            if not complex_mlp_head else nn.Sequential(
+        self.head = (
+            nn.Linear(self.config.hidden_size, 2 * output_size)
+            if not complex_mlp_head
+            else nn.Sequential(
                 nn.Linear(self.config.hidden_size, 2 * output_size),
                 nn.ReLU(),
                 nn.Linear(2 * output_size, 2 * output_size),
                 nn.ReLU(),
                 nn.Linear(2 * output_size, 2 * output_size),
             )
+        )
         self.output_size = output_size
 
     def _load_model(self, model_name: str) -> nn.Module:

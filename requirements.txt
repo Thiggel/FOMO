@@ -12,3 +12,5 @@ albumentations
 psutil
 pytest
 datasets
+flake8
+black

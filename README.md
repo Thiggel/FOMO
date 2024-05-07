@@ -48,30 +48,30 @@ python experiment [... arguments]
 │   │   ├── FinetuningBenchmarks                # Contains all finetuning benchmarks
 │   │   │                                       # (e.g. CIFAR-10 module that loads
 │   │   │                                       # dataset and defines the train/val/test loop)
-│   │   │                                       
+│   │   │
 │   │   ├── ModelTypes.py                       # Here, all different models are defined
 │   │   │                                       # (e.g. resnet-18, resnet-50, ViT)
-│   │   │                                       
+│   │   │
 │   │   ├── SSLMethods                          # Self-supervised training methods
 │   │   │                                       # (e.g. SimCLR)
-│   │   │                                       
+│   │   │
 │   │   ├── SSLTypes.py                         # This file defines all SSL methods
 │   │   │                                       # that can be selected in the main script
-│   │   │                                       
+│   │   │
 │   │   ├── backbones                           # All backbones (e.g. ViT)
-│   │   │                                       
+│   │   │
 │   │   ├── losses                              # Define losses (e.g. contrastive) here
-│   │   │                                       
+│   │   │
 │   │   └── metrics                             # Metrics such as OOD-metric
-│   │   
+│   │  
 │   ├── tests                                   # All tests go here
-│   │   
-│   └── utils                                   # small utility functions 
+│   │  
+│   └── utils                                   # small utility functions
 │                                               # (one function per file)
-│                                               
+│
 ├── job_logs                                    # Write your job scripts so that
 │                                               # all logs are saved here
-│                                               
+│
 ├── jobs                                        # All job scripts go here
 │   ├── environment.sh                          # Use this script to load env
 │                                               # in an interactive session
