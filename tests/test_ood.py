@@ -31,8 +31,8 @@ def test_extract_features():
     train_features, val_features = extract_features(train_dataset, val_dataset, feature_extractor)
     
     # Assert the expected output
-    assert np.all(np.equal(train_features.numpy(), np.array([[1, 2, 3], [4, 5, 6]])))
-    assert np.all(np.equal(val_features.numpy(), np.array([[7, 8, 9], [10, 11, 12]])))
+    assert np.all(np.equal(train_features, np.array([[1, 2, 3], [4, 5, 6]])))
+    assert np.all(np.equal(val_features, np.array([[7, 8, 9], [10, 11, 12]])))
     
 def test_ood():
     # Create dummy features
