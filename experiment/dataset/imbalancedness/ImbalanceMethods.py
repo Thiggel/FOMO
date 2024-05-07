@@ -8,6 +8,9 @@ from experiment.dataset.imbalancedness.ExponentiallyIncreasingImbalancedness imp
     ExponentiallyIncreasingImbalancedness,
 )
 from experiment.dataset.imbalancedness.NoImbalancedness import NoImbalancedness
+from  experiment.dataset.imbalancedness.PowerLawImbalancedness import (
+    PowerLawImbalancedness,
+)
 
 
 @dataclass
@@ -30,6 +33,11 @@ class ImbalanceMethods(Enum):
     NoImbalance = ImbalanceMethod(
         name="no_imbalance",
         impl=NoImbalancedness,
+    )
+
+    PowerLawImbalance = ImbalanceMethod(
+        name="power_law_imbalance",
+        impl=PowerLawImbalancedness,
     )
 
     @staticmethod

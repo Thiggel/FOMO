@@ -23,7 +23,7 @@ class ImbalancedImageNet(Dataset):
         dataset_path: str,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
-        transform=None,
+        transform=None
     ):
         super().__init__()
 
