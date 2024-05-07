@@ -22,7 +22,12 @@ def extract_features(train: Dataset, val: Dataset, feature_extractor: torch.nn.M
 
     return train_features, val_features
 
-def ood(train_features, val_features, pct_train=1.0, normalize=True):
+def ood(train_features, val_features, pct_train=1.0, normalize=True, K=1000, pct_ood=0.1):
+    '''
+    Since we dont have a set that we know is in-distribution to estimate lambda,
+    we will control it with the pct_ood parameter. If we set pct_ood to a conservative value,
+    we will always augment the most-OOD samples.
+    '''
     dim = train_features.shape[1]
     train_size = train_features.shape[0]
 
@@ -39,13 +44,7 @@ def ood(train_features, val_features, pct_train=1.0, normalize=True):
 
         ################### Using KNN distance Directly ###################
         D, _ = index.search(val_features, K)
-        scores_in = -D[:,-1]
-        all_results = []
-        for ood_dataset, food in food_all.items():
-            D, _ = index.search(food, K)
-            scores_ood_test = -D[:,-1]
-            results = metrics.cal_metric(scores_in, scores_ood_test)
-            all_results.append(results)
-
-        metrics.print_all_results(all_results, args.out_datasets, 'KNN')
-        print()
+        scores_ood = -D[:,-1] # extracting dist to k-th nearest neighbor
+        threshold = np.percentile(scores_ood, 100*(1-pct_ood))
+        is_ood = scores_ood > threshold
+        return is_ood, threshold
