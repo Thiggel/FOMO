@@ -3,12 +3,13 @@ from torch.utils.data import Dataset
 import faiss 
 from tqdm import tqdm
 import numpy as np
+from torch.utils.data import DataLoader
 
 def extract_features(train: Dataset, val: Dataset, feature_extractor: torch.nn.Module, batch_size=32):
     train_features = []
     val_features = []
-    train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False)
-    val_loader = torch.utils.data.DataLoader(val, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=False)
+    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False)
 
     # Extract features from the train dataset
     for batch in tqdm(train_loader, desc='Extracting train features'):
@@ -33,7 +34,7 @@ def ood(train_features, val_features, pct_train=1.0, normalize=True, K=1000, pct
 
     # Normalize features
     if normalize:
-        normalizer = lambda x: x / np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10
+        normalizer = lambda x: x / (np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10)
         train_features = normalizer(train_features)
         val_features = normalizer(val_features)
 
