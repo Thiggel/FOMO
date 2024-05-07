@@ -3,6 +3,8 @@ from torch.utils.data import Dataset
 from experiment.ood.ood import extract_features, ood
 import numpy as np
 
+import logging
+
 class DummyDataset(Dataset):
     def __init__(self, data):
         self.data = data
@@ -41,6 +43,7 @@ def test_ood():
     
     # Call the ood function
     ood_scores, thresh = ood(train_features, val_features, 0.5)
+    logging.info(f"OOD scores: {ood_scores}")
     
     # Check output values
     assert ood_scores[0] == False 
