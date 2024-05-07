@@ -31,7 +31,7 @@ mp.set_start_method("spawn")
 
 
 def init_datamodule(
-    args: dict, checkpoint_filename: str, ssl_method: L.LightningModule, #TODO I think ssl_method should be removed from the args here?
+    args: dict, checkpoint_filename: str 
 ) -> L.LightningDataModule:
     model_type = ModelTypes.get_model_type(args.model_name)
     ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
