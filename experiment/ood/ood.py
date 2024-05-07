@@ -37,14 +37,14 @@ def ood(train_features, val_features, pct_train=1.0, normalize=True, K=1000, pct
         train_features = normalizer(train_features)
         val_features = normalizer(val_features)
 
-    for K in [1000]:
-        rand_ind = np.random.choice(train_size, int(train_size * pct_train), replace=False)
-        index = faiss.IndexFlatL2(dim)
-        index.add(train_features[rand_ind])
+    
+    rand_ind = np.random.choice(train_size, int(train_size * pct_train), replace=False)
+    index = faiss.IndexFlatL2(dim)
+    index.add(train_features[rand_ind])
 
-        ################### Using KNN distance Directly ###################
-        D, _ = index.search(val_features, K)
-        scores_ood = -D[:,-1] # extracting dist to k-th nearest neighbor
-        threshold = np.percentile(scores_ood, 100*(1-pct_ood))
-        is_ood = scores_ood > threshold
-        return is_ood, threshold
+    ################### Using KNN distance Directly ###################
+    D, _ = index.search(val_features, K)
+    scores_ood = D[:,-1] # extracting dist to k-th nearest neighbor
+    threshold = np.percentile(scores_ood, 100*(1-pct_ood))
+    is_ood = scores_ood >= threshold
+    return is_ood, threshold

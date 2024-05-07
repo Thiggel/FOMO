@@ -42,9 +42,10 @@ def test_ood():
     val_features = np.array([[0, 0, 0], [10, 5, 8]])
     
     # Call the ood function
-    ood_scores, thresh = ood(train_features, val_features, 0.5)
+    ood_scores, thresh = ood(train_features, val_features, pct_ood=0.5)
     logging.info(f"OOD scores: {ood_scores}")
-    
+    logging.indo(f"Threshold: {thresh}")
+
     # Check output values
     assert ood_scores[0] == False 
     assert ood_scores[1] == True
