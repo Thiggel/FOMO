@@ -33,6 +33,8 @@ def ood(train_features, val_features, pct_train=1.0, normalize=True, K=1000, pct
     dim = train_features.shape[1]
     train_size = train_features.shape[0]
 
+    K = min(K, train_size)
+
     # Normalize features
     if normalize:
         normalizer = lambda x: x / (np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10)
