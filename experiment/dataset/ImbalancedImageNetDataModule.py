@@ -98,8 +98,8 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            # num_workers=self.num_workers,
-            # persistent_workers=True,
+            num_workers=self.num_workers,
+            persistent_workers=True,
             collate_fn=self.collate_fn,
         )
 
