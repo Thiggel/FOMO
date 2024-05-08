@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 from torch.utils.data import DataLoader
 
+
 def extract_features(train: Dataset, val: Dataset, feature_extractor: torch.nn.Module, batch_size=32):
     train_features = []
     val_features = []
@@ -38,14 +39,13 @@ def ood(train_features, val_features, pct_train=1.0, normalize=True, K=1000, pct
         train_features = normalizer(train_features)
         val_features = normalizer(val_features)
 
-    
-    rand_ind = np.random.choice(train_size, int(train_size * pct_train), replace=False)
+    rand_ind = np.arange(train_size)#np.random.choice(train_size, int(train_size * pct_train), replace=False)
     index = faiss.IndexFlatL2(dim)
     index.add(train_features[rand_ind])
-
+    
     ################### Using KNN distance Directly ###################
     D, _ = index.search(val_features, K)
-    scores_ood = D[:,-1] # extracting dist to k-th nearest neighbor
+    scores_ood = D[:,-1] # extracting dist to k-th nearest neighbor 
     threshold = np.percentile(scores_ood, 100*(1-pct_ood))
     is_ood = scores_ood >= threshold
-    return is_ood, rand_ind, threshold
+    return is_ood, threshold

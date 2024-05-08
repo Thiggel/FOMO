@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 from experiment.ood.ood import extract_features, ood
 import numpy as np
 
+import logging
 
 class DummyDataset(Dataset):
     def __init__(self, data):
@@ -37,18 +38,14 @@ def test_extract_features():
     
 def test_ood():
     # Create dummy features
-    train_features = np.array([[0, 0, 1], [0, 1, 0]])
-    val_features = np.array([[0, 0.1, 0], [10, 5, 8]])
+    train_features = np.array([[0, 0, 1], [0, 0, 0.6], [0, 0.1, 0.9], [0.1, 1.2, 0.01]])
+    val_features = np.array([[0, 0.1, 1.1], [7, 0, 0.1]])
     
     # Call the ood function
-    ood_scores, ood_indices, thresh = ood(train_features, val_features, pct_ood=0.5)
-
+    ood_scores, thresh = ood(train_features, val_features, K=2, pct_ood=0.5)
     true_ood_scores = np.array([False, True])
-
     # Check output values
-    assert np.all(np.equal(ood_scores, true_ood_scores[ood_indices]))
+    assert np.all(np.equal(ood_scores, true_ood_scores))
 
     # Assert the expected output
     assert len(ood_scores) == 2
-    assert isinstance(ood_scores[0], bool)
-    assert isinstance(ood_scores[1], bool)
