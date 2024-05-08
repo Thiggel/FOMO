@@ -48,4 +48,4 @@ def ood(train_features, val_features, pct_train=1.0, normalize=True, K=1000, pct
     scores_ood = D[:,-1] # extracting dist to k-th nearest neighbor
     threshold = np.percentile(scores_ood, 100*(1-pct_ood))
     is_ood = scores_ood >= threshold
-    return is_ood, threshold
+    return is_ood, rand_ind, threshold
