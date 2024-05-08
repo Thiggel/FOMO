@@ -62,6 +62,12 @@ def get_training_args() -> dict:
 
     parser.add_argument("--logger", action="store_true")
     parser.add_argument("--no-logger", action="store_false", dest="logger")
+
+    parser.add_argument("fe_batch_size", type=int, default=32)
+    parser.add_argument("k", type=int, default=1000)
+    parser.add_argument("pct_ood", type=float, default=0.1)
+    parser.add_argument("pct_train", type=float, default=1.0)
+
     parser.set_defaults(logger=True)
 
     args = parser.parse_args()
