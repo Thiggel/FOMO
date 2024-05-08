@@ -14,6 +14,8 @@ class SimCLR(L.LightningModule):
         temperature: float,
         weight_decay: float,
         max_epochs: int = 500,
+        *args,
+        **kwargs,
     ):
         super().__init__()
 
