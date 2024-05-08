@@ -1,7 +1,7 @@
 from typing import TypedDict
 from PIL import Image
 from random import random
-from torch.utils.data import Dataset, ConcatDataset
+from torch.utils.data import Dataset
 from tqdm import tqdm
 import pickle
 
@@ -23,19 +23,19 @@ class ImbalancedImageNet(Dataset):
         dataset_path: str,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
-        transform=None
+        transform=None,
+        test_mode: bool = False,
     ):
         super().__init__()
 
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
 
-        self.train_dataset = load_dataset(dataset_path, split="train")
-        self.val_dataset = load_dataset(dataset_path, split="validation")
+        split = "test[:1]" if test_mode else "train+validation+test"
 
-        self.dataset = ConcatDataset([self.train_dataset, self.val_dataset])
+        self.dataset = load_dataset(dataset_path, split=split)
 
-        self.classes = self.train_dataset.features["label"].names
+        self.classes = self.dataset.features["label"].names
         self.num_classes = len(self.classes)
         self.imbalancedness = imbalance_method.value.impl(self.num_classes)
         self.indices = self._load_or_create_indices()
