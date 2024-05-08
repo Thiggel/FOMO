@@ -22,7 +22,7 @@ class TestOOD:
     val_data = [torch.tensor([7, 8, 9]), torch.tensor([10, 11, 12])]
     train_dataset = DummyDataset(train_data)
     val_dataset = DummyDataset(val_data)
-    ood = OOD({'fe_batch_size': 2, 'k': 2, 'pct_ood': 0.5, 'pct_train': 0.5}, train_dataset, val_dataset, torch.nn.Identity())
+    ood = OOD(**{'fe_batch_size': 2, 'k': 2, 'pct_ood': 0.5, 'pct_train': 0.5}, train_dataset, val_dataset, torch.nn.Identity())
 
     def test_extract_features():
         # Call the extract_features function
@@ -38,10 +38,10 @@ class TestOOD:
         TestOOD.ood.val_features = np.array([[0, 0.1, 1.1], [7, 0, 0.1]])
         
         # Call the ood function
-        ood_scores, thresh = TestOOD.ood.ood(normalize=False)
-        true_ood_scores = np.array([False, True])
+        ood_indices, thresh = TestOOD.ood.ood(normalize=False)
+        true_ood_indices = np.array([1])
         # Check output values
-        assert np.all(np.equal(ood_scores, true_ood_scores))
+        assert np.all(np.equal(ood_indices, true_ood_indices))
 
         # Assert the expected output
-        assert len(ood_scores) == 2
+        assert len(ood_indices) == 1

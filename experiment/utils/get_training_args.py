@@ -67,6 +67,8 @@ def get_training_args() -> dict:
     parser.add_argument("k", type=int, default=1000)
     parser.add_argument("pct_ood", type=float, default=0.1)
     parser.add_argument("pct_train", type=float, default=1.0)
+    parser.add_argument("ood_test_split", type=float, default=0.1)
+    parser.add_argument("additional_data_path", type=str, required=True)
 
     parser.set_defaults(logger=True)
 

@@ -140,3 +140,9 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         stacked_labels = torch.tensor(labels)
 
         return data, stacked_labels
+
+    def update_dataset(self, aug_path):
+        # TODO: add the real labels, not dummy ones
+        images = os.listdir(aug_path)
+        for image in images:
+            self.train_dataset._save_additional_datapoint(image, None)
