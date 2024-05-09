@@ -159,4 +159,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 dataset_pickles/*
+!dataset_pickles/__init__.py
 lightning_logs/*
