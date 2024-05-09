@@ -6,17 +6,24 @@ from torchvision import models, transforms
 
 from experiment.dataset.ContrastiveTransformations import ContrastiveTransformations
 from experiment.models.SSLMethods.SimCLR import SimCLR
+from experiment.models.SSLMethods.IJepa import IJepa
+from experiment.utils.collate_functions import simclr_collate
+
+from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
+from experiment.dataset.transforms import make_transforms
+
 
 
 @dataclass
 class SSLType:
     module: nn.Module
     transforms: Callable
+    collate_fn: Callable
 
     def initialize(self, *args, **kwargs) -> nn.Module:
         return self.module(*args, **kwargs)
 
-
+#TODO I dont understand how this all works very well, so please check if the lambda thing to initialize jepa transforms and collate are correct.
 class SSLTypes(Enum):
     @staticmethod
     def ssl_types():
@@ -57,7 +64,38 @@ class SSLTypes(Enum):
                     ),
                     n_views=2,
                 ),
+                collate_fn=simclr_collate
             ),
+            "I-Jepa": SSLType(
+                module=lambda model, lr, temperature, weight_decay, max_epochs, parserargs, iterations_per_epoch, *args, **kwargs: IJepa(
+                    model=model,
+                    lr=lr,
+                    args = parserargs,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    iterations_per_epoch = iterations_per_epoch,
+                    *args,
+                    **kwargs
+                ),
+                collate_fn= lambda parserargs: MBMaskCollator(
+                    input_size=parserargs.crop_size,
+                    patch_size=parserargs.patch_size,
+                    pred_mask_scale=parserargs.pred_mask_scale,
+                    enc_mask_scale=parserargs.enc_mask_scale,
+                    aspect_ratio=parserargs.aspect_ratio,
+                    nenc=parserargs.num_enc_masks,
+                    npred=parserargs.num_pred_masks,
+                    allow_overlap=parserargs.allow_overlap,
+                    min_keep=parserargs.min_keep),
+
+                transforms= lambda parserargs: make_transforms(
+                    crop_size=parserargs.crop_size,
+                    crop_scale=parserargs.crop_scale,
+                    gaussian_blur=parserargs.use_gaussian_blur,
+                    horizontal_flip=parserargs.use_horizontal_flip,
+                    color_distortion=parserargs.use_color_distortion,
+                    color_jitter=parserargs.color_jitter_strength)
+            )
         }
 
     @staticmethod

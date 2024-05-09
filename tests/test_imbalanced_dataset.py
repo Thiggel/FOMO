@@ -2,10 +2,11 @@ from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDa
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 
 
-def test_imbalanced_dataset():
+def test_imbalanced_dataset_length():
     balanced_datamodule = ImbalancedImageNetDataModule(
         imbalance_method=ImbalanceMethods.NoImbalance,
         checkpoint_filename="test_balanced_dataset",
+        test_mode=True,
     )
 
     balanced_datamodule.setup(stage="train")
@@ -13,6 +14,7 @@ def test_imbalanced_dataset():
     datamodule = ImbalancedImageNetDataModule(
         imbalance_method=ImbalanceMethods.ExponentiallyIncreasing,
         checkpoint_filename="test_imbalanced_dataset",
+        test_mode=True,
     )
 
     datamodule.setup(stage="train")
