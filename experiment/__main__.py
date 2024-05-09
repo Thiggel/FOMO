@@ -135,14 +135,8 @@ def run(args: dict, seed: int = 42) -> dict:
     }
 
     if args.no_augmentation:
-        ssl_args = {
-            'model': model,
-            'lr': args.lr,
-            'temperature': args.temperature,
-            'weight_decay': args.weight_decay,
-            'max_epochs': args.n_epochs_per_cycle,
-        }
-        ssl_method = ssl_type.initialize(**ssl_args)
+        
+        ssl_method = ssl_type
 
         if args.checkpoint is not None:
             ssl_method.model.load_state_dict(
