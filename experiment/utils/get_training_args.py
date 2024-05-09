@@ -38,6 +38,8 @@ def get_training_args() -> dict:
         default=SSLTypes.get_default_ssl_type(),
     )
 
+    parser.add_argument("--no_augmentation", action="store_true")
+
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--temperature", type=float, default=0.5)
     parser.add_argument("--weight_decay", type=float, default=1e-6)

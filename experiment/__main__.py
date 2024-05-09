@@ -134,15 +134,75 @@ def run(args: dict, seed: int = 42) -> dict:
         "devices": "auto",
     }
 
-    imbalanced_training = ImbalancedTraining(
-        args,
-        trainer_args,
-        ssl_type,
-        datamodule,
-        checkpoint_callback,
-    )
+    if args.no_augmentation:
+        ssl_args = {
+            'model': model,
+            'lr': args.lr,
+            'temperature': args.temperature,
+            'weight_decay': args.weight_decay,
+            'max_epochs': args.max_epochs,
+        }
+        ssl_method = ssl_type.initialize(**ssl_args)
 
-    return imbalanced_training.run()
+        if args.checkpoint is not None:
+            ssl_method.model.load_state_dict(
+                torch.load(
+                    args.checkpoint,
+                    map_location=torch.device(
+                        'cuda' if torch.cuda.is_available() else 'cpu'
+                    )
+                )['state_dict']
+            )
+
+        trainer = L.Trainer(
+            **trainer_args
+        )
+
+        if args.pretrain:
+            trainer.fit(model=ssl_method, datamodule=datamodule)
+
+            ssl_method.model.load_state_dict(
+                torch.load(checkpoint_callback.best_model_path)['state_dict']
+            )
+
+        if args.finetune:
+            results = finetune(args, trainer_args, model)
+
+            return results
+
+        else:
+            return {}
+        
+    else:
+        imbalanced_training = ImbalancedTraining(
+            args,
+            trainer_args,
+            ssl_type,
+            datamodule,
+            checkpoint_callback,
+        )
+
+        return imbalanced_training.run()
+    
+def finetune(args, trainer_args, model) -> dict:
+        benchmarks = FinetuningBenchmarks.benchmarks
+        results = {}
+
+        for benchmark in benchmarks:
+            finetuner = benchmark(
+                model=model,
+                lr=args.lr,
+            )
+
+            trainer_args["max_epochs"] = benchmark.max_epochs
+
+            trainer = L.Trainer(**trainer_args)
+
+            trainer.fit(model=finetuner)
+
+            results.update(trainer.test(model=finetuner))
+
+        return results
 
 
 def main():
