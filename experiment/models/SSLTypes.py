@@ -38,13 +38,13 @@ class SSLTypes(Enum):
                     *args,
                     **kwargs
                 ),
-                transforms=ContrastiveTransformations(
+                transforms= lambda parserargs: ContrastiveTransformations(
                     transforms.Compose(
                         [
                             transforms.Resize(256),
                             transforms.CenterCrop(224),
                             transforms.RandomHorizontalFlip(),
-                            transforms.RandomResizedCrop(size=96),
+                            transforms.RandomResizedCrop(size=parserargs.crop_size), #was 96 before but that didnt work for some reason, possibly because its not divisible by 16 and or 2
                             transforms.RandomApply(
                                 [
                                     transforms.ColorJitter(
@@ -64,7 +64,7 @@ class SSLTypes(Enum):
                     ),
                     n_views=2,
                 ),
-                collate_fn=simclr_collate
+                collate_fn=lambda parserargs: simclr_collate
             ),
             "I-Jepa": SSLType(
                 module=lambda model, lr, temperature, weight_decay, max_epochs, parserargs, iterations_per_epoch, *args, **kwargs: IJepa(

@@ -35,14 +35,14 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
     ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
     return ImbalancedImageNetDataModule(
-        collate_fn=ssl_method.collate_fn,
+        collate_fn=ssl_method.collate_fn(args),
         dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
         imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
         splits=args.splits,
         batch_size=args.batch_size,
         resized_image_size=model_type.resized_image_size,
         checkpoint_filename=checkpoint_filename,
-        transform=ssl_method.transforms,
+        transform=ssl_method.transforms(args),
     )
 
 
@@ -54,6 +54,7 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
         "resized_image_size": model_type.resized_image_size,
         "batch_size": args.batch_size,
         "output_size": datamodule.num_classes,
+        "image_size": args.crop_size
     }
 
     model = model_type.initialize(**model_args)
