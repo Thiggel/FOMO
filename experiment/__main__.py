@@ -140,7 +140,7 @@ def run(args: dict, seed: int = 42) -> dict:
             'lr': args.lr,
             'temperature': args.temperature,
             'weight_decay': args.weight_decay,
-            'max_epochs': args.max_epochs,
+            'max_epochs': args.n_epochs_per_cycle,
         }
         ssl_method = ssl_type.initialize(**ssl_args)
 
