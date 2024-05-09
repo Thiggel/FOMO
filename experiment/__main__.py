@@ -30,9 +30,7 @@ from experiment.ImbalancedTraining import ImbalancedTraining
 mp.set_start_method("spawn")
 
 
-def init_datamodule(
-    args: dict, checkpoint_filename: str 
-) -> L.LightningDataModule:
+def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
     model_type = ModelTypes.get_model_type(args.model_name)
     ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
@@ -73,7 +71,9 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
     return model
 
 
-def init_ssl_type(args: dict, model: nn.Module, iterations_per_epoch) -> L.LightningModule:
+def init_ssl_type(
+    args: dict, model: nn.Module, iterations_per_epoch
+) -> L.LightningModule:
     ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
     ssl_args = {
         "model": model,
@@ -82,7 +82,7 @@ def init_ssl_type(args: dict, model: nn.Module, iterations_per_epoch) -> L.Light
         "weight_decay": args.weight_decay,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
         "parserargs": args,
-        "iterations_per_epoch": iterations_per_epoch
+        "iterations_per_epoch": iterations_per_epoch,
     }
 
     return ssl_type.initialize(**ssl_args)
@@ -92,12 +92,7 @@ def run(args: dict, seed: int = 42) -> dict:
     set_seed(seed)
 
     checkpoint_filename = (
-        args.model_name
-        + "_"
-        + args.imagenet_variant
-        + "_"
-        + args.imbalance_method
-        + "-{epoch}-{val_loss:.2f}"
+        args.model_name + "_" + args.imagenet_variant + "_" + args.imbalance_method
         if args.checkpoint is None
         else args.checkpoint
     )
@@ -113,7 +108,7 @@ def run(args: dict, seed: int = 42) -> dict:
 
     checkpoint_callback = ModelCheckpoint(
         dirpath="checkpoints/",
-        filename=checkpoint_filename,
+        filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
     )
 
