@@ -14,3 +14,4 @@ pytest
 datasets
 flake8
 black
+faiss-cpu
