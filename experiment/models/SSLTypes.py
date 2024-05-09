@@ -44,7 +44,7 @@ class SSLTypes(Enum):
                             transforms.Resize(256),
                             transforms.CenterCrop(224),
                             transforms.RandomHorizontalFlip(),
-                            transforms.RandomResizedCrop(size=parserargs.crop_size), #was 96 before but that didnt work for some reason, possibly because its not divisible by 16 and or 2
+                            transforms.RandomResizedCrop(size=parserargs.crop_size), #was 96
                             transforms.RandomApply(
                                 [
                                     transforms.ColorJitter(
