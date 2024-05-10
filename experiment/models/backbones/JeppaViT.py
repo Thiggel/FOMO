@@ -363,9 +363,11 @@ class VisionTransformer(nn.Module):
             embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
         #-- if a classification head is used, also add a [CLS] token
+        
+        #the following value is 1 if we use a cls token because in this case pos_embed needs to increase by one
+        use_cls = 1 if classification_head else 0
+        
         if classification_head:
-            #the following value is 1 if we use a cls token because in this case pos_embed needs to increase by one
-            use_cls = 1 if classification_head else 0
             #n_channels = 3 * I think I dont need this.
             self.class_token = nn.Parameter(
                 torch.randn(1,1,embed_dim)

@@ -54,7 +54,8 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
         "resized_image_size": model_type.resized_image_size,
         "batch_size": args.batch_size,
         "output_size": datamodule.num_classes,
-        "image_size": args.crop_size
+        "image_size": args.crop_size,
+        "classification_head": args.classification_head
     }
 
     model = model_type.initialize(**model_args)
