@@ -60,16 +60,6 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
 
     model = model_type.initialize(**model_args)
 
-    if args.checkpoint is not None:
-        model.load_state_dict(
-            torch.load(
-                args.checkpoint,
-                map_location=torch.device(
-                    "cuda" if torch.cuda.is_available() else "cpu"
-                ),
-            )["state_dict"]
-        )
-
     return model
 
 
@@ -142,7 +132,7 @@ def run(args: dict, seed: int = 42) -> dict:
         ssl_method = ssl_type
 
         if args.checkpoint is not None:
-            ssl_method.model.load_state_dict(
+            ssl_method.load_state_dict(
                 torch.load(
                     args.checkpoint,
                     map_location=torch.device(
