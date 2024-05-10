@@ -95,8 +95,8 @@ def run(args: dict, seed: int = 42) -> dict:
 
     checkpoint_filename = (
         args.model_name + "_" + args.imagenet_variant + "_" + args.imbalance_method
-        if args.checkpoint is None
-        else args.checkpoint
+        #if args.checkpoint is None
+        #else args.checkpoint THis might mess up other stuff but it seems incorrect from my perspective
     )
 
     datamodule = init_datamodule(
@@ -134,7 +134,7 @@ def run(args: dict, seed: int = 42) -> dict:
         "logger": tensorboard_logger if args.logger else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
-        
+
     }
 
     if args.no_augmentation:
