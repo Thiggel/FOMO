@@ -1,7 +1,7 @@
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 import faiss
-import numpy as np
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Subset
 
@@ -60,9 +60,9 @@ class OOD:
             self.train_features = self.normalize(self.train_features)
             self.test_features = self.normalize(self.test_features)
 
-        rand_ind = torch.arange(train_size)
         index = faiss.IndexFlatL2(dim)
-        index.add(self.train_features[rand_ind].numpy())
+
+        index.add(self.train_features.numpy())
 
         ################### Using KNN distance Directly ###################
         D, _ = index.search(self.test_features, K)
