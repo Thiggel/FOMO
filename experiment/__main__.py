@@ -134,6 +134,7 @@ def run(args: dict, seed: int = 42) -> dict:
         "logger": tensorboard_logger if args.logger else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
+        
     }
 
     if args.no_augmentation:
