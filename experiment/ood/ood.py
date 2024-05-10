@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 import faiss
+import numpy as np
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Subset
 
@@ -61,12 +62,12 @@ class OOD:
 
         rand_ind = torch.arange(train_size)
         index = faiss.IndexFlatL2(dim)
-        index.add(self.train_features[rand_ind])
+        index.add(self.train_features[rand_ind].numpy())
 
         ################### Using KNN distance Directly ###################
         D, _ = index.search(self.test_features, K)
         scores_ood = D[:, -1]  # extracting dist to k-th nearest neighbor
-        threshold = torch.percentile(scores_ood, 100 * (1 - self.pct_ood))
+        threshold = np.percentile(scores_ood, 100 * (1 - self.pct_ood))
         is_ood = scores_ood >= threshold
         ood_indices = [i for i, ood_flag in enumerate(is_ood) if ood_flag]
 
