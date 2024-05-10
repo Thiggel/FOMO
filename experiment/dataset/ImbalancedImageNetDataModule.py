@@ -99,7 +99,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            #persistent_workers=True,
             collate_fn=self.collate_fn,
         )
 
@@ -108,7 +108,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            #persistent_workers=True,
             collate_fn=self.collate_fn,
         )
 
@@ -117,7 +117,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            #persistent_workers=True,
             collate_fn=self.collate_fn,
         )
 
