@@ -131,6 +131,8 @@ class ImbalancedImageNet(Dataset):
             else self._load_additional_datapoint(idx - len(self.indices))
         )
 
+        datapoint["image"] = datapoint["image"].convert('RGB')
+
         if self.transform:
             datapoint["image"] = self.transform(datapoint["image"])
 
