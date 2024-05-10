@@ -348,6 +348,8 @@ class VisionTransformer(nn.Module):
         drop_path_rate=0.0,
         norm_layer=nn.LayerNorm,
         init_std=0.02,
+        classification_head=False,
+        output_size = 100,
         **kwargs
     ):
         super().__init__()
@@ -360,11 +362,22 @@ class VisionTransformer(nn.Module):
             in_chans=in_chans,
             embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
+        #-- if a classification head is used, also add a [CLS] token
+        if classification_head:
+            #the following value is 1 if we use a cls token because in this case pos_embed needs to increase by one
+            use_cls = 1 if classification_head else 0
+            #n_channels = 3 * I think I dont need this.
+            self.class_token = nn.Parameter(
+                torch.randn(1,1,embed_dim)
+            )
+            torch.nn.init.normal_(self.class_token, std=0.02)
+            
+        
         # --
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim), requires_grad=False)
+        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + use_cls, embed_dim), requires_grad=False)
         pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1],
                                             int(self.patch_embed.num_patches**.5),
-                                            cls_token=False)
+                                            cls_token=classification_head)
         self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
         # --
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
@@ -378,6 +391,15 @@ class VisionTransformer(nn.Module):
         self.init_std = init_std
         self.apply(self._init_weights)
         self.fix_init_weight()
+
+        ## add a classification head if needed:
+        self.classification_head = classification_head
+        if self.classification_head:
+            self.head = nn.Sequential(
+                nn.Linear(embed_dim, 2 * output_size),
+                nn.Tanh(),
+                nn.Linear(2 * output_size, output_size),
+            )
 
     def fix_init_weight(self):
         def rescale(param, layer_id):
@@ -409,6 +431,9 @@ class VisionTransformer(nn.Module):
         x = self.patch_embed(x)
         B, N, D = x.shape
 
+        # -- add cls token to x
+        x = torch.cat([self.class_token.expand(x.size(0),-1,-1), x], dim = 1)
+
         # -- add positional embedding to x
         pos_embed = self.interpolate_pos_encoding(x, self.pos_embed)
         x = x + pos_embed
@@ -423,6 +448,9 @@ class VisionTransformer(nn.Module):
 
         if self.norm is not None:
             x = self.norm(x)
+
+        if self.classification_head:
+            x = self.head(x[:,0])
 
         return x
 
@@ -440,8 +468,9 @@ class VisionTransformer(nn.Module):
             mode='bicubic',
         )
         pos_embed = pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
-        return torch.cat((class_emb.unsqueeze(0), pos_embed), dim=1)
 
+        return torch.cat((class_emb.unsqueeze(0), pos_embed), dim=1) 
+#This is weird because dim 1 of the final output = 36, however there are 36 patches, so that must not include the class emedding?
 
 def vit_predictor(**kwargs):
     model = VisionTransformerPredictor(
