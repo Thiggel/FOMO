@@ -50,12 +50,12 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
     model_type = ModelTypes.get_model_type(args.model_name)
 
     model_args = {
-        "model_name": args.model_name,
-        "resized_image_size": model_type.resized_image_size,
-        "batch_size": args.batch_size,
+        #"model_name": args.model_name,
+        #"resized_image_size": model_type.resized_image_size,
+        #"batch_size": args.batch_size,
         "output_size": 128, #simclear uses this hidden dim, vit doesnt use this parameter
-        "image_size": args.crop_size,
-        "classification_head": args.classification_head
+        #"image_size": args.crop_size,
+        #"classification_head": args.classification_head
     }
 
     model = model_type.initialize(**model_args)
