@@ -14,6 +14,7 @@ class SimCLR(L.LightningModule):
         temperature: float,
         weight_decay: float,
         max_epochs: int = 500,
+        hidden_dim = 128,
         *args,
         **kwargs,
     ):
@@ -26,6 +27,12 @@ class SimCLR(L.LightningModule):
         ), "The temperature must be a positive float!"
 
         self.model = model
+        if self.model.fc is not None:
+            self.model.fc = nn.Sequential(
+                self.model.fc,  # Linear(ResNet output, 4*hidden_dim)
+                nn.ReLU(inplace=True),
+                nn.Linear(4*hidden_dim, hidden_dim)
+            )
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer = AdamW(

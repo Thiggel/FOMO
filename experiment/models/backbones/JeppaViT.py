@@ -349,7 +349,7 @@ class VisionTransformer(nn.Module):
         norm_layer=nn.LayerNorm,
         init_std=0.02,
         classification_head=False,
-        output_size = 100,
+        output_size = 128,
         **kwargs
     ):
         super().__init__()
@@ -370,13 +370,13 @@ class VisionTransformer(nn.Module):
         if classification_head:
             #n_channels = 3 * I think I dont need this.
             self.class_token = nn.Parameter(
-                torch.randn(1,1,embed_dim)
+                torch.randn(1,1,embed_dim) #[1,1,embed]
             )
             torch.nn.init.normal_(self.class_token, std=0.02)
             
         
         # --
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + use_cls, embed_dim), requires_grad=False)
+        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim), requires_grad=False)
         pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1],
                                             int(self.patch_embed.num_patches**.5),
                                             cls_token=classification_head)
@@ -431,10 +431,10 @@ class VisionTransformer(nn.Module):
 
         # -- patchify x
         x = self.patch_embed(x)
-        B, N, D = x.shape
+        B, N, D = x.shape #Batch, patches, embed dim
 
         # -- add cls token to x
-        x = torch.cat([self.class_token.expand(x.size(0),-1,-1), x], dim = 1)
+        x = torch.cat([self.class_token.expand(B,-1,-1), x], dim = 1) #cls now is [B, 1, embeddim] makes x = [B,N+1,]
 
         # -- add positional embedding to x
         pos_embed = self.interpolate_pos_encoding(x, self.pos_embed)
@@ -460,6 +460,7 @@ class VisionTransformer(nn.Module):
         npatch = x.shape[1] - 1
         N = pos_embed.shape[1] - 1
         if npatch == N:
+            print('happend')
             return pos_embed
         class_emb = pos_embed[:, 0]
         pos_embed = pos_embed[:, 1:]
