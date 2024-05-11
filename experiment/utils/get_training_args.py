@@ -66,7 +66,7 @@ def get_training_args() -> dict:
     parser.add_argument("--no-logger", action="store_false", dest="logger")
     parser.set_defaults(logger=True)
 
-    parser.add_argument("--classification_head", action="store_strue")
+    parser.add_argument("--classification_head", action="store_true")
 
     #I-Jepa Args
 

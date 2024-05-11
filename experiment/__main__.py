@@ -148,7 +148,7 @@ def run(args: dict, seed: int = 42) -> dict:
         if args.pretrain:
             trainer.fit(model=ssl_method, datamodule=datamodule)
 
-            ssl_method.model.load_state_dict(
+            ssl_method.load_state_dict(
                 torch.load(checkpoint_callback.best_model_path)['state_dict']
             )
 
@@ -179,9 +179,10 @@ def finetune(args, trainer_args, model) -> dict:
             finetuner = benchmark(
                 model=model,
                 lr=args.lr,
+                batch_size=args.batch_size
             )
 
-            trainer_args["max_epochs"] = benchmark.max_epochs
+            trainer_args["max_epochs"] = finetuner.max_epochs
 
             trainer = L.Trainer(**trainer_args)
 

@@ -1,5 +1,5 @@
 import os
-import pytorch_lightning as L
+import lightning as L
 from torch import nn
 from torch.optim import Adam, Optimizer
 from torchvision.datasets import CIFAR10
@@ -12,8 +12,9 @@ class CIFAR10FineTuner(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        lr: float,
-        output_size: int,
+        batch_size: int,
+        lr: float = 0.001,
+        output_size: int = 10,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -22,9 +23,21 @@ class CIFAR10FineTuner(L.LightningModule):
 
         self.model = model
         self.max_epochs = 10
+        self.batch_size = batch_size
 
-        num_ftrs = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_ftrs, 10)
+        
+
+        # Determine the number of input features
+        num_ftrs = None
+        if isinstance(self.model.head, nn.Linear):
+            num_ftrs = self.model.head.in_features
+        elif isinstance(self.model.head, nn.Sequential):
+            first_layer = list(self.model.head.children())[0]
+            num_ftrs = first_layer.in_features
+        else:
+            raise ValueError("Unsupported last layer type")
+
+        self.model.head = nn.Linear(num_ftrs, 10)
 
         self.loss = nn.CrossEntropyLoss()
 
