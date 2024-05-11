@@ -124,11 +124,12 @@ class TestOODMNIST:
         test_data[0] = torch.zeros_like(
             test_data[0]
         )  # Replacing a data point with all zeros from class 0
-        
+        test_data[0][0][0] = 1  # Changing the first pixel to 1
+
         self.ood.train_features = self.ood.train_features.view(self.ood.train_features.size(0), -1) # Flatten the data
         self.ood.test_features = test_data.view(test_data.size(0), -1) # Flatten the data
 
-        ood_indices, thresh = self.ood.ood(normalize=False)
+        ood_indices, thresh = self.ood.ood(normalize=True)
 
         
 
