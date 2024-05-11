@@ -3,18 +3,12 @@ from torch import Tensor
 
 def simclr_collate(batch: list) -> tuple[list[Tensor], Tensor]:
         num_images = len(batch[0][0])
+        print(num_images)
 
         outer_list = []
         for i in range(num_images):
             data = torch.stack(
-                [
-                    (
-                        item[0][i].repeat(3, 1, 1)
-                        if item[0][i].size(0) == 1
-                        else item[0][i][:3]
-                    )
-                    for item in batch
-                ]
+                [item[0][i] for item in batch]
             )
 
             outer_list.append(data)
