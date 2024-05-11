@@ -89,10 +89,8 @@ class TestOODMNIST:
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
 
-        print(torch.stack(train_data).shape)
-
         self.train = torch.utils.data.TensorDataset(
-            torch.stack(train_data), torch.tensor([0, 1] * (len(train_data) // 2))
+            torch.stack(train_data), torch.tensor([0, 1] * (len(train_data) // 2) + [0] * 1)
         )
         self.test = torch.utils.data.TensorDataset(
             torch.stack(test_data), torch.tensor([0, 1] * (len(test_data) // 2))
@@ -110,19 +108,19 @@ class TestOODMNIST:
 
         assert torch.equal(
             self.ood.train_features,
-            torch.stack([img for img, _ in self.train_dataset if _ in [0, 1]]),
+            torch.stack([img for img, lab in self.train_dataset if lab in [0, 1]]),
         )
 
         assert torch.equal(
             self.ood.test_features,
-            torch.stack([img for img, _ in self.test_dataset if _ in [0, 1]]),
+            torch.stack([img for img, lab in self.test_dataset if lab in [0, 1]]),
         )
 
     def test_ood(self):
         self.ood.extract_features()
 
         # Artificially construct a test set with one class having a different class' datapoint
-        test_data = torch.stack([img for img, _ in self.test_dataset if _ == 0])
+        test_data = torch.stack([img for img, lab in self.test_dataset if lab == 0])
         test_data[0] = torch.zeros_like(
             test_data[0]
         )  # Replacing a data point with all zeros from class 0
