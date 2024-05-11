@@ -376,7 +376,7 @@ class VisionTransformer(nn.Module):
             
         
         # --
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim), requires_grad=False)
+        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + use_cls, embed_dim), requires_grad=False)
         pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1],
                                             int(self.patch_embed.num_patches**.5),
                                             cls_token=classification_head)
@@ -398,9 +398,9 @@ class VisionTransformer(nn.Module):
         self.classification_head = classification_head
         if self.classification_head:
             self.head = nn.Sequential(
-                nn.Linear(embed_dim, 2 * output_size),
-                nn.Tanh(),
-                nn.Linear(2 * output_size, output_size),
+                nn.Linear(embed_dim, 4 * output_size),
+                nn.ReLu(),
+                nn.Linear(4 * output_size, output_size),
             )
 
     def fix_init_weight(self):

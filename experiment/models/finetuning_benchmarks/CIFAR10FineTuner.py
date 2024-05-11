@@ -25,7 +25,8 @@ class CIFAR10FineTuner(L.LightningModule):
         self.max_epochs = 10
         self.batch_size = batch_size
 
-        
+        for param in self.model.parameters():
+            param.requires_grad = False
 
         # Determine the number of input features
         num_ftrs = None
