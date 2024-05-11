@@ -25,7 +25,7 @@ class ModelTypes(Enum):
                 resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: models.resnet18(
                     pretrained=False,
-                    num_classes=output_size,
+                    num_classes=4*output_size,
                 ),
             ),
             "ResNet50": ModelType(
