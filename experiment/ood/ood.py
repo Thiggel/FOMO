@@ -29,12 +29,12 @@ class OOD:
         test_loader = DataLoader(self.test, batch_size=self.batch_size, shuffle=False)
 
         # Extract features from the train dataset
-        for batch in tqdm(train_loader, desc="Extracting train features"):
+        for batch, _ in tqdm(train_loader, desc="Extracting train features"):
             features = self.feature_extractor(batch).cpu().detach()
             self.train_features.append(features)
 
         # Extract features from the test dataset
-        for batch in tqdm(test_loader, desc="Extracting test features"):
+        for batch, _ in tqdm(test_loader, desc="Extracting test features"):
             features = self.feature_extractor(batch).cpu().detach()
             self.test_features.append(features)
 

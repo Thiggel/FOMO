@@ -16,7 +16,7 @@ class DummyDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        return self.data[idx]
+        return self.data[idx], 0
 
 
 class TestOODDummyDataset:
