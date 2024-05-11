@@ -124,10 +124,13 @@ class TestOODMNIST:
         test_data[0] = torch.zeros_like(
             test_data[0]
         )  # Replacing a data point with all zeros from class 0
+        
+        self.ood.train_features = self.ood.train_features.view(self.ood.train_features.size(0), -1) # Flatten the data
+        self.ood.test_features = test_data.view(test_data.size(0), -1) # Flatten the data
 
-        self.ood.test_features = test_data.view(test_data.size(0), -1)
+        ood_indices, thresh = self.ood.ood(normalize=False)
 
-        # ood_indices, thresh = self.ood.ood(normalize=False)
+        
 
         # The first data point from the test set (which is now all zeros) should be classified as OOD
-        assert True  # ood_indices == [0]
+        assert ood_indices == [0]
