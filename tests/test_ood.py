@@ -93,7 +93,7 @@ class TestOODMNIST:
             torch.stack(train_data), torch.tensor([0, 1] * (len(train_data) // 2) + [0] * 1)
         )
         self.test = torch.utils.data.TensorDataset(
-            torch.stack(test_data), torch.tensor([0, 1] * (len(test_data) // 2))
+            torch.stack(test_data), torch.tensor([0, 1] * (len(test_data) // 2)  + [0] * 1)
         )
 
         self.ood = OOD(
