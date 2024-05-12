@@ -3,7 +3,6 @@ from torch import Tensor
 
 def simclr_collate(batch: list) -> tuple[list[Tensor], Tensor]:
         num_images = len(batch[0][0])
-        print(num_images)
 
         outer_list = []
         for i in range(num_images):

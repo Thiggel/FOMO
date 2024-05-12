@@ -399,7 +399,7 @@ class VisionTransformer(nn.Module):
         if self.classification_head:
             self.head = nn.Sequential(
                 nn.Linear(embed_dim, 4 * output_size),
-                nn.ReLu(),
+                nn.ReLU(inplace = True),
                 nn.Linear(4 * output_size, output_size),
             )
 
@@ -460,7 +460,7 @@ class VisionTransformer(nn.Module):
         npatch = x.shape[1] - 1
         N = pos_embed.shape[1] - 1
         if npatch == N:
-            print('happend')
+            #rint('happend') THis happening is fine because the input is already taking into account the cls token
             return pos_embed
         class_emb = pos_embed[:, 0]
         pos_embed = pos_embed[:, 1:]
