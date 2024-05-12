@@ -104,10 +104,15 @@ def run(args: dict, seed: int = 42) -> dict:
         monitor="val_loss",
     )
 
+    if 'loss' in args.early_stopping_patience:
+        mode = 'min'
+    if 'acc' in args.early_stopping_patience:
+        mode = 'max'
+
     early_stopping_callback = EarlyStopping(
         monitor=args.early_stopping_monitor,
         patience=args.early_stopping_patience,
-        mode="min",
+        mode=mode,
     )
 
     tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
