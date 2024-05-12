@@ -98,16 +98,19 @@ def run(args: dict, seed: int = 42) -> dict:
 
     ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
 
-    checkpoint_callback = ModelCheckpoint(
-        dirpath="checkpoints/",
-        filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
-        monitor="val_loss",
-    )
-
     if 'loss' in args.early_stopping_patience:
         mode = 'min'
     if 'acc' in args.early_stopping_patience:
         mode = 'max'
+
+    checkpoint_callback = ModelCheckpoint(
+        dirpath="checkpoints/",
+        filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
+        monitor=args.early_stopping_monitor,
+        mode = mode
+    )
+
+
 
     early_stopping_callback = EarlyStopping(
         monitor=args.early_stopping_monitor,
