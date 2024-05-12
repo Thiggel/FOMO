@@ -67,6 +67,7 @@ def get_training_args() -> dict:
     parser.set_defaults(logger=True)
 
     parser.add_argument("--classification_head", action="store_true")
+    parser.add_argument("--early_stopping_monitor", type=str, default="val_loss")
 
     #I-Jepa Args
 

@@ -105,7 +105,7 @@ def run(args: dict, seed: int = 42) -> dict:
     )
 
     early_stopping_callback = EarlyStopping(
-        monitor="val_loss",
+        monitor=args.early_stopping_monitor,
         patience=args.early_stopping_patience,
         mode="min",
     )
