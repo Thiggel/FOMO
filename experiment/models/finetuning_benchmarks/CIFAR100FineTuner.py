@@ -2,13 +2,13 @@ import os
 import pytorch_lightning as L
 from torch import nn
 from torch.optim import Adam, Optimizer
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR100
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 import torch
 
 
-class CIFAR10FineTuner(L.LightningModule):
+class CIFAR100FineTuner(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -24,7 +24,7 @@ class CIFAR10FineTuner(L.LightningModule):
         self.max_epochs = 25
 
         num_ftrs = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_ftrs, 10)
+        self.model.fc = nn.Linear(num_ftrs, 100)
 
         self.loss = nn.CrossEntropyLoss()
 
@@ -36,11 +36,11 @@ class CIFAR10FineTuner(L.LightningModule):
             ]
         )
 
-        dataset = CIFAR10(root="data", download=True, transform=transform)
+        dataset = CIFAR100(root="data", download=True, transform=transform)
         train_size = int(0.9 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-        test_dataset = CIFAR10(
+        test_dataset = CIFAR100(
             root="data", train=False, download=True, transform=transform
         )
 
@@ -108,6 +108,6 @@ class CIFAR10FineTuner(L.LightningModule):
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
-        self.log("cifar10_test_loss", loss)
-        self.log("cifar10_test_accuracy", accuracy)
+        self.log("cifar100_test_loss", loss)
+        self.log("cifar10_0test_accuracy", accuracy)
         return loss
