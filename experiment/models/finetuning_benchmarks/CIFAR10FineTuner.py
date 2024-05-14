@@ -16,7 +16,7 @@ class CIFAR10FineTuner(L.LightningModule):
         lr: float = 0.01,
         output_size: int = 10,
         weight_decay=1e-3,
-        max_epochs = 10
+        max_epochs = 25
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -24,8 +24,6 @@ class CIFAR10FineTuner(L.LightningModule):
         (self.train_dataset, self.val_dataset, self.test_dataset) = self.get_datasets()
 
         self.model = model
-        self.max_epochs = 10
-        self.batch_size = batch_size
 
         for param in self.model.parameters():
             param.requires_grad = False

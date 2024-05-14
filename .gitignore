@@ -161,3 +161,4 @@ cython_debug/
 dataset_pickles/*
 !dataset_pickles/__init__.py
 lightning_logs/*
+logs/*

@@ -1,6 +1,7 @@
 from datetime import date
 import time
 import argparse
+from argparse import Namespace
 import lightning.pytorch as L
 from lightning.pytorch.callbacks import (
     ModelCheckpoint,
@@ -46,7 +47,7 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
     )
 
 
-def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
+def init_model(args: Namespace, datamodule: L.LightningDataModule) -> nn.Module:
     model_type = ModelTypes.get_model_type(args.model_name)
 
     model_args = {
@@ -64,7 +65,7 @@ def init_model(args: dict, datamodule: L.LightningDataModule) -> nn.Module:
 
 
 def init_ssl_type(
-    args: dict, model: nn.Module, iterations_per_epoch
+    args: Namespace, model: nn.Module, iterations_per_epoch
 ) -> L.LightningModule:
     ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
     ssl_args = {
@@ -80,7 +81,7 @@ def init_ssl_type(
     return ssl_type.initialize(**ssl_args)
 
 
-def run(args: dict, seed: int = 42) -> dict:
+def run(args: Namespace, seed: int = 42) -> dict:
     set_seed(seed)
 
     checkpoint_filename = (
@@ -136,7 +137,7 @@ def run(args: dict, seed: int = 42) -> dict:
     }
 
     if args.no_augmentation:
-        
+
         ssl_method = ssl_type
 
         if args.checkpoint is not None:
@@ -144,14 +145,12 @@ def run(args: dict, seed: int = 42) -> dict:
                 torch.load(
                     args.checkpoint,
                     map_location=torch.device(
-                        'cuda' if torch.cuda.is_available() else 'cpu'
-                    )
-                )['state_dict']
+                        "cuda" if torch.cuda.is_available() else "cpu"
+                    ),
+                )["state_dict"]
             )
 
-        trainer = L.Trainer(
-            **trainer_args
-        )
+        trainer = L.Trainer(**trainer_args)
 
         if args.pretrain:
             trainer.fit(model=ssl_method, datamodule=datamodule)
@@ -167,7 +166,7 @@ def run(args: dict, seed: int = 42) -> dict:
 
         else:
             return {}
-        
+
     else:
         imbalanced_training = ImbalancedTraining(
             args,
@@ -178,27 +177,35 @@ def run(args: dict, seed: int = 42) -> dict:
         )
 
         return imbalanced_training.run()
-    
-def finetune(args, trainer_args, model) -> dict:
-        benchmarks = FinetuningBenchmarks.benchmarks
-        results = {}
 
-        for benchmark in benchmarks:
-            finetuner = benchmark(
-                model=model,
-                lr=args.lr,
-                batch_size=args.batch_size
-            )
 
-            trainer_args["max_epochs"] = finetuner.max_epochs
+def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
+    benchmarks = FinetuningBenchmarks.benchmarks
+    results = {}
 
-            trainer = L.Trainer(**trainer_args)
+    for benchmark in benchmarks:
+        finetuner = benchmark(
+            model=model,
+            lr=args.lr,
+        )
 
-            trainer.fit(model=finetuner)
+        trainer_args["max_epochs"] = benchmark.max_epochs
 
-            results.update(trainer.test(model=finetuner))
+        trainer = L.Trainer(**trainer_args)
 
-        return results
+        trainer.fit(model=finetuner)
+
+        results.update(trainer.test(model=finetuner))
+
+    return results
+
+
+def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
+    if not hasattr(args, 'checkpoint_list') or args.checkpoint_list is None:
+        args.checkpoint_list = args.checkpoint  
+        
+    args.checkpoint = args.checkpoint_list[run_idx % len(args.checkpoint_list)]
+    return args
 
 
 def main():
@@ -209,7 +216,9 @@ def main():
     for run_idx in range(args.num_runs):
         start_time = time.time()
 
-        results = run(args, seed=run_idx)[0]
+        run_args = set_checkpoint_for_run(args, run_idx)
+
+        results = run(run_args, seed=run_idx)[0]
 
         end_time = time.time()
         seconds_to_hours = 3600
