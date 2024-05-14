@@ -71,7 +71,8 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
-        self.generate_new_data(ood_samples, save_subfolder=f"/{cycle_idx}")
+        diffussion_pipe = self.initialize_model()
+        self.generate_new_data(ood_samples, pipe=diffussion_pipe, save_subfolder=f"/{cycle_idx}")
 
         self.datamodule.update_dataset(
             path=f"{self.args['additional_data_path']}/{cycle_idx}"
@@ -110,5 +111,39 @@ class ImbalancedTraining:
 
         return results
 
-    def generate_new_data(ood_samples):
-        pass
+    def initialize_model():
+        """
+        Load the model first to ensure better flow
+        """
+        from diffusers import StableUnCLIPImg2ImgPipeline
+        pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-2-1-unclip", torch_dtype=torch.float16, variation="fp16")
+        pipe = pipe.to("cuda")
+        return pipe
+
+    def generate_new_data(ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1)-> None:
+        """
+        Generate new data based on out-of-distribution (OOD) samples using StableUnclip Img2Img.
+
+        Args:
+        - ood_samples (Dataset): Dataset of OOD samples.
+        - pipe (DiffusionPipeline): The diffusion model pipeline to generate new data.
+        - save_subfolder (str): Path to the folder where generated images will be saved.
+        - batch_size (int): Number of samples per batch.
+        - nr_to_gen (int): Number of images to generate per sample.
+        """
+        from torchvision.transforms.functional import to_pil_image
+        from PIL import Image
+        ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=True)
+
+        for ood_samples, ood_index in ood_sample_loader:
+            samples = []
+            for sample in ood_samples:
+                if not isinstance(sample, Image.Image): #check if sample is already a PIL Image to avoid unnecessary conversion
+                    sample = to_pil_image(sample)
+                samples.append(sample)
+
+            v_imgs = pipe(samples,num_images_per_prompt=nr_to_gen).images   
+            for i, img in enumerate(v_imgs):
+                name =f"/ood_variation_{i}.png" #TODO: include index?
+                img.save(save_subfolder+name)
