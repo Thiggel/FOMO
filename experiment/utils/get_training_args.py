@@ -49,7 +49,7 @@ def get_training_args() -> dict:
     parser.add_argument("--splits", nargs="+", type=float, default=[0.8, 0.1, 0.1])
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--early_stopping_patience", type=int, default=100)
-    parser.add_argument("--checkpoint", type=str, default=None)
+    parser.add_argument("--checkpoint", nargs="+", type=str, default=None)
 
     parser.add_argument("--pretrain", action="store_true")
     parser.add_argument("--no-pretrain", action="store_false", dest="pretrain")

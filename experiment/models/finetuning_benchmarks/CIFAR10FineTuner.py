@@ -21,7 +21,7 @@ class CIFAR10FineTuner(L.LightningModule):
         (self.train_dataset, self.val_dataset, self.test_dataset) = self.get_datasets()
 
         self.model = model
-        self.max_epochs = 10
+        self.max_epochs = 25
 
         num_ftrs = self.model.fc.in_features
         self.model.fc = nn.Linear(num_ftrs, 10)
