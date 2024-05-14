@@ -200,7 +200,7 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
     return results
 
 
-def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:   Not Committed Yet
+def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
     if not hasattr(args, 'checkpoint_list') or args.checkpoint_list is None:
         args.checkpoint_list = args.checkpoint  
         
