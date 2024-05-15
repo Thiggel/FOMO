@@ -58,13 +58,10 @@ class ImbalancedTraining:
         )
 
         ood = OOD(
-            fe_batch_size=self.args.fe_batch_size,
-            k=self.args.k,
-            pct_ood=self.args.pct_ood,
-            pct_train=self.args.pct_train,
-            train_dataset=ood_train_dataset,
-            val_dataset=ood_test_dataset,
-            model=self.ssl_method.model,
+            args=self.args,
+            train=ood_train_dataset,
+            val=ood_test_dataset,
+            feature_extractor=self.ssl_method.model,
         )
 
         ood.extract_features()

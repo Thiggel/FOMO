@@ -40,7 +40,7 @@ class IJepa(L.LightningModule):
             pred_depth=args.pred_depth,
             pred_emb_dim=args.pred_emb_dim,
             model=model)
-        
+
         self.target_encoder = copy.deepcopy(self.encoder)
         for p in self.target_encoder.parameters():
             p.requires_grad = False
@@ -66,7 +66,7 @@ class IJepa(L.LightningModule):
         self.momentum_scheduler = (self.args.ema[0] + i*(self.args.ema[1]-self.args.ema[0])/(self.iterations_per_epoch*self.max_epochs*self.args.ipe_scale)
                           for i in range(int(self.iterations_per_epoch*self.max_epochs*self.args.ipe_scale)+1))
         
-
+        self.model = self.target_encoder
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer, scaler, scheduler, wd_scheduler = init_opt(
