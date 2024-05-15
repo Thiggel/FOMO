@@ -28,12 +28,15 @@ class SimCLR(L.LightningModule):
         
         #you need to do this on resnet but I havent decided how to nicely make that dynamic yet. Ill be using ViT for now 
         self.model = model
-        #if self.model.fc is not None:
-        #    self.model.fc = nn.Sequential(
-        #        self.model.fc,  # Linear(ResNet output, 4*hidden_dim)
-        #        nn.ReLU(inplace=True),
-        #        nn.Linear(4*hidden_dim, hidden_dim)
-        #    )
+        try:
+            if self.model.fc is not None:
+                self.model.fc = nn.Sequential(
+                    self.model.fc,  # Linear(ResNet output, 4*hidden_dim)
+                    nn.ReLU(inplace=True),
+                    nn.Linear(4*hidden_dim, hidden_dim)
+                )
+        except:
+            pass
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer = AdamW(
