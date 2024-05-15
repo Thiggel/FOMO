@@ -201,10 +201,12 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
 
 
 def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
-    if not hasattr(args, 'checkpoint_list') or args.checkpoint_list is None:
-        args.checkpoint_list = args.checkpoint  
-        
-    args.checkpoint = args.checkpoint_list[run_idx % len(args.checkpoint_list)]
+    if not hasattr(args, "checkpoint_list") or args.checkpoint_list is None:
+        args.checkpoint_list = args.checkpoint
+
+    if args.checkpoint_list is not None:
+        args.checkpoint = args.checkpoint_list[run_idx % len(args.checkpoint_list)]
+
     return args
 
 
@@ -218,7 +220,7 @@ def main():
 
         run_args = set_checkpoint_for_run(args, run_idx)
 
-        results = run(run_args, seed=run_idx)[0]
+        results = run(run_args, seed=run_idx)
 
         end_time = time.time()
         seconds_to_hours = 3600
