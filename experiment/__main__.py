@@ -54,9 +54,9 @@ def init_model(args: Namespace, datamodule: L.LightningDataModule) -> nn.Module:
         "model_name": args.model_name,
         "resized_image_size": model_type.resized_image_size,
         "batch_size": args.batch_size,
-        "output_size": 128, #simclear uses this hidden dim, vit doesnt use this parameter
+        "output_size": 128,  # simclear uses this hidden dim, vit doesnt use this parameter
         "image_size": args.crop_size,
-        "classification_head": args.classification_head
+        "classification_head": args.classification_head,
     }
 
     model = model_type.initialize(**model_args)
@@ -85,9 +85,13 @@ def run(args: Namespace, seed: int = 42) -> dict:
     set_seed(seed)
 
     checkpoint_filename = (
-        args.model_name + "_" + args.imagenet_variant + "_" + args.imbalance_method
-        #if args.checkpoint is None
-        #else args.checkpoint THis might mess up other stuff but it seems incorrect from my perspective
+        args.model_name
+        + "_"
+        + args.imagenet_variant
+        + "_"
+        + args.imbalance_method
+        # if args.checkpoint is None
+        # else args.checkpoint THis might mess up other stuff but it seems incorrect from my perspective
     )
 
     datamodule = init_datamodule(
@@ -99,19 +103,17 @@ def run(args: Namespace, seed: int = 42) -> dict:
 
     ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
 
-    if 'loss' in args.early_stopping_patience:
-        mode = 'min'
-    if 'acc' in args.early_stopping_patience:
-        mode = 'max'
+    if "loss" in args.early_stopping_monitor:
+        mode = "min"
+    if "acc" in args.early_stopping_monitor:
+        mode = "max"
 
     checkpoint_callback = ModelCheckpoint(
         dirpath="checkpoints/",
         filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
         monitor=args.early_stopping_monitor,
-        mode = mode
+        mode=mode,
     )
-
-
 
     early_stopping_callback = EarlyStopping(
         monitor=args.early_stopping_monitor,
@@ -133,7 +135,6 @@ def run(args: Namespace, seed: int = 42) -> dict:
         "logger": tensorboard_logger if args.logger else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
-
     }
 
     if args.no_augmentation:
@@ -156,7 +157,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
             trainer.fit(model=ssl_method, datamodule=datamodule)
 
             ssl_method.load_state_dict(
-                torch.load(checkpoint_callback.best_model_path)['state_dict']
+                torch.load(checkpoint_callback.best_model_path)["state_dict"]
             )
 
         if args.finetune:
@@ -201,10 +202,12 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
 
 
 def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
-    if not hasattr(args, 'checkpoint_list') or args.checkpoint_list is None:
-        args.checkpoint_list = args.checkpoint  
-        
-    args.checkpoint = args.checkpoint_list[run_idx % len(args.checkpoint_list)]
+    if not hasattr(args, "checkpoint_list") or args.checkpoint_list is None:
+        args.checkpoint_list = args.checkpoint
+
+    if args.checkpoint_list is not None:
+        args.checkpoint = args.checkpoint_list[run_idx % len(args.checkpoint_list)]
+
     return args
 
 
