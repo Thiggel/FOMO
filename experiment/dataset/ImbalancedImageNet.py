@@ -43,7 +43,6 @@ class ImbalancedImageNet(Dataset):
 
         print("original length:", len(self.dataset))
         print("imbalanced length:", len(self))
-        exit()
 
     def _save_additional_datapoint(self, filename: str, label: int):
         self.additional_data.append((filename, label))
