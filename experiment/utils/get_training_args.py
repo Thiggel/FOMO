@@ -66,6 +66,10 @@ def get_training_args() -> dict:
     parser.add_argument("--no-logger", action="store_false", dest="logger")
     parser.set_defaults(logger=True)
 
+    parser.add_argument("--classification_head", action="store_true")
+    parser.add_argument("--early_stopping_monitor", type=str, default="val_loss")
+
+    #I-Jepa Args
     parser.add_argument("--fe_batch_size", type=int, default=32)
     parser.add_argument("--k", type=int, default=1000)
     parser.add_argument("--pct_ood", type=float, default=0.1)

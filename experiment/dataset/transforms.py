@@ -60,7 +60,7 @@ def make_transforms(
     if gaussian_blur:
         transform_list += [GaussianBlur(p=0.5)]
     transform_list += [transforms.ToTensor()]
-    transform_list += [ChannelTransform(3)]
+    #transform_list += [ChannelTransform(3)]
     transform_list += [transforms.Normalize(normalization[0], normalization[1])]
 
     transform = transforms.Compose(transform_list)
