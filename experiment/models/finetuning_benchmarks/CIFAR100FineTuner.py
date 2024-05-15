@@ -1,7 +1,8 @@
 import os
 import pytorch_lightning as L
 from torch import nn
-from torch.optim import Adam, Optimizer
+from torch.optim import AdamW, Optimizer
+from torch import optim
 from torchvision.datasets import CIFAR100
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
@@ -77,9 +78,21 @@ class CIFAR100FineTuner(L.LightningModule):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
 
-    def configure_optimizers(self) -> Optimizer:
-        optimizer = Adam(self.parameters(), lr=self.hparams.lr)
-        return optimizer
+    def configure_optimizers(self):
+        optimizer = optim.AdamW(
+            self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+        )
+        lr_scheduler = optim.lr_scheduler.MultiStepLR(
+            optimizer,
+            milestones=[
+                int(self.hparams.max_epochs * 0.6),
+                int(self.hparams.max_epochs * 0.8),
+            ],
+            gamma=0.1,
+        )
+        return [optimizer], [lr_scheduler]
 
     def training_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
