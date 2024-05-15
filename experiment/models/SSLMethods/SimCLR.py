@@ -1,95 +1,240 @@
+from datetime import date
+import time
+import argparse
+from argparse import Namespace
 import lightning.pytorch as L
+from lightning.pytorch.callbacks import (
+    ModelCheckpoint,
+    EarlyStopping,
+    DeviceStatsMonitor,
+)
+from lightning.pytorch.loggers import TensorBoardLogger
 import torch
 from torch import nn
-from torch.optim import AdamW, Optimizer
-from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler
-import torch.nn.functional as F
+import torch.multiprocessing as mp
+
+from experiment.utils.set_seed import set_seed
+from experiment.utils.print_mean_std import print_mean_std
+from experiment.utils.get_training_args import get_training_args
+from experiment.utils.get_model_name import get_model_name
+
+from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
+from experiment.models.ModelTypes import ModelTypes
+from experiment.models.SSLTypes import SSLTypes
+from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
+    FinetuningBenchmarks,
+)
+from experiment.dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
+from experiment.ImbalancedTraining import ImbalancedTraining
+
+mp.set_start_method("spawn")
 
 
-class SimCLR(L.LightningModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        lr: float,
-        temperature: float,
-        weight_decay: float,
-        max_epochs: int = 500,
-        hidden_dim = 128,
-        *args,
-        **kwargs,
-    ):
-        super().__init__()
+def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
+    model_type = ModelTypes.get_model_type(args.model_name)
+    ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
-        self.save_hyperparameters(ignore=["model"])
+    return ImbalancedImageNetDataModule(
+        collate_fn=ssl_method.collate_fn(args),
+        dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
+        imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
+        splits=args.splits,
+        batch_size=args.batch_size,
+        resized_image_size=model_type.resized_image_size,
+        checkpoint_filename=checkpoint_filename,
+        transform=ssl_method.transforms(args),
+    )
 
-        assert (
-            self.hparams.temperature > 0.0
-        ), "The temperature must be a positive float!"
-        
-        #you need to do this on resnet but I havent decided how to nicely make that dynamic yet. Ill be using ViT for now 
-        self.model = model
-        #if self.model.fc is not None:
-        #    self.model.fc = nn.Sequential(
-        #        self.model.fc,  # Linear(ResNet output, 4*hidden_dim)
-        #        nn.ReLU(inplace=True),
-        #        nn.Linear(4*hidden_dim, hidden_dim)
-        #    )
 
-    def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer = AdamW(
-            self.parameters(),
-            lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay,
+def init_model(args: Namespace, datamodule: L.LightningDataModule) -> nn.Module:
+    model_type = ModelTypes.get_model_type(args.model_name)
+
+    model_args = {
+        "model_name": args.model_name,
+        "resized_image_size": model_type.resized_image_size,
+        "batch_size": args.batch_size,
+        "output_size": 128,  # simclear uses this hidden dim, vit doesnt use this parameter
+        "image_size": args.crop_size,
+        "classification_head": args.classification_head,
+    }
+
+    model = model_type.initialize(**model_args)
+
+    return model
+
+
+def init_ssl_type(
+    args: Namespace, model: nn.Module, iterations_per_epoch
+) -> L.LightningModule:
+    ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
+    ssl_args = {
+        "model": model,
+        "lr": args.lr,
+        "temperature": args.temperature,
+        "weight_decay": args.weight_decay,
+        "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
+        "parserargs": args,
+        "iterations_per_epoch": iterations_per_epoch,
+    }
+
+    return ssl_type.initialize(**ssl_args)
+
+
+def run(args: Namespace, seed: int = 42) -> dict:
+    set_seed(seed)
+
+    checkpoint_filename = (
+        args.model_name
+        + "_"
+        + args.imagenet_variant
+        + "_"
+        + args.imbalance_method
+        # if args.checkpoint is None
+        # else args.checkpoint THis might mess up other stuff but it seems incorrect from my perspective
+    )
+
+    datamodule = init_datamodule(
+        args,
+        checkpoint_filename,
+    )
+
+    model = init_model(args, datamodule)
+
+    ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
+
+    if "loss" in args.early_stopping_monitor:
+        mode = "min"
+    if "acc" in args.early_stopping_monitor:
+        mode = "max"
+
+    checkpoint_callback = ModelCheckpoint(
+        dirpath="checkpoints/",
+        filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
+        monitor=args.early_stopping_monitor,
+        mode=mode,
+    )
+
+    early_stopping_callback = EarlyStopping(
+        monitor=args.early_stopping_monitor,
+        patience=args.early_stopping_patience,
+        mode=mode,
+    )
+
+    tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
+
+    stats_monitor = DeviceStatsMonitor()
+
+    callbacks = [checkpoint_callback, early_stopping_callback, stats_monitor]
+
+    trainer_args = {
+        "max_time": {"hours": args.max_hours_per_run},
+        "max_epochs": args.n_epochs_per_cycle,
+        "callbacks": callbacks,
+        "enable_checkpointing": True,
+        "logger": tensorboard_logger if args.logger else None,
+        "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
+        "devices": "auto",
+    }
+
+    if args.no_augmentation:
+
+        ssl_method = ssl_type
+
+        if args.checkpoint is not None:
+            ssl_method.load_state_dict(
+                torch.load(
+                    args.checkpoint,
+                    map_location=torch.device(
+                        "cuda" if torch.cuda.is_available() else "cpu"
+                    ),
+                )["state_dict"]
+            )
+
+        trainer = L.Trainer(**trainer_args)
+
+        if args.pretrain:
+            trainer.fit(model=ssl_method, datamodule=datamodule)
+
+            ssl_method.load_state_dict(
+                torch.load(checkpoint_callback.best_model_path)["state_dict"]
+            )
+
+        if args.finetune:
+            results = finetune(args, trainer_args, model)
+
+            return results
+
+        else:
+            return {}
+
+    else:
+        imbalanced_training = ImbalancedTraining(
+            args,
+            trainer_args,
+            ssl_type,
+            datamodule,
+            checkpoint_callback,
         )
 
-        lr_scheduler = CosineAnnealingLR(
-            optimizer, T_max=self.hparams.max_epochs, eta_min=self.hparams.lr / 50
+        return imbalanced_training.run()
+
+
+def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
+    benchmarks = FinetuningBenchmarks.benchmarks
+    results = {}
+
+    for benchmark in benchmarks:
+        finetuner = benchmark(
+            model=model,
+            lr=args.lr,
+            batch_size = 64
         )
 
-        return [optimizer], [lr_scheduler]
+        trainer_args["max_epochs"] = finetuner.max_epochs
 
-    def info_nce_loss(self, batch, mode="train"):
-        imgs, _ = batch
-        imgs = torch.cat(imgs, dim=0)
+        trainer = L.Trainer(**trainer_args)
 
-        feats = self.model(imgs) #yep thats the issue, why can a resnet deal with two concatenated images??
+        trainer.fit(model=finetuner)
 
-        cos_sim = F.cosine_similarity(feats[:, None, :], feats[None, :, :], dim=-1)
+        results.update(trainer.test(model=finetuner))
 
-        # Mask out cosine similarity to itself
-        self_mask = torch.eye(cos_sim.shape[0], dtype=torch.bool, device=cos_sim.device)
-        cos_sim.masked_fill_(self_mask, -9e15)
+    return results
 
-        # Find positive example -> batch_size//2 away from the original example
-        pos_mask = self_mask.roll(shifts=cos_sim.shape[0] // 2, dims=0)
 
-        # InfoNCE loss
-        cos_sim = cos_sim / self.hparams.temperature
-        nll = -cos_sim[pos_mask] + torch.logsumexp(cos_sim, dim=-1)
-        nll = nll.mean()
+def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
+    if not hasattr(args, "checkpoint_list") or args.checkpoint_list is None:
+        args.checkpoint_list = args.checkpoint
 
-        # Logging loss
-        self.log(mode + "_loss", nll, prog_bar = True)
+    if args.checkpoint_list is not None:
+        args.checkpoint = args.checkpoint_list[run_idx % len(args.checkpoint_list)]
 
-        # Get ranking position of positive example
-        comb_sim = torch.cat(
-            [
-                cos_sim[pos_mask][:, None],
-                cos_sim.masked_fill(pos_mask, -9e15),
-            ],  # First position positive example
-            dim=-1,
-        )
+    return args
 
-        sim_argsort = comb_sim.argsort(dim=-1, descending=True).argmin(dim=-1)
 
-        self.log(mode + "_acc_top1", (sim_argsort == 0).float().mean(), prog_bar = True)
-        self.log(mode + "_acc_top5", (sim_argsort < 5).float().mean(), prog_bar = True)
-        self.log(mode + "_acc_mean_pos", 1 + sim_argsort.float().mean(), prog_bar = True)
+def main():
+    args = get_training_args()
 
-        return nll
+    all_results = []
 
-    def training_step(self, batch, batch_idx):
-        return self.info_nce_loss(batch, mode="train")
+    for run_idx in range(args.num_runs):
+        start_time = time.time()
 
-    def validation_step(self, batch, batch_idx):
-        self.info_nce_loss(batch, mode="val")
+        run_args = set_checkpoint_for_run(args, run_idx)
+
+        results = run(run_args, seed=run_idx)[0]
+
+        end_time = time.time()
+        seconds_to_hours = 3600
+        training_time = (end_time - start_time) / seconds_to_hours
+        results.update({"training_time": training_time})
+
+        print(results)
+
+        all_results.append(results)
+
+    print_mean_std(all_results)
+
+
+if __name__ == "__main__":
+    main()
