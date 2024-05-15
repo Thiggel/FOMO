@@ -88,10 +88,16 @@ class IJepa(L.LightningModule):
             use_bfloat16=self.args.use_bfloat16,
         )
 
+        self.scheduler = scheduler
+
         return [optimizer], [scheduler]
 
     def jepa_loss(self, batch, mode):
         self.wd_scheduler.step()
+
+        # log the wd_scheduler and scheduler values
+        self.log("wd", self.wd_scheduler.current_wd, prog_bar=True)
+        self.log("lr", self.scheduler.current_lr, prog_bar=True)
 
         # Create the collate function and datamodule in such a way that this is true.
         udata, masks_enc, masks_pred = batch
@@ -142,13 +148,6 @@ class IJepa(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # log current learning rate
-        self.log(
-            "lr",
-            self.trainer.optimizers[0].param_groups[0]["lr"],
-            on_step=True,
-            on_epoch=False,
-            prog_bar=True,
-        )
         return self.jepa_loss(batch, mode="train")
 
     def validation_step(self, batch, batch_idx):
