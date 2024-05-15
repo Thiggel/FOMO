@@ -41,6 +41,10 @@ class ImbalancedImageNet(Dataset):
         self.indices = self._load_or_create_indices()
         self.additional_data = self._create_or_load_additional_data()
 
+        print("original length:", len(self.dataset))
+        print("imbalanced length:", len(self))
+        exit()
+
     def _save_additional_datapoint(self, filename: str, label: int):
         self.additional_data.append((filename, label))
         self._save_additional_data_to_pickle()
@@ -131,7 +135,7 @@ class ImbalancedImageNet(Dataset):
             else self._load_additional_datapoint(idx - len(self.indices))
         )
 
-        datapoint["image"] = datapoint["image"].convert('RGB')
+        datapoint["image"] = datapoint["image"].convert("RGB")
 
         if self.transform:
             datapoint["image"] = self.transform(datapoint["image"])
