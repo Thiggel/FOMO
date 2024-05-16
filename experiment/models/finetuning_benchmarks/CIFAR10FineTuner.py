@@ -1,5 +1,4 @@
 import os
-import lightning as L
 import lightning.pytorch as L
 from torch import nn
 from torch import optim
@@ -17,7 +16,7 @@ class CIFAR10FineTuner(L.LightningModule):
         lr: float = 0.01,
         output_size: int = 10,
         weight_decay=1e-3,
-        max_epochs = 25
+        max_epochs=25,
         *args,
         **kwargs,
     ):
@@ -39,26 +38,26 @@ class CIFAR10FineTuner(L.LightningModule):
         # Determine the number of input features
         num_ftrs = None
         try:
-          if isinstance(self.model.head, nn.Linear):
-              num_ftrs = self.model.head.in_features
-          elif isinstance(self.model.head, nn.Sequential):
-              first_layer = list(self.model.head.children())[0]
-              num_ftrs = first_layer.in_features
-          else:
-              raise ValueError("Unsupported last layer type")
+            if isinstance(self.model.head, nn.Linear):
+                num_ftrs = self.model.head.in_features
+            elif isinstance(self.model.head, nn.Sequential):
+                first_layer = list(self.model.head.children())[0]
+                num_ftrs = first_layer.in_features
+            else:
+                raise ValueError("Unsupported last layer type")
 
-          self.model.head = nn.Linear(num_ftrs, 10)
+            self.model.head = nn.Linear(num_ftrs, 10)
 
-        except:
-          if isinstance(self.model.fc, nn.Linear):
-              num_ftrs = self.model.fc.in_features
-          elif isinstance(self.model.fc, nn.Sequential):
-              first_layer = list(self.model.fc.children())[0]
-              num_ftrs = first_layer.in_features
-          else:
-              raise ValueError("Unsupported last layer type")
+        except Exception:
+            if isinstance(self.model.fc, nn.Linear):
+                num_ftrs = self.model.fc.in_features
+            elif isinstance(self.model.fc, nn.Sequential):
+                first_layer = list(self.model.fc.children())[0]
+                num_ftrs = first_layer.in_features
+            else:
+                raise ValueError("Unsupported last layer type")
 
-          self.model.fc = nn.Linear(num_ftrs, 10)
+            self.model.fc = nn.Linear(num_ftrs, 10)
 
         self.loss = nn.CrossEntropyLoss()
 
@@ -112,13 +111,19 @@ class CIFAR10FineTuner(L.LightningModule):
         return self.model(x)
 
     def configure_optimizers(self):
-        optimizer = optim.AdamW(self.parameters(), 
-                                lr=self.hparams.lr, 
-                                weight_decay=self.hparams.weight_decay)
-        lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, 
-                                                      milestones=[int(self.hparams.max_epochs*0.6), 
-                                                                  int(self.hparams.max_epochs*0.8)], 
-                                                      gamma=0.1)
+        optimizer = optim.AdamW(
+            self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+        )
+        lr_scheduler = optim.lr_scheduler.MultiStepLR(
+            optimizer,
+            milestones=[
+                int(self.hparams.max_epochs * 0.6),
+                int(self.hparams.max_epochs * 0.8),
+            ],
+            gamma=0.1,
+        )
         return [optimizer], [lr_scheduler]
 
     def training_step(
@@ -127,7 +132,7 @@ class CIFAR10FineTuner(L.LightningModule):
         inputs, targets = batch
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
-        self.log("train_loss", loss, prog_bar = True)
+        self.log("train_loss", loss, prog_bar=True)
         return loss
 
     def validation_step(
@@ -137,8 +142,8 @@ class CIFAR10FineTuner(L.LightningModule):
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
-        self.log("val_loss", loss, prog_bar = True)
-        self.log("val_accuracy", accuracy, prog_bar = True)
+        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_accuracy", accuracy, prog_bar=True)
         return loss
 
     def test_step(
@@ -148,6 +153,6 @@ class CIFAR10FineTuner(L.LightningModule):
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
-        self.log("cifar10_test_loss", loss, prog_bar = True)
-        self.log("cifar10_test_accuracy", accuracy, prog_bar = True)
+        self.log("cifar10_test_loss", loss, prog_bar=True)
+        self.log("cifar10_test_accuracy", accuracy, prog_bar=True)
         return loss
