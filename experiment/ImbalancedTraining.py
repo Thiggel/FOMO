@@ -50,13 +50,13 @@ class ImbalancedTraining:
 
         train_dataset = self.datamodule.train_dataset
 
-        train_dataset_rand_idx = torch.randperm(len(train_dataset)).tolist()
+        train_dataset_rand_idx = torch.randperm(len(train_dataset))
 
         split_idx = int(len(train_dataset) * self.ood_test_split)
 
         ood_train_dataset, ood_test_dataset = (
-            ood_train_dataset[train_dataset_rand_idx[:split_idx]],
-            ood_train_dataset[train_dataset_rand_idx[split_idx]]
+            train_dataset[train_dataset_rand_idx[:split_idx]],
+            train_dataset[train_dataset_rand_idx[split_idx:]]
         )
 
         ood = OOD(
