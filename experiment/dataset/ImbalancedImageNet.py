@@ -137,6 +137,6 @@ class ImbalancedImageNet(Dataset):
         datapoint["image"] = datapoint["image"].convert("RGB")
 
         if self.transform:
-            datapoint["image"] = self.transform(datapoint["image"])
+            datapoint["image"] = self.transform(datapoint["image"])[0]
 
         return datapoint["image"], datapoint["label"]
