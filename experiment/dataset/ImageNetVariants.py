@@ -21,7 +21,7 @@ class ImageNetVariants(Enum):
 
     ImageNetDummy = ImageNetVariant(
         name="dummy",
-        path="patrickvonplaten/dummy_image_data",
+        path="DurreSudoku/dummy_image_dataset",
     )
 
     @staticmethod
