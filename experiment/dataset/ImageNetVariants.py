@@ -21,7 +21,7 @@ class ImageNetVariants(Enum):
 
     ImageNetDummy = ImageNetVariant(
         name="dummy",
-        path="Narsil/image_dummy",
+        path="hf-internal-testing/dummy_image_class_data",
     )
 
     @staticmethod
