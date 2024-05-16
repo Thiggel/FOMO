@@ -12,10 +12,7 @@ from experiment.models.SSLMethods.masks.utils import apply_masks
 
 from experiment.models.SSLMethods.utils.tensors import repeat_interleave_batch
 
-from experiment.models.SSLMethods.helper import (
-    load_checkpoint,
-    init_model,
-    init_opt)
+from experiment.models.SSLMethods.helper import load_checkpoint, init_model, init_opt
 
 
 class IJepa(L.LightningModule):
@@ -39,12 +36,13 @@ class IJepa(L.LightningModule):
             crop_size=args.crop_size,
             pred_depth=args.pred_depth,
             pred_emb_dim=args.pred_emb_dim,
-            model=model)
+            model=model,
+        )
 
         self.target_encoder = copy.deepcopy(self.encoder)
         for p in self.target_encoder.parameters():
             p.requires_grad = False
-        
+
         self.args = args
         self.max_epochs = max_epochs
 
@@ -52,52 +50,65 @@ class IJepa(L.LightningModule):
             encoder=self.encoder,
             predictor=self.predictor,
             wd=self.args.weight_decay,
-            final_wd= self.args.final_weight_decay,
-            start_lr= self.args.start_lr,
-            ref_lr= self.args.lr,
-            final_lr= self.args.final_lr,
-            iterations_per_epoch= self.iterations_per_epoch,
+            final_wd=self.args.final_weight_decay,
+            start_lr=self.args.start_lr,
+            ref_lr=self.args.lr,
+            final_lr=self.args.final_lr,
+            iterations_per_epoch=self.iterations_per_epoch,
             warmup=self.args.warmup,
             num_epochs=self.max_epochs,
             ipe_scale=self.args.ipe_scale,
-            use_bfloat16=self.args.use_bfloat16
+            use_bfloat16=self.args.use_bfloat16,
         )
 
-        self.momentum_scheduler = (self.args.ema[0] + i*(self.args.ema[1]-self.args.ema[0])/(self.iterations_per_epoch*self.max_epochs*self.args.ipe_scale)
-                          for i in range(int(self.iterations_per_epoch*self.max_epochs*self.args.ipe_scale)+1))
-        
-        self.model = self.target_encoder
+        self.momentum_scheduler = (
+            self.args.ema[0]
+            + i
+            * (self.args.ema[1] - self.args.ema[0])
+            / (self.iterations_per_epoch * self.max_epochs * self.args.ipe_scale)
+            for i in range(
+                int(self.iterations_per_epoch * self.max_epochs * self.args.ipe_scale)
+                + 1
+            )
+        )
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer, scaler, scheduler, wd_scheduler = init_opt(
             encoder=self.encoder,
             predictor=self.predictor,
             wd=self.args.weight_decay,
-            final_wd= self.args.final_weight_decay,
-            start_lr= self.args.start_lr,
-            ref_lr= self.args.lr,
-            final_lr= self.args.final_lr,
-            iterations_per_epoch= self.iterations_per_epoch,
+            final_wd=self.args.final_weight_decay,
+            start_lr=self.args.start_lr,
+            ref_lr=self.args.lr,
+            final_lr=self.args.final_lr,
+            iterations_per_epoch=self.iterations_per_epoch,
             warmup=self.args.warmup,
-            num_epochs= self.max_epochs, #not entirely the same but fine maybe
+            num_epochs=self.max_epochs,  # not entirely the same but fine maybe
             ipe_scale=self.args.ipe_scale,
-            use_bfloat16=self.args.use_bfloat16
+            use_bfloat16=self.args.use_bfloat16,
         )
 
-        return [optimizer], [scheduler]
-    
-    def jepa_loss(self, batch, mode):
-        _new_wd = self.wd_scheduler.step()
+        self.scheduler = scheduler
 
-        # Create the collate function and datamodule in such a way that this is true. 
+        return [optimizer], [scheduler]
+
+    def jepa_loss(self, batch, mode):
+        self.wd_scheduler.step()
+
+        # log the wd_scheduler and scheduler values
+        self.log("wd", self.wd_scheduler.current_wd, prog_bar=True)
+        self.log("lr", self.scheduler.current_lr, prog_bar=True)
+
+        # Create the collate function and datamodule in such a way that this is true.
         udata, masks_enc, masks_pred = batch
 
         def load_imgs():
-                # -- unsupervised imgs
-                imgs = udata[0].to(self.device)
-                masks_1 = [u.to(self.device) for u in masks_enc]
-                masks_2 = [u.to(self.device) for u in masks_pred]
-                return (imgs, masks_1, masks_2)
+            # -- unsupervised imgs
+            imgs = udata[0].to(self.device)
+            masks_1 = [u.to(self.device) for u in masks_enc]
+            masks_2 = [u.to(self.device) for u in masks_pred]
+            return (imgs, masks_1, masks_2)
+
         imgs, masks_enc, masks_pred = load_imgs()
 
         def forward_target():
@@ -120,32 +131,36 @@ class IJepa(L.LightningModule):
             return loss
 
         # Step 1. Forward
-        #idk if I should keep the casting
-        with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=self.args.use_bfloat16):
+        # idk if I should keep the casting
+        with torch.cuda.amp.autocast(
+            dtype=torch.bfloat16, enabled=self.args.use_bfloat16
+        ):
             h = forward_target()
             z = forward_context()
             loss = loss_fn(z, h)
-        
-        #logging
+
+        # logging
         self.log(mode + "_loss", loss, prog_bar=True)
 
-        assert not torch.isnan(loss), 'loss is nan'
+        assert not torch.isnan(loss), "loss is nan"
 
         return loss
 
     def training_step(self, batch, batch_idx):
-        return self.jepa_loss(batch, mode='train')
+        # log current learning rate
+        return self.jepa_loss(batch, mode="train")
 
     def validation_step(self, batch, batch_idx):
         self.jepa_loss(batch, mode="val")
 
     def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure):
-        #step 2. backward and step 
+        # step 2. backward and step
         optimizer.step(closure=optimizer_closure)
 
         # Step 3. momentum update of target encoder (this is nograd and thus shouldnt affect the backward)
         with torch.no_grad():
             m = next(self.momentum_scheduler)
-            for param_q, param_k in zip(self.encoder.parameters(), self.target_encoder.parameters()):
-                param_k.data.mul_(m).add_((1.-m) * param_q.detach().data)
-    
+            for param_q, param_k in zip(
+                self.encoder.parameters(), self.target_encoder.parameters()
+            ):
+                param_k.data.mul_(m).add_((1.0 - m) * param_q.detach().data)
