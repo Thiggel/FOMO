@@ -56,7 +56,7 @@ class ImbalancedTraining:
 
         ood_train_dataset, ood_test_dataset = (
             ood_train_dataset[train_dataset_rand_idx[:split_idx]],
-            ood_train_dataset[train_dataset_rand_idx[split_idx]]:
+            ood_train_dataset[train_dataset_rand_idx[split_idx]]
         )
 
         ood = OOD(
