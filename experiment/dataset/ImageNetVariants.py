@@ -19,6 +19,11 @@ class ImageNetVariants(Enum):
         path="imagenet-1k",
     )
 
+    ImageNetDummy = ImageNetVariant(
+        name="dummy",
+        path="doyu/imagenette-224_224_100_test",
+    )
+
     @staticmethod
     def init_variant(variant: str):
         return {member.value.name: member for member in ImageNetVariants}[variant]

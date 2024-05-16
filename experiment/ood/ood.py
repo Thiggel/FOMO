@@ -12,7 +12,7 @@ class OOD:
         args: dict,
         train: Dataset,
         test: Dataset,
-        feature_extractor: torch.nn.Module,
+        feature_extractor,
     ):
         self.train = train
         self.test = test

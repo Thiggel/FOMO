@@ -1,5 +1,5 @@
 import os
-import pytorch_lightning as L
+import lightning.pytorch as L
 from torch import nn
 from torch.optim import AdamW, Optimizer
 from torch import optim
@@ -14,15 +14,18 @@ class CIFAR100FineTuner(L.LightningModule):
         self,
         model: nn.Module,
         lr: float,
-        output_size: int,
+        *args,
+        **kwargs,
     ):
+        self.max_epochs = 10
+        self.batch_size = 32
+
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
         (self.train_dataset, self.val_dataset, self.test_dataset) = self.get_datasets()
 
         self.model = model
-        self.max_epochs = 25
 
         num_ftrs = self.model.fc.in_features
         self.model.fc = nn.Linear(num_ftrs, 100)

@@ -222,7 +222,7 @@ def main():
 
         run_args = set_checkpoint_for_run(args, run_idx)
 
-        results = run(run_args, seed=run_idx)[0]
+        results = run(run_args, seed=run_idx)
 
         end_time = time.time()
         seconds_to_hours = 3600
