@@ -60,7 +60,7 @@ class ImbalancedTraining:
         ood = OOD(
             args=self.args,
             train=ood_train_dataset,
-            val=ood_test_dataset,
+            test=ood_test_dataset,
             feature_extractor=self.ssl_method.model.extract_features,
             )
 
