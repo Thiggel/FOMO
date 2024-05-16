@@ -21,7 +21,7 @@ class ImageNetVariants(Enum):
 
     ImageNetDummy = ImageNetVariant(
         name="dummy",
-        path="DurreSudoku/dummy_image_dataset",
+        path="sxdave/emotion_detection",
     )
 
     @staticmethod
