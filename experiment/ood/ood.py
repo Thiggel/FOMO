@@ -12,11 +12,11 @@ class OOD:
         args: dict,
         train: Dataset,
         test: Dataset,
-        feature_extractor: torch.nn.Module,
+        feature_extractor,
     ):
         self.train = train
         self.test = test
-        self.feature_extractor = feature_extractor.extract_features
+        self.feature_extractor = feature_extractor
         self.batch_size = args.fe_batch_size
         self.K = args.k
         self.pct_ood = args.pct_ood
