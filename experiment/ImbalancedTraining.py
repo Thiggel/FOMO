@@ -100,13 +100,15 @@ class ImbalancedTraining:
                 lr=self.args.lr,
             )
 
-            self.trainer_args["max_epochs"] = benchmark.max_epochs
+            self.trainer_args["max_epochs"] = finetuner.max_epochs
 
             trainer = L.Trainer(**self.trainer_args)
 
             trainer.fit(model=finetuner)
 
-            results.update(trainer.test(model=finetuner))
+            finetuning_results = trainer.test(model=finetuner)[0]
+
+            results = {**results, **finetuning_results}
 
         return results
 
