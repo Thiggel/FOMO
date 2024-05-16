@@ -21,7 +21,7 @@ class ImageNetVariants(Enum):
 
     ImageNetDummy = ImageNetVariant(
         name="dummy",
-        path="hf-internal-testing/dummy_image_class_data",
+        path="patrickvonplaten/dummy_image_data",
     )
 
     @staticmethod
