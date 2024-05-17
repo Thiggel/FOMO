@@ -60,7 +60,8 @@ class ImbalancedTraining:
 
         train_dataset = self.datamodule.train_dataset
 
-        num_ood_train, num_ood_test = int((1-self.ood_test_split)*len(train_dataset)), int(self.ood_test_split*len(train_dataset))
+        num_ood_test = int(self.ood_test_split*len(train_dataset))
+        num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
             train_dataset, [num_ood_train, num_ood_test]
