@@ -83,6 +83,7 @@ def get_training_args() -> dict:
     parser.add_argument("--color_jitter_strength", type=float, default=0.0)
     parser.add_argument("--crop_scale", type=float, nargs=2, default=[0.3, 1.0])
     parser.add_argument("--crop_size", type=int, default=224)
+    parser.add_argument("--resize_to", type=int, default=256)
     parser.add_argument(
         "--image_folder", type=str, default="imagenet_full_size/061417/"
     )
