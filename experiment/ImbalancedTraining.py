@@ -95,6 +95,8 @@ class ImbalancedTraining:
         results = {}
 
         for benchmark in benchmarks:
+            print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
+
             finetuner = benchmark(
                 model=self.ssl_method.model,
                 lr=self.args.lr,
