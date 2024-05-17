@@ -7,6 +7,9 @@ import torch
 import lightning.pytorch as L
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from tqdm import tqdm
+
+from experiment.utils.get_num_workers import get_num_workers
 
 
 class CIFAR10KNNClassifier(L.LightningModule):
@@ -47,7 +50,7 @@ class CIFAR10KNNClassifier(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return os.cpu_count()
+        return get_num_workers()
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -72,8 +75,8 @@ class CIFAR10KNNClassifier(L.LightningModule):
         labels = []
 
         with torch.no_grad():
-            for inputs, label in dataloader:
-                outputs = self.model.extract_features(inputs)
+            for inputs, label in tqdm(dataloader, desc="Extracting features"):
+                outputs = self.model.extract_features(inputs.to(self.device))
                 features.append(outputs)
                 labels.append(label)
 
@@ -82,10 +85,11 @@ class CIFAR10KNNClassifier(L.LightningModule):
     def fit_knn(self):
         train_loader = self.train_dataloader()
         train_features, train_labels = self.extract_features(train_loader)
-        self.knn.fit(train_features.numpy(), train_labels.numpy())
+        self.knn.fit(train_features.cpu().numpy(), train_labels.cpu().numpy())
 
     def training_step(self, batch, batch_idx):
         self.fit_knn()
+        self.trainer.should_stop = True
         return None
 
     def test_step(
@@ -94,8 +98,8 @@ class CIFAR10KNNClassifier(L.LightningModule):
         inputs, targets = batch
 
         features = self.model.extract_features(inputs)
-        predictions = self.knn.predict(features.numpy())
-        accuracy = accuracy_score(targets.numpy(), predictions)
+        predictions = self.knn.predict(features.cpu().numpy())
+        accuracy = accuracy_score(targets.cpu().numpy(), predictions)
 
         self.log("cifar10_knn_test_accuracy", accuracy, prog_bar=True)
 

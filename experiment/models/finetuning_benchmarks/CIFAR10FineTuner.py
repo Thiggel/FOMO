@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 import torch
 
+from experiment.utils.get_num_workers import get_num_workers
+
 
 class CIFAR10FineTuner(L.LightningModule):
     def __init__(
@@ -81,7 +83,7 @@ class CIFAR10FineTuner(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return os.cpu_count()
+        return get_num_workers()
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(

@@ -115,17 +115,11 @@ def run(args: Namespace, seed: int = 42) -> dict:
         mode=mode,
     )
 
-    early_stopping_callback = EarlyStopping(
-        monitor=args.early_stopping_monitor,
-        patience=args.early_stopping_patience,
-        mode=mode,
-    )
-
     tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
 
     stats_monitor = DeviceStatsMonitor()
 
-    callbacks = [checkpoint_callback, early_stopping_callback, stats_monitor]
+    callbacks = [checkpoint_callback, stats_monitor]
 
     trainer_args = {
         "max_time": {"hours": args.max_hours_per_run},
@@ -185,11 +179,7 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
     results = {}
 
     for benchmark in benchmarks:
-        finetuner = benchmark(
-            model=model,
-            lr=args.lr,
-            batch_size = 64
-        )
+        finetuner = benchmark(model=model, lr=args.lr, batch_size=64)
 
         trainer_args["max_epochs"] = finetuner.max_epochs
 

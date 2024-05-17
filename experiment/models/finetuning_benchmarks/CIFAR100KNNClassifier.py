@@ -7,6 +7,9 @@ import torch
 import lightning.pytorch as L
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from tqdm import tqdm
+
+from experiment.utils.get_num_workers import get_num_workers
 
 
 class CIFAR100KNNClassifier(L.LightningModule):
@@ -47,7 +50,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return os.cpu_count()
+        return get_num_workers()
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -72,7 +75,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
         labels = []
 
         with torch.no_grad():
-            for inputs, label in dataloader:
+            for inputs, label in tqdm(dataloader, desc="Extracting features"):
                 outputs = self.model.extract_features(inputs)
                 features.append(outputs)
                 labels.append(label)
@@ -86,6 +89,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         self.fit_knn()
+        self.trainer.should_stop = True
         return None
 
     def test_step(
