@@ -14,11 +14,8 @@ class CIFAR100FineTuner(L.LightningModule):
         self,
         model: nn.Module,
         lr: float,
-<<<<<<< Updated upstream
-=======
         weight_decay=1e-3,
         max_epochs=25,
->>>>>>> Stashed changes
         *args,
         **kwargs,
     ):
