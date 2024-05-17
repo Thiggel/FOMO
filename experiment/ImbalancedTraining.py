@@ -27,7 +27,7 @@ class ImbalancedTraining:
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
         self.ood_transform = transforms.Compose([
-            transforms.Resize(args.crop_size),
+            transforms.Resize(args.resize_to),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
