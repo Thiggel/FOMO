@@ -33,7 +33,7 @@ class ModelTypes(Enum):
             "ViTSmall": ModelType(
                 resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ViT(
-                    model_name="WinKawaks/vit-small-patch16-224",
+                    model_id="WinKawaks/vit-small-patch16-224",
                     output_size=output_size,
                     *args,
                     **kwargs,
@@ -42,7 +42,7 @@ class ModelTypes(Enum):
             "ViTBase": ModelType(
                 resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ViT(
-                    model_name="google/vit-base-patch16-224-in21k",
+                    model_id="google/vit-base-patch16-224-in21k",
                     output_size=output_size,
                     *args,
                     **kwargs,
