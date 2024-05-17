@@ -17,7 +17,7 @@ class CIFAR10FineTuner(L.LightningModule):
         lr: float = 0.01,
         output_size: int = 10,
         weight_decay=1e-3,
-        max_epochs = 25
+        max_epochs = 25,
         *args,
         **kwargs,
     ):
