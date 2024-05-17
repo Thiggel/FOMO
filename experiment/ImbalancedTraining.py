@@ -5,6 +5,8 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
 from experiment.ood.ood import OOD
+from torchvision import transforms
+import copy
 
 
 class ImbalancedTraining:
@@ -24,6 +26,15 @@ class ImbalancedTraining:
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
+        self.ood_transform = transforms.Compose(
+            [
+                transforms.Resize(args.resize_to),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -48,23 +59,23 @@ class ImbalancedTraining:
             datamodule=self.datamodule,
         )
 
+        ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
+        self.datamodule.train_dataset.dataset.transform = self.ood_transform
+
         train_dataset = self.datamodule.train_dataset
 
-        ood_train_size = int(self.ood_test_split * len(train_dataset))
-        ood_test_size = len(train_dataset) - ood_train_size
+        num_ood_test = int(self.ood_test_split * len(train_dataset))
+        num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
-            train_dataset, [ood_train_size, ood_test_size]
+            train_dataset, [num_ood_train, num_ood_test]
         )
 
         ood = OOD(
-            fe_batch_size=self.args.fe_batch_size,
-            k=self.args.k,
-            pct_ood=self.args.pct_ood,
-            pct_train=self.args.pct_train,
-            train_dataset=ood_train_dataset,
-            val_dataset=ood_test_dataset,
-            model=self.ssl_method.model,
+            args=self.args,
+            train=ood_train_dataset,
+            test=ood_test_dataset,
+            feature_extractor=self.ssl_method.model.extract_features,
         )
 
         ood.extract_features()
@@ -76,6 +87,8 @@ class ImbalancedTraining:
         self.datamodule.update_dataset(
             path=f"{self.args['additional_data_path']}/{cycle_idx}"
         )
+
+        self.datamodule.train_dataset.dataset.transform = ssl_transform
 
     def pretrain_imbalanced(
         self,

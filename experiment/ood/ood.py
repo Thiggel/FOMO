@@ -3,8 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import faiss
 from tqdm import tqdm
-from torch.utils.data import DataLoader, Subset
-
+from torch.utils.data import DataLoader
 
 class OOD:
     def __init__(
@@ -12,7 +11,7 @@ class OOD:
         args: dict,
         train: Dataset,
         test: Dataset,
-        feature_extractor: torch.nn.Module,
+        feature_extractor,
     ):
         self.train = train
         self.test = test
