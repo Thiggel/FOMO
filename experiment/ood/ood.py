@@ -3,8 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import faiss
 from tqdm import tqdm
-from torch.utils.data import DataLoader, Subset
-
+from torch.utils.data import DataLoader
 
 class OOD:
     def __init__(

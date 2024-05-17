@@ -5,6 +5,8 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
 from experiment.ood.ood import OOD
+from torchvision import transforms
+import copy
 
 
 class ImbalancedTraining:
@@ -24,6 +26,11 @@ class ImbalancedTraining:
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
+        self.ood_transform = transforms.Compose([
+            transforms.Resize(args.crop_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -48,9 +55,14 @@ class ImbalancedTraining:
             datamodule=self.datamodule,
         )
 
+        ssl_transform = copy.deepcopy(self.datamodule.transform)
+        self.datamodule.transform = self.ood_transform
+
         train_dataset = self.datamodule.train_dataset
 
-        
+        ood_train_dataset, ood_test_dataset = random_split(
+            train_dataset, [len(train_dataset) - self.ood_test_split, self.ood_test_split]
+        )
 
         ood = OOD(
             args=self.args,
@@ -68,6 +80,8 @@ class ImbalancedTraining:
         self.datamodule.update_dataset(
             path=f"{self.args['additional_data_path']}/{cycle_idx}"
         )
+
+        self.datamodule.transform = ssl_transform
 
     def pretrain_imbalanced(
         self,
