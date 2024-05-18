@@ -7,6 +7,10 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
 from experiment.ood.ood import OOD
 from diffusers import StableUnCLIPImg2ImgPipeline
 
+from torchvision.transforms.functional import to_pil_image
+from PIL import Image
+import os
+
 class ImbalancedTraining:
     def __init__(
         self,
@@ -69,7 +73,7 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
         diffussion_pipe = self.initialize_model()
-        self.generate_new_data(ood_samples, pipe=diffussion_pipe, save_subfolder=f"/{cycle_idx}")
+        self.generate_new_data(ood_samples, pipe=diffussion_pipe, save_subfolder=f"{self.args['additional_data_path']}/{cycle_idx}")
 
         self.datamodule.update_dataset(
             path=f"{self.args['additional_data_path']}/{cycle_idx}"
@@ -128,8 +132,9 @@ class ImbalancedTraining:
         - batch_size (int): Number of samples per batch.
         - nr_to_gen (int): Number of images to generate per sample.
         """
-        from torchvision.transforms.functional import to_pil_image
-        from PIL import Image
+        if not os.path.exists(save_subfolder):
+            os.makedirs(save_subfolder)
+
         ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=True)
 
         for ood_samples, ood_index in ood_sample_loader:
