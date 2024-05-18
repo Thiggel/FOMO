@@ -11,7 +11,6 @@ from experiment.models.backbones.Resnet import ResNet18, ResNet50
 
 @dataclass
 class ModelType:
-    resized_image_size: tuple[int, int]
     model: nn.Module
 
     def initialize(self, *args, **kwargs) -> nn.Module:
@@ -23,15 +22,12 @@ class ModelTypes(Enum):
     def model_types():
         return {
             "ResNet18": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ResNet18(output_size),
             ),
             "ResNet50": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ResNet50(output_size),
             ),
             "ViTSmall": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ViT(
                     model_id="WinKawaks/vit-small-patch16-224",
                     output_size=output_size,
@@ -40,7 +36,6 @@ class ModelTypes(Enum):
                 ),
             ),
             "ViTBase": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ViT(
                     model_id="google/vit-base-patch16-224-in21k",
                     output_size=output_size,
@@ -50,7 +45,6 @@ class ModelTypes(Enum):
             ),
             ### Add the Jeppa ViT versions, Jeppa needs seperate ViTs because of masking
             "ViTTinyJeppa": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda image_size, classification_head, output_size, **kwargs: VisionTransformer(
                     patch_size=16,
                     embed_dim=192,
@@ -66,7 +60,6 @@ class ModelTypes(Enum):
                 ),
             ),
             "ViTSmallJeppa": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda image_size, classification_head, output_size, **kwargs: VisionTransformer(
                     patch_size=16,
                     embed_dim=384,

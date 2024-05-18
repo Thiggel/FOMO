@@ -18,12 +18,19 @@ class CIFAR10KNNClassifier(L.LightningModule):
         model: nn.Module,
         batch_size: int = 32,
         k: int = 5,
+        transform: transforms.Compose = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        ),
         *args,
         **kwargs,
     ):
         super().__init__()
 
         self.save_hyperparameters(ignore=["model"])
+        self.transform = transform
 
         (self.train_dataset, self.test_dataset) = self.get_datasets()
 
@@ -33,17 +40,10 @@ class CIFAR10KNNClassifier(L.LightningModule):
 
         self.knn = KNeighborsClassifier(n_neighbors=k)
 
-    def get_datasets(self) -> tuple[Dataset, Dataset]:
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            ]
-        )
-
-        train_dataset = CIFAR10(root="data", download=True, transform=transform)
+    def get_datasets(self) -> tuple[Dataset, Dataset, Dataset]:
+        train_dataset = CIFAR10(root="data", download=True, transform=self.transform)
         test_dataset = CIFAR10(
-            root="data", train=False, download=True, transform=transform
+            root="data", train=False, download=True, transform=self.transform
         )
 
         return train_dataset, test_dataset

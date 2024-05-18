@@ -23,8 +23,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
         transform: Callable = transforms.Compose(
             [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
+                transforms.Resize(224),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -34,7 +33,6 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         splits: tuple[int, int] = (0.8, 0.1, 0.1),
         batch_size: int = 32,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
-        resized_image_size: tuple[int, int] = (224, 224),
         checkpoint_filename: str = None,
         test_mode: bool = False,
     ):

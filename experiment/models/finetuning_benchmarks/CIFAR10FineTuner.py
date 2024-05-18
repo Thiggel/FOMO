@@ -19,12 +19,19 @@ class CIFAR10FineTuner(L.LightningModule):
         output_size: int = 10,
         weight_decay=1e-3,
         max_epochs=25,
+        transform: transforms.Compose = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        ),
         *args,
         **kwargs,
     ):
         super().__init__()
         self.max_epochs = 10
         self.batch_size = 32
+        self.transform = transform
 
         self.save_hyperparameters(ignore=["model"])
 
@@ -64,19 +71,12 @@ class CIFAR10FineTuner(L.LightningModule):
         self.loss = nn.CrossEntropyLoss()
 
     def get_datasets(self) -> tuple[Dataset, Dataset, Dataset]:
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            ]
-        )
-
-        dataset = CIFAR10(root="data", download=True, transform=transform)
+        dataset = CIFAR10(root="data", download=True, transform=self.transform)
         train_size = int(0.9 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
         test_dataset = CIFAR10(
-            root="data", train=False, download=True, transform=transform
+            root="data", train=False, download=True, transform=self.transform
         )
 
         return train_dataset, val_dataset, test_dataset

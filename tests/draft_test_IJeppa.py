@@ -90,17 +90,6 @@ def balanced_datamodule(monkeypatch):
 
 
 def init_model(args: dict) -> nn.Module:
-    model_type = ModelTypes.get_model_type(args.model_name)
-
-    model_args = {
-        "model_name": args.model_name,
-        "resized_image_size": model_type.resized_image_size,
-        "batch_size": args.batch_size,
-        "output_size": 100,
-    }
-
-    model = model_type.initialize(**model_args)
-
     if args.checkpoint is not None:
         model.load_state_dict(
             torch.load(

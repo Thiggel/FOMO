@@ -26,9 +26,9 @@ class ImbalancedTraining:
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
-        self.ood_transform = transforms.Compose(
+        self.transform = transforms.Compose(
             [
-                transforms.Resize(args.resize_to),
+                transforms.Resize(args.crop_size),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -60,7 +60,7 @@ class ImbalancedTraining:
         )
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
-        self.datamodule.train_dataset.dataset.transform = self.ood_transform
+        self.datamodule.train_dataset.dataset.transform = self.transform
 
         train_dataset = self.datamodule.train_dataset
 
@@ -111,8 +111,7 @@ class ImbalancedTraining:
             print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
 
             finetuner = benchmark(
-                model=self.ssl_method.model,
-                lr=self.args.lr,
+                model=self.ssl_method.model, lr=self.args.lr, transform=self.transform
             )
 
             self.trainer_args["max_epochs"] = finetuner.max_epochs
