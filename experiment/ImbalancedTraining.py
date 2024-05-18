@@ -5,13 +5,10 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
 from experiment.ood.ood import OOD
-<<<<<<< HEAD
 from torchvision import transforms
 import copy
 
-=======
 from diffusers import StableUnCLIPImg2ImgPipeline
->>>>>>> feature-diffusion
 
 class ImbalancedTraining:
     def __init__(
