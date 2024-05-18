@@ -7,8 +7,11 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
 from experiment.ood.ood import OOD
 from torchvision import transforms
 import copy
-
+from torchvision.transforms.functional import to_pil_image
+from PIL import Image
 from diffusers import StableUnCLIPImg2ImgPipeline
+import os 
+
 
 class ImbalancedTraining:
     def __init__(
@@ -132,7 +135,7 @@ class ImbalancedTraining:
         pipe = pipe.to("cuda")
         return pipe
 
-    def generate_new_data(self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1)-> None:
+    def generate_new_data(self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1) -> None:
         """
         Generate new data based on out-of-distribution (OOD) samples using StableUnclip Img2Img.
 
@@ -143,10 +146,11 @@ class ImbalancedTraining:
         - batch_size (int): Number of samples per batch.
         - nr_to_gen (int): Number of images to generate per sample.
         """
-        from torchvision.transforms.functional import to_pil_image
-        from PIL import Image
-        ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=True)
-
+        if not os.path.exists(save_subfolder):
+            os.makedirs(save_subfolder)
+        
+        ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=False)
+        
         for ood_samples, ood_index in ood_sample_loader:
             samples = []
             for sample in ood_samples:
@@ -156,5 +160,5 @@ class ImbalancedTraining:
 
             v_imgs = pipe(samples,num_images_per_prompt=nr_to_gen).images   
             for i, img in enumerate(v_imgs):
-                name =f"/ood_variation_{i}.png" #TODO: include index?
+                name = f"/ood_variation_{i}.png" #TODO: include index?
                 img.save(save_subfolder+name)
