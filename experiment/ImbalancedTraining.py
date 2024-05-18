@@ -69,17 +69,10 @@ class ImbalancedTraining:
 
         ood = OOD(
             args=self.args,
-<<<<<<< HEAD
             train=ood_train_dataset,
             test=ood_test_dataset,
             feature_extractor=self.ssl_method.model.extract_features,
             )
-=======
-            train_dataset=ood_train_dataset,
-            val_dataset=ood_test_dataset,
-            model=self.ssl_method.model,
-        )
->>>>>>> feature-diffusion
 
         ood.extract_features()
         ood_indices, _ = ood.ood()
