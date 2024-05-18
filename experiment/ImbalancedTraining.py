@@ -73,10 +73,10 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
         diffussion_pipe = self.initialize_model()
-        self.generate_new_data(ood_samples, pipe=diffussion_pipe, save_subfolder=f"{self.args['additional_data_path']}/{cycle_idx}")
+        self.generate_new_data(ood_samples, pipe=diffussion_pipe, save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}")
 
         self.datamodule.update_dataset(
-            path=f"{self.args['additional_data_path']}/{cycle_idx}"
+            path=f"{self.args.additional_data_path}/{cycle_idx}"
         )
 
     def pretrain_imbalanced(
@@ -121,7 +121,7 @@ class ImbalancedTraining:
         pipe = pipe.to("cuda")
         return pipe
 
-    def generate_new_data(self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1)-> None:
+    def generate_new_data(self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1) -> None:
         """
         Generate new data based on out-of-distribution (OOD) samples using StableUnclip Img2Img.
 
