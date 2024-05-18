@@ -150,4 +150,4 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         # TODO: add the real labels, not dummy ones
         images = os.listdir(aug_path)
         for image in images:
-            self.train_dataset._save_additional_datapoint(image, None)
+            self.train_dataset.dataset._save_additional_datapoint(image, None)
