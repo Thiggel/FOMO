@@ -24,12 +24,13 @@ def test_update_dataset():
 
     # Pass the image filename to _save_additional_datapoint
     datamodule.dataset._save_additional_datapoint(image_filename, None)
-    datamodule.train_dataset.indices.append(len(datamodule.dataset))
+    datamodule.train_dataset.indices.append(len(datamodule.dataset)-1)
 
     # Pass the image filename to _save_additional_datapoint
     datamodule.dataset._save_additional_datapoint(image_filename, None)
-    datamodule.train_dataset.indices.append(len(datamodule.dataset)+1)
+    datamodule.train_dataset.indices.append(len(datamodule.dataset)-1)
 
+    assert len(datamodule.train_dataset) == initial_length + 2
     # Check that the dataset has been updated
     assert torch.equal(datamodule.train_dataset[initial_length][0], torch.zeros(datamodule.train_dataset[0][0].shape))
     assert torch.equal(datamodule.train_dataset[initial_length+1][0], torch.zeros(datamodule.train_dataset[0][0].shape))
