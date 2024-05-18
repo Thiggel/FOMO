@@ -90,7 +90,7 @@ class ImbalancedTraining:
         self.generate_new_data(ood_samples, pipe=diffussion_pipe, save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}")
 
         self.datamodule.update_dataset(
-            path=f"{self.args.additional_data_path}/{cycle_idx}"
+            aug_path=f"{self.args.additional_data_path}/{cycle_idx}"
         )
 
         self.datamodule.train_dataset.dataset.transform = ssl_transform
