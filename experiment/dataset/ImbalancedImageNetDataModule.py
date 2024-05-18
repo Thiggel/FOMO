@@ -10,7 +10,6 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethods,
     ImbalanceMethod,
 )
-from PIL import Image
 from torchvision import transforms
 
 

@@ -11,7 +11,6 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethod,
 )
 
-
 class DataPoint(TypedDict):
     image: Image.Image
     label: int
@@ -30,7 +29,6 @@ class ImbalancedImageNet(Dataset):
 
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
-
         split = "validation[:1]" if test_mode else "train+validation"
 
         self.dataset = load_dataset(dataset_path, split=split)
@@ -40,6 +38,9 @@ class ImbalancedImageNet(Dataset):
         self.imbalancedness = imbalance_method.value.impl(self.num_classes)
         self.indices = self._load_or_create_indices()
         self.additional_data = self._create_or_load_additional_data()
+
+        print("original length:", len(self.dataset))
+        print("imbalanced length:", len(self))
 
     def _save_additional_datapoint(self, filename: str, label: int):
         self.additional_data.append((filename, label))
@@ -130,6 +131,8 @@ class ImbalancedImageNet(Dataset):
             if idx < len(self.indices)
             else self._load_additional_datapoint(idx - len(self.indices))
         )
+
+        datapoint["image"] = datapoint["image"].convert("RGB")
 
         if self.transform:
             datapoint["image"] = self.transform(datapoint["image"])

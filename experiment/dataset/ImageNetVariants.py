@@ -19,6 +19,11 @@ class ImageNetVariants(Enum):
         path="imagenet-1k",
     )
 
+    ImageNetDummy = ImageNetVariant(
+        name="dummy",
+        path="sxdave/emotion_detection",
+    )
+
     @staticmethod
     def init_variant(variant: str):
         return {member.value.name: member for member in ImageNetVariants}[variant]

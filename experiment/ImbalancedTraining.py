@@ -6,6 +6,8 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
 )
 from experiment.ood.ood import OOD
 from diffusers import StableUnCLIPImg2ImgPipeline
+from torchvision import transforms
+import copy
 
 from torchvision.transforms.functional import to_pil_image
 from PIL import Image
@@ -28,6 +30,11 @@ class ImbalancedTraining:
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
+        self.ood_transform = transforms.Compose([
+            transforms.Resize(args.resize_to),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -52,21 +59,24 @@ class ImbalancedTraining:
             datamodule=self.datamodule,
         )
 
+        ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
+        self.datamodule.train_dataset.dataset.transform = self.ood_transform
+
         train_dataset = self.datamodule.train_dataset
 
-        ood_train_size = int(self.ood_test_split * len(train_dataset))
-        ood_test_size = len(train_dataset) - ood_train_size
+        num_ood_test = int(self.ood_test_split*len(train_dataset))
+        num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
-            train_dataset, [ood_train_size, ood_test_size]
+            train_dataset, [num_ood_train, num_ood_test]
         )
 
         ood = OOD(
             args=self.args,
-            train_dataset=ood_train_dataset,
-            val_dataset=ood_test_dataset,
-            model=self.ssl_method.model,
-        )
+            train=ood_train_dataset,
+            test=ood_test_dataset,
+            feature_extractor=self.ssl_method.model.extract_features,
+            )
 
         ood.extract_features()
         ood_indices, _ = ood.ood()
@@ -81,6 +91,8 @@ class ImbalancedTraining:
         self.datamodule.update_dataset(
             aug_path=f"{self.args.additional_data_path}/{cycle_idx}"
         )
+
+        self.datamodule.train_dataset.dataset.transform = ssl_transform
 
     def pretrain_imbalanced(
         self,
@@ -105,13 +117,15 @@ class ImbalancedTraining:
                 lr=self.args.lr,
             )
 
-            self.trainer_args["max_epochs"] = benchmark.max_epochs
+            self.trainer_args["max_epochs"] = finetuner.max_epochs
 
             trainer = L.Trainer(**self.trainer_args)
 
             trainer.fit(model=finetuner)
 
-            results.update(trainer.test(model=finetuner))
+            finetuning_results = trainer.test(model=finetuner)[0]
+
+            results = {**results, **finetuning_results}
 
         return results
 

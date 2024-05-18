@@ -6,4 +6,5 @@ class NoImbalancedness(Imbalancedness):
         super().__init__(num_classes)
 
     def get_imbalance(self, class_index: int) -> float:
-        return 0.0
+        # keep 58.313% of the data
+        return 1 - 0.58313

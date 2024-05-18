@@ -64,3 +64,6 @@ class ViT(nn.Module):
         output = self.head(output).reshape(-1, self.output_size, 2)
 
         return output
+
+    def extract_features(self, images: torch.Tensor) -> torch.Tensor:
+        return self.model(images).last_hidden_state[:, 0, :]
