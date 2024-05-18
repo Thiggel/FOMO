@@ -5,9 +5,13 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
 from experiment.ood.ood import OOD
+<<<<<<< HEAD
 from torchvision import transforms
 import copy
 
+=======
+from diffusers import StableUnCLIPImg2ImgPipeline
+>>>>>>> feature-diffusion
 
 class ImbalancedTraining:
     def __init__(
@@ -122,17 +126,16 @@ class ImbalancedTraining:
 
         return results
 
-    def initialize_model():
+    def initialize_model(self):
         """
         Load the model first to ensure better flow
         """
-        from diffusers import StableUnCLIPImg2ImgPipeline
         pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
                 "stabilityai/stable-diffusion-2-1-unclip", torch_dtype=torch.float16, variation="fp16")
         pipe = pipe.to("cuda")
         return pipe
 
-    def generate_new_data(ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1)-> None:
+    def generate_new_data(self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1)-> None:
         """
         Generate new data based on out-of-distribution (OOD) samples using StableUnclip Img2Img.
 
