@@ -35,6 +35,8 @@ class ImbalancedTraining:
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
+        self.initial_train_ds_size = len(self.datamodule.train_dataset)
+
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -61,15 +63,18 @@ class ImbalancedTraining:
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
         self.datamodule.train_dataset.dataset.transform = self.ood_transform
-
-        train_dataset = self.datamodule.train_dataset
-
+        
+        train_dataset = Subset(
+          self.datamodule.train_dataset,
+          list(range(self.initial_train_ds_size)))
+        
         num_ood_test = int(self.ood_test_split*len(train_dataset))
         num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
             train_dataset, [num_ood_train, num_ood_test]
         )
+
 
         ood = OOD(
             args=self.args,
