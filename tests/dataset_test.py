@@ -29,10 +29,10 @@ def test_update_dataset():
     datamodule.train_dataset.indices.append(len(datamodule.dataset))
 
     # Check that the dataset has been updated
-    assert torch.equal(datamodule.train_dataset[initial_length][0], torch.zeros(datamodule.train_dataset[0].shape))
+    assert torch.equal(datamodule.train_dataset[initial_length][0], torch.zeros(datamodule.train_dataset[0][0].shape))
     assert datamodule.train_dataset[initial_length][1] == 0
 
-    assert torch.equal(datamodule.train_dataset[initial_length + 1][0], torch.ones(datamodule.train_dataset[0].shape))
+    assert torch.equal(datamodule.train_dataset[initial_length + 1][0], torch.ones(datamodule.train_dataset[0][0].shape))
     assert datamodule.train_dataset[initial_length + 1][1] == 1
 
     # Remove the dummy image file
