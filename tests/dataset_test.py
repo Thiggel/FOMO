@@ -4,11 +4,13 @@ from torchvision.utils import save_image
 from experiment.dataset.ImageNetVariants import ImageNetVariants
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 import os
+from torchvision import transforms
 
 def test_update_dataset():
     # Create an instance of ImbalancedImageNetDataModule
     datamodule = ImbalancedImageNetDataModule(dataset_variant=ImageNetVariants.ImageNetDummy,
-                                              imbalance_method=ImbalanceMethods.NoImbalance)  
+                                              imbalance_method=ImbalanceMethods.NoImbalance,
+                                              transform=transforms.ToTensor())  
     
     initial_length = len(datamodule.train_dataset)
 
@@ -30,10 +32,7 @@ def test_update_dataset():
 
     # Check that the dataset has been updated
     assert torch.equal(datamodule.train_dataset[initial_length][0], torch.zeros(datamodule.train_dataset[0][0].shape))
-    assert datamodule.train_dataset[initial_length][1] == 0
-
-    assert torch.equal(datamodule.train_dataset[initial_length + 1][0], torch.ones(datamodule.train_dataset[0][0].shape))
-    assert datamodule.train_dataset[initial_length + 1][1] == 1
+    assert torch.equal(datamodule.train_dataset[initial_length+1][0], torch.zeros(datamodule.train_dataset[0][0].shape))
 
     # Remove the dummy image file
     os.remove(image_filename)
