@@ -72,8 +72,11 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
-        diffussion_pipe = self.initialize_model()
-        self.generate_new_data(ood_samples, pipe=diffussion_pipe, save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}")
+        diffusion_pipe = self.initialize_model()
+        self.generate_new_data(ood_samples, 
+                               pipe=diffusion_pipe, 
+                               batch_size=self.args.sd_batch_size, 
+                               save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}")
 
         self.datamodule.update_dataset(
             aug_path=f"{self.args.additional_data_path}/{cycle_idx}"
@@ -144,7 +147,7 @@ class ImbalancedTraining:
                     sample = to_pil_image(sample)
                 samples.append(sample)
 
-            v_imgs = pipe(samples,num_images_per_prompt=nr_to_gen).images   
+            v_imgs = pipe(samples, num_images_per_prompt=nr_to_gen).images   
             for i, img in enumerate(v_imgs):
                 name =f"/ood_variation_{i}.png" #TODO: include index?
                 img.save(save_subfolder+name)
