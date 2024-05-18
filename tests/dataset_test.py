@@ -12,7 +12,9 @@ def test_update_dataset():
 
     # Add additional datapoints
     datamodule.dataset._save_additional_datapoint(torch.zeros(datamodule.train_dataset[0][0].shape), None)
+    datamodule.train_dataset.indices.append(len(datamodule.dataset))
     datamodule.dataset._save_additional_datapoint(torch.ones(datamodule.train_dataset[0][0].shape), None)
+    datamodule.train_dataset.indices.append(len(datamodule.dataset) + 1)
 
     updated_length = len(datamodule.train_dataset)
 
