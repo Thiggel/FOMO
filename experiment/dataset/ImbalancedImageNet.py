@@ -11,7 +11,6 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethod,
 )
 
-
 class DataPoint(TypedDict):
     image: Image.Image
     label: int
@@ -30,7 +29,6 @@ class ImbalancedImageNet(Dataset):
 
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
-
         split = "validation[:1]" if test_mode else "train+validation"
 
         self.dataset = load_dataset(dataset_path, split=split)

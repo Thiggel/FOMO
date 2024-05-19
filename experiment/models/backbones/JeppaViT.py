@@ -549,6 +549,12 @@ class VisionTransformer(nn.Module):
 
         return x
 
+    def extract_features(self, x, masks=None):
+        x = self.forward(x, masks)
+        x = torch.mean(x, dim=1)
+
+        return x
+
     def interpolate_pos_encoding(self, x, pos_embed):
         npatch = x.shape[1] - 1
         N = pos_embed.shape[1] - 1

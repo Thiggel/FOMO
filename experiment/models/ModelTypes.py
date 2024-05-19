@@ -6,7 +6,7 @@ from torchvision import models
 
 from experiment.models.backbones.ViT import ViT
 from experiment.models.backbones.JeppaViT import VisionTransformer, partial
-
+from experiment.models.backbones.Resnet import ResNet18, ResNet50
 
 @dataclass
 class ModelType:
@@ -23,17 +23,11 @@ class ModelTypes(Enum):
         return {
             "ResNet18": ModelType(
                 resized_image_size=(224, 224),
-                model=lambda output_size, *args, **kwargs: models.resnet18(
-                    pretrained=False,
-                    num_classes=4*output_size,
-                ),
+                model=lambda output_size, *args, **kwargs: ResNet18(output_size),
             ),
             "ResNet50": ModelType(
                 resized_image_size=(224, 224),
-                model=lambda output_size, *args, **kwargs: models.resnet50(
-                    pretrained=False,
-                    num_classes=output_size,
-                ),
+                model=lambda output_size, *args, **kwargs: ResNet50(output_size),
             ),
             "ViTSmall": ModelType(
                 resized_image_size=(224, 224),
