@@ -100,7 +100,6 @@ class CIFAR10KNNClassifier(L.LightningModule):
         features = self.model.extract_features(inputs)
         predictions = self.knn.predict(features.cpu().numpy())
         accuracy = accuracy_score(targets.cpu().numpy(), predictions)
-        print(targets, predictions, accuracy)
 
         self.log("cifar10_knn_test_accuracy", accuracy, prog_bar=True)
 
