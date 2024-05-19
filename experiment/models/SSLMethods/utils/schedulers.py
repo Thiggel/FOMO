@@ -49,8 +49,10 @@ class WarmupCosineSchedule(_LRScheduler):
 
         for group in self.optimizer.param_groups:
             group["lr"] = new_lr
+            #print(group["lr"])
 
         self.current_lr = new_lr
+        #print(new_lr)
 
         return new_lr
 
@@ -81,4 +83,5 @@ class CosineWDSchedule(object):
                 group["weight_decay"] = new_wd
 
         self.current_wd = new_wd
+        #print(new_wd)
         return new_wd
