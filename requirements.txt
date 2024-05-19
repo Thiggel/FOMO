@@ -17,3 +17,4 @@ flake8
 black
 pre-commit
 faiss-cpu
+scikit-learn

@@ -37,7 +37,6 @@ class ImbalancedTraining:
         ])
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
 
-
     def run(self) -> dict:
         if self.args.pretrain:
             self.pretrain_imbalanced()
@@ -62,6 +61,7 @@ class ImbalancedTraining:
         )
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
+        
         self.datamodule.train_dataset.dataset.transform = self.ood_transform
         
         train_dataset = Subset(
@@ -69,6 +69,7 @@ class ImbalancedTraining:
           list(range(self.initial_train_ds_size)))
         
         num_ood_test = int(self.ood_test_split*len(train_dataset))
+
         num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
@@ -81,7 +82,7 @@ class ImbalancedTraining:
             train=ood_train_dataset,
             test=ood_test_dataset,
             feature_extractor=self.ssl_method.model.extract_features,
-            )
+        )
 
         ood.extract_features()
         ood_indices, _ = ood.ood()
@@ -117,12 +118,17 @@ class ImbalancedTraining:
         results = {}
 
         for benchmark in benchmarks:
+            print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
+
             finetuner = benchmark(
-                model=self.ssl_method.model,
-                lr=self.args.lr,
+                model=self.ssl_method.model, lr=self.args.lr, transform=self.transform
             )
 
             self.trainer_args["max_epochs"] = finetuner.max_epochs
+
+            self.trainer_args["max_time"] = {
+                "minutes": 15,
+            }
 
             trainer = L.Trainer(**self.trainer_args)
 

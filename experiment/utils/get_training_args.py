@@ -69,7 +69,7 @@ def get_training_args() -> dict:
     parser.add_argument("--classification_head", action="store_true")
     parser.add_argument("--early_stopping_monitor", type=str, default="val_loss")
 
-    #I-Jepa Args
+    # I-Jepa Args
     parser.add_argument("--fe_batch_size", type=int, default=32)
     parser.add_argument("--sd_batch_size", type=int, default=4)
     parser.add_argument("--k", type=int, default=1000)
@@ -84,7 +84,6 @@ def get_training_args() -> dict:
     parser.add_argument("--color_jitter_strength", type=float, default=0.0)
     parser.add_argument("--crop_scale", type=float, nargs=2, default=[0.3, 1.0])
     parser.add_argument("--crop_size", type=int, default=224)
-    parser.add_argument("--resize_to", type=int, default=256)
     parser.add_argument(
         "--image_folder", type=str, default="imagenet_full_size/061417/"
     )

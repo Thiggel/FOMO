@@ -8,17 +8,26 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 import torch
 
+from experiment.utils.get_num_workers import get_num_workers
+
 
 class CIFAR100FineTuner(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
         lr: float,
+        transform: transforms.Compose = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        ),
         *args,
         **kwargs,
     ):
         self.max_epochs = 10
         self.batch_size = 32
+        self.transform = transform
 
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -33,26 +42,19 @@ class CIFAR100FineTuner(L.LightningModule):
         self.loss = nn.CrossEntropyLoss()
 
     def get_datasets(self) -> tuple[Dataset, Dataset, Dataset]:
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            ]
-        )
-
-        dataset = CIFAR100(root="data", download=True, transform=transform)
+        dataset = CIFAR100(root="data", download=True, transform=self.transform)
         train_size = int(0.9 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
         test_dataset = CIFAR100(
-            root="data", train=False, download=True, transform=transform
+            root="data", train=False, download=True, transform=self.transform
         )
 
         return train_dataset, val_dataset, test_dataset
 
     @property
     def num_workers(self) -> int:
-        return os.cpu_count()
+        return get_num_workers()
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -60,6 +62,7 @@ class CIFAR100FineTuner(L.LightningModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -68,6 +71,7 @@ class CIFAR100FineTuner(L.LightningModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -76,6 +80,7 @@ class CIFAR100FineTuner(L.LightningModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
