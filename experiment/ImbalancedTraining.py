@@ -5,9 +5,13 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
 from experiment.ood.ood import OOD
+from diffusers import StableUnCLIPImg2ImgPipeline
 from torchvision import transforms
 import copy
 
+from torchvision.transforms.functional import to_pil_image
+from PIL import Image
+import os
 
 class ImbalancedTraining:
     def __init__(
@@ -31,6 +35,8 @@ class ImbalancedTraining:
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
+        self.initial_train_ds_size = len(self.datamodule.train_dataset)
+
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -57,15 +63,18 @@ class ImbalancedTraining:
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
         self.datamodule.train_dataset.dataset.transform = self.ood_transform
-
-        train_dataset = self.datamodule.train_dataset
-
+        
+        train_dataset = Subset(
+          self.datamodule.train_dataset,
+          list(range(self.initial_train_ds_size)))
+        
         num_ood_test = int(self.ood_test_split*len(train_dataset))
         num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
             train_dataset, [num_ood_train, num_ood_test]
         )
+
 
         ood = OOD(
             args=self.args,
@@ -78,10 +87,14 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
-        self.generate_new_data(ood_samples, save_subfolder=f"/{cycle_idx}")
+        diffusion_pipe = self.initialize_model()
+        self.generate_new_data(ood_samples, 
+                               pipe=diffusion_pipe, 
+                               batch_size=self.args.sd_batch_size, 
+                               save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}")
 
         self.datamodule.update_dataset(
-            path=f"{self.args['additional_data_path']}/{cycle_idx}"
+            aug_path=f"{self.args.additional_data_path}/{cycle_idx}"
         )
 
         self.datamodule.train_dataset.dataset.transform = ssl_transform
@@ -121,5 +134,39 @@ class ImbalancedTraining:
 
         return results
 
-    def generate_new_data(ood_samples):
-        pass
+    def initialize_model(self):
+        """
+        Load the model first to ensure better flow
+        """
+        pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-2-1-unclip", torch_dtype=torch.float16, variation="fp16")
+        pipe = pipe.to("cuda")
+        return pipe
+
+    def generate_new_data(self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1) -> None:
+        """
+        Generate new data based on out-of-distribution (OOD) samples using StableUnclip Img2Img.
+
+        Args:
+        - ood_samples (Dataset): Dataset of OOD samples.
+        - pipe (DiffusionPipeline): The diffusion model pipeline to generate new data.
+        - save_subfolder (str): Path to the folder where generated images will be saved.
+        - batch_size (int): Number of samples per batch.
+        - nr_to_gen (int): Number of images to generate per sample.
+        """
+        if not os.path.exists(save_subfolder):
+            os.makedirs(save_subfolder)
+
+        ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=True)
+
+        for ood_samples, ood_index in ood_sample_loader:
+            samples = []
+            for sample in ood_samples:
+                if not isinstance(sample, Image.Image): #check if sample is already a PIL Image to avoid unnecessary conversion
+                    sample = to_pil_image(sample)
+                samples.append(sample)
+
+            v_imgs = pipe(samples, num_images_per_prompt=nr_to_gen).images   
+            for i, img in enumerate(v_imgs):
+                name =f"/ood_variation_{i}.png" #TODO: include index?
+                img.save(save_subfolder+name)

@@ -10,7 +10,6 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethods,
     ImbalanceMethod,
 )
-from PIL import Image
 from torchvision import transforms
 
 
@@ -42,32 +41,20 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self.collate_fn = collate_fn
         self.batch_size = batch_size
 
-        (
-            self.train_dataset,
-            self.val_dataset,
-            self.test_dataset,
-            self.num_classes,
-        ) = self._load_dataset(
-            dataset_variant, imbalance_method, splits, checkpoint_filename, test_mode
-        )
-
-    def _load_dataset(
-        self,
-        dataset_variant: ImageNetVariants,
-        imbalance_method: ImbalanceMethod,
-        splits: tuple[float, float],
-        checkpoint_filename: str,
-        test_mode: bool,
-    ):
-        dataset = ImbalancedImageNet(
+        self.dataset = ImbalancedImageNet(
             dataset_variant.value.path,
             transform=self.transform,
             imbalance_method=imbalance_method,
             checkpoint_filename=checkpoint_filename,
             test_mode=test_mode,
         )
+        self.num_classes = self.dataset.num_classes
 
-        return self._split_dataset(dataset, splits) + [dataset.num_classes]
+        (
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset,
+        ) = self._split_dataset(self.dataset, splits)
 
     def _split_dataset(
         self,
@@ -150,4 +137,5 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         # TODO: add the real labels, not dummy ones
         images = os.listdir(aug_path)
         for image in images:
-            self.train_dataset._save_additional_datapoint(image, None)
+            self.dataset._save_additional_datapoint(aug_path+"/"+image, 0)
+            self.train_dataset.indices.append(len(self.dataset) - 1)
