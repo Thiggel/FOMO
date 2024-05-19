@@ -1,14 +1,16 @@
 from experiment.dataset.imbalancedness.Imbalancedness import Imbalancedness
+from experiment.dataset.imbalancedness.PowerLawImbalance import PowerLawImbalance
 
 
 class NoImbalancedness(Imbalancedness):
     def __init__(self, num_classes: int):
         super().__init__(num_classes)
 
+        self.power_law_imbalance = PowerLawImbalance(num_classes)
         self.total_imbalance = self.get_total_imbalance()
 
     def get_power_law_imbalance(self, class_index: int) -> float:
-        return 1 / ((class_index + 1) ** 0.25)
+        return self.power_law_imbalance.get_imbalance(class_index)
 
     def get_total_imbalance(self) -> float:
         """
