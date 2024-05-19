@@ -113,7 +113,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
     callbacks = [checkpoint_callback, stats_monitor]
 
     trainer_args = {
-        "max_time": {"hours": args.max_hours_per_run},
+        "max_time": {"hours": int(args.max_hours_per_run) - 1},
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
