@@ -71,7 +71,7 @@ def get_training_args() -> dict:
 
     #I-Jepa Args
     parser.add_argument("--fe_batch_size", type=int, default=32)
-    parser.add_argument("--sd_batch_size", type=int, default=32)
+    parser.add_argument("--sd_batch_size", type=int, default=4)
     parser.add_argument("--k", type=int, default=1000)
     parser.add_argument("--pct_ood", type=float, default=0.1)
     parser.add_argument("--pct_train", type=float, default=1.0)
