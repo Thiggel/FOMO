@@ -76,7 +76,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
 
         with torch.no_grad():
             for inputs, label in tqdm(dataloader, desc="Extracting features"):
-                outputs = self.model.extract_features(inputs)
+                outputs = self.model.extract_features(inputs.to(self.device))
                 features.append(outputs)
                 labels.append(label)
 
@@ -85,7 +85,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
     def fit_knn(self):
         train_loader = self.train_dataloader()
         train_features, train_labels = self.extract_features(train_loader)
-        self.knn.fit(train_features.numpy(), train_labels.numpy())
+        self.knn.fit(train_features.cpu().numpy(), train_labels.cpu().numpy())
 
     def training_step(self, batch, batch_idx):
         self.fit_knn()
@@ -98,8 +98,8 @@ class CIFAR100KNNClassifier(L.LightningModule):
         inputs, targets = batch
 
         features = self.model.extract_features(inputs)
-        predictions = self.knn.predict(features.numpy())
-        accuracy = accuracy_score(targets.numpy(), predictions)
+        predictions = self.knn.predict(features.cpu().numpy())
+        accuracy = accuracy_score(targets.cpu().numpy(), predictions)
 
         self.log("cifar100_knn_test_accuracy", accuracy, prog_bar=True)
 

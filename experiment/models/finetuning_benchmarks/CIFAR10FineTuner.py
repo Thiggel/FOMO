@@ -14,7 +14,7 @@ class CIFAR10FineTuner(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        batch_size: int,
+        batch_size: int = 32,
         lr: float = 0.01,
         output_size: int = 10,
         weight_decay=1e-3,
@@ -58,15 +58,15 @@ class CIFAR10FineTuner(L.LightningModule):
             self.model.head = nn.Linear(num_ftrs, 10)
 
         except Exception:
-            if isinstance(self.model.fc, nn.Linear):
-                num_ftrs = self.model.fc.in_features
-            elif isinstance(self.model.fc, nn.Sequential):
-                first_layer = list(self.model.fc.children())[0]
+            if isinstance(self.model.resnet.fc, nn.Linear):
+                num_ftrs = self.model.resnet.fc.in_features
+            elif isinstance(self.model.resnet.fc, nn.Sequential):
+                first_layer = list(self.model.resnet.fc.children())[0]
                 num_ftrs = first_layer.in_features
             else:
                 raise ValueError("Unsupported last layer type")
 
-            self.model.fc = nn.Linear(num_ftrs, 10)
+            self.model.resnet.fc = nn.Linear(num_ftrs, 10)
 
         self.loss = nn.CrossEntropyLoss()
 
@@ -91,6 +91,7 @@ class CIFAR10FineTuner(L.LightningModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -99,6 +100,7 @@ class CIFAR10FineTuner(L.LightningModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -107,6 +109,7 @@ class CIFAR10FineTuner(L.LightningModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

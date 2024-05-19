@@ -8,7 +8,7 @@ class ViT(nn.Module):
         super().__init__()
 
         self.model, self.config = self._load_model(model_id)
-        self.head = nn.Linear(self.config.hidden_size, 2 * output_size)
+        self.head = nn.Linear(self.config.hidden_size, output_size)
         self.output_size = output_size
 
     def _load_model(self, model_name: str) -> nn.Module:
@@ -18,7 +18,7 @@ class ViT(nn.Module):
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
         output = self.model(images).last_hidden_state[:, 0, :]
-        output = self.head(output).reshape(-1, self.output_size, 2)
+        output = self.head(output)
 
         return output
 

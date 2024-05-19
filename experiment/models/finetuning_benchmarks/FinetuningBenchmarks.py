@@ -10,8 +10,8 @@ from experiment.models.finetuning_benchmarks.CIFAR100KNNClassifier import (
 
 class FinetuningBenchmarks:
     benchmarks = [
-        CIFAR10KNNClassifier,
-        CIFAR100KNNClassifier,
         CIFAR10FineTuner,
         CIFAR100FineTuner,
+        CIFAR10KNNClassifier,
+        CIFAR100KNNClassifier,
     ]
