@@ -38,6 +38,8 @@ class IJepa(L.LightningModule):
             pred_emb_dim=args.pred_emb_dim,
             model=model,
         )
+        
+        self.model = self.encoder
 
         self.target_encoder = copy.deepcopy(self.encoder)
         for p in self.target_encoder.parameters():
