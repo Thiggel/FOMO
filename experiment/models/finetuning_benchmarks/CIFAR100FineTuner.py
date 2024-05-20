@@ -15,12 +15,13 @@ class CIFAR100FineTuner(L.LightningModule):
         model: nn.Module,
         lr: float,
         weight_decay=1e-3,
-        max_epochs=25,
+        max_epochs=10,
+        batch_size=32,
         *args,
         **kwargs,
     ):
-        self.max_epochs = 10
-        self.batch_size = 32
+        self.max_epochs = max_epochs
+        self.batch_size = batch_size
 
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
