@@ -12,7 +12,9 @@ albumentations
 psutil
 pytest
 datasets
+diffusers
 flake8
 black
 pre-commit
 faiss-cpu
+scikit-learn

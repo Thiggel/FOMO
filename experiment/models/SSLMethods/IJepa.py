@@ -46,21 +46,6 @@ class IJepa(L.LightningModule):
         self.args = args
         self.max_epochs = max_epochs
 
-        _, _, _, self.wd_scheduler = init_opt(
-            encoder=self.encoder,
-            predictor=self.predictor,
-            wd=self.args.weight_decay,
-            final_wd=self.args.final_weight_decay,
-            start_lr=self.args.start_lr,
-            ref_lr=self.args.lr,
-            final_lr=self.args.final_lr,
-            iterations_per_epoch=self.iterations_per_epoch,
-            warmup=self.args.warmup,
-            num_epochs=self.max_epochs,
-            ipe_scale=self.args.ipe_scale,
-            use_bfloat16=self.args.use_bfloat16,
-        )
-
         self.momentum_scheduler = (
             self.args.ema[0]
             + i
@@ -89,11 +74,13 @@ class IJepa(L.LightningModule):
         )
 
         self.scheduler = scheduler
+        self.wd_scheduler = wd_scheduler
 
-        return [optimizer], [scheduler]
+        return [optimizer]
 
     def jepa_loss(self, batch, mode):
         self.wd_scheduler.step()
+        self.scheduler.step()
 
         # log the wd_scheduler and scheduler values
         self.log("wd", self.wd_scheduler.current_wd, prog_bar=True)

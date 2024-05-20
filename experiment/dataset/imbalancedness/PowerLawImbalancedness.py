@@ -7,12 +7,12 @@ class PowerLawImbalancedness(Imbalancedness):
 
     def get_imbalance(self, class_index: int) -> float:
         """
-        Following the imbalance evaluated in Assran et al. 2023, 
+        Following the imbalance evaluated in Assran et al. 2023,
         imbalance is given by [p(tau)]_k prop 1/(k^{tau}).
         according to this paper this should be close to imbalance in real scenarios
-        
+
         imbalancedness: 1, 0.84, 0.75 etc
-        
+
         (I think its fine to not use numclasses here)
         """
-        return 1/((class_index + 1) ** (0.25))
+        return 1 / ((class_index + 1) ** 0.5)

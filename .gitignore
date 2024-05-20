@@ -163,3 +163,4 @@ dataset_pickles/*
 lightning_logs/*
 logs/*
 data/*
+checkpoints/*

@@ -29,7 +29,8 @@ class ResNet18(nn.Module):
             features = torch.flatten(features, 1)
 
         return features
-    
+
+
 class ResNet50(nn.Module):
     def __init__(self, output_size):
         super(ResNet50, self).__init__()

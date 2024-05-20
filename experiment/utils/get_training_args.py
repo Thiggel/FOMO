@@ -69,8 +69,9 @@ def get_training_args() -> dict:
     parser.add_argument("--classification_head", action="store_true")
     parser.add_argument("--early_stopping_monitor", type=str, default="val_loss")
 
-    #I-Jepa Args
+    # I-Jepa Args
     parser.add_argument("--fe_batch_size", type=int, default=32)
+    parser.add_argument("--sd_batch_size", type=int, default=4)
     parser.add_argument("--k", type=int, default=1000)
     parser.add_argument("--pct_ood", type=float, default=0.1)
     parser.add_argument("--pct_train", type=float, default=1.0)
@@ -83,7 +84,6 @@ def get_training_args() -> dict:
     parser.add_argument("--color_jitter_strength", type=float, default=0.0)
     parser.add_argument("--crop_scale", type=float, nargs=2, default=[0.3, 1.0])
     parser.add_argument("--crop_size", type=int, default=224)
-    parser.add_argument("--resize_to", type=int, default=256)
     parser.add_argument(
         "--image_folder", type=str, default="imagenet_full_size/061417/"
     )
@@ -112,12 +112,12 @@ def get_training_args() -> dict:
     # Optimization
     parser.add_argument("--ema", type=float, nargs=2, default=[0.996, 1.0])
     parser.add_argument("--epochs", type=int, default=300)
-    parser.add_argument("--final_lr", type=float, default=1.0e-06)
+    parser.add_argument("--final_lr", type=float, default=1.0e-4)
     parser.add_argument("--final_weight_decay", type=float, default=0.4)
     parser.add_argument("--ipe_scale", type=float, default=1.0)
     # parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument("--start_lr", type=float, default=0.0002)
-    parser.add_argument("--warmup", type=int, default=40)
+    parser.add_argument("--warmup", type=int, default=670) #n_batches, so change depending on the gpu, but if the batch size goes up maybe 1 epoch longer warmup isnt too bad
     # parser.add_argument('--weight_decay', type=float, default=0.04)
 
     args = parser.parse_args()

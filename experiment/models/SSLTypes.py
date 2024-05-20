@@ -13,7 +13,6 @@ from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMask
 from experiment.dataset.transforms import make_transforms
 
 
-
 @dataclass
 class SSLType:
     module: nn.Module
@@ -23,7 +22,8 @@ class SSLType:
     def initialize(self, *args, **kwargs) -> nn.Module:
         return self.module(*args, **kwargs)
 
-#TODO I dont understand how this all works very well, so please check if the lambda thing to initialize jepa transforms and collate are correct.
+
+# TODO I dont understand how this all works very well, so please check if the lambda thing to initialize jepa transforms and collate are correct.
 class SSLTypes(Enum):
     @staticmethod
     def ssl_types():
@@ -38,13 +38,11 @@ class SSLTypes(Enum):
                     *args,
                     **kwargs
                 ),
-                transforms= lambda parserargs: ContrastiveTransformations(
+                transforms=lambda parserargs: ContrastiveTransformations(
                     transforms.Compose(
                         [
-                            transforms.Resize(256),
-                            transforms.CenterCrop(224),
+                            transforms.Resize(parserargs.crop_size),
                             transforms.RandomHorizontalFlip(),
-                            transforms.RandomResizedCrop(size=parserargs.crop_size), #was 96
                             transforms.RandomApply(
                                 [
                                     transforms.ColorJitter(
@@ -64,20 +62,20 @@ class SSLTypes(Enum):
                     ),
                     n_views=2,
                 ),
-                collate_fn=lambda parserargs: simclr_collate
+                collate_fn=lambda parserargs: simclr_collate,
             ),
             "I-Jepa": SSLType(
                 module=lambda model, lr, temperature, weight_decay, max_epochs, parserargs, iterations_per_epoch, *args, **kwargs: IJepa(
                     model=model,
                     lr=lr,
-                    args = parserargs,
+                    args=parserargs,
                     weight_decay=weight_decay,
                     max_epochs=max_epochs,
-                    iterations_per_epoch = iterations_per_epoch,
+                    iterations_per_epoch=iterations_per_epoch,
                     *args,
                     **kwargs
                 ),
-                collate_fn= lambda parserargs: MBMaskCollator(
+                collate_fn=lambda parserargs: MBMaskCollator(
                     input_size=parserargs.crop_size,
                     patch_size=parserargs.patch_size,
                     pred_mask_scale=parserargs.pred_mask_scale,
@@ -86,16 +84,17 @@ class SSLTypes(Enum):
                     nenc=parserargs.num_enc_masks,
                     npred=parserargs.num_pred_masks,
                     allow_overlap=parserargs.allow_overlap,
-                    min_keep=parserargs.min_keep),
-
-                transforms= lambda parserargs: make_transforms(
+                    min_keep=parserargs.min_keep,
+                ),
+                transforms=lambda parserargs: make_transforms(
                     crop_size=parserargs.crop_size,
                     crop_scale=parserargs.crop_scale,
                     gaussian_blur=parserargs.use_gaussian_blur,
                     horizontal_flip=parserargs.use_horizontal_flip,
                     color_distortion=parserargs.use_color_distortion,
-                    color_jitter=parserargs.color_jitter_strength)
-            )
+                    color_jitter=parserargs.color_jitter_strength,
+                ),
+            ),
         }
 
     @staticmethod

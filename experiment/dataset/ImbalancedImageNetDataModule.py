@@ -10,8 +10,9 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethods,
     ImbalanceMethod,
 )
-from PIL import Image
 from torchvision import transforms
+
+from experiment.utils.get_num_workers import get_num_workers
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
@@ -21,8 +22,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
         transform: Callable = transforms.Compose(
             [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
+                transforms.Resize(224),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -32,7 +32,6 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         splits: tuple[int, int] = (0.8, 0.1, 0.1),
         batch_size: int = 32,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
-        resized_image_size: tuple[int, int] = (224, 224),
         checkpoint_filename: str = None,
         test_mode: bool = False,
     ):
@@ -42,32 +41,20 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self.collate_fn = collate_fn
         self.batch_size = batch_size
 
-        (
-            self.train_dataset,
-            self.val_dataset,
-            self.test_dataset,
-            self.num_classes,
-        ) = self._load_dataset(
-            dataset_variant, imbalance_method, splits, checkpoint_filename, test_mode
-        )
-
-    def _load_dataset(
-        self,
-        dataset_variant: ImageNetVariants,
-        imbalance_method: ImbalanceMethod,
-        splits: tuple[float, float],
-        checkpoint_filename: str,
-        test_mode: bool,
-    ):
-        dataset = ImbalancedImageNet(
+        self.dataset = ImbalancedImageNet(
             dataset_variant.value.path,
             transform=self.transform,
             imbalance_method=imbalance_method,
             checkpoint_filename=checkpoint_filename,
             test_mode=test_mode,
         )
+        self.num_classes = self.dataset.num_classes
 
-        return self._split_dataset(dataset, splits) + [dataset.num_classes]
+        (
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset,
+        ) = self._split_dataset(self.dataset, splits)
 
     def _split_dataset(
         self,
@@ -91,7 +78,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
     @property
     def num_workers(self) -> int:
-        return os.cpu_count()
+        return get_num_workers()
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -99,7 +86,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            #persistent_workers=True,
+            persistent_workers=True,
             collate_fn=self.collate_fn,
         )
 
@@ -108,7 +95,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            #persistent_workers=True,
+            persistent_workers=True,
             collate_fn=self.collate_fn,
         )
 
@@ -117,7 +104,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            #persistent_workers=True,
+            persistent_workers=True,
             collate_fn=self.collate_fn,
         )
 
@@ -150,4 +137,5 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         # TODO: add the real labels, not dummy ones
         images = os.listdir(aug_path)
         for image in images:
-            self.train_dataset._save_additional_datapoint(image, None)
+            self.dataset._save_additional_datapoint(aug_path+"/"+image, 0)
+            self.train_dataset.indices.append(len(self.dataset) - 1)

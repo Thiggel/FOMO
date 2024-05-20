@@ -32,7 +32,6 @@ mp.set_start_method("spawn")
 
 
 def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
-    model_type = ModelTypes.get_model_type(args.model_name)
     ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
     return ImbalancedImageNetDataModule(
@@ -41,7 +40,6 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
         imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
         splits=args.splits,
         batch_size=args.batch_size,
-        resized_image_size=model_type.resized_image_size,
         checkpoint_filename=checkpoint_filename,
         transform=ssl_method.transforms(args),
     )
@@ -52,7 +50,6 @@ def init_model(args: Namespace, datamodule: L.LightningDataModule) -> nn.Module:
 
     model_args = {
         "model_name": args.model_name,
-        "resized_image_size": model_type.resized_image_size,
         "batch_size": args.batch_size,
         "output_size": 128,  # simclear uses this hidden dim, vit doesnt use this parameter
         "image_size": args.crop_size,
@@ -85,13 +82,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
     set_seed(seed)
 
     checkpoint_filename = (
-        args.model_name
-        + "_"
-        + args.imagenet_variant
-        + "_"
-        + args.imbalance_method
-        # if args.checkpoint is None
-        # else args.checkpoint THis might mess up other stuff but it seems incorrect from my perspective
+        args.model_name + "_" + args.imagenet_variant + "_" + args.imbalance_method
     )
 
     datamodule = init_datamodule(
@@ -113,22 +104,18 @@ def run(args: Namespace, seed: int = 42) -> dict:
         filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
         monitor=args.early_stopping_monitor,
         mode=mode,
-    )
-
-    early_stopping_callback = EarlyStopping(
-        monitor=args.early_stopping_monitor,
-        patience=args.early_stopping_patience,
-        mode=mode,
+        save_top_k=-1,
+        save_last=True
     )
 
     tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
 
     stats_monitor = DeviceStatsMonitor()
 
-    callbacks = [checkpoint_callback, early_stopping_callback, stats_monitor]
+    callbacks = [checkpoint_callback, stats_monitor]
 
     trainer_args = {
-        "max_time": {"hours": args.max_hours_per_run},
+        "max_time": {"hours": int(args.max_hours_per_run) - 1},
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
@@ -185,11 +172,7 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
     results = {}
 
     for benchmark in benchmarks:
-        finetuner = benchmark(
-            model=model,
-            lr=args.lr,
-            batch_size = 64
-        )
+        finetuner = benchmark(model=model, lr=args.lr, batch_size=64)
 
         trainer_args["max_epochs"] = finetuner.max_epochs
 

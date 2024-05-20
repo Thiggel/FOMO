@@ -8,9 +8,9 @@ from experiment.models.backbones.ViT import ViT
 from experiment.models.backbones.JeppaViT import VisionTransformer, partial
 from experiment.models.backbones.Resnet import ResNet18, ResNet50
 
+
 @dataclass
 class ModelType:
-    resized_image_size: tuple[int, int]
     model: nn.Module
 
     def initialize(self, *args, **kwargs) -> nn.Module:
@@ -22,26 +22,22 @@ class ModelTypes(Enum):
     def model_types():
         return {
             "ResNet18": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ResNet18(output_size),
             ),
             "ResNet50": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ResNet50(output_size),
             ),
             "ViTSmall": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ViT(
-                    model_name="WinKawaks/vit-small-patch16-224",
+                    model_id="WinKawaks/vit-small-patch16-224",
                     output_size=output_size,
                     *args,
                     **kwargs,
                 ),
             ),
             "ViTBase": ModelType(
-                resized_image_size=(224, 224),
                 model=lambda output_size, *args, **kwargs: ViT(
-                    model_name="google/vit-base-patch16-224-in21k",
+                    model_id="google/vit-base-patch16-224-in21k",
                     output_size=output_size,
                     *args,
                     **kwargs,
@@ -49,21 +45,34 @@ class ModelTypes(Enum):
             ),
             ### Add the Jeppa ViT versions, Jeppa needs seperate ViTs because of masking
             "ViTTinyJeppa": ModelType(
-                resized_image_size=(224, 224),
-                model= lambda image_size, classification_head, output_size, **kwargs: VisionTransformer(
-                        patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4,
-                        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), img_size = [image_size], classification_head=classification_head,
-                        output_size=output_size, **kwargs
-                )
+                model=lambda image_size, classification_head, output_size, **kwargs: VisionTransformer(
+                    patch_size=16,
+                    embed_dim=192,
+                    depth=12,
+                    num_heads=3,
+                    mlp_ratio=4,
+                    qkv_bias=True,
+                    norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                    img_size=[image_size],
+                    classification_head=classification_head,
+                    output_size=output_size,
+                    **kwargs,
+                ),
             ),
-
             "ViTSmallJeppa": ModelType(
-                resized_image_size=(224, 224),
-                model = lambda image_size, classification_head, output_size, **kwargs: VisionTransformer(
-                    patch_size=16, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4,
-                    qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), img_size = [image_size], classification_head = classification_head,
-                    output_size= output_size, **kwargs
-                )
+                model=lambda image_size, classification_head, output_size, **kwargs: VisionTransformer(
+                    patch_size=16,
+                    embed_dim=384,
+                    depth=12,
+                    num_heads=6,
+                    mlp_ratio=4,
+                    qkv_bias=True,
+                    norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                    img_size=[image_size],
+                    classification_head=classification_head,
+                    output_size=output_size,
+                    **kwargs,
+                ),
             ),
         }
 

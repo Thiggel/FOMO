@@ -6,7 +6,7 @@ python -m experiment --model_name ViTTinyJeppa \
   --no_augmentation \
   --early_stopping_monitor "val_loss" \
   --imbalance_method no_imbalance \
-  --batch_size 4 \
+  --batch_size 256 \
   --crop_size 224 \
   --lr 1e-3 \
   --temperature 0.7 \
@@ -15,4 +15,5 @@ python -m experiment --model_name ViTTinyJeppa \
   --pretrain \
   --no-finetune \
   --n_epochs_per_cycle 100 \
-  --logger
+  --num_runs 3 \
+  --max_hours_per_run 4
