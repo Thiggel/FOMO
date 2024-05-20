@@ -148,7 +148,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
             )
 
         if args.finetune:
-            results = finetune(args, trainer_args, model)
+            results = finetune(args, trainer_args, ssl_method.model)
 
             return results
 

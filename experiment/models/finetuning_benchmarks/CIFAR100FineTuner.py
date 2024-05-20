@@ -22,11 +22,14 @@ class CIFAR100FineTuner(L.LightningModule):
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             ]
         ),
+        weight_decay=1e-3,
+        max_epochs=10,
+        batch_size=32,
         *args,
         **kwargs,
     ):
-        self.max_epochs = 10
-        self.batch_size = 32
+        self.max_epochs = max_epochs
+        self.batch_size = batch_size
         self.transform = transform
 
         super().__init__()
@@ -36,11 +39,34 @@ class CIFAR100FineTuner(L.LightningModule):
 
         self.model = model
 
-        num_ftrs = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_ftrs, 100)
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        # Determine the number of input features
+        num_ftrs = None
+        try:
+          if isinstance(self.model.head, nn.Linear):
+              num_ftrs = self.model.head.in_features
+          elif isinstance(self.model.head, nn.Sequential):
+              first_layer = list(self.model.head.children())[0]
+              num_ftrs = first_layer.in_features
+          else:
+              raise ValueError("Unsupported last layer type")
+
+          self.model.head = nn.Linear(num_ftrs, 100)
+
+        except:
+          if isinstance(self.model.fc, nn.Linear):
+              num_ftrs = self.model.fc.in_features
+          elif isinstance(self.model.fc, nn.Sequential):
+              first_layer = list(self.model.fc.children())[0]
+              num_ftrs = first_layer.in_features
+          else:
+              raise ValueError("Unsupported last layer type")
+
+          self.model.fc = nn.Linear(num_ftrs, 100)
 
         self.loss = nn.CrossEntropyLoss()
-
     def get_datasets(self) -> tuple[Dataset, Dataset, Dataset]:
         dataset = CIFAR100(root="data", download=True, transform=self.transform)
         train_size = int(0.9 * len(dataset))
