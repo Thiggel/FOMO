@@ -514,7 +514,7 @@ class VisionTransformer(nn.Module):
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x, masks=None):
+    def extract_last_hidden_state(self, x, masks=None):
         if masks is not None:
             if not isinstance(masks, list):
                 masks = [masks]
@@ -544,15 +544,23 @@ class VisionTransformer(nn.Module):
         if self.norm is not None:
             x = self.norm(x)
 
+    def forward(self, x, masks=None):
+        x = self.extract_last_hidden_state(x, masks)
+
         if self.classification_head:
             x = self.head(x[:, 0])
 
         return x
 
     def extract_features(self, x, masks=None):
-        x = self.forward(x, masks)
-        x = torch.mean(x, dim=1)
+        # SimCLR uses classification head; uses CLS token features
+        # IJepa doesnt use classification head; averages features
+        self.extract_last_hidden_state(x, masks)
 
+        if self.classification_head:
+            x = x[:, 0]
+        else:
+            x = torch.mean(x, dim=1)
         return x
 
     def interpolate_pos_encoding(self, x, pos_embed):
