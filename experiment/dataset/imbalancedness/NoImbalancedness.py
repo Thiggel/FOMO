@@ -1,5 +1,7 @@
 from experiment.dataset.imbalancedness.Imbalancedness import Imbalancedness
-from experiment.dataset.imbalancedness.PowerLawImbalancedness import PowerLawImbalancedness
+from experiment.dataset.imbalancedness.PowerLawImbalancedness import (
+    PowerLawImbalancedness,
+)
 
 
 class NoImbalancedness(Imbalancedness):
