@@ -104,6 +104,8 @@ def run(args: Namespace, seed: int = 42) -> dict:
         filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
         monitor=args.early_stopping_monitor,
         mode=mode,
+        save_top_k=-1,
+        save_last=True
     )
 
     tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
