@@ -12,4 +12,5 @@ python -m experiment --model_name ViTTiny \
   --temperature 0.7 \
   --weight_decay 1e-4 \
   --early_stopping_patience 10 \
-  --n_epochs_per_cycle 100
+  --n_epochs_per_cycle 100 \
+  --max_cycles 1

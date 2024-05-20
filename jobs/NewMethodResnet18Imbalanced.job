@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=NewMethodResNet-Imbalanced
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=12:30:00
+#SBATCH --output=job_logs/NewMethodResNet-Imbalanced-%A.out
+
+cd $HOME/FOMO
+
+. jobs/NewMethodResnet18Imbalanced.sh

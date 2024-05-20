@@ -16,4 +16,5 @@ python -m experiment --model_name ResNet18 \
   --pretrain \
   --finetune \
   --n_epochs_per_cycle 100 \
+  --max_cycles 1 \
   --logger
