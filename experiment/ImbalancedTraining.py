@@ -13,6 +13,7 @@ from torchvision.transforms.functional import to_pil_image
 from PIL import Image
 import os
 
+
 class ImbalancedTraining:
     def __init__(
         self,
@@ -30,11 +31,15 @@ class ImbalancedTraining:
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
-        self.ood_transform = transforms.Compose([
-            transforms.Resize(args.resize_to),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize(args.crop_size),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
 
     def run(self) -> dict:
@@ -61,21 +66,20 @@ class ImbalancedTraining:
         )
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
-        
-        self.datamodule.train_dataset.dataset.transform = self.ood_transform
-        
+
+        self.datamodule.train_dataset.dataset.transform = self.transform
+
         train_dataset = Subset(
-          self.datamodule.train_dataset,
-          list(range(self.initial_train_ds_size)))
-        
-        num_ood_test = int(self.ood_test_split*len(train_dataset))
+            self.datamodule.train_dataset, list(range(self.initial_train_ds_size))
+        )
+
+        num_ood_test = int(self.ood_test_split * len(train_dataset))
 
         num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
             train_dataset, [num_ood_train, num_ood_test]
         )
-
 
         ood = OOD(
             args=self.args,
@@ -89,10 +93,12 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
         diffusion_pipe = self.initialize_model()
-        self.generate_new_data(ood_samples, 
-                               pipe=diffusion_pipe, 
-                               batch_size=self.args.sd_batch_size, 
-                               save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}")
+        self.generate_new_data(
+            ood_samples,
+            pipe=diffusion_pipe,
+            batch_size=self.args.sd_batch_size,
+            save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
+        )
 
         self.datamodule.update_dataset(
             aug_path=f"{self.args.additional_data_path}/{cycle_idx}"
@@ -145,11 +151,16 @@ class ImbalancedTraining:
         Load the model first to ensure better flow
         """
         pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-2-1-unclip", torch_dtype=torch.float16, variation="fp16")
+            "stabilityai/stable-diffusion-2-1-unclip",
+            torch_dtype=torch.float16,
+            variation="fp16",
+        )
         pipe = pipe.to("cuda")
         return pipe
 
-    def generate_new_data(self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen = 1) -> None:
+    def generate_new_data(
+        self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
+    ) -> None:
         """
         Generate new data based on out-of-distribution (OOD) samples using StableUnclip Img2Img.
 
@@ -168,11 +179,13 @@ class ImbalancedTraining:
         for ood_samples, ood_index in ood_sample_loader:
             samples = []
             for sample in ood_samples:
-                if not isinstance(sample, Image.Image): #check if sample is already a PIL Image to avoid unnecessary conversion
+                if not isinstance(
+                    sample, Image.Image
+                ):  # check if sample is already a PIL Image to avoid unnecessary conversion
                     sample = to_pil_image(sample)
                 samples.append(sample)
 
-            v_imgs = pipe(samples, num_images_per_prompt=nr_to_gen).images   
+            v_imgs = pipe(samples, num_images_per_prompt=nr_to_gen).images
             for i, img in enumerate(v_imgs):
-                name =f"/ood_variation_{i}.png" #TODO: include index?
-                img.save(save_subfolder+name)
+                name = f"/ood_variation_{i}.png"  # TODO: include index?
+                img.save(save_subfolder + name)
