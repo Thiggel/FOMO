@@ -41,7 +41,9 @@ class SSLTypes(Enum):
                 transforms=lambda parserargs: ContrastiveTransformations(
                     transforms.Compose(
                         [
-                            transforms.Resize(parserargs.crop_size),
+                            transforms.Resize(
+                                (parserargs.crop_size, parserargs.crop_size)
+                            ),
                             transforms.RandomHorizontalFlip(),
                             transforms.RandomApply(
                                 [

@@ -22,7 +22,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
         transform: Callable = transforms.Compose(
             [
-                transforms.Resize(224),
+                transforms.Resize((224, 224)),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -137,5 +137,5 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         # TODO: add the real labels, not dummy ones
         images = os.listdir(aug_path)
         for image in images:
-            self.dataset._save_additional_datapoint(aug_path+"/"+image, 0)
+            self.dataset._save_additional_datapoint(aug_path + "/" + image, 0)
             self.train_dataset.indices.append(len(self.dataset) - 1)
