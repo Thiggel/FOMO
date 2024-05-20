@@ -543,7 +543,8 @@ class VisionTransformer(nn.Module):
 
         if self.norm is not None:
             x = self.norm(x)
-
+        return x
+    
     def forward(self, x, masks=None):
         x = self.extract_last_hidden_state(x, masks)
 
@@ -555,7 +556,7 @@ class VisionTransformer(nn.Module):
     def extract_features(self, x, masks=None):
         # SimCLR uses classification head; uses CLS token features
         # IJepa doesnt use classification head; averages features
-        self.extract_last_hidden_state(x, masks)
+        x = self.extract_last_hidden_state(x, masks)
 
         if self.classification_head:
             x = x[:, 0]
