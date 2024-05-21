@@ -57,14 +57,16 @@ class WarmupCosineSchedule(_LRScheduler):
         return new_lr
 
 
-class CosineWDSchedule(object):
+class CosineWDSchedule(_LRScheduler):
     def __init__(self, optimizer, ref_wd, T_max, final_wd=0.0):
+        super(CosineWDSchedule, self).__init__(optimizer)
         self.optimizer = optimizer
         self.ref_wd = ref_wd
         self.final_wd = final_wd
         self.T_max = T_max
         self._step = 0.0
         self.current_wd = 0
+        
 
     def step(self):
         self._step += 1
