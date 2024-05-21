@@ -15,6 +15,7 @@ import torchvision.transforms as transforms
 _GLOBAL_SEED = 0
 logger = getLogger()
 
+
 class ChannelTransform(object):
     def __init__(self, out_channels):
         self.out_channels = out_channels
@@ -22,9 +23,9 @@ class ChannelTransform(object):
     def __call__(self, image):
         # Check if image is 4D tensor with multiple channels
         if image.size(0) > self.out_channels:
-           image = image[:self.out_channels3]
+            image = image[: self.out_channels3]
         elif image.size(0) == 1:
-            image = image.repeat(self.out_channels, 1, 1) 
+            image = image.repeat(self.out_channels, 1, 1)
 
         return image
 
@@ -36,23 +37,22 @@ def make_transforms(
     horizontal_flip=False,
     color_distortion=False,
     gaussian_blur=False,
-    normalization=((0.485, 0.456, 0.406),
-                   (0.229, 0.224, 0.225))
+    normalization=((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
 ):
-    logger.info('making imagenet data transforms')
+    logger.info("making imagenet data transforms")
 
     def get_color_distortion(s=1.0):
         # s is the strength of color distortion.
-        color_jitter = transforms.ColorJitter(0.8*s, 0.8*s, 0.8*s, 0.2*s)
+        color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         rnd_color_jitter = transforms.RandomApply([color_jitter], p=0.8)
         rnd_gray = transforms.RandomGrayscale(p=0.2)
-        color_distort = transforms.Compose([
-            rnd_color_jitter,
-            rnd_gray])
+        color_distort = transforms.Compose([rnd_color_jitter, rnd_gray])
         return color_distort
 
     transform_list = []
-    transform_list += [transforms.RandomResizedCrop(crop_size, scale=crop_scale)]
+    transform_list += [
+        transforms.RandomResizedCrop((crop_size, crop_size), scale=crop_scale)
+    ]
     if horizontal_flip:
         transform_list += [transforms.RandomHorizontalFlip()]
     if color_distortion:
@@ -60,7 +60,7 @@ def make_transforms(
     if gaussian_blur:
         transform_list += [GaussianBlur(p=0.5)]
     transform_list += [transforms.ToTensor()]
-    #transform_list += [ChannelTransform(3)]
+    # transform_list += [ChannelTransform(3)]
     transform_list += [transforms.Normalize(normalization[0], normalization[1])]
 
     transform = transforms.Compose(transform_list)
@@ -68,7 +68,7 @@ def make_transforms(
 
 
 class GaussianBlur(object):
-    def __init__(self, p=0.5, radius_min=0.1, radius_max=2.):
+    def __init__(self, p=0.5, radius_min=0.1, radius_max=2.0):
         self.prob = p
         self.radius_min = radius_min
         self.radius_max = radius_max
