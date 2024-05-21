@@ -58,7 +58,9 @@ class ImbalancedTraining:
         2. assess OOD samples
         3. generate new data for OOD
         """
-        trainer = L.Trainer(**self.trainer_args)
+        trainer_args = self.trainer_args.copy()
+        trainer_args["max_epochs"] += self.n_epochs_per_cycle
+        trainer = L.Trainer(**trainer_args)
 
         trainer.fit(
             model=self.ssl_method,
