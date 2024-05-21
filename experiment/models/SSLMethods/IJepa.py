@@ -39,6 +39,8 @@ class IJepa(L.LightningModule):
             model=model,
         )
 
+        self.model = self.encoder
+
         self.target_encoder = copy.deepcopy(self.encoder)
         for p in self.target_encoder.parameters():
             p.requires_grad = False
