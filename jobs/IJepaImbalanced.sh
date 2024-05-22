@@ -14,4 +14,5 @@ python -m experiment --model_name ViTTinyJeppa \
   --temperature 0.7 \
   --weight_decay 0.04 \
   --n_epochs_per_cycle 100 \
-  --max_cycles 1
+  --max_cycles 1 \
+  --num_runs 3
