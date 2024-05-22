@@ -17,4 +17,5 @@ python -m experiment --model_name ViTTinyJeppa \
   --n_epochs_per_cycle 100 \
   --max_cycles 1 \
   --num_runs 3 \
-  --max_hours_per_run 4
+  --max_hours_per_run 4 \
+  --num_runs 3

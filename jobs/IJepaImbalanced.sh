@@ -16,4 +16,5 @@ python -m experiment --model_name ViTTinyJeppa \
   --no-finetune \
   --n_epochs_per_cycle 100 \
   --max_cycles 1 \
-  --logger
+  --logger \
+  --num_runs 3

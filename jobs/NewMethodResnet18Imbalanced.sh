@@ -3,7 +3,6 @@
 python -m experiment --model_name ResNet18 \
   --imagenet_variant 100 \
   --ssl_method SimCLR \
-  --no_augmentation \
   --classification_head \
   --early_stopping_monitor "val_acc_top5" \
   --imbalance_method power_law_imbalance \
@@ -17,4 +16,5 @@ python -m experiment --model_name ResNet18 \
   --finetune \
   --n_epochs_per_cycle 5\
   --max_cycles 20 \
-  --logger
+  --logger \
+  --num_runs 3
