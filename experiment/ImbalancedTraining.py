@@ -33,7 +33,7 @@ class ImbalancedTraining:
         self.ood_test_split = args.ood_test_split
         self.transform = transforms.Compose(
             [
-                transforms.Resize(args.crop_size),
+                transforms.Resize((args.crop_size, args.crop_size)),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -63,6 +63,7 @@ class ImbalancedTraining:
         trainer.fit(
             model=self.ssl_method,
             datamodule=self.datamodule,
+            ckpt_path='last'
         )
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)

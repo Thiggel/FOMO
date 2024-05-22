@@ -27,6 +27,14 @@ class ModelTypes(Enum):
             "ResNet50": ModelType(
                 model=lambda output_size, *args, **kwargs: ResNet50(output_size),
             ),
+            "ViTTiny": ModelType(
+                model=lambda output_size, *args, **kwargs: ViT(
+                    model_id="WinKawaks/vit-tiny-patch16-224",
+                    output_size=output_size,
+                    *args,
+                    **kwargs,
+                ),
+            ),
             "ViTSmall": ModelType(
                 model=lambda output_size, *args, **kwargs: ViT(
                     model_id="WinKawaks/vit-small-patch16-224",

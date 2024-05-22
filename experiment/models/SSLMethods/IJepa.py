@@ -169,3 +169,16 @@ class IJepa(L.LightningModule):
                 self.encoder.parameters(), self.target_encoder.parameters()
             ):
                 param_k.data.mul_(m).add_((1.0 - m) * param_q.detach().data)
+
+    def on_save_checkpoint(self, checkpoint):
+        # Save additional model state
+        checkpoint['wd_scheduler_state'] = self.wd_scheduler.state_dict()
+        checkpoint['scheduler_state'] = self.scheduler.state_dict()
+
+    def on_load_checkpoint(self, checkpoint):
+        # Load additional model state
+        if 'wd_scheduler_state' in checkpoint:
+            self.wd_scheduler.load_state_dict(checkpoint['wd_scheduler_state'])
+
+        if 'scheduler_state' in checkpoint:
+            self.scheduler.load_state_dict(checkpoint['scheduler_state'])
