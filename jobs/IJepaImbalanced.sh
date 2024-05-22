@@ -13,8 +13,5 @@ python -m experiment --model_name ViTTinyJeppa \
   --final_lr 1e-4 \
   --temperature 0.7 \
   --weight_decay 0.04 \
-  --early_stopping_patience 10 \
-  --pretrain \
-  --finetune \
   --n_epochs_per_cycle 100 \
-  --logger
+  --max_cycles 1
