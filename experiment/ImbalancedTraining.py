@@ -63,6 +63,7 @@ class ImbalancedTraining:
         trainer.fit(
             model=self.ssl_method,
             datamodule=self.datamodule,
+            ckpt_path='last'
         )
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)

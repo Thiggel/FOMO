@@ -35,7 +35,7 @@ class CIFAR10FineTuner(L.LightningModule):
 
         self.save_hyperparameters(ignore=["model"])
 
-        (self.train_dataset, self.val_dataset, self.test_dataset) = self.get_datasets()
+        (self.train_dataset, _, _) = self.get_datasets()
 
         self.model = model
         self.batch_size = batch_size
@@ -45,28 +45,14 @@ class CIFAR10FineTuner(L.LightningModule):
             param.requires_grad = False
 
         # Determine the number of input features
-        num_ftrs = None
-        try:
-            if isinstance(self.model.head, nn.Linear):
-                num_ftrs = self.model.head.in_features
-            elif isinstance(self.model.head, nn.Sequential):
-                first_layer = list(self.model.head.children())[0]
-                num_ftrs = first_layer.in_features
-            else:
-                raise ValueError("Unsupported last layer type")
+        input, _ = next(iter(self.train_dataset))
+        input = input.unsqueeze(0)
+        x = self.model.extract_features(input)
+        num_ftrs = x.size(1)
 
-            self.model.head = nn.Linear(num_ftrs, 10)
+        self.probe = nn.Linear(num_ftrs, output_size)
 
-        except Exception:
-            if isinstance(self.model.resnet.fc, nn.Linear):
-                num_ftrs = self.model.resnet.fc.in_features
-            elif isinstance(self.model.resnet.fc, nn.Sequential):
-                first_layer = list(self.model.resnet.fc.children())[0]
-                num_ftrs = first_layer.in_features
-            else:
-                raise ValueError("Unsupported last layer type")
-
-            self.model.resnet.fc = nn.Linear(num_ftrs, 10)
+        (self.train_dataset, self.val_dataset, self.test_dataset) = self.get_datasets()
 
         self.loss = nn.CrossEntropyLoss()
 
@@ -113,7 +99,9 @@ class CIFAR10FineTuner(L.LightningModule):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x)
+        with torch.no_grad():
+            features = self.model.extract_features(x)
+        return features
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(
@@ -136,6 +124,8 @@ class CIFAR10FineTuner(L.LightningModule):
     ) -> torch.Tensor:
         inputs, targets = batch
         outputs = self(inputs)
+        outputs = self.probe(outputs)
+
         loss = self.loss(outputs, targets)
         self.log("train_loss", loss, prog_bar=True)
         return loss
@@ -145,6 +135,8 @@ class CIFAR10FineTuner(L.LightningModule):
     ) -> torch.Tensor:
         inputs, targets = batch
         outputs = self(inputs)
+        outputs = self.probe(outputs)
+        
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
         self.log("val_loss", loss, prog_bar=True)
@@ -156,6 +148,8 @@ class CIFAR10FineTuner(L.LightningModule):
     ) -> torch.Tensor:
         inputs, targets = batch
         outputs = self(inputs)
+        outputs = self.probe(outputs)
+
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
         self.log("cifar10_test_loss", loss, prog_bar=True)

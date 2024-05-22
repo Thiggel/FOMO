@@ -39,7 +39,10 @@ class IJepa(L.LightningModule):
             model=model,
         )
 
+        
+
         self.target_encoder = copy.deepcopy(self.encoder)
+        self.model = self.target_encoder
         for p in self.target_encoder.parameters():
             p.requires_grad = False
 
@@ -57,8 +60,7 @@ class IJepa(L.LightningModule):
             )
         )
 
-    def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer, scaler, scheduler, wd_scheduler = init_opt(
+        _, _, self.scheduler, self.wd_scheduler = init_opt(
             encoder=self.encoder,
             predictor=self.predictor,
             wd=self.args.weight_decay,
@@ -73,8 +75,24 @@ class IJepa(L.LightningModule):
             use_bfloat16=self.args.use_bfloat16,
         )
 
-        self.scheduler = scheduler
-        self.wd_scheduler = wd_scheduler
+
+    
+
+    def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
+        optimizer, scaler, _, _ = init_opt(
+            encoder=self.encoder,
+            predictor=self.predictor,
+            wd=self.args.weight_decay,
+            final_wd=self.args.final_weight_decay,
+            start_lr=self.args.start_lr,
+            ref_lr=self.args.lr,
+            final_lr=self.args.final_lr,
+            iterations_per_epoch=self.iterations_per_epoch,
+            warmup=self.args.warmup,
+            num_epochs=self.max_epochs,  # not entirely the same but fine maybe
+            ipe_scale=self.args.ipe_scale,
+            use_bfloat16=self.args.use_bfloat16,
+        )
 
         return [optimizer]
 
@@ -151,3 +169,16 @@ class IJepa(L.LightningModule):
                 self.encoder.parameters(), self.target_encoder.parameters()
             ):
                 param_k.data.mul_(m).add_((1.0 - m) * param_q.detach().data)
+
+    def on_save_checkpoint(self, checkpoint):
+        # Save additional model state
+        checkpoint['wd_scheduler_state'] = self.wd_scheduler.state_dict()
+        checkpoint['scheduler_state'] = self.scheduler.state_dict()
+
+    def on_load_checkpoint(self, checkpoint):
+        # Load additional model state
+        if 'wd_scheduler_state' in checkpoint:
+            self.wd_scheduler.load_state_dict(checkpoint['wd_scheduler_state'])
+
+        if 'scheduler_state' in checkpoint:
+            self.scheduler.load_state_dict(checkpoint['scheduler_state'])
