@@ -15,6 +15,6 @@ python -m experiment --model_name ResNet18 \
   --early_stopping_patience 10 \
   --pretrain \
   --finetune \
-  --n_epochs_per_cycle 5 \
+  --n_epochs_per_cycle 5\
   --max_cycles 20 \
-  --logger
+  --logger
