@@ -46,6 +46,7 @@ class CIFAR100FineTuner(L.LightningModule):
 
         # Determine the number of input features
         input, _ = next(iter(self.train_dataset))
+        input = input.unsqueeze(0)
         x = self.model.extract_features(input)
         num_ftrs = x.size(1)
 
