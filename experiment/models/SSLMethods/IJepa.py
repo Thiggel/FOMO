@@ -60,8 +60,7 @@ class IJepa(L.LightningModule):
             )
         )
 
-    def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer, scaler, scheduler, wd_scheduler = init_opt(
+        _, _, self.scheduler, self.wd_scheduler = init_opt(
             encoder=self.encoder,
             predictor=self.predictor,
             wd=self.args.weight_decay,
@@ -76,8 +75,24 @@ class IJepa(L.LightningModule):
             use_bfloat16=self.args.use_bfloat16,
         )
 
-        self.scheduler = scheduler
-        self.wd_scheduler = wd_scheduler
+
+    
+
+    def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
+        optimizer, scaler, _, _ = init_opt(
+            encoder=self.encoder,
+            predictor=self.predictor,
+            wd=self.args.weight_decay,
+            final_wd=self.args.final_weight_decay,
+            start_lr=self.args.start_lr,
+            ref_lr=self.args.lr,
+            final_lr=self.args.final_lr,
+            iterations_per_epoch=self.iterations_per_epoch,
+            warmup=self.args.warmup,
+            num_epochs=self.max_epochs,  # not entirely the same but fine maybe
+            ipe_scale=self.args.ipe_scale,
+            use_bfloat16=self.args.use_bfloat16,
+        )
 
         return [optimizer]
 
