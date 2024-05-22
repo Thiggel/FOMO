@@ -45,10 +45,8 @@ class CIFAR100FineTuner(L.LightningModule):
             param.requires_grad = False
 
         # Determine the number of input features
-        input, _ = next(iter(self.train_dataset))
-        input = input.unsqueeze(0)
-        x = self.model.extract_features(input)
-        num_ftrs = x.size(1)
+        sample_input = torch.zeros(1, 3, 32, 32)  # Assuming CIFAR-10 size input
+        num_ftrs = self.model.extract_features(sample_input).shape[1]
 
         self.probe = nn.Linear(num_ftrs, 100)
 
