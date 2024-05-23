@@ -117,7 +117,7 @@ def get_training_args() -> dict:
     parser.add_argument("--ipe_scale", type=float, default=1.0)
     # parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument("--start_lr", type=float, default=0.0002)
-    parser.add_argument("--warmup", type=int, default=670) #n_batches, so change depending on the gpu, but if the batch size goes up maybe 1 epoch longer warmup isnt too bad
+    parser.add_argument("--warmup", type=int, default=5) #n_batches, so change depending on the gpu, but if the batch size goes up maybe 1 epoch longer warmup isnt too bad
     # parser.add_argument('--weight_decay', type=float, default=0.04)
 
     args = parser.parse_args()
