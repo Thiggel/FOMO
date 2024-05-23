@@ -140,7 +140,7 @@ class ImbalancedTraining:
             self.trainer_args["max_epochs"] = finetuner.max_epochs
 
             self.trainer_args["max_time"] = {
-                "minutes": 15,
+                "minutes": 25,
             }
 
             trainer = L.Trainer(**self.trainer_args)

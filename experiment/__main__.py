@@ -192,13 +192,19 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
 
         trainer_args["max_epochs"] = finetuner.max_epochs
 
+        trainer_args["max_time"] = {
+            "minutes": 25,
+        }
+
         trainer = L.Trainer(**trainer_args)
 
         trainer.fit(model=finetuner)
 
-        results.update(trainer.test(model=finetuner))
+        finetuning_results = trainer.test(model=finetuner)[0]
 
-    return results
+        results = {**results, **finetuning_results}
+
+        return results
 
 
 def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
