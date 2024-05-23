@@ -107,8 +107,8 @@ def get_training_args() -> dict:
     parser.add_argument("--pred_mask_scale", type=float, nargs=2, default=[0.15, 0.2])
 
     # Meta
-    parser.add_argument("--pred_depth", type=int, default=12)
-    parser.add_argument("--pred_emb_dim", type=int, default=384)
+    parser.add_argument("--pred_depth", type=int, default=3)
+    parser.add_argument("--pred_emb_dim", type=int, default=192)
     parser.add_argument("--use_bfloat16", type=bool, default=False)
 
     # Optimization
