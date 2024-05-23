@@ -6,7 +6,7 @@ python -m experiment --model_name ResNet18 \
   --no_augmentation \
   --classification_head \
   --early_stopping_monitor "val_acc_top5" \
-  --imbalance_method power_law_imbalance \
+  --imbalance_method linearly_increasing \
   --batch_size 256 \
   --crop_size 96 \
   --lr 5e-4 \
@@ -19,4 +19,3 @@ python -m experiment --model_name ResNet18 \
   --max_cycles 1 \
   --logger \
   --num_runs 3
-

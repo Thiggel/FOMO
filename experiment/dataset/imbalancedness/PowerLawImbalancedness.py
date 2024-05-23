@@ -5,6 +5,10 @@ class PowerLawImbalancedness(Imbalancedness):
     def __init__(self, num_classes: int):
         super().__init__(num_classes)
 
+    def normalize_class_dist(self):
+        sum_dist = sum(self.class_dist)
+        self.class_dist = [dist / sum_dist for dist in self.class_dist]
+
     def get_imbalance(self, class_index: int) -> float:
         """
         Following the imbalance evaluated in Assran et al. 2023,
