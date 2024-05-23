@@ -88,6 +88,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True,
             collate_fn=self.collate_fn,
+            drop_last=True
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -97,6 +98,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True,
             collate_fn=self.collate_fn,
+            drop_last=True
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -106,6 +108,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True,
             collate_fn=self.collate_fn,
+            drop_last=True
         )
 
     def collate(self, batch: list) -> tuple[list[Tensor], Tensor]:
