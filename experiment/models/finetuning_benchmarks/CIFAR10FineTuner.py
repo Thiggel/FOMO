@@ -44,13 +44,9 @@ class CIFAR10FineTuner(L.LightningModule):
         for param in self.model.parameters():
             param.requires_grad = False
 
-        # Determine the number of input features
-        input, _ = next(iter(self.train_dataset))
-        input = input.unsqueeze(0)
-        x = self.model.extract_features(input)
-        num_ftrs = x.size(1)
+        self.num_features = self.model.num_features
 
-        self.probe = nn.Linear(num_ftrs, output_size)
+        self.probe = nn.Linear(self.num_features, output_size)
 
         (self.train_dataset, self.val_dataset, self.test_dataset) = self.get_datasets()
 
@@ -136,7 +132,7 @@ class CIFAR10FineTuner(L.LightningModule):
         inputs, targets = batch
         outputs = self(inputs)
         outputs = self.probe(outputs)
-        
+
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
         self.log("val_loss", loss, prog_bar=True)

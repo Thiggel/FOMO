@@ -12,6 +12,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 import torch
 from torch import nn
 import torch.multiprocessing as mp
+from torchvision import transforms
 
 from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
@@ -173,7 +174,21 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
     results = {}
 
     for benchmark in benchmarks:
-        finetuner = benchmark(model=model, lr=args.lr, batch_size=64)
+        print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
+
+        transform = transforms.Compose(
+            [
+                transforms.Resize((args.crop_size, args.crop_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+        finetuner = benchmark(
+            model=model, lr=args.lr, batch_size=64, transform=transform
+        )
 
         trainer_args["max_epochs"] = finetuner.max_epochs
 

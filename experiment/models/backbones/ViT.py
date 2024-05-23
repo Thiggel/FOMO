@@ -10,6 +10,7 @@ class ViT(nn.Module):
         self.model, self.config = self._load_model(model_id)
         self.head = nn.Linear(self.config.hidden_size, output_size)
         self.output_size = output_size
+        self.num_features = self.config.hidden_size
 
     def _load_model(self, model_name: str) -> nn.Module:
         model = ViTModel.from_pretrained(model_name)

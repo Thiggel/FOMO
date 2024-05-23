@@ -8,6 +8,7 @@ class ResNet18(nn.Module):
     def __init__(self, output_size):
         super(ResNet18, self).__init__()
         self.resnet = models.resnet18(pretrained=False, num_classes=output_size)
+        self.num_features = self.resnet.fc.in_features
 
     def forward(self, x):
         return self.resnet(x)
