@@ -5,9 +5,10 @@ python -m experiment --model_name ViTTinyJeppa \
   --ssl_method "I-Jepa" \
   --early_stopping_monitor "val_loss" \
   --imbalance_method linearly_increasing \
-  --batch_size 4 \
+  --batch_size 128 \
   --crop_size 224 \
-  --lr 1e-3 \
+  --lr 3e-3 \
+  --final_lr 1e-4 \
   --temperature 0.7 \
   --weight_decay 0.04 \
   --early_stopping_patience 10 \
