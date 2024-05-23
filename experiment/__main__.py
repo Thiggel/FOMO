@@ -105,7 +105,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         monitor=args.early_stopping_monitor,
         mode=mode,
         save_top_k=-1,
-        save_last=True
+        save_last=True,
     )
 
     tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
@@ -148,6 +148,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
             )
 
         if args.finetune:
+            trainer_args.pop("callbacks")
             results = finetune(args, trainer_args, ssl_method.model)
 
             return results
