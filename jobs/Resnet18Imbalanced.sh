@@ -12,7 +12,6 @@ python -m experiment --model_name ResNet18 \
   --lr 5e-4 \
   --temperature 0.7 \
   --weight_decay 1e-4 \
-  --early_stopping_patience 10 \
   --pretrain \
   --finetune \
   --n_epochs_per_cycle 100 \
