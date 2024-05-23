@@ -295,6 +295,7 @@ class VisionTransformerPredictor(nn.Module):
         **kwargs
     ):
         super().__init__()
+        self.num_features = embed_dim
         self.predictor_embed = nn.Linear(embed_dim, predictor_embed_dim, bias=True)
         self.mask_token = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
         dpr = [
@@ -544,7 +545,7 @@ class VisionTransformer(nn.Module):
         if self.norm is not None:
             x = self.norm(x)
         return x
-    
+
     def forward(self, x, masks=None):
         x = self.extract_last_hidden_state(x, masks)
 

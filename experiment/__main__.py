@@ -12,6 +12,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 import torch
 from torch import nn
 import torch.multiprocessing as mp
+from torchvision import transforms
 
 from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
@@ -105,7 +106,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         monitor=args.early_stopping_monitor,
         mode=mode,
         save_top_k=-1,
-        save_last=True
+        save_last=True,
     )
 
     tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
@@ -148,6 +149,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
             )
 
         if args.finetune:
+            trainer_args.pop("callbacks")
             results = finetune(args, trainer_args, ssl_method.model)
 
             return results
@@ -172,17 +174,37 @@ def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
     results = {}
 
     for benchmark in benchmarks:
-        finetuner = benchmark(model=model, lr=args.lr, batch_size=64)
+        print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
+
+        transform = transforms.Compose(
+            [
+                transforms.Resize((args.crop_size, args.crop_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+        finetuner = benchmark(
+            model=model, lr=args.lr, batch_size=64, transform=transform
+        )
 
         trainer_args["max_epochs"] = finetuner.max_epochs
+
+        trainer_args["max_time"] = {
+            "minutes": 25,
+        }
 
         trainer = L.Trainer(**trainer_args)
 
         trainer.fit(model=finetuner)
 
-        results.update(trainer.test(model=finetuner))
+        finetuning_results = trainer.test(model=finetuner)[0]
 
-    return results
+        results = {**results, **finetuning_results}
+
+        return results
 
 
 def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
@@ -205,7 +227,7 @@ def main():
 
         run_args = set_checkpoint_for_run(args, run_idx)
 
-        results = run(run_args, seed=run_idx)
+        results = run(run_args, seed=args.seeds[run_idx])
 
         end_time = time.time()
         seconds_to_hours = 3600

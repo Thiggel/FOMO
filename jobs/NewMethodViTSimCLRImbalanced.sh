@@ -4,7 +4,7 @@ python -m experiment --model_name ViTTiny \
   --imagenet_variant 100 \
   --ssl_method SimCLR \
   --early_stopping_monitor "val_acc_top5" \
-  --imbalance_method power_law_imbalance \
+  --imbalance_method linearly_increasing \
   --batch_size 256 \
   --crop_size 224 \
   --lr 5e-4 \
@@ -14,4 +14,3 @@ python -m experiment --model_name ViTTiny \
   --n_epochs_per_cycle 5 \
   --max_cycles 20\
   --num_runs 3
-

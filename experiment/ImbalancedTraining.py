@@ -60,11 +60,7 @@ class ImbalancedTraining:
         """
         trainer = L.Trainer(**self.trainer_args)
 
-        trainer.fit(
-            model=self.ssl_method,
-            datamodule=self.datamodule,
-            ckpt_path='last'
-        )
+        trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
 
@@ -124,17 +120,29 @@ class ImbalancedTraining:
         benchmarks = FinetuningBenchmarks.benchmarks
         results = {}
 
+        self.trainer_args.pop("callbacks")
+
         for benchmark in benchmarks:
             print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
 
+            transform = transforms.Compose(
+                [
+                    transforms.Resize((self.args.crop_size, self.args.crop_size)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    ),
+                ]
+            )
+
             finetuner = benchmark(
-                model=self.ssl_method.model, lr=self.args.lr, transform=self.transform
+                model=self.ssl_method.model, lr=self.args.lr, transform=transform
             )
 
             self.trainer_args["max_epochs"] = finetuner.max_epochs
 
             self.trainer_args["max_time"] = {
-                "minutes": 15,
+                "minutes": 25,
             }
 
             trainer = L.Trainer(**self.trainer_args)
