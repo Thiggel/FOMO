@@ -139,7 +139,7 @@ def init_opt(
     optimizer = torch.optim.AdamW(param_groups)
     scheduler = WarmupCosineSchedule(
         optimizer,
-        warmup_steps=int(warmup),
+        warmup_steps=int(warmup*iterations_per_epoch),
         start_lr=start_lr,
         ref_lr=ref_lr,
         final_lr=final_lr,
