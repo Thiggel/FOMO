@@ -6,7 +6,7 @@ python -m experiment --model_name ViTTinyJeppa \
   --no_augmentation \
   --warmup 700 \
   --early_stopping_monitor "val_loss" \
-  --imbalance_method no_imbalance \
+  --imbalance_method linearly_increasing \
   --batch_size 128 \
   --crop_size 224 \
   --lr 3e-3 \

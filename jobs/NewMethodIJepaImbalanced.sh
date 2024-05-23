@@ -4,7 +4,7 @@ python -m experiment --model_name ViTTinyJeppa \
   --imagenet_variant 100 \
   --ssl_method "I-Jepa" \
   --early_stopping_monitor "val_loss" \
-  --imbalance_method power_law_imbalance \
+  --imbalance_method linearly_increasing \
   --batch_size 4 \
   --crop_size 224 \
   --lr 1e-3 \

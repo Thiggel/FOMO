@@ -5,7 +5,7 @@ python -m experiment --model_name ViTTiny \
   --ssl_method SimCLR \
   --no_augmentation \
   --early_stopping_monitor "val_acc_top5" \
-  --imbalance_method power_law_imbalance \
+  --imbalance_method linearly_increasing \
   --batch_size 256 \
   --crop_size 224 \
   --lr 5e-4 \
