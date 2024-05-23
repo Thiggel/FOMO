@@ -120,6 +120,8 @@ class ImbalancedTraining:
         benchmarks = FinetuningBenchmarks.benchmarks
         results = {}
 
+        self.trainer_args.pop("callbacks")
+
         for benchmark in benchmarks:
             print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
 
