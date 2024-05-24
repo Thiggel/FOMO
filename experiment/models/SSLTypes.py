@@ -7,6 +7,7 @@ from torchvision import models, transforms
 from experiment.dataset.ContrastiveTransformations import ContrastiveTransformations
 from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.IJepa import IJepa
+from experiment.models.SSLMethods.TestSSLMethod import TestSSLMethod
 from experiment.utils.collate_functions import simclr_collate
 
 from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
@@ -96,6 +97,16 @@ class SSLTypes(Enum):
                     color_distortion=parserargs.use_color_distortion,
                     color_jitter=parserargs.color_jitter_strength,
                 ),
+            ),
+            "TestSSLMethod": SSLType(
+                module=lambda *args, **kwargs: TestSSLMethod(),
+                transforms=lambda *args, **kwargs: transforms.Compose(
+                    [
+                        transforms.Resize((30, 30)),
+                        transforms.ToTensor(),
+                    ]
+                ),
+                collate_fn=lambda *args, **kwargs: None,
             ),
         }
 

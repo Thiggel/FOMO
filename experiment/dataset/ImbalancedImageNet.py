@@ -11,9 +11,29 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethod,
 )
 
+
 class DataPoint(TypedDict):
     image: Image.Image
     label: int
+
+
+class DummyImageNet(Dataset):
+    def __init__(self, num_classes: int, transform=None):
+        super().__init__()
+
+        self.num_classes = num_classes
+        self.transform = transform
+
+    def __len__(self):
+        return 100
+
+    def __getitem__(self, idx) -> DataPoint:
+        datapoint = {"image": Image.new("RGB", (224, 224)), "label": 0}
+
+        if self.transform:
+            datapoint["image"] = self.transform(datapoint["image"])
+
+        return datapoint["image"], datapoint["label"]
 
 
 class ImbalancedImageNet(Dataset):
@@ -23,13 +43,12 @@ class ImbalancedImageNet(Dataset):
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
         transform=None,
-        test_mode: bool = False,
     ):
         super().__init__()
 
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
-        split = "validation[:1]" if test_mode else "train+validation"
+        split = "train+validation"
 
         self.dataset = load_dataset(dataset_path, split=split)
 

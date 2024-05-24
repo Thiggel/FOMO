@@ -18,3 +18,4 @@ black
 pre-commit
 faiss-cpu
 scikit-learn
+wandb

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 import time
 import argparse
 from argparse import Namespace
@@ -8,7 +8,8 @@ from lightning.pytorch.callbacks import (
     EarlyStopping,
     DeviceStatsMonitor,
 )
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import WandbLogger
+import wandb
 import torch
 from torch import nn
 import torch.multiprocessing as mp
@@ -43,6 +44,7 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
         batch_size=args.batch_size,
         checkpoint_filename=checkpoint_filename,
         transform=ssl_method.transforms(args),
+        test_mode=args.test_mode,
     )
 
 
@@ -83,7 +85,13 @@ def run(args: Namespace, seed: int = 42) -> dict:
     set_seed(seed)
 
     checkpoint_filename = (
-        args.model_name + "_" + args.imagenet_variant + "_" + args.imbalance_method
+        args.model_name
+        + "_"
+        + args.imagenet_variant
+        + "_"
+        + args.imbalance_method
+        + "_"
+        + str(datetime.now())
     )
 
     datamodule = init_datamodule(
@@ -105,11 +113,13 @@ def run(args: Namespace, seed: int = 42) -> dict:
         filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
         monitor=args.early_stopping_monitor,
         mode=mode,
-        save_top_k=-1,
-        save_last=True,
     )
 
-    tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
+    if not args.test_mode:
+        wandb_logger = WandbLogger(
+            entity="organize", project="FOMO", name=checkpoint_filename
+        )
+        wandb_logger.watch(model, log="all")
 
     stats_monitor = DeviceStatsMonitor()
 
@@ -120,91 +130,25 @@ def run(args: Namespace, seed: int = 42) -> dict:
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
-        "logger": tensorboard_logger if args.logger else None,
+        "logger": wandb_logger if args.logger and not args.test_mode else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
     }
 
-    if args.no_augmentation:
+    imbalanced_training = ImbalancedTraining(
+        args,
+        trainer_args,
+        ssl_type,
+        datamodule,
+        checkpoint_callback,
+    )
 
-        ssl_method = ssl_type
+    results = imbalanced_training.run()
 
-        if args.checkpoint is not None:
-            ssl_method.load_state_dict(
-                torch.load(
-                    args.checkpoint,
-                    map_location=torch.device(
-                        "cuda" if torch.cuda.is_available() else "cpu"
-                    ),
-                )["state_dict"]
-            )
+    if not args.test_mode:
+        wandb_logger.experiment.unwatch()
 
-        trainer = L.Trainer(**trainer_args)
-
-        if args.pretrain:
-            trainer.fit(model=ssl_method, datamodule=datamodule)
-
-            ssl_method.load_state_dict(
-                torch.load(checkpoint_callback.best_model_path)["state_dict"]
-            )
-
-        if args.finetune:
-            trainer_args.pop("callbacks")
-            results = finetune(args, trainer_args, ssl_method.model)
-
-            return results
-
-        else:
-            return {}
-
-    else:
-        imbalanced_training = ImbalancedTraining(
-            args,
-            trainer_args,
-            ssl_type,
-            datamodule,
-            checkpoint_callback,
-        )
-
-        return imbalanced_training.run()
-
-
-def finetune(args: Namespace, trainer_args: dict, model: nn.Module) -> dict:
-    benchmarks = FinetuningBenchmarks.benchmarks
-    results = {}
-
-    for benchmark in benchmarks:
-        print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
-
-        transform = transforms.Compose(
-            [
-                transforms.Resize((args.crop_size, args.crop_size)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
-        )
-
-        finetuner = benchmark(
-            model=model, lr=args.lr, batch_size=64, transform=transform
-        )
-
-        trainer_args["max_epochs"] = finetuner.max_epochs
-
-        trainer_args["max_time"] = {
-            "minutes": 25,
-        }
-
-        trainer = L.Trainer(**trainer_args)
-
-        trainer.fit(model=finetuner)
-
-        finetuning_results = trainer.test(model=finetuner)[0]
-
-        results = {**results, **finetuning_results}
-
-        return results
+    return results
 
 
 def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
@@ -217,9 +161,7 @@ def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
     return args
 
 
-def main():
-    args = get_training_args()
-
+def run_different_seeds(args: Namespace) -> dict:
     all_results = []
 
     for run_idx in range(args.num_runs):
@@ -237,6 +179,17 @@ def main():
         print(results)
 
         all_results.append(results)
+
+    return all_results
+
+
+def main():
+    args = get_training_args()
+
+    if not args.test_mode:
+        wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
+
+    all_results = run_different_seeds(args)
 
     print_mean_std(all_results)
 
