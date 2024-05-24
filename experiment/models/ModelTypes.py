@@ -21,11 +21,11 @@ class ModelTypes(Enum):
     @staticmethod
     def model_types():
         return {
-            "ResNet18": ModelType(
-                model=lambda output_size, *args, **kwargs: ResNet18(output_size),
-            ),
             "ResNet50": ModelType(
                 model=lambda output_size, *args, **kwargs: ResNet50(output_size),
+            ),
+            "ResNet18": ModelType(
+                model=lambda output_size, *args, **kwargs: ResNet18(output_size),
             ),
             "ViTTiny": ModelType(
                 model=lambda output_size, *args, **kwargs: ViT(

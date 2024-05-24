@@ -68,7 +68,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
 
     parser.add_argument("--splits", nargs="+", type=float, default=[0.8, 0.1, 0.1])
     parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--early_stopping_patience", type=int, default=100)
     parser.add_argument("--checkpoint", nargs="+", type=str, default=None)
 
     parser.add_argument("--no-pretrain", action="store_false", dest="pretrain")
@@ -84,7 +83,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument("--no-logger", action="store_false", dest="logger")
 
     parser.add_argument("--classification_head", action="store_true")
-    parser.add_argument("--early_stopping_monitor", type=str, default="val_loss")
 
     parser.add_argument(
         "--seeds", nargs="+", type=int, default=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -108,7 +106,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument(
         "--image_folder", type=str, default="imagenet_full_size/061417/"
     )
-    parser.add_argument("--num_workers", type=int, default=10)
     parser.add_argument("--pin_mem", type=bool, default=True)
     # parser.add_argument('--root_path', type=str, default='$replace_this_with_absolute_path_to_your_datasets_directory') #idk if I can make this nicer somehow.
     parser.add_argument("--use_color_distortion", type=bool, default=False)
@@ -132,7 +129,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
 
     # Optimization
     parser.add_argument("--ema", type=float, nargs=2, default=[0.996, 1.0])
-    parser.add_argument("--epochs", type=int, default=300)
     parser.add_argument("--final_lr", type=float, default=1.0e-4)
     parser.add_argument("--final_weight_decay", type=float, default=0.4)
     parser.add_argument("--ipe_scale", type=float, default=1.0)
