@@ -12,7 +12,7 @@ class NoImbalancedness(Imbalancedness):
         self.total_imbalance = self.get_total_imbalance()
 
     def get_power_law_imbalance(self, class_index: int) -> float:
-        return self.linearly_increasing.get_imbalance(class_index)
+        return self.linear_imbalance.get_imbalance(class_index)
 
     def get_total_imbalance(self) -> float:
         """

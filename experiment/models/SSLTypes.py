@@ -109,7 +109,7 @@ class SSLTypes(Enum):
                 ),
                 transforms=lambda parserargs: transforms.Compose(
                     [
-                        transforms.Resize((parserargs.crop_size, parserargs.crop_size)),
+                        transforms.Resize((224, 224)),
                         transforms.RandomHorizontalFlip(),
                         transforms.RandomApply(
                             [
@@ -117,20 +117,18 @@ class SSLTypes(Enum):
                                     brightness=0.4,
                                     contrast=0.4,
                                     saturation=0.4,
-                                    hue=0.1,
+                                    hue=0.1
                                 )
-                            ],
-                            p=0.8,
-                        ),
-                        transforms.RandomGrayscale(p=0.2),
-                        transforms.GaussianBlur(kernel_size=3),
-                        transforms.ToTensor(),
-                        transforms.Normalize(
-                            mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]
-                        ),
-                    ]
-                ),
+                    ],
+                      p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.GaussianBlur(kernel_size=3),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225]
+                    ),
+                ]),
                 collate_fn=lambda parserargs: simclr_collate,
             ),
         }

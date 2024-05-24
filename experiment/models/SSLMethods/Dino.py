@@ -26,8 +26,8 @@ class Dino(L.LightningModule):
             self.hparams.temperature > 0.0
         ), "The temperature must be a positive float!"
 
-        # Load DINO model from timm
-        self.model = timm.create_model(model_name, pretrained=True)
+        # Load DINO model from timm no pretrained 
+        self.model = timm.create_model(model_name, pretrained=False)
 
         # Adjusting the final layer for our specific task
         try:
@@ -38,7 +38,7 @@ class Dino(L.LightningModule):
                     nn.Linear(self.model.fc.out_features, hidden_dim)
                 )
         except AttributeError:
-            # handle when there is no model.fc error TODO revisit
+            # Handle the case where model.fc does not exist
             self.model.head = nn.Sequential(
                 self.model.head,
                 nn.ReLU(inplace=True),
@@ -61,6 +61,9 @@ class Dino(L.LightningModule):
     def info_nce_loss(self, batch, mode="train"):
         imgs, _ = batch
         imgs = torch.cat(imgs, dim=0)
+        
+        if imgs.dim() == 3:
+            imgs = imgs.unsqueeze(1)  
 
         feats = self.model(imgs)
 
