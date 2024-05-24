@@ -31,7 +31,7 @@ class ImbalancedImageNet(Dataset):
         self.test_mode = test_mode
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
-        split = "validation[:5%]" if test_mode else "train+validation"
+        split = "validation[:1%]" if test_mode else "train+validation"
 
         self.dataset = load_dataset(dataset_path, split=split)
 

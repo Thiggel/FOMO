@@ -1,0 +1,47 @@
+{
+    "os": "macOS-10.16-x86_64-i386-64bit",
+    "python": "3.10.14",
+    "heartbeatAt": "2024-05-24T12:39:22.121982",
+    "startedAt": "2024-05-24T12:39:21.357661",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "tests/test_pipeline.py",
+        "-s"
+    ],
+    "state": "running",
+    "program": "-m pytest.__main__",
+    "codePathLocal": null,
+    "git": {
+        "remote": "git@github.com:Thiggel/FOMO.git",
+        "commit": "7a2a3d00bf54ba2e2b6f58b1d54c3ace40c0340a"
+    },
+    "email": "f.laitenberger@gmail.com",
+    "root": "/Users/filipe/Desktop/Foundation Models/Project/FOMO",
+    "host": "sp-byods-145-109-11-222.wireless.uva.nl",
+    "username": "filipe",
+    "executable": "/opt/miniconda3/envs/fomo/bin/python",
+    "cpu_count": 6,
+    "cpu_count_logical": 12,
+    "cpu_freq": {
+        "current": 2600,
+        "min": 2600,
+        "max": 2600
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2600,
+            "min": 2600,
+            "max": 2600
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 233.46913528442383,
+            "used": 12.53695297241211
+        }
+    },
+    "memory": {
+        "total": 16.0
+    }
+}
