@@ -118,7 +118,10 @@ class ImbalancedTraining:
         """
         for cycle_idx in range(self.max_cycles):
             print(f"Pretraining cycle {cycle_idx + 1}/{self.max_cycles}")
-            self.pretrain_cycle(cycle_idx)
+            try:
+                self.pretrain_cycle(cycle_idx)
+            except Exception as e:
+                print(f"Error in cycle {cycle_idx}: {e}")
 
     def finetune(self) -> dict:
         benchmarks = FinetuningBenchmarks.get_benchmarks(
@@ -153,7 +156,10 @@ class ImbalancedTraining:
 
             trainer = L.Trainer(**self.trainer_args)
 
-            trainer.fit(model=finetuner)
+            try:
+                trainer.fit(model=finetuner)
+            except Exception as e:
+                print(f"Error in benchmark {benchmark.__name__}: {e}")
 
             finetuning_results = trainer.test(model=finetuner)[0]
 
