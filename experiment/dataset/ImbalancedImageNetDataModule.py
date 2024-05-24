@@ -5,7 +5,7 @@ from torch import Tensor
 from torch.utils.data import random_split, DataLoader, Dataset
 from typing import Callable
 from experiment.dataset.ImageNetVariants import ImageNetVariants
-from experiment.dataset.ImbalancedImageNet import ImbalancedImageNet
+from experiment.dataset.ImbalancedImageNet import DummyImageNet, ImbalancedImageNet
 from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethods,
     ImbalanceMethod,
@@ -42,13 +42,15 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self.collate_fn = collate_fn
         self.batch_size = batch_size
 
-        self.dataset = ImbalancedImageNet(
-            dataset_variant.value.path,
-            transform=self.transform,
-            imbalance_method=imbalance_method,
-            checkpoint_filename=checkpoint_filename,
-            test_mode=test_mode,
-        )
+        if test_mode:
+            self.dataset = DummyImageNet(100, transform=self.transform)
+        else:
+            self.dataset = ImbalancedImageNet(
+                dataset_variant.value.path,
+                transform=self.transform,
+                imbalance_method=imbalance_method,
+                checkpoint_filename=checkpoint_filename,
+            )
 
         self.num_classes = self.dataset.num_classes
 

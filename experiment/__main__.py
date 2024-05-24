@@ -129,7 +129,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
-        "logger": wandb_logger if args.logger else None,
+        "logger": wandb_logger if args.logger and not args.test_mode else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
     }
@@ -181,8 +181,10 @@ def run_different_seeds(args: Namespace) -> dict:
 
 
 def main():
-    wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
     args = get_training_args()
+
+    if not args.test_mode:
+        wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
 
     all_results = run_different_seeds(args)
 
