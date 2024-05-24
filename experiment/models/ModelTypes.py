@@ -5,6 +5,7 @@ from torchvision import models
 
 
 from experiment.models.backbones.ViT import ViT
+from experiment.models.backbones.DinoViT import DinoViT
 from experiment.models.backbones.JeppaViT import VisionTransformer, partial
 from experiment.models.backbones.Resnet import ResNet18, ResNet50
 
@@ -79,6 +80,14 @@ class ModelTypes(Enum):
                     img_size=[image_size],
                     classification_head=classification_head,
                     output_size=output_size,
+                    **kwargs,
+                ),
+            ),
+            "DinoViTBase224": ModelType(
+                model=lambda output_size, *args, **kwargs: DinoViT(
+                    model_id="timm/vit_base_patch16_224.dino",
+                    output_size=output_size,
+                    *args,
                     **kwargs,
                 ),
             ),

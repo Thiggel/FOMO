@@ -8,6 +8,7 @@ from experiment.dataset.ContrastiveTransformations import ContrastiveTransformat
 from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.IJepa import IJepa
 from experiment.utils.collate_functions import simclr_collate
+from experiment.models.SSLMethods.Dino import Dino 
 
 from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
 from experiment.dataset.transforms import make_transforms
@@ -96,6 +97,41 @@ class SSLTypes(Enum):
                     color_distortion=parserargs.use_color_distortion,
                     color_jitter=parserargs.color_jitter_strength,
                 ),
+            ),
+            "Dino": SSLType(
+                module=lambda lr, temperature, weight_decay, max_epochs, *args, **kwargs: Dino(
+                    lr=lr,
+                    temperature=temperature,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    *args,
+                    **kwargs
+                ),
+                transforms=lambda parserargs: transforms.Compose(
+                    [
+                        transforms.Resize((parserargs.crop_size, parserargs.crop_size)),
+                        transforms.RandomHorizontalFlip(),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.4,
+                                    contrast=0.4,
+                                    saturation=0.4,
+                                    hue=0.1,
+                                )
+                            ],
+                            p=0.8,
+                        ),
+                        transforms.RandomGrayscale(p=0.2),
+                        transforms.GaussianBlur(kernel_size=3),
+                        transforms.ToTensor(),
+                        transforms.Normalize(
+                            mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225]
+                        ),
+                    ]
+                ),
+                collate_fn=lambda parserargs: simclr_collate,
             ),
         }
 
