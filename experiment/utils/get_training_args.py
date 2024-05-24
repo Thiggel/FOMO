@@ -8,7 +8,7 @@ from experiment.dataset.ImageNetVariants import ImageNetVariants
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 
 
-def get_training_args() -> dict:
+def get_training_args(get_defaults: bool = False) -> dict:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model_name",
@@ -38,6 +38,14 @@ def get_training_args() -> dict:
         default=SSLTypes.get_default_ssl_type(),
     )
 
+    parser.add_argument(
+        "--finetuning_benchmarks",
+        nargs="+",
+        type=str,
+        choices=FinetuningBenchmarks.get_all_benchmark_names(),
+        default=FinetuningBenchmarks.get_default_benchmark_names(),
+    )
+
     parser.add_argument("--no_augmentation", action="store_true")
 
     parser.add_argument("--lr", type=float, default=1e-4)
@@ -51,25 +59,24 @@ def get_training_args() -> dict:
     parser.add_argument("--early_stopping_patience", type=int, default=100)
     parser.add_argument("--checkpoint", nargs="+", type=str, default=None)
 
-    parser.add_argument("--pretrain", action="store_true")
     parser.add_argument("--no-pretrain", action="store_false", dest="pretrain")
     parser.set_defaults(pretrain=True)
 
-    parser.add_argument("--finetune", action="store_true")
     parser.add_argument("--no-finetune", action="store_false", dest="finetune")
     parser.set_defaults(finetune=True)
 
-    parser.add_argument("--num_runs", type=int, default=1)
+    parser.add_argument("--num_runs", type=int, default=3)
     parser.add_argument("--max_hours_per_run", type=int, default=5)
 
-    parser.add_argument("--logger", action="store_true")
-    parser.add_argument("--no-logger", action="store_false", dest="logger")
     parser.set_defaults(logger=True)
+    parser.add_argument("--no-logger", action="store_false", dest="logger")
 
     parser.add_argument("--classification_head", action="store_true")
     parser.add_argument("--early_stopping_monitor", type=str, default="val_loss")
-    
-    parser.add_argument("--seeds", nargs="+", type=int, default=[0,1,2,3,4,5,6,7,8,9])
+
+    parser.add_argument(
+        "--seeds", nargs="+", type=int, default=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    )
 
     # I-Jepa Args
     parser.add_argument("--fe_batch_size", type=int, default=32)
@@ -119,11 +126,14 @@ def get_training_args() -> dict:
     parser.add_argument("--ipe_scale", type=float, default=1.0)
     # parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument("--start_lr", type=float, default=0.0002)
-    parser.add_argument("--warmup", type=int, default=5) #n_batches, so change depending on the gpu, but if the batch size goes up maybe 1 epoch longer warmup isnt too bad
+    parser.add_argument(
+        "--warmup", type=int, default=5
+    )  # n_batches, so change depending on the gpu, but if the batch size goes up maybe 1 epoch longer warmup isnt too bad
     # parser.add_argument('--weight_decay', type=float, default=0.04)
 
-    args = parser.parse_args()
-
-    args.split = tuple(args.splits)
+    if get_defaults:
+        args = parser.parse_args([])
+    else:
+        args = parser.parse_args()
 
     return args

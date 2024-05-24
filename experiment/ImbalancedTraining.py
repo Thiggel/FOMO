@@ -117,7 +117,9 @@ class ImbalancedTraining:
             self.pretrain_cycle(cycle_idx)
 
     def finetune(self) -> dict:
-        benchmarks = FinetuningBenchmarks.benchmarks
+        benchmarks = FinetuningBenchmarks.get_benchmarks(
+            self.args.finetuning_benchmarks
+        )
         results = {}
 
         self.trainer_args.pop("callbacks")
