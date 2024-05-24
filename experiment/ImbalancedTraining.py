@@ -83,6 +83,7 @@ class ImbalancedTraining:
             train=ood_train_dataset,
             test=ood_test_dataset,
             feature_extractor=self.ssl_method.model.extract_features,
+            cycle_idx=cycle_idx,
         )
 
         ood.extract_features()

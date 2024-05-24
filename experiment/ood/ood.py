@@ -4,6 +4,8 @@ from torch.utils.data import Dataset
 import faiss
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+import os
+from torchvision.utils import save_image
 
 class OOD:
     def __init__(
@@ -12,6 +14,7 @@ class OOD:
         train: Dataset,
         test: Dataset,
         feature_extractor,
+        cycle_idx: int = None,
     ):
         self.train = train
         self.test = test
@@ -22,6 +25,7 @@ class OOD:
         self.pct_train = args.pct_train
         self.train_features = []
         self.test_features = []
+        self.cycle_idx = cycle_idx
 
     def extract_features(self):
         train_loader = DataLoader(self.train, batch_size=self.batch_size, shuffle=False)
@@ -69,5 +73,16 @@ class OOD:
         threshold = np.percentile(scores_ood, 100 * (1 - self.pct_ood))
         is_ood = scores_ood >= threshold
         ood_indices = [i for i, ood_flag in enumerate(is_ood) if ood_flag]
+
+        if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
+            os.makedirs(f"./ood_logs/{self.cycle_idx}")
+
+        np.save(f"./ood_logs/{self.cycle_idx}/scores_ood.npy", scores_ood)
+        if not os.path.exists(f"./ood_logs/{self.cycle_idx}/images"):
+            os.makedirs(f"./ood_logs/{self.cycle_idx}/images")
+        for i, index in enumerate(ood_indices):
+            image = self.test[index][0] 
+            image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}.jpg"
+            save_image(image, image_path)
 
         return ood_indices, threshold
