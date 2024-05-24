@@ -29,16 +29,6 @@ class SSLTypes(Enum):
     @staticmethod
     def ssl_types():
         return {
-            "TestSSLMethod": SSLType(
-                module=lambda *args, **kwargs: TestSSLMethod(),
-                transforms=lambda *args, **kwargs: transforms.Compose(
-                    [
-                        transforms.Resize((30, 30)),
-                        transforms.ToTensor(),
-                    ]
-                ),
-                collate_fn=lambda *args, **kwargs: None,
-            ),
             "SimCLR": SSLType(
                 module=lambda model, lr, temperature, weight_decay, max_epochs, *args, **kwargs: SimCLR(
                     model=model,
@@ -107,6 +97,16 @@ class SSLTypes(Enum):
                     color_distortion=parserargs.use_color_distortion,
                     color_jitter=parserargs.color_jitter_strength,
                 ),
+            ),
+            "TestSSLMethod": SSLType(
+                module=lambda *args, **kwargs: TestSSLMethod(),
+                transforms=lambda *args, **kwargs: transforms.Compose(
+                    [
+                        transforms.Resize((30, 30)),
+                        transforms.ToTensor(),
+                    ]
+                ),
+                collate_fn=lambda *args, **kwargs: None,
             ),
         }
 

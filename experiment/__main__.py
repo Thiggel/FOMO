@@ -8,7 +8,8 @@ from lightning.pytorch.callbacks import (
     EarlyStopping,
     DeviceStatsMonitor,
 )
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import WandbLogger
+import wandb
 import torch
 from torch import nn
 import torch.multiprocessing as mp
@@ -114,7 +115,10 @@ def run(args: Namespace, seed: int = 42) -> dict:
         mode=mode,
     )
 
-    tensorboard_logger = TensorBoardLogger("logs/", name=args.model_name)
+    wandb_logger = WandbLogger(
+        entity="organize", project="FOMO", name=checkpoint_filename
+    )
+    wandb_logger.watch(model, log="all")
 
     stats_monitor = DeviceStatsMonitor()
 
@@ -125,7 +129,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
-        "logger": tensorboard_logger if args.logger else None,
+        "logger": wandb_logger if args.logger else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
     }
@@ -138,7 +142,10 @@ def run(args: Namespace, seed: int = 42) -> dict:
         checkpoint_callback,
     )
 
-    return imbalanced_training.run()
+    results = imbalanced_training.run()
+    wandb_logger.experiment.unwatch()
+
+    return results
 
 
 def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
@@ -174,6 +181,7 @@ def run_different_seeds(args: Namespace) -> dict:
 
 
 def main():
+    wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
     args = get_training_args()
 
     all_results = run_different_seeds(args)
