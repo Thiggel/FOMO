@@ -46,9 +46,10 @@ class ImbalancedTraining:
         if self.args.pretrain:
             self.pretrain_imbalanced()
 
-            self.ssl_method.model.load_state_dict(
-                torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
-            )
+            if not self.args.test_mode:
+                self.ssl_method.model.load_state_dict(
+                    torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
+                )
 
         return self.finetune() if self.args.finetune else {}
 
@@ -61,6 +62,9 @@ class ImbalancedTraining:
         trainer = L.Trainer(**self.trainer_args)
 
         trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
+
+        if not self.args.ood_augmentation:
+            return
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
 

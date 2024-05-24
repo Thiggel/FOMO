@@ -11,6 +11,7 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethod,
 )
 
+
 class DataPoint(TypedDict):
     image: Image.Image
     label: int
@@ -27,9 +28,10 @@ class ImbalancedImageNet(Dataset):
     ):
         super().__init__()
 
+        self.test_mode = test_mode
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
-        split = "validation[:1]" if test_mode else "train+validation"
+        split = "validation[:5%]" if test_mode else "train+validation"
 
         self.dataset = load_dataset(dataset_path, split=split)
 
@@ -71,6 +73,9 @@ class ImbalancedImageNet(Dataset):
         add a fraction of *1 - imbalance* of the samples of each class
         to our dataset.
         """
+        if self.test_mode:
+            return list(range(len(self.dataset)))
+
         indices = []
 
         for index, sample in tqdm(

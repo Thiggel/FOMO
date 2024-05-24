@@ -11,6 +11,7 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethod,
 )
 from torchvision import transforms
+from datasets import load_dataset
 
 from experiment.utils.get_num_workers import get_num_workers
 
@@ -48,6 +49,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             checkpoint_filename=checkpoint_filename,
             test_mode=test_mode,
         )
+
         self.num_classes = self.dataset.num_classes
 
         (
@@ -88,6 +90,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True,
             collate_fn=self.collate_fn,
+            drop_last=True,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -97,6 +100,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True,
             collate_fn=self.collate_fn,
+            drop_last=True,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -106,6 +110,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True,
             collate_fn=self.collate_fn,
+            drop_last=True,
         )
 
     def collate(self, batch: list) -> tuple[list[Tensor], Tensor]:

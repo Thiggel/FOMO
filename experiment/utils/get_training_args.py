@@ -46,7 +46,19 @@ def get_training_args(get_defaults: bool = False) -> dict:
         default=FinetuningBenchmarks.get_default_benchmark_names(),
     )
 
-    parser.add_argument("--no_augmentation", action="store_true")
+    parser.add_argument(
+        "--test_mode",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--no-test_mode",
+        action="store_false",
+        dest="test_mode",
+    )
+    parser.set_defaults(test_mode=False)
+
+    parser.add_argument("--ood_augmentation", action="store_true")
+    parser.set_defaults(ood_augmentation=False)
 
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--temperature", type=float, default=0.5)
