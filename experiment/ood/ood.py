@@ -76,15 +76,16 @@ class OOD:
 
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
             os.makedirs(f"./ood_logs/{self.cycle_idx}")
-
+            
         np.save(f"./ood_logs/{self.cycle_idx}/scores_ood.npy", scores_ood)
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}/images"):
             os.makedirs(f"./ood_logs/{self.cycle_idx}/images")
         top_k_indices = np.argsort(scores_ood)[-10:][::-1]
         for i, index in enumerate(top_k_indices):
             image = self.test[index][0] 
-            distance = scores_ood[index]
-            image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
-            save_image(image, image_path)
+            if len(image.shape) in [3, 4]:
+                distance = scores_ood[index]
+                image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
+                save_image(image, image_path)
 
         return ood_indices, threshold
