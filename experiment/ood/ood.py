@@ -80,9 +80,11 @@ class OOD:
         np.save(f"./ood_logs/{self.cycle_idx}/scores_ood.npy", scores_ood)
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}/images"):
             os.makedirs(f"./ood_logs/{self.cycle_idx}/images")
-        for i, index in enumerate(ood_indices):
+        top_k_indices = np.argsort(scores_ood)[-10:][::-1]
+        for i, index in enumerate(top_k_indices):
             image = self.test[index][0] 
-            image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}.jpg"
+            distance = scores_ood[index]
+            image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
             save_image(image, image_path)
 
         return ood_indices, threshold
