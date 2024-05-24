@@ -115,10 +115,11 @@ def run(args: Namespace, seed: int = 42) -> dict:
         mode=mode,
     )
 
-    wandb_logger = WandbLogger(
-        entity="organize", project="FOMO", name=checkpoint_filename
-    )
-    wandb_logger.watch(model, log="all")
+    if not args.test_mode:
+        wandb_logger = WandbLogger(
+            entity="organize", project="FOMO", name=checkpoint_filename
+        )
+        wandb_logger.watch(model, log="all")
 
     stats_monitor = DeviceStatsMonitor()
 
