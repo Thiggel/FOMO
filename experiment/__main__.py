@@ -144,7 +144,9 @@ def run(args: Namespace, seed: int = 42) -> dict:
     )
 
     results = imbalanced_training.run()
-    wandb_logger.experiment.unwatch()
+
+    if not args.test_mode:
+        wandb_logger.experiment.unwatch()
 
     return results
 
