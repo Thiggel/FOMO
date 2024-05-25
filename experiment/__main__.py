@@ -94,9 +94,11 @@ def run(args: Namespace, seed: int = 42) -> dict:
         + str(datetime.now())
     )
 
+    dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
+
     datamodule = init_datamodule(
         args,
-        checkpoint_filename,
+        dataset_pickle_filename,
     )
 
     model = init_model(args, datamodule)

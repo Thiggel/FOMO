@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=ResNet18_SimCLR_Imbalanced_Finetune
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=1:20:00
+#SBATCH --output=job_logs/ResNet18_SimCLR_Imbalanced_Finetune.out
+
+cd $HOME/FOMO
+
+. jobs/baselines/finetune/ResNet18/ResNet18_SimCLR_Imbalanced.sh
