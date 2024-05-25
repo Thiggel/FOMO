@@ -47,7 +47,7 @@ class ImbalancedTraining:
             self.pretrain_imbalanced()
 
             if not self.args.test_mode:
-                self.ssl_method.model.load_state_dict(
+                self.ssl_method.load_state_dict(
                     torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
                 )
 
