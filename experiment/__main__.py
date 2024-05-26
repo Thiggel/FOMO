@@ -154,6 +154,12 @@ def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
 
     if args.checkpoint_list is not None:
         args.checkpoint = args.checkpoint_list[run_idx % len(args.checkpoint_list)]
+    
+    #give wandb checkpoint preference
+    if args.wandb_checkpoint is not None:
+        run = wandb.init()
+        current_checkpoint = run.use_artifact(args.wandb_checkpoint[run_idx], type="model")
+        args.checkpoint = current_checkpoint.download() + "/model.ckpt"
 
     return args
 
@@ -185,7 +191,7 @@ def main():
 
     if not args.test_mode:
         wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
-
+    
     all_results = run_different_seeds(args)
 
     print_mean_std(all_results)
