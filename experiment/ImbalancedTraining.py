@@ -200,14 +200,18 @@ class ImbalancedTraining:
 
         for ood_samples, ood_index in ood_sample_loader:
             samples = []
+            sample_names = []
             for sample in ood_samples:
                 if not isinstance(
                     sample, Image.Image
                 ):  # check if sample is already a PIL Image to avoid unnecessary conversion
                     sample = to_pil_image(sample)
                 samples.append(sample)
+                print(f"Checking ood index to see if it makes any sense/varies : {ood_index}")
+                sample_names.append(f"ood_sample_{ood_index}")
 
             v_imgs = pipe(samples, num_images_per_prompt=nr_to_gen).images
             for i, img in enumerate(v_imgs):
-                name = f"/ood_variation_{i}.png"  # TODO: include index?
-                img.save(save_subfolder + name)
+                img_name = sample_names[i % len(sample_names)] 
+                name = f"{img_name}_variation_{i}.png"
+                img.save(os.path.join(save_subfolder, name))
