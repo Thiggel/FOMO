@@ -203,5 +203,5 @@ class ImbalancedTraining:
 
             v_imgs = pipe(batch, num_images_per_prompt=nr_to_gen).images
             for i, img in enumerate(v_imgs):
-                name = f"/ood_variation_{i}_{k}.png"  # TODO: include index?
+                name = f"/ood_variation_{i}.png"  # TODO: include index?
                 img.save(save_subfolder + name)
