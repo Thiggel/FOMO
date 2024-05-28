@@ -94,6 +94,7 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
+        self.datamodule.train_dataset.dataset.transform = None
         diffusion_pipe = self.initialize_model()
         self.generate_new_data(
             ood_samples,
@@ -196,20 +197,12 @@ class ImbalancedTraining:
         if not os.path.exists(save_subfolder):
             os.makedirs(save_subfolder)
 
-        ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=True)
         k = 0
+        for b_start in range(0, len(ood_samples), batch_size):
+            batch = [ood_samples[i+b_start][0] for i in range(min(len(ood_samples)-b_start, batch_size))]
 
-        for ood_samples, ood_index in ood_sample_loader:
-            samples = []
-            for sample in ood_samples:
-                if not isinstance(
-                    sample, Image.Image
-                ):  # check if sample is already a PIL Image to avoid unnecessary conversion
-                    sample = to_pil_image(sample)
-                samples.append(sample)
-
-            v_imgs = pipe(samples, num_images_per_prompt=nr_to_gen).images
+            v_imgs = pipe(batch, num_images_per_prompt=nr_to_gen).images
             for i, img in enumerate(v_imgs):
-                name = f"/ood_variation_{i}_{k}.png"  # TODO: include index?
+                name = f"/ood_variation_{k}.png"  # TODO: include index?
                 img.save(save_subfolder + name)
-        k+=1
+                k += 1
