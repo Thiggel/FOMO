@@ -69,6 +69,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument("--splits", nargs="+", type=float, default=[0.8, 0.1, 0.1])
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--checkpoint", nargs="+", type=str, default=None)
+    parser.add_argument("--wandb_checkpoint", type=str, default=None)
 
     parser.add_argument("--no-pretrain", action="store_false", dest="pretrain")
     parser.set_defaults(pretrain=True)

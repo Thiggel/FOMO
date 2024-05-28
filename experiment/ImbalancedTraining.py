@@ -196,7 +196,8 @@ class ImbalancedTraining:
         if not os.path.exists(save_subfolder):
             os.makedirs(save_subfolder)
 
-        ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=True)
+        ood_sample_loader = DataLoader(ood_samples, batch_size, shuffle=False)
+        k=0
 
         for ood_samples, ood_index in ood_sample_loader:
             samples = []
@@ -209,5 +210,7 @@ class ImbalancedTraining:
 
             v_imgs = pipe(samples, num_images_per_prompt=nr_to_gen).images
             for i, img in enumerate(v_imgs):
-                name = f"/ood_variation_{i}.png"  # TODO: include index?
+                name = f"/ood_variation_{i}_{k}.png"  # TODO: include index?
                 img.save(save_subfolder + name)
+             
+            k+=1
