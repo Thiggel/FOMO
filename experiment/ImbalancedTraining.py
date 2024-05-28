@@ -197,11 +197,12 @@ class ImbalancedTraining:
         if not os.path.exists(save_subfolder):
             os.makedirs(save_subfolder)
 
-        
+        k = 0
         for b_start in range(0, len(ood_samples), batch_size):
             batch = [ood_samples[i+b_start][0] for i in range(min(len(ood_samples)-b_start, batch_size))]
 
             v_imgs = pipe(batch, num_images_per_prompt=nr_to_gen).images
             for i, img in enumerate(v_imgs):
-                name = f"/ood_variation_{i}.png"  # TODO: include index?
+                name = f"/ood_variation_{k}.png"  # TODO: include index?
                 img.save(save_subfolder + name)
+                k += 1
