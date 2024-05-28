@@ -19,3 +19,4 @@ pre-commit
 faiss-cpu
 scikit-learn
 wandb
+mypy
