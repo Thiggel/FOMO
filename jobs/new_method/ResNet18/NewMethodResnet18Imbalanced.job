@@ -10,4 +10,4 @@
 
 cd $HOME/FOMO
 
-. jobs/NewMethodResnet18Imbalanced.sh
+. jobs/new_method/ResNet18/ResNet18_SimCLR.sh
