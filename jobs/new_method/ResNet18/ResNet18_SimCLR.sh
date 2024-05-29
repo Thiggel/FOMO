@@ -5,4 +5,5 @@ python -m experiment \
 	--imbalance_method linearly_increasing \
 	--max_cycles 5 \
 	--ood_augmentation \
-	--n_epochs_per_cycle 20
+	--n_epochs_per_cycle 20 \
+	--pct_ood 0.15
