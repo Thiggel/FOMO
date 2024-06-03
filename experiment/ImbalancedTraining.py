@@ -41,6 +41,7 @@ class ImbalancedTraining:
             ]
         )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
+        self.pipe = self.initialize_model()
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -95,7 +96,7 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, ood_indices)
 
         self.datamodule.train_dataset.dataset.transform = None
-        diffusion_pipe = self.initialize_model()
+        diffusion_pipe = self.pipe
         self.generate_new_data(
             ood_samples,
             pipe=diffusion_pipe,
