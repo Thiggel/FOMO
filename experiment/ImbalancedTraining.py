@@ -90,17 +90,13 @@ class ImbalancedTraining:
             train_dataset, [num_ood_train, num_ood_test]
         )
 
-        ood = OOD(
-            args=self.args,
-            train=ood_train_dataset,
-            test=ood_test_dataset,
-            feature_extractor=self.ssl_method.model.extract_features,
-            cycle_idx=cycle_idx,
+        indices_to_be_augmented = (
+            self.get_ood_indices(ood_train_dataset, ood_test_dataset, cycle_idx)
+            if self.args.use_ood
+            else self.get_random_indices(ood_train_dataset)
         )
 
-        ood.extract_features()
-        ood_indices, _ = ood.ood()
-        ood_samples = Subset(ood_train_dataset, ood_indices)
+        ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
 
         self.datamodule.train_dataset.dataset.transform = None
         diffusion_pipe = self.pipe
@@ -116,6 +112,28 @@ class ImbalancedTraining:
         )
 
         self.datamodule.train_dataset.dataset.transform = ssl_transform
+
+    def get_num_samples_to_generate(self) -> int:
+        return int(
+            self.args.pct_ood * self.ood_test_split * len(self.datamodule.train_dataset)
+        )
+
+    def get_random_indices(self, ood_train_dataset) -> list:
+        num_samples = self.get_num_samples_to_generate()
+        return torch.randperm(len(ood_train_dataset))[:num_samples].tolist()
+
+    def get_ood_indices(self, ood_train_dataset, ood_test_dataset, cycle_idx) -> list:
+        ood = OOD(
+            args=self.args,
+            train=ood_train_dataset,
+            test=ood_test_dataset,
+            feature_extractor=self.ssl_method.model.extract_features,
+            cycle_idx=cycle_idx,
+        )
+
+        ood.extract_features()
+        ood_indices, _ = ood.ood()
+        return ood_indices
 
     def pretrain_imbalanced(
         self,
@@ -207,7 +225,10 @@ class ImbalancedTraining:
 
         k = 0
         for b_start in range(0, len(ood_samples), batch_size):
-            batch = [ood_samples[i+b_start][0] for i in range(min(len(ood_samples)-b_start, batch_size))]
+            batch = [
+                ood_samples[i + b_start][0]
+                for i in range(min(len(ood_samples) - b_start, batch_size))
+            ]
 
             v_imgs = pipe(batch, num_images_per_prompt=nr_to_gen).images
             for i, img in enumerate(v_imgs):

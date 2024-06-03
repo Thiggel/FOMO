@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=ResNet18-UniformGeneration
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=12:00:00
+#SBATCH --output=job_logs/ResNet18-UniformGeneration-%A.out
+
+cd $HOME/FOMO
+
+. jobs/ablations/ResNet18/UniformGeneration.sh
