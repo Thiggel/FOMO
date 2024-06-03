@@ -60,6 +60,9 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument("--ood_augmentation", action="store_true")
     parser.set_defaults(ood_augmentation=False)
 
+    parser.add_argument("--remove_diffusion", action="store_true")
+    parser.set_defaults(remove_ood_detection=False)
+
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--temperature", type=float, default=0.5)
     parser.add_argument("--weight_decay", type=float, default=1e-6)

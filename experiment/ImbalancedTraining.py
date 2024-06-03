@@ -66,6 +66,12 @@ class ImbalancedTraining:
 
         if not self.args.ood_augmentation:
             return
+        
+        #Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
+        if self.args.remove_diffusion:
+            num_samples_to_generate = int(self.args.pct_ood * self.ood_test_split * len(self.datamodule.train_dataset))
+            self.datamodule.add_n_samples_by_index(num_samples_to_generate)
+            return 
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
 
