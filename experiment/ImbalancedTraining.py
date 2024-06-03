@@ -69,7 +69,7 @@ class ImbalancedTraining:
         
         #Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
         if self.args.remove_diffusion:
-            print(f'initial dataset size: {len(self.initial_train_ds_size)}')
+            print(f'initial dataset size: {self.initial_train_ds_size}')
             print(f'dataset_size: {len(self.datamodule.train_dataset)}')
             num_samples_to_generate = int(self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size)
             self.datamodule.add_n_samples_by_index(num_samples_to_generate)
