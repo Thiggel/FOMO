@@ -71,6 +71,7 @@ class ImbalancedTraining:
         if self.args.remove_diffusion:
             num_samples_to_generate = int(self.args.pct_ood * self.ood_test_split * len(self.datamodule.train_dataset))
             self.datamodule.add_n_samples_by_index(num_samples_to_generate)
+            print(f'added {num_samples_to_generate} samples to the training set, dataset size is now {len(self.datamodule.indices)}')
             return 
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
