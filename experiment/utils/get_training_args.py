@@ -57,8 +57,14 @@ def get_training_args(get_defaults: bool = False) -> dict:
     )
     parser.set_defaults(test_mode=False)
 
+    # Use augmentation at all, or just train on the original dataset forever
     parser.add_argument("--ood_augmentation", action="store_true")
     parser.set_defaults(ood_augmentation=False)
+
+    # Use OOD-detection or uniformly augment the dataset
+    parser.add_argument("--use_ood", action="store_true")
+    parser.add_argument("--no-use_ood", action="store_false", dest="use_ood")
+    parser.set_defaults(use_ood=True)
 
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--temperature", type=float, default=0.5)

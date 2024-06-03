@@ -5,7 +5,7 @@
 #SBATCH --job-name=NewMethodResNet-Imbalanced
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=4:00:00
+#SBATCH --time=12:00:00
 #SBATCH --output=job_logs/NewMethodResNet-Imbalanced-%A.out
 
 cd $HOME/FOMO
