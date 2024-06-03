@@ -1,1 +1,1 @@
-nohup bash ./jobs/new_method/ResNet18/ResNet18_SimCLR.sh > ResNet18_SimCLR_NewMethod.log 2>&1 &
+nohup bash ./jobs/ablations/ResNet18/UniformGeneration.sh > ResNet18_UniformGeneration.log 2>&1 &
