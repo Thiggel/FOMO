@@ -41,7 +41,7 @@ class ImbalancedTraining:
             ]
         )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
-        self.pipe = self.initialize_model()
+        self.pipe = self.initialize_model(self.args.datamodule.device)
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -197,7 +197,7 @@ class ImbalancedTraining:
 
         return results
 
-    def initialize_model(self):
+    def initialize_model(self, device):
         """
         Load the model first to ensure better flow
         """
@@ -206,7 +206,7 @@ class ImbalancedTraining:
             torch_dtype=torch.float16,
             variation="fp16",
         )
-        pipe = pipe.to("cuda")
+        pipe = pipe.to(device)
         return pipe
 
     def generate_new_data(
