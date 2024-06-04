@@ -41,7 +41,7 @@ class ImbalancedTraining:
             ]
         )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
-        self.pipe = self.initialize_model(self.args.datamodule.device)
+        self.pipe = self.initialize_model(self.trainer_args.accelerator)
 
     def run(self) -> dict:
         if self.args.pretrain:
