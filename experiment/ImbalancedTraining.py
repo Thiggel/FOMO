@@ -201,11 +201,16 @@ class ImbalancedTraining:
         """
         Load the model first to ensure better flow
         """
-        pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-2-1-unclip",
-            torch_dtype=torch.float16,
-            variation="fp16",
-        )
+        if device == "cpu":
+            pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-2-1-unclip"
+            )
+        else:
+            pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-2-1-unclip",
+                torch_dtype=torch.float16,
+                variation="fp16",
+            )
         pipe = pipe.to(device)
         return pipe
 
