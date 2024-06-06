@@ -129,7 +129,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
-        "devices": "auto",
+        "devices": "auto"
     }
 
     imbalanced_training = ImbalancedTraining(

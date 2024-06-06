@@ -12,6 +12,7 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
 )
 from torchvision import transforms
 from datasets import load_dataset
+import random
 
 from experiment.utils.get_num_workers import get_num_workers
 
@@ -146,3 +147,14 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         for image in images:
             self.dataset._save_additional_datapoint(aug_path + "/" + image, 0)
             self.train_dataset.indices.append(len(self.dataset) - 1)
+
+    def add_n_samples_by_index(self, n):
+        #get all the indices currently not in use
+        unused_indices = set(range(len(self.train_dataset))).difference(set(self.train_dataset.indices))
+
+        #randomly sample n indices from the unused indices
+        new_indices = random.sample(unused_indices, n)
+
+        #add the new indices to the indices list
+        self.train_dataset.indices.extend(new_indices)
+        

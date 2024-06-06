@@ -41,6 +41,7 @@ class ImbalancedTraining:
             ]
         )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
+        self.pipe = self.initialize_model(self.trainer_args['accelerator'])
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -65,6 +66,15 @@ class ImbalancedTraining:
 
         if not self.args.ood_augmentation:
             return
+        
+        #Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
+        if self.args.remove_diffusion:
+            print(f'initial dataset size: {self.initial_train_ds_size}')
+            print(f'dataset_size: {len(self.datamodule.train_dataset)}')
+            num_samples_to_generate = int(self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size)
+            self.datamodule.add_n_samples_by_index(num_samples_to_generate)
+            print(f'added {num_samples_to_generate} samples to the training set, dataset size is now {len(self.datamodule.train_dataset.indices)}')
+            return 
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
 
@@ -91,7 +101,7 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
 
         self.datamodule.train_dataset.dataset.transform = None
-        diffusion_pipe = self.initialize_model()
+        diffusion_pipe = self.pipe
         self.generate_new_data(
             ood_samples,
             pipe=diffusion_pipe,
@@ -187,16 +197,21 @@ class ImbalancedTraining:
 
         return results
 
-    def initialize_model(self):
+    def initialize_model(self, device):
         """
         Load the model first to ensure better flow
         """
-        pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-2-1-unclip",
-            torch_dtype=torch.float16,
-            variation="fp16",
-        )
-        pipe = pipe.to("cuda")
+        if device == "cpu":
+            pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-2-1-unclip"
+            )
+        else:
+            pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-2-1-unclip",
+                torch_dtype=torch.float16,
+                variation="fp16",
+            )
+        pipe = pipe.to(device)
         return pipe
 
     def generate_new_data(

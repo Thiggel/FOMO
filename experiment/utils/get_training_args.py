@@ -61,6 +61,9 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument("--ood_augmentation", action="store_true")
     parser.set_defaults(ood_augmentation=False)
 
+    parser.add_argument("--remove_diffusion", action="store_true")
+    parser.set_defaults(remove_ood_detection=False)
+    
     # Use OOD-detection or uniformly augment the dataset
     parser.add_argument("--use_ood", action="store_true")
     parser.add_argument("--no-use_ood", action="store_false", dest="use_ood")
@@ -98,7 +101,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument("--fe_batch_size", type=int, default=32)
     parser.add_argument("--sd_batch_size", type=int, default=4)
     parser.add_argument("--k", type=int, default=1000)
-    parser.add_argument("--pct_ood", type=float, default=0.05)
+    parser.add_argument("--pct_ood", type=float, default=0.15)
     parser.add_argument("--pct_train", type=float, default=1.0)
     parser.add_argument("--ood_test_split", type=float, default=0.1)
     parser.add_argument("--additional_data_path", type=str, default="additional_data")
@@ -108,7 +111,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
     # Data
     parser.add_argument("--color_jitter_strength", type=float, default=0.0)
     parser.add_argument("--crop_scale", type=float, nargs=2, default=[0.3, 1.0])
-    parser.add_argument("--crop_size", type=int, default=224)
+    parser.add_argument("--crop_size", type=int, default=96)
     parser.add_argument(
         "--image_folder", type=str, default="imagenet_full_size/061417/"
     )
