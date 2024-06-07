@@ -18,6 +18,7 @@ class OOD:
     ):
         self.train = train
         self.test = test
+        self.num_workers = args.num_workers
         self.feature_extractor = feature_extractor
         self.batch_size = args.fe_batch_size
         self.K = args.k
@@ -28,8 +29,8 @@ class OOD:
         self.cycle_idx = cycle_idx
 
     def extract_features(self):
-        train_loader = DataLoader(self.train, batch_size=self.batch_size, shuffle=False)
-        test_loader = DataLoader(self.test, batch_size=self.batch_size, shuffle=False)
+        train_loader = DataLoader(self.train, batch_size=self.batch_size, shuffle=False, num_workers = self.num_workers) #these two are the issue
+        test_loader = DataLoader(self.test, batch_size=self.batch_size, shuffle=False, num_workers = self.num_workers) #Because of these two we are using to many dataloader workers 
 
         # Extract features from the train dataset
         for batch, _ in tqdm(train_loader, desc="Extracting train features"):
@@ -43,6 +44,10 @@ class OOD:
 
         self.train_features = torch.cat(self.train_features)
         self.test_features = torch.cat(self.test_features)
+
+        #garbage collection 
+        train_loader = None
+        test_loader = None
 
     def normalize(self, x):
         return x / (torch.linalg.norm(x, axis=-1, keepdims=True) + 1e-10)

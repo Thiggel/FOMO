@@ -61,7 +61,8 @@ class ImbalancedTraining:
         3. generate new data for OOD
         """
         trainer = L.Trainer(**self.trainer_args)
-
+        
+        #handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too. 
         trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
 
         if not self.args.ood_augmentation:
