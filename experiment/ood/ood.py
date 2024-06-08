@@ -6,6 +6,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 import os
 from torchvision.utils import save_image
+from experiment.utils.get_num_workers import get_num_workers
 
 class OOD:
     def __init__(
@@ -18,7 +19,7 @@ class OOD:
     ):
         self.train = train
         self.test = test
-        self.num_workers = args.num_workers
+        self.num_workers = get_num_workers()
         self.feature_extractor = feature_extractor
         self.batch_size = args.fe_batch_size
         self.K = args.k
