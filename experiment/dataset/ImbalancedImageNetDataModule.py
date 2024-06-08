@@ -84,9 +84,14 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
     @property
     def num_workers(self) -> int:
         return get_num_workers()
+    
+    def set_dataloaders_none(self):
+        self._train_dataloader = None
+        self._val_dataloader = None
+        self._test_dataloader = None
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(
+        self._train_dataloader =  DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
@@ -96,8 +101,10 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             drop_last=True,
         )
 
+        return self._train_dataloader
+
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(
+        self._val_dataloader = DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
@@ -105,9 +112,10 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             collate_fn=self.collate_fn,
             drop_last=True,
         )
+        return self._val_dataloader
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(
+        self._test_dataloader = DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
@@ -115,6 +123,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             collate_fn=self.collate_fn,
             drop_last=True,
         )
+        return self._test_dataloader
 
     def collate(self, batch: list) -> tuple[list[Tensor], Tensor]:
         num_images = len(batch[0][0])

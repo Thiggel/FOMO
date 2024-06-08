@@ -13,4 +13,6 @@ def get_num_workers():
         if cpu_count is not None:
             max_num_worker_suggest = cpu_count
 
-    return max_num_worker_suggest
+    num_workers = int(max_num_worker_suggest*0.75)
+
+    return num_workers

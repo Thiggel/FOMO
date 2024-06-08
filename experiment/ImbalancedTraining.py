@@ -41,7 +41,7 @@ class ImbalancedTraining:
             ]
         )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
-        self.pipe = self.initialize_model(self.trainer_args['accelerator'])
+        #self.pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -61,8 +61,12 @@ class ImbalancedTraining:
         3. generate new data for OOD
         """
         trainer = L.Trainer(**self.trainer_args)
-
+        
+        #handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too. 
         trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
+        #Set the dataloaders to None for garbage collection
+        self.datamodule.set_dataloaders_none()
+        #They will be reinstantiate anyway in the next trainer.fit 
 
         if not self.args.ood_augmentation:
             return
@@ -101,7 +105,8 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
 
         self.datamodule.train_dataset.dataset.transform = None
-        diffusion_pipe = self.pipe
+        diffusion_pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
+
         self.generate_new_data(
             ood_samples,
             pipe=diffusion_pipe,
@@ -174,6 +179,7 @@ class ImbalancedTraining:
                 ]
             )
 
+            #dataloader is already handled fine here because each loop should set the past loader to None.
             finetuner = benchmark(
                 model=self.ssl_method.model, lr=self.args.lr, transform=transform
             )
