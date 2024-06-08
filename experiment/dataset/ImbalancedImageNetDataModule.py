@@ -101,7 +101,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             drop_last=True,
         )
 
-        return self.train_dataloader
+        return self._train_dataloader
 
     def val_dataloader(self) -> DataLoader:
         self._val_dataloader = DataLoader(
