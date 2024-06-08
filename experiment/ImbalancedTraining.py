@@ -41,7 +41,7 @@ class ImbalancedTraining:
             ]
         )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
-        self.pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
+        #self.pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -105,7 +105,8 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
 
         self.datamodule.train_dataset.dataset.transform = None
-        diffusion_pipe = self.pipe
+        diffusion_pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
+
         self.generate_new_data(
             ood_samples,
             pipe=diffusion_pipe,
