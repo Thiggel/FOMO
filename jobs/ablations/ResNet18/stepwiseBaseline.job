@@ -10,4 +10,4 @@
 
 cd $HOME/FOMO
 
-. jobs/ablations/ResNet18/OODAugmentationBalanced.sh
+. jobs/ablations/ResNet18/stepwiseBaseline.sh
