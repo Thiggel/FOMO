@@ -1,1 +1,1 @@
-nohup bash ./jobs/ablations/ResNet18/OODAugmentationBalanced.sh > ResNet18_OODAugmentationBalanced.log 2>&1 &
+nohup bash ./jobs/ablations/ResNet18/stepwiseBaseline.sh > ResNet18stepwiseBaseline.log 2>&1 &
