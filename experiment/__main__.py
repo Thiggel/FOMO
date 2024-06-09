@@ -183,6 +183,9 @@ def run_different_seeds(args: Namespace) -> dict:
 def main():
     args = get_training_args()
 
+    #add a timestamp to the additional data path
+    args.additional_data_path = args.additional_data_path + "_" + str(datetime.now())
+
     if not args.test_mode:
         wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
 
