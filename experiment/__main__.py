@@ -129,7 +129,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
-        "devices": "auto"
+        "devices": "auto",
     }
 
     imbalanced_training = ImbalancedTraining(
@@ -138,6 +138,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         ssl_type,
         datamodule,
         checkpoint_callback,
+        checkpoint_filename,
     )
 
     results = imbalanced_training.run()
@@ -183,7 +184,7 @@ def run_different_seeds(args: Namespace) -> dict:
 def main():
     args = get_training_args()
 
-    #add a timestamp to the additional data path
+    # add a timestamp to the additional data path
     args.additional_data_path = args.additional_data_path + "_" + str(datetime.now())
 
     if not args.test_mode:

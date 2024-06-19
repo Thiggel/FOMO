@@ -84,14 +84,14 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
     @property
     def num_workers(self) -> int:
         return get_num_workers()
-    
+
     def set_dataloaders_none(self):
         self._train_dataloader = None
         self._val_dataloader = None
         self._test_dataloader = None
 
     def train_dataloader(self) -> DataLoader:
-        self._train_dataloader =  DataLoader(
+        self._train_dataloader = DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
@@ -150,20 +150,22 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
         return data, stacked_labels
 
-    def update_dataset(self, aug_path):
-        # TODO: add the real labels, not dummy ones
+    def update_dataset(self, aug_path: str, labels: list[int] = []):
         images = os.listdir(aug_path)
-        for image in images:
-            self.dataset._save_additional_datapoint(aug_path + "/" + image, 0)
+        images.sort()
+
+        for image, label in zip(images, labels):
+            self.dataset.save_additional_datapoint(aug_path + "/" + image, label)
             self.train_dataset.indices.append(len(self.dataset) - 1)
 
     def add_n_samples_by_index(self, n):
-        #get all the indices currently not in use
-        unused_indices = set(range(len(self.train_dataset))).difference(set(self.train_dataset.indices))
+        # get all the indices currently not in use
+        unused_indices = set(range(len(self.train_dataset))).difference(
+            set(self.train_dataset.indices)
+        )
 
-        #randomly sample n indices from the unused indices
+        # randomly sample n indices from the unused indices
         new_indices = random.sample(unused_indices, n)
 
-        #add the new indices to the indices list
+        # add the new indices to the indices list
         self.train_dataset.indices.extend(new_indices)
-        
