@@ -6,12 +6,15 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 import os
 from torchvision import transforms
 
+
 def test_update_dataset():
     # Create an instance of ImbalancedImageNetDataModule
-    datamodule = ImbalancedImageNetDataModule(dataset_variant=ImageNetVariants.ImageNetDummy,
-                                              imbalance_method=ImbalanceMethods.NoImbalance,
-                                              transform=transforms.ToTensor())  
-    
+    datamodule = ImbalancedImageNetDataModule(
+        dataset_variant=ImageNetVariants.ImageNetDummy,
+        imbalance_method=ImbalanceMethods.NoImbalance,
+        transform=transforms.ToTensor(),
+    )
+
     initial_length = len(datamodule.train_dataset)
 
     # Create a dummy image
@@ -23,17 +26,23 @@ def test_update_dataset():
     save_image(dummy_image, image_filename)
 
     # Pass the image filename to _save_additional_datapoint
-    datamodule.dataset._save_additional_datapoint(image_filename, None)
-    datamodule.train_dataset.indices.append(len(datamodule.dataset)-1)
+    datamodule.dataset.save_additional_datapoint(image_filename, None)
+    datamodule.train_dataset.indices.append(len(datamodule.dataset) - 1)
 
     # Pass the image filename to _save_additional_datapoint
-    datamodule.dataset._save_additional_datapoint(image_filename, None)
-    datamodule.train_dataset.indices.append(len(datamodule.dataset)-1)
+    datamodule.dataset.save_additional_datapoint(image_filename, None)
+    datamodule.train_dataset.indices.append(len(datamodule.dataset) - 1)
 
     assert len(datamodule.train_dataset) == initial_length + 2
     # Check that the dataset has been updated
-    assert torch.equal(datamodule.train_dataset[initial_length][0], torch.zeros(datamodule.train_dataset[0][0].shape))
-    assert torch.equal(datamodule.train_dataset[initial_length+1][0], torch.zeros(datamodule.train_dataset[0][0].shape))
+    assert torch.equal(
+        datamodule.train_dataset[initial_length][0],
+        torch.zeros(datamodule.train_dataset[0][0].shape),
+    )
+    assert torch.equal(
+        datamodule.train_dataset[initial_length + 1][0],
+        torch.zeros(datamodule.train_dataset[0][0].shape),
+    )
 
     # Remove the dummy image file
     os.remove(image_filename)
