@@ -1,6 +1,7 @@
+from tqdm import tqdm
 import torch
 import traceback
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import DataLoader, Subset, random_split, Dataset
 import lightning.pytorch as L
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
@@ -9,10 +10,12 @@ from experiment.ood.ood import OOD
 from diffusers import StableUnCLIPImg2ImgPipeline
 from torchvision import transforms
 import copy
+import matplotlib.pyplot as plt
 
 from torchvision.transforms.functional import to_pil_image
 from PIL import Image
 import os
+import pickle
 
 
 class ImbalancedTraining:
@@ -155,6 +158,28 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         return ood_indices
 
+    def save_class_dist(
+        self,
+        dataset: Dataset,
+        filename="class_distribution"
+    ) -> None:
+        """
+        Visualize the class distribution of the dataset.
+        """
+        class_distribution = [0] * self.datamodule.dataset.num_classes
+
+        for index in tqdm(range(len(dataset)), desc="Calculating class distribution"):
+            class_distribution[dataset[index][1]] += 1
+
+        with open(filename + '.pkl', 'wb') as f:
+            pickle.dump(class_distribution, f)
+
+        plt.bar(range(self.datamodule.dataset.num_classes), class_distribution)
+        plt.xlabel("Class Index")
+        plt.ylabel("Number of Samples")
+        plt.savefig(filename + '.pdf', format="pdf")
+        plt.close()
+
     def pretrain_imbalanced(
         self,
     ) -> None:
@@ -169,8 +194,9 @@ class ImbalancedTraining:
         )
         os.makedirs(visualization_dir, exist_ok=True)
 
-        self.datamodule.train_dataset.visualize_class_dist(
-            f"{visualization_dir}/initial_class_dist.pdf"
+        self.save_class_dist(
+            self.datamodule.train_dataset,
+            f"{visualization_dir}/initial_class_dist"
         )
 
         for cycle_idx in range(self.max_cycles):
@@ -178,8 +204,9 @@ class ImbalancedTraining:
             try:
                 self.pretrain_cycle(cycle_idx)
 
-                self.datamodule.train_dataset.visualize_class_dist(
-                    f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}.pdf"
+                self.save_class_dist(
+                    self.datamodule.train_dataset,
+                    f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}"
                 )
             except Exception as e:
                 print(f"Error in cycle {cycle_idx}: {e}")
