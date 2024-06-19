@@ -4,6 +4,7 @@ from random import random
 from torch.utils.data import Dataset
 from tqdm import tqdm
 import pickle
+import matplotlib.pyplot as plt
 
 from datasets import load_dataset
 from experiment.dataset.imbalancedness.ImbalanceMethods import (
@@ -27,8 +28,8 @@ class DummyImageNet(Dataset):
     def __len__(self):
         return 100
 
-    def __getitem__(self, idx) -> DataPoint:
-        datapoint = {"image": Image.new("RGB", (224, 224)), "label": 0}
+    def __getitem__(self, _) -> tuple[Image.Image, int]:
+        datapoint: DataPoint = {"image": Image.new("RGB", (224, 224)), "label": 0}
 
         if self.transform:
             datapoint["image"] = self.transform(datapoint["image"])
@@ -61,7 +62,7 @@ class ImbalancedImageNet(Dataset):
         print("original length:", len(self.dataset))
         print("imbalanced length:", len(self))
 
-    def _save_additional_datapoint(self, filename: str, label: int):
+    def save_additional_datapoint(self, filename: str, label: int):
         self.additional_data.append((filename, label))
         self._save_additional_data_to_pickle()
 
@@ -157,3 +158,20 @@ class ImbalancedImageNet(Dataset):
             datapoint["image"] = self.transform(datapoint["image"])
 
         return datapoint["image"], datapoint["label"]
+
+    def visualize_class_dist(self, filename="class_distribution.pdf") -> None:
+        """
+        Visualize the class distribution of the dataset.
+        """
+        class_distribution = [0] * self.num_classes
+
+        print("Calculating class distribution...")
+
+        for index in self.indices:
+            class_distribution[self.dataset[index]["label"]] += 1
+
+        print("Done.")
+
+        plt.bar(range(self.num_classes), class_distribution)
+        plt.savefig(filename, format="pdf")
+        plt.close()

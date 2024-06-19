@@ -1,4 +1,5 @@
 import torch
+import traceback
 from torch.utils.data import DataLoader, Subset, random_split
 import lightning.pytorch as L
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
@@ -22,12 +23,14 @@ class ImbalancedTraining:
         ssl_method: L.LightningModule,
         datamodule: L.LightningDataModule,
         checkpoint_callback: L.Callback,
+        checkpoint_filename: str,
     ):
         self.args = args
         self.trainer_args = trainer_args
         self.ssl_method = ssl_method
         self.datamodule = datamodule
         self.checkpoint_callback = checkpoint_callback
+        self.checkpoint_filename = checkpoint_filename
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
@@ -41,7 +44,7 @@ class ImbalancedTraining:
             ]
         )
         self.initial_train_ds_size = len(self.datamodule.train_dataset)
-        #self.pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
+        # self.pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -61,24 +64,29 @@ class ImbalancedTraining:
         3. generate new data for OOD
         """
         trainer = L.Trainer(**self.trainer_args)
-        
-        #handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too. 
+
+        # handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too.
+
         trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
-        #Set the dataloaders to None for garbage collection
+        # Set the dataloaders to None for garbage collection
         self.datamodule.set_dataloaders_none()
-        #They will be reinstantiate anyway in the next trainer.fit 
+        # They will be reinstantiate anyway in the next trainer.fit
 
         if not self.args.ood_augmentation:
             return
-        
-        #Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
+
+        # Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
         if self.args.remove_diffusion:
-            print(f'initial dataset size: {self.initial_train_ds_size}')
-            print(f'dataset_size: {len(self.datamodule.train_dataset)}')
-            num_samples_to_generate = int(self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size)
+            print(f"initial dataset size: {self.initial_train_ds_size}")
+            print(f"dataset_size: {len(self.datamodule.train_dataset)}")
+            num_samples_to_generate = int(
+                self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size
+            )
             self.datamodule.add_n_samples_by_index(num_samples_to_generate)
-            print(f'added {num_samples_to_generate} samples to the training set, dataset size is now {len(self.datamodule.train_dataset.indices)}')
-            return 
+            print(
+                f"added {num_samples_to_generate} samples to the training set, dataset size is now {len(self.datamodule.train_dataset.indices)}"
+            )
+            return
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
 
@@ -105,7 +113,9 @@ class ImbalancedTraining:
         ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
 
         self.datamodule.train_dataset.dataset.transform = None
-        diffusion_pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
+        diffusion_pipe = self.initialize_model(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
 
         self.generate_new_data(
             ood_samples,
@@ -114,8 +124,11 @@ class ImbalancedTraining:
             save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
         )
 
+        labels = [label for _, label in ood_samples]
+
         self.datamodule.update_dataset(
-            aug_path=f"{self.args.additional_data_path}/{cycle_idx}"
+            aug_path=f"{self.args.additional_data_path}/{cycle_idx}",
+            labels=labels,
         )
 
         self.datamodule.train_dataset.dataset.transform = ssl_transform
@@ -151,12 +164,26 @@ class ImbalancedTraining:
         3. Generate augmentations for OOD samples
         4. Restart
         """
+        visualization_dir = (
+            f"visualizations/class_distributions/{self.checkpoint_filename}"
+        )
+        os.makedirs(visualization_dir, exist_ok=True)
+
+        self.datamodule.train_dataset.visualize_class_dist(
+            f"{visualization_dir}/initial_class_dist.pdf"
+        )
+
         for cycle_idx in range(self.max_cycles):
             print(f"Pretraining cycle {cycle_idx + 1}/{self.max_cycles}")
             try:
                 self.pretrain_cycle(cycle_idx)
+
+                self.datamodule.train_dataset.visualize_class_dist(
+                    f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}.pdf"
+                )
             except Exception as e:
                 print(f"Error in cycle {cycle_idx}: {e}")
+                traceback.print_exc()
 
     def finetune(self) -> dict:
         benchmarks = FinetuningBenchmarks.get_benchmarks(
@@ -179,7 +206,7 @@ class ImbalancedTraining:
                 ]
             )
 
-            #dataloader is already handled fine here because each loop should set the past loader to None.
+            # dataloader is already handled fine here because each loop should set the past loader to None.
             finetuner = benchmark(
                 model=self.ssl_method.model, lr=self.args.lr, transform=transform
             )
@@ -196,6 +223,7 @@ class ImbalancedTraining:
                 trainer.fit(model=finetuner)
             except Exception as e:
                 print(f"Error in benchmark {benchmark.__name__}: {e}")
+                traceback.print_exc()
 
             finetuning_results = trainer.test(model=finetuner)[0]
 
