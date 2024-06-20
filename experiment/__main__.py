@@ -81,7 +81,7 @@ def init_ssl_type(
     return ssl_type.initialize(**ssl_args)
 
 
-def run(args: Namespace, seed: int = 42) -> dict:
+def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -> dict:
     set_seed(seed)
 
     checkpoint_filename = (
@@ -139,6 +139,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         datamodule,
         checkpoint_callback,
         checkpoint_filename,
+        save_class_distribution=save_class_distribution and args.ood_augmentation,
     )
 
     results = imbalanced_training.run()
@@ -167,7 +168,7 @@ def run_different_seeds(args: Namespace) -> dict:
 
         run_args = set_checkpoint_for_run(args, run_idx)
 
-        results = run(run_args, seed=args.seeds[run_idx])
+        results = run(run_args, seed=args.seeds[run_idx], save_class_distribution=(run_idx== 0))
 
         end_time = time.time()
         seconds_to_hours = 3600
