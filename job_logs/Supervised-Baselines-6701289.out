@@ -1,0 +1,158 @@
+============================================================================================== 
+Warning! Mixing Conda and module environments may lead to corruption of the
+user environment. 
+We do not recommend users mixing those two environments unless absolutely
+necessary. Note that 
+SURF does not provide any support for Conda environment.
+For more information, please refer to our software policy page:
+https://servicedesk.surf.nl/wiki/display/WIKI/Software+policy+Snellius#SoftwarepolicySnellius-UseofAnacondaandMinicondaenvironmentsonSnellius 
+
+Remember that many packages have already been installed on the system and can
+be loaded using 
+the 'module load <package__name>' command. If you are uncertain if a package is
+already available 
+on the system, please use 'module avail' or 'module spider' to search for it.
+============================================================================================== 
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: torch in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 1)) (2.3.1)
+Requirement already satisfied: lightning in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 2)) (2.3.0)
+Requirement already satisfied: pandas in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from -r requirements.txt (line 3)) (1.4.2)
+Requirement already satisfied: torchvision in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 4)) (0.18.1)
+Requirement already satisfied: pillow in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 5)) (10.3.0)
+Requirement already satisfied: tqdm in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 6)) (4.66.4)
+Requirement already satisfied: tensorboard in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 7)) (2.17.0)
+Requirement already satisfied: matplotlib in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from -r requirements.txt (line 8)) (3.5.1)
+Requirement already satisfied: timm in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 9)) (1.0.7)
+Requirement already satisfied: transformers in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 10)) (4.41.2)
+Requirement already satisfied: albumentations in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 11)) (1.4.9)
+Requirement already satisfied: psutil in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from -r requirements.txt (line 12)) (5.8.0)
+Requirement already satisfied: pytest in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from -r requirements.txt (line 13)) (7.1.1)
+Requirement already satisfied: datasets in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 14)) (2.20.0)
+Requirement already satisfied: diffusers in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 15)) (0.29.0)
+Requirement already satisfied: flake8 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from -r requirements.txt (line 16)) (3.9.2)
+Requirement already satisfied: black in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from -r requirements.txt (line 17)) (19.10b0)
+Requirement already satisfied: pre-commit in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 18)) (3.7.1)
+Requirement already satisfied: faiss-cpu in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 19)) (1.8.0)
+Requirement already satisfied: scikit-learn in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 20)) (1.5.0)
+Requirement already satisfied: wandb in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 21)) (0.17.2)
+Requirement already satisfied: mypy in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from -r requirements.txt (line 22)) (1.10.0)
+Requirement already satisfied: nvidia-curand-cu12==10.3.2.106 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (10.3.2.106)
+Requirement already satisfied: jinja2 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (2.11.3)
+Requirement already satisfied: nvidia-cufft-cu12==11.0.2.54 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (11.0.2.54)
+Requirement already satisfied: nvidia-cudnn-cu12==8.9.2.26 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (8.9.2.26)
+Requirement already satisfied: sympy in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (1.10.1)
+Requirement already satisfied: networkx in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (3.2.1)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.1.105 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: filelock in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (3.15.1)
+Requirement already satisfied: nvidia-nccl-cu12==2.20.5 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (2.20.5)
+Requirement already satisfied: nvidia-cusolver-cu12==11.4.5.107 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (11.4.5.107)
+Requirement already satisfied: triton==2.3.1 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (2.3.1)
+Requirement already satisfied: fsspec in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (2024.5.0)
+Requirement already satisfied: nvidia-cublas-cu12==12.1.3.1 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (12.1.3.1)
+Requirement already satisfied: nvidia-cusparse-cu12==12.1.0.106 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (12.1.0.106)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.1.105 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: typing-extensions>=4.8.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (4.12.2)
+Requirement already satisfied: nvidia-nvtx-cu12==12.1.105 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.1.105 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from torch->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: nvidia-nvjitlink-cu12 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from nvidia-cusolver-cu12==11.4.5.107->torch->-r requirements.txt (line 1)) (12.5.40)
+Requirement already satisfied: pytorch-lightning in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from lightning->-r requirements.txt (line 2)) (2.3.0)
+Requirement already satisfied: PyYAML<8.0,>=5.4 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from lightning->-r requirements.txt (line 2)) (6.0)
+Requirement already satisfied: lightning-utilities<2.0,>=0.8.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from lightning->-r requirements.txt (line 2)) (0.11.2)
+Requirement already satisfied: numpy<3.0,>=1.17.2 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from lightning->-r requirements.txt (line 2)) (1.26.4)
+Requirement already satisfied: packaging<25.0,>=20.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from lightning->-r requirements.txt (line 2)) (21.3)
+Requirement already satisfied: torchmetrics<3.0,>=0.7.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from lightning->-r requirements.txt (line 2)) (1.4.0.post0)
+Requirement already satisfied: python-dateutil>=2.8.1 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from pandas->-r requirements.txt (line 3)) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from pandas->-r requirements.txt (line 3)) (2021.3)
+Requirement already satisfied: protobuf!=4.24.0,<5.0.0,>=3.19.6 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (4.25.3)
+Requirement already satisfied: markdown>=2.6.8 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (3.3.4)
+Requirement already satisfied: werkzeug>=1.0.1 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (2.0.3)
+Requirement already satisfied: six>1.9 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (1.16.0)
+Requirement already satisfied: absl-py>=0.4 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (2.1.0)
+Requirement already satisfied: setuptools>=41.0.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (61.2.0)
+Requirement already satisfied: grpcio>=1.48.2 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (1.64.1)
+Requirement already satisfied: tensorboard-data-server<0.8.0,>=0.7.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from tensorboard->-r requirements.txt (line 7)) (0.7.2)
+Requirement already satisfied: cycler>=0.10 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from matplotlib->-r requirements.txt (line 8)) (0.11.0)
+Requirement already satisfied: pyparsing>=2.2.1 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from matplotlib->-r requirements.txt (line 8)) (3.0.4)
+Requirement already satisfied: kiwisolver>=1.0.1 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from matplotlib->-r requirements.txt (line 8)) (1.3.2)
+Requirement already satisfied: fonttools>=4.22.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from matplotlib->-r requirements.txt (line 8)) (4.25.0)
+Requirement already satisfied: huggingface_hub in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from timm->-r requirements.txt (line 9)) (0.23.4)
+Requirement already satisfied: safetensors in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from timm->-r requirements.txt (line 9)) (0.4.3)
+Requirement already satisfied: tokenizers<0.20,>=0.19 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from transformers->-r requirements.txt (line 10)) (0.19.1)
+Requirement already satisfied: regex!=2019.12.17 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from transformers->-r requirements.txt (line 10)) (2022.3.15)
+Requirement already satisfied: requests in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from transformers->-r requirements.txt (line 10)) (2.32.3)
+Requirement already satisfied: scipy>=1.10.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from albumentations->-r requirements.txt (line 11)) (1.13.1)
+Requirement already satisfied: pydantic>=2.7.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from albumentations->-r requirements.txt (line 11)) (2.7.4)
+Requirement already satisfied: albucore>=0.0.11 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from albumentations->-r requirements.txt (line 11)) (0.0.11)
+Requirement already satisfied: opencv-python-headless>=4.9.0.80 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from albumentations->-r requirements.txt (line 11)) (4.10.0.84)
+Requirement already satisfied: scikit-image>=0.21.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from albumentations->-r requirements.txt (line 11)) (0.24.0)
+Requirement already satisfied: attrs>=19.2.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from pytest->-r requirements.txt (line 13)) (21.4.0)
+Requirement already satisfied: iniconfig in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from pytest->-r requirements.txt (line 13)) (1.1.1)
+Requirement already satisfied: pluggy<2.0,>=0.12 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from pytest->-r requirements.txt (line 13)) (1.0.0)
+Requirement already satisfied: py>=1.8.2 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from pytest->-r requirements.txt (line 13)) (1.11.0)
+Requirement already satisfied: tomli>=1.0.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from pytest->-r requirements.txt (line 13)) (2.0.1)
+Requirement already satisfied: pyarrow>=15.0.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from datasets->-r requirements.txt (line 14)) (16.1.0)
+Requirement already satisfied: multiprocess in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from datasets->-r requirements.txt (line 14)) (0.70.16)
+Requirement already satisfied: dill<0.3.9,>=0.3.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from datasets->-r requirements.txt (line 14)) (0.3.8)
+Requirement already satisfied: pyarrow-hotfix in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from datasets->-r requirements.txt (line 14)) (0.6)
+Requirement already satisfied: xxhash in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from datasets->-r requirements.txt (line 14)) (3.4.1)
+Requirement already satisfied: aiohttp in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from datasets->-r requirements.txt (line 14)) (3.8.1)
+Requirement already satisfied: importlib-metadata in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from diffusers->-r requirements.txt (line 15)) (4.11.3)
+Requirement already satisfied: pycodestyle<2.8.0,>=2.7.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from flake8->-r requirements.txt (line 16)) (2.7.0)
+Requirement already satisfied: pyflakes<2.4.0,>=2.3.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from flake8->-r requirements.txt (line 16)) (2.3.1)
+Requirement already satisfied: mccabe<0.7.0,>=0.6.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from flake8->-r requirements.txt (line 16)) (0.6.1)
+Requirement already satisfied: toml>=0.9.4 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from black->-r requirements.txt (line 17)) (0.10.2)
+Requirement already satisfied: typed-ast>=1.4.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from black->-r requirements.txt (line 17)) (1.4.3)
+Requirement already satisfied: click>=6.5 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from black->-r requirements.txt (line 17)) (8.0.4)
+Requirement already satisfied: pathspec<1,>=0.6 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from black->-r requirements.txt (line 17)) (0.7.0)
+Requirement already satisfied: appdirs in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from black->-r requirements.txt (line 17)) (1.4.4)
+Requirement already satisfied: virtualenv>=20.10.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from pre-commit->-r requirements.txt (line 18)) (20.26.2)
+Requirement already satisfied: nodeenv>=0.11.1 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from pre-commit->-r requirements.txt (line 18)) (1.9.1)
+Requirement already satisfied: identify>=1.0.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from pre-commit->-r requirements.txt (line 18)) (2.5.36)
+Requirement already satisfied: cfgv>=2.0.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from pre-commit->-r requirements.txt (line 18)) (3.4.0)
+Requirement already satisfied: joblib>=1.2.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from scikit-learn->-r requirements.txt (line 20)) (1.4.2)
+Requirement already satisfied: threadpoolctl>=3.1.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from scikit-learn->-r requirements.txt (line 20)) (3.5.0)
+Requirement already satisfied: setproctitle in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from wandb->-r requirements.txt (line 21)) (1.3.3)
+Requirement already satisfied: sentry-sdk>=1.0.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from wandb->-r requirements.txt (line 21)) (2.5.1)
+Requirement already satisfied: docker-pycreds>=0.4.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from wandb->-r requirements.txt (line 21)) (0.4.0)
+Requirement already satisfied: platformdirs in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from wandb->-r requirements.txt (line 21)) (4.2.2)
+Requirement already satisfied: gitpython!=3.1.29,>=1.0.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from wandb->-r requirements.txt (line 21)) (3.1.43)
+Requirement already satisfied: mypy-extensions>=1.0.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from mypy->-r requirements.txt (line 22)) (1.0.0)
+Requirement already satisfied: charset-normalizer<3.0,>=2.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from aiohttp->datasets->-r requirements.txt (line 14)) (2.0.4)
+Requirement already satisfied: yarl<2.0,>=1.0 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from aiohttp->datasets->-r requirements.txt (line 14)) (1.6.3)
+Requirement already satisfied: async-timeout<5.0,>=4.0.0a3 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from aiohttp->datasets->-r requirements.txt (line 14)) (4.0.1)
+Requirement already satisfied: frozenlist>=1.1.1 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from aiohttp->datasets->-r requirements.txt (line 14)) (1.2.0)
+Requirement already satisfied: aiosignal>=1.1.2 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from aiohttp->datasets->-r requirements.txt (line 14)) (1.2.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from aiohttp->datasets->-r requirements.txt (line 14)) (5.2.0)
+Requirement already satisfied: gitdb<5,>=4.0.1 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from gitpython!=3.1.29,>=1.0.0->wandb->-r requirements.txt (line 21)) (4.0.11)
+Requirement already satisfied: smmap<6,>=3.0.1 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from gitdb<5,>=4.0.1->gitpython!=3.1.29,>=1.0.0->wandb->-r requirements.txt (line 21)) (5.0.1)
+Requirement already satisfied: annotated-types>=0.4.0 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from pydantic>=2.7.0->albumentations->-r requirements.txt (line 11)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.18.4 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from pydantic>=2.7.0->albumentations->-r requirements.txt (line 11)) (2.18.4)
+Requirement already satisfied: idna<4,>=2.5 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from requests->transformers->-r requirements.txt (line 10)) (3.3)
+Requirement already satisfied: certifi>=2017.4.17 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from requests->transformers->-r requirements.txt (line 10)) (2021.10.8)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from requests->transformers->-r requirements.txt (line 10)) (2.2.2)
+Requirement already satisfied: lazy-loader>=0.4 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from scikit-image>=0.21.0->albumentations->-r requirements.txt (line 11)) (0.4)
+Requirement already satisfied: tifffile>=2022.8.12 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from scikit-image>=0.21.0->albumentations->-r requirements.txt (line 11)) (2024.6.18)
+Requirement already satisfied: imageio>=2.33 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from scikit-image>=0.21.0->albumentations->-r requirements.txt (line 11)) (2.34.1)
+Requirement already satisfied: distlib<1,>=0.3.7 in /gpfs/home4/scur1188/.local/lib/python3.9/site-packages (from virtualenv>=20.10.0->pre-commit->-r requirements.txt (line 18)) (0.3.8)
+Requirement already satisfied: zipp>=0.5 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from importlib-metadata->diffusers->-r requirements.txt (line 15)) (3.7.0)
+Requirement already satisfied: MarkupSafe>=0.23 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from jinja2->torch->-r requirements.txt (line 1)) (2.0.1)
+Requirement already satisfied: mpmath>=0.19 in /gpfs/admin/_hpc/sw/arch/INTEL-AVX512/RHEL8/EB_production/2022/software/Anaconda3/2022.05/lib/python3.9/site-packages (from sympy->torch->-r requirements.txt (line 1)) (1.2.1)

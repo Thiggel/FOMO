@@ -5,7 +5,7 @@ python -m experiment --model_name ResNet18 \
   --ssl_method SimCLR \
   --classification_head \
   --early_stopping_monitor "val_acc_top5" \
-  --imbalance_method linearly_increasing \
+  --imbalance_method power_law_imbalance \
   --batch_size 256 \
   --crop_size 96 \
   --lr 5e-4 \
