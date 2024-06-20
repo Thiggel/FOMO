@@ -60,9 +60,11 @@ class ImbalancedTraining:
                     torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
                 )
 
-            if hasattr(self.ssl_method, "test_step"):
+            try:
                 trainer = L.Trainer(**self.trainer_args)
                 return trainer.test(model=self.ssl_method, datamodule=self.datamodule)[0]
+            except Exception:
+                pass
 
         return self.finetune() if self.args.finetune else {}
 
