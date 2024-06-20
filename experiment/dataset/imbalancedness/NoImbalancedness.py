@@ -21,7 +21,7 @@ class NoImbalancedness(Imbalancedness):
         imbalance across classes and take away this data in
         a uniform way.
         """
-        total_imbalance = 0
+        total_imbalance = 0.0
         for class_idx in range(self.num_classes):
             total_imbalance += self.get_power_law_imbalance(class_idx)
 
