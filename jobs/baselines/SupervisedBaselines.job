@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=Supervised-Baselines
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=16:00:00
+#SBATCH --output=job_logs/Supervised-Baselines-%A.out
+
+cd $HOME/FOMO
+
+. jobs/baselines/ResNet50_Supervised_Balanced.sh
+. jobs/baselines/ResNet50_Supervised_Imbalanced.sh
+. jobs/baselines/ViTSmall_Supervised_Balanced.sh
+. jobs/baselines/ViTSmall_Supervised_Imbalanced.sh

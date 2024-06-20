@@ -81,7 +81,7 @@ def init_ssl_type(
     return ssl_type.initialize(**ssl_args)
 
 
-def run(args: Namespace, seed: int = 42) -> dict:
+def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -> dict:
     set_seed(seed)
 
     checkpoint_filename = (
@@ -112,7 +112,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         mode="min",
     )
 
-    if not args.test_mode:
+    if args.logger and not args.test_mode:
         wandb_logger = WandbLogger(
             entity="organize", project="FOMO", name=checkpoint_filename
         )
@@ -129,7 +129,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
-        "devices": "auto"
+        "devices": "auto",
     }
 
     imbalanced_training = ImbalancedTraining(
@@ -138,11 +138,13 @@ def run(args: Namespace, seed: int = 42) -> dict:
         ssl_type,
         datamodule,
         checkpoint_callback,
+        checkpoint_filename,
+        save_class_distribution=save_class_distribution and args.ood_augmentation,
     )
 
     results = imbalanced_training.run()
 
-    if not args.test_mode:
+    if args.logger and not args.test_mode:
         wandb_logger.experiment.unwatch()
 
     return results
@@ -166,7 +168,7 @@ def run_different_seeds(args: Namespace) -> dict:
 
         run_args = set_checkpoint_for_run(args, run_idx)
 
-        results = run(run_args, seed=args.seeds[run_idx])
+        results = run(run_args, seed=args.seeds[run_idx], save_class_distribution=(run_idx== 0))
 
         end_time = time.time()
         seconds_to_hours = 3600
@@ -183,7 +185,7 @@ def run_different_seeds(args: Namespace) -> dict:
 def main():
     args = get_training_args()
 
-    #add a timestamp to the additional data path
+    # add a timestamp to the additional data path
     args.additional_data_path = args.additional_data_path + "_" + str(datetime.now())
 
     if not args.test_mode:

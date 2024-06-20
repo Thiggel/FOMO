@@ -5,7 +5,7 @@
 #SBATCH --job-name=ResNet18_SimCLR_Balanced_Finetune
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=1:20:00
+#SBATCH --time=2:30:00
 #SBATCH --output=job_logs/ResNet18_SimCLR_Balanced_Finetune.out
 
 cd $HOME/FOMO

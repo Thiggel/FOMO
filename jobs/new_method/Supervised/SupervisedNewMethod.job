@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=Supervised-New-Method
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=24:00:00
+#SBATCH --output=job_logs/Supervised-New-Method-%A.out
+
+cd $HOME/FOMO
+
+. jobs/new_method/Supervised/ResNet50_Supervised.sh
+. jobs/new_method/Supervised/ViTSmall_Supervised.sh
