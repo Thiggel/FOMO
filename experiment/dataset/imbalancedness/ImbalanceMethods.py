@@ -20,6 +20,11 @@ class ImbalanceMethod:
 
 
 class ImbalanceMethods(Enum):
+    PowerLawImbalance = ImbalanceMethod(
+        name="power_law_imbalance",
+        impl=PowerLawImbalancedness,
+    )
+
     LinearlyIncreasing = ImbalanceMethod(
         name="linearly_increasing",
         impl=LinearlyIncreasingImbalancedness,
@@ -33,11 +38,6 @@ class ImbalanceMethods(Enum):
     NoImbalance = ImbalanceMethod(
         name="no_imbalance",
         impl=NoImbalancedness,
-    )
-
-    PowerLawImbalance = ImbalanceMethod(
-        name="power_law_imbalance",
-        impl=PowerLawImbalancedness,
     )
 
     @staticmethod

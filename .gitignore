@@ -165,3 +165,5 @@ data/*
 checkpoints/*
 wandb/*
 visualizations/*
+additional_data*
+additional_data*/*
