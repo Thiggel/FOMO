@@ -58,6 +58,10 @@ class ImbalancedTraining:
                     torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
                 )
 
+            if hasattr(self.ssl_method, "test_step"):
+                trainer = L.Trainer(**self.trainer_args)
+                return trainer.test(model=self.ssl_method)[0]
+
         return self.finetune() if self.args.finetune else {}
 
     def pretrain_cycle(self, cycle_idx) -> None:
@@ -158,11 +162,7 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         return ood_indices
 
-    def save_class_dist(
-        self,
-        dataset: Dataset,
-        filename="class_distribution"
-    ) -> None:
+    def save_class_dist(self, dataset: Dataset, filename="class_distribution") -> None:
         """
         Visualize the class distribution of the dataset.
         """
@@ -171,13 +171,13 @@ class ImbalancedTraining:
         for index in tqdm(range(len(dataset)), desc="Calculating class distribution"):
             class_distribution[dataset[index][1]] += 1
 
-        with open(filename + '.pkl', 'wb') as f:
+        with open(filename + ".pkl", "wb") as f:
             pickle.dump(class_distribution, f)
 
         plt.bar(range(self.datamodule.dataset.num_classes), class_distribution)
         plt.xlabel("Class Index")
         plt.ylabel("Number of Samples")
-        plt.savefig(filename + '.pdf', format="pdf")
+        plt.savefig(filename + ".pdf", format="pdf")
         plt.close()
 
     def pretrain_imbalanced(
@@ -195,8 +195,7 @@ class ImbalancedTraining:
         os.makedirs(visualization_dir, exist_ok=True)
 
         self.save_class_dist(
-            self.datamodule.train_dataset,
-            f"{visualization_dir}/initial_class_dist"
+            self.datamodule.train_dataset, f"{visualization_dir}/initial_class_dist"
         )
 
         for cycle_idx in range(self.max_cycles):
@@ -206,7 +205,7 @@ class ImbalancedTraining:
 
                 self.save_class_dist(
                     self.datamodule.train_dataset,
-                    f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}"
+                    f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}",
                 )
             except Exception as e:
                 print(f"Error in cycle {cycle_idx}: {e}")
