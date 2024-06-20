@@ -27,6 +27,7 @@ class ImbalancedTraining:
         datamodule: L.LightningDataModule,
         checkpoint_callback: L.Callback,
         checkpoint_filename: str,
+        save_class_distribution: bool = False,
     ):
         self.args = args
         self.trainer_args = trainer_args
@@ -34,6 +35,7 @@ class ImbalancedTraining:
         self.datamodule = datamodule
         self.checkpoint_callback = checkpoint_callback
         self.checkpoint_filename = checkpoint_filename
+        self.save_class_distribution = save_class_distribution
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.ood_test_split = args.ood_test_split
@@ -57,6 +59,12 @@ class ImbalancedTraining:
                 self.ssl_method.load_state_dict(
                     torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
                 )
+
+            try:
+                trainer = L.Trainer(**self.trainer_args)
+                return trainer.test(model=self.ssl_method, datamodule=self.datamodule)[0]
+            except Exception:
+                pass
 
         return self.finetune() if self.args.finetune else {}
 
@@ -158,11 +166,7 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         return ood_indices
 
-    def save_class_dist(
-        self,
-        dataset: Dataset,
-        filename="class_distribution"
-    ) -> None:
+    def save_class_dist(self, dataset: Dataset, filename="class_distribution") -> None:
         """
         Visualize the class distribution of the dataset.
         """
@@ -171,13 +175,13 @@ class ImbalancedTraining:
         for index in tqdm(range(len(dataset)), desc="Calculating class distribution"):
             class_distribution[dataset[index][1]] += 1
 
-        with open(filename + '.pkl', 'wb') as f:
+        with open(filename + ".pkl", "wb") as f:
             pickle.dump(class_distribution, f)
 
         plt.bar(range(self.datamodule.dataset.num_classes), class_distribution)
         plt.xlabel("Class Index")
         plt.ylabel("Number of Samples")
-        plt.savefig(filename + '.pdf', format="pdf")
+        plt.savefig(filename + ".pdf", format="pdf")
         plt.close()
 
     def pretrain_imbalanced(
@@ -194,20 +198,21 @@ class ImbalancedTraining:
         )
         os.makedirs(visualization_dir, exist_ok=True)
 
-        self.save_class_dist(
-            self.datamodule.train_dataset,
-            f"{visualization_dir}/initial_class_dist"
-        )
+        if self.save_class_distribution:
+            self.save_class_dist(
+                self.datamodule.train_dataset, f"{visualization_dir}/initial_class_dist"
+            )
 
         for cycle_idx in range(self.max_cycles):
             print(f"Pretraining cycle {cycle_idx + 1}/{self.max_cycles}")
             try:
                 self.pretrain_cycle(cycle_idx)
 
-                self.save_class_dist(
-                    self.datamodule.train_dataset,
-                    f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}"
-                )
+                if self.save_class_distribution:
+                    self.save_class_dist(
+                        self.datamodule.train_dataset,
+                        f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}",
+                    )
             except Exception as e:
                 print(f"Error in cycle {cycle_idx}: {e}")
                 traceback.print_exc()

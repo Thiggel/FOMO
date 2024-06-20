@@ -7,6 +7,7 @@ from torchvision import models, transforms
 from experiment.dataset.ContrastiveTransformations import ContrastiveTransformations
 from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.IJepa import IJepa
+from experiment.models.SSLMethods.Supervised import Supervised
 from experiment.models.SSLMethods.TestSSLMethod import TestSSLMethod
 from experiment.utils.collate_functions import simclr_collate
 
@@ -66,6 +67,24 @@ class SSLTypes(Enum):
                     n_views=2,
                 ),
                 collate_fn=lambda parserargs: simclr_collate,
+            ),
+            "Supervised": SSLType(
+                module=lambda model, lr, weight_decay, max_epochs, *args, **kwargs: Supervised(
+                    model=model,
+                    lr=lr,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    *args,
+                    **kwargs
+                ),
+                transforms=lambda parserargs: transforms.Compose(
+                    [
+                        transforms.Resize((parserargs.crop_size, parserargs.crop_size)),
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.5,), (0.5,)),
+                    ]
+                ),
+                collate_fn=lambda _: None,
             ),
             "I-Jepa": SSLType(
                 module=lambda model, lr, temperature, weight_decay, max_epochs, parserargs, iterations_per_epoch, *args, **kwargs: IJepa(
