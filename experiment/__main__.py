@@ -112,7 +112,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
         mode="min",
     )
 
-    if not args.test_mode:
+    if args.logger and not args.test_mode:
         wandb_logger = WandbLogger(
             entity="organize", project="FOMO", name=checkpoint_filename
         )
@@ -143,7 +143,7 @@ def run(args: Namespace, seed: int = 42) -> dict:
 
     results = imbalanced_training.run()
 
-    if not args.test_mode:
+    if args.logger and not args.test_mode:
         wandb_logger.experiment.unwatch()
 
     return results

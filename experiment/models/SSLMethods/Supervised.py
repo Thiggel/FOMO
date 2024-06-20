@@ -51,12 +51,12 @@ class Supervised(L.LightningModule):
 
         logits = self.model(imgs)
         loss = F.cross_entropy(logits, labels)
-        self.log(f"{mode}_loss", loss, prog_bar=True)
+        self.log(f"supervised_{mode}_loss", loss, prog_bar=True)
 
         if mode != "train":
             preds = torch.argmax(logits, dim=1)
             acc = (preds == labels).float().mean()
-            self.log(f"{mode}_acc", acc, prog_bar=True)
+            self.log(f"supervised_{mode}_acc", acc, prog_bar=True)
 
         return loss
 

@@ -60,7 +60,7 @@ class ImbalancedTraining:
 
             if hasattr(self.ssl_method, "test_step"):
                 trainer = L.Trainer(**self.trainer_args)
-                return trainer.test(model=self.ssl_method)[0]
+                return trainer.test(model=self.ssl_method, datamodule=self.datamodule)[0]
 
         return self.finetune() if self.args.finetune else {}
 
