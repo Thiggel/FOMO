@@ -2,10 +2,8 @@
 
 python -m experiment \
 	--model ResNet18 \
-	--imbalance_method linearly_increasing \
+	--imbalance_method power_law_imbalance \
 	--max_cycles 5 \
 	--ood_augmentation \
 	--n_epochs_per_cycle 20 \
-	--pct_ood 0.15 \
-	--num_runs 1 \
-	--seeds 3
+	--pct_ood 0.15
