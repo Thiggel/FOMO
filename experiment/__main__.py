@@ -113,8 +113,9 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
     )
 
     if args.logger and not args.test_mode:
+        log_name = args.experiment_name if args.experiment_name else checkpoint_filename
         wandb_logger = WandbLogger(
-            entity="organize", project="FOMO", name=checkpoint_filename
+            entity="organize", project="FOMO", name=log_name
         )
         wandb_logger.watch(model, log="all")
 

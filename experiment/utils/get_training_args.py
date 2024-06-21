@@ -11,6 +11,10 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 def get_training_args(get_defaults: bool = False) -> dict:
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--experiment_name",
+        type=str,
+    )
+    parser.add_argument(
         "--model_name",
         type=str,
         choices=ModelTypes.get_model_types(),
@@ -63,7 +67,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
 
     parser.add_argument("--remove_diffusion", action="store_true")
     parser.set_defaults(remove_ood_detection=False)
-    
+
     # Use OOD-detection or uniformly augment the dataset
     parser.add_argument("--use_ood", action="store_true")
     parser.add_argument("--no-use_ood", action="store_false", dest="use_ood")
@@ -76,7 +80,9 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument("--n_epochs_per_cycle", type=int, default=20)
 
     parser.add_argument("--splits", nargs="+", type=float, default=[0.8, 0.1, 0.1])
-    parser.add_argument("--batch_size", type=int, default=32) #this should be the simclr batch size but ofxourse depends on gpu a bit 
+    parser.add_argument(
+        "--batch_size", type=int, default=256
+    )  # this should be the simclr batch size but ofxourse depends on gpu a bit
     parser.add_argument("--checkpoint", nargs="+", type=str, default=None)
 
     parser.add_argument("--no-pretrain", action="store_false", dest="pretrain")

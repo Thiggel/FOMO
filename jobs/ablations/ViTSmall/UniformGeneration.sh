@@ -1,12 +1,11 @@
 . jobs/environment.sh
 
 python -m experiment \
-  --ssl_method Supervised \
-	--model ResNet50 \
+	--model ViTSmall \
 	--imbalance_method power_law_imbalance \
 	--max_cycles 5 \
 	--ood_augmentation \
+	--no-use_ood \
 	--n_epochs_per_cycle 20 \
-	--pct_ood 0.15 \
-	--crop_size 96 \
-  --experiment_name "NewMethod_ResNet50_Supervised_Imbalanced"
+	--num_runs 1 \
+	--seeds 3

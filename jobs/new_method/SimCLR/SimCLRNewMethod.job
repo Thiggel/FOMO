@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=NewMethod
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=24:00:00
+#SBATCH --output=job_logs/SimCLRNewMethod-%A.out
+
+cd $HOME/FOMO
+
+. jobs/new_method/SimCLR/ResNet50_SimCLR.sh
+. jobs/new_method/SimCLR/ViTSmall_SimCLR.sh

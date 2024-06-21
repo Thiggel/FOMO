@@ -1,7 +1,6 @@
 . jobs/environment.sh
 
 python -m experiment \
-  --ssl_method Supervised \
 	--model ResNet50 \
 	--imbalance_method power_law_imbalance \
 	--max_cycles 5 \
