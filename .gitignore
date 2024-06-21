@@ -167,3 +167,9 @@ wandb/*
 visualizations/*
 additional_data*
 additional_data*/*
+job_logs/*
+ood_logs/*
+FOMO
+FOMO/*
+*/job_logs/*
+*/**/job_logs/*
