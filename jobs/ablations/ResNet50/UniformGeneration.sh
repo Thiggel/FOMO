@@ -8,4 +8,5 @@ python -m experiment \
 	--no-use_ood \
 	--n_epochs_per_cycle 20 \
 	--num_runs 1 \
-	--seeds 3
+	--seeds 3 \
+  --experiment_name "ResNet50_UniformGeneration"

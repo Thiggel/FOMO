@@ -8,4 +8,6 @@ python -m experiment \
 	--no-use_ood \
 	--n_epochs_per_cycle 20 \
 	--num_runs 1 \
-	--seeds 3
+	--seeds 3 \
+  --crop_size 224 \
+  --experiment_name "ViTSmall_UniformGeneration"

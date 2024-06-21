@@ -7,4 +7,6 @@ python -m experiment \
 	--ood_augmentation \
 	--remove_diffusion \
 	--n_epochs_per_cycle 20 \
-	--pct_ood 0.15
+	--pct_ood 0.15 \
+  --crop_size 224 \
+  --experiment_name "ViTSmall_stepwiseBaseline"
