@@ -172,4 +172,4 @@ ood_logs/*
 FOMO
 FOMO/*
 */job_logs/*
-*/**/job_logs/*
+.env

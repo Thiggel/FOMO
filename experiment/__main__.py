@@ -1,4 +1,6 @@
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 import time
 import argparse
 from argparse import Namespace
@@ -115,7 +117,7 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
     if args.logger and not args.test_mode:
         log_name = args.experiment_name if args.experiment_name else checkpoint_filename
         wandb_logger = WandbLogger(
-            entity="organize", project="FOMO", name=log_name
+            project="FOMO", name=log_name
         )
         wandb_logger.watch(model, log="all")
 
@@ -184,12 +186,15 @@ def run_different_seeds(args: Namespace) -> dict:
 
 
 def main():
+    load_dotenv()
+
     args = get_training_args()
 
     # add a timestamp to the additional data path
     args.additional_data_path = args.additional_data_path + "_" + str(datetime.now())
 
     if not args.test_mode:
+        api_key = os.getenv("WANDB_API_KEY")
         wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
 
     all_results = run_different_seeds(args)
