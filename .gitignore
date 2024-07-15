@@ -173,3 +173,4 @@ FOMO
 FOMO/*
 */job_logs/*
 .env
+*.out
