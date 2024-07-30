@@ -21,6 +21,7 @@ from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
 from experiment.utils.get_training_args import get_training_args
 from experiment.utils.get_model_name import get_model_name
+from experiments.utils.generate_random_string import generate_random_string
 
 from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
 from experiment.models.ModelTypes import ModelTypes
@@ -107,8 +108,13 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
 
     ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
 
+    checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
+
+    if not os.path.exists(checkpoints_dir):
+        os.makedirs(checkpoints_dir)
+
     checkpoint_callback = ModelCheckpoint(
-        dirpath="checkpoints/",
+        dirpath=checkpoints_dir,
         filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
@@ -193,7 +199,9 @@ def main():
     args = get_training_args()
 
     # add a timestamp to the additional data path
-    args.additional_data_path = args.additional_data_path + "_" + str(datetime.now())
+    args.additional_data_path = (
+        args.additional_data_path + "_" + generate_random_string()
+    )
 
     if not args.test_mode:
         api_key = os.getenv("WANDB_API_KEY")

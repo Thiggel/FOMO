@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=SimCLR-Baselines
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=50:00:00
+#SBATCH --output=job_logs/ViTBase_SimCLR_Balanced-%A.out
+
+cd $HOME/FOMO
+
+. jobs/ViTBase/baselines/ViTBase_SimCLR_Balanced.sh

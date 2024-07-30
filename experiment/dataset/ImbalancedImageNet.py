@@ -1,3 +1,4 @@
+import os
 from typing import TypedDict
 from PIL import Image
 from random import random
@@ -73,7 +74,12 @@ class ImbalancedImageNet(Dataset):
 
     @property
     def _additional_data_filename(self):
-        return f"dataset_pickles/{self.checkpoint_filename}_additional_data.pkl"
+        dataset_pickles = os.environ["BASE_CACHE_DIR"] + "/dataset_pickles"
+
+        if not os.path.exists(dataset_pickles):
+            os.makedirs(dataset_pickles)
+
+        return f"{dataset_pickles}/{self.checkpoint_filename}_additional_data.pkl"
 
     def _save_additional_data_to_pickle(self):
         with open(self._additional_data_filename, "wb") as f:
@@ -157,4 +163,3 @@ class ImbalancedImageNet(Dataset):
             datapoint["image"] = self.transform(datapoint["image"])
 
         return datapoint["image"], datapoint["label"]
-
