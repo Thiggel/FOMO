@@ -9,5 +9,5 @@ python -m experiment \
 	--n_epochs_per_cycle 20 \
 	--num_runs 1 \
 	--seeds 3 \
-  --crop_size 224 \
+  --crop_size 96 \
   --experiment_name "ResNet50_UniformGeneration"

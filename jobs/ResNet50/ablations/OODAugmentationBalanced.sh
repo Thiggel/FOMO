@@ -9,5 +9,5 @@ python -m experiment \
 	--pct_ood 0.15 \
 	--num_runs 1 \
 	--seeds 3 \
-  --crop_size 224 \
+  --crop_size 96 \
   --experiment_name "ResNet50_OODAugmentationBalanced"

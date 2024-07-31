@@ -8,5 +8,5 @@ python -m experiment \
 	--remove_diffusion \
 	--n_epochs_per_cycle 20 \
 	--pct_ood 0.15 \
-  --crop_size 224 \
+  --crop_size 96 \
   --experiment_name "ResNet50_stepwiseBaseline"

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #SBATCH --partition=gpu
-#SBATCH --gpus=1
+#SBATCH --gpus=4
 #SBATCH --job-name=ViTBase-UniformGeneration
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=48:00:00
+#SBATCH --time=80:00:00
 #SBATCH --output=job_logs/ViTBase-UniformGeneration-%A.out
 
 cd $HOME/FOMO

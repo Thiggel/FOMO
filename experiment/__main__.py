@@ -10,6 +10,7 @@ from lightning.pytorch.callbacks import (
     EarlyStopping,
     DeviceStatsMonitor,
 )
+from lightning.pytorch.strategies import DeepSpeedStrategy
 from lightning.pytorch.loggers import WandbLogger
 import wandb
 import torch
@@ -131,6 +132,30 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
 
     callbacks = [checkpoint_callback, stats_monitor]
 
+    deepspeed_strategy = DeepSpeedStrategy(
+        stage=3,
+        offload_optimizer=True,
+        offload_parameters=True,
+        allgather_bucket_size=5e8,
+        reduce_bucket_size=5e8,
+        contiguous_gradients=True,
+        overlap_comm=True,
+        zero_optimization={
+            "stage": 3,
+            "offload_optimizer": {"device": "cpu", "pin_memory": True},
+            "offload_param": {"device": "cpu", "pin_memory": True},
+            "overlap_comm": True,
+            "contiguous_gradients": True,
+            "sub_group_size": 1e9,
+            "reduce_bucket_size": "auto",
+            "stage3_prefetch_bucket_size": "auto",
+            "stage3_param_persistence_threshold": "auto",
+            "stage3_max_live_parameters": 1e9,
+            "stage3_max_reuse_distance": 1e9,
+            "stage3_gather_16bit_weights_on_model_save": True,
+        },
+    )
+
     trainer_args = {
         "max_time": {"hours": int(args.max_hours_per_run) - 1},
         "max_epochs": args.n_epochs_per_cycle,
@@ -140,6 +165,9 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
     }
+
+    if torch.cuda.is_available():
+        trainer_args["strategy"] = deepspeed_strategy
 
     imbalanced_training = ImbalancedTraining(
         args,

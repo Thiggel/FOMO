@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #SBATCH --partition=gpu
-#SBATCH --gpus=1
+#SBATCH --gpus=4
 #SBATCH --job-name=stepwise-ResNet50
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=48:00:00
+#SBATCH --time=80:00:00
 #SBATCH --output=job_logs/stepwise-ResNet50-%A.out
 
 cd $HOME/FOMO
