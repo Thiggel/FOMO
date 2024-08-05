@@ -22,7 +22,7 @@ from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
 from experiment.utils.get_training_args import get_training_args
 from experiment.utils.get_model_name import get_model_name
-from experiments.utils.generate_random_string import generate_random_string
+from experiment.utils.generate_random_string import generate_random_string
 
 from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
 from experiment.models.ModelTypes import ModelTypes
@@ -124,7 +124,7 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
     if args.logger and not args.test_mode:
         log_name = args.experiment_name if args.experiment_name else checkpoint_filename
         wandb_logger = WandbLogger(
-            project="FOMO", name=log_name + str(seed), group=log_name
+            project="FOMO2", name=log_name + str(seed), group=log_name
         )
         wandb_logger.watch(model, log="all")
 
@@ -162,7 +162,6 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
         "callbacks": callbacks,
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
-        "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
     }
 

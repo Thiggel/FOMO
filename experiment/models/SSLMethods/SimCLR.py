@@ -14,7 +14,7 @@ class SimCLR(L.LightningModule):
         temperature: float,
         weight_decay: float,
         max_epochs: int = 500,
-        hidden_dim = 128,
+        hidden_dim=128,
         *args,
         **kwargs,
     ):
@@ -25,25 +25,26 @@ class SimCLR(L.LightningModule):
         assert (
             self.hparams.temperature > 0.0
         ), "The temperature must be a positive float!"
-        
-        #you need to do this on resnet but I havent decided how to nicely make that dynamic yet. Ill be using ViT for now 
+
+        # you need to do this on resnet but I havent decided how to nicely make that dynamic yet. Ill be using ViT for now
         self.model = model
         try:
             if self.model.fc is not None:
                 self.model.fc = nn.Sequential(
                     self.model.fc,  # Linear(ResNet output, 4*hidden_dim)
                     nn.ReLU(inplace=True),
-                    nn.Linear(4*hidden_dim, hidden_dim)
+                    nn.Linear(4 * hidden_dim, hidden_dim),
                 )
         except:
             pass
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer = AdamW(
-            self.parameters(),
-            lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay,
-        )
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
+        else:
+            optimizer = AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
 
         lr_scheduler = CosineAnnealingLR(
             optimizer, T_max=self.hparams.max_epochs, eta_min=self.hparams.lr / 50
@@ -55,7 +56,9 @@ class SimCLR(L.LightningModule):
         imgs, _ = batch
         imgs = torch.cat(imgs, dim=0)
 
-        feats = self.model(imgs) #yep thats the issue, why can a resnet deal with two concatenated images??
+        feats = self.model(
+            imgs
+        )  # yep thats the issue, why can a resnet deal with two concatenated images??
 
         cos_sim = F.cosine_similarity(feats[:, None, :], feats[None, :, :], dim=-1)
 
@@ -72,7 +75,7 @@ class SimCLR(L.LightningModule):
         nll = nll.mean()
 
         # Logging loss
-        self.log(mode + "_loss", nll, prog_bar = True)
+        self.log(mode + "_loss", nll, prog_bar=True)
 
         # Get ranking position of positive example
         comb_sim = torch.cat(
@@ -85,9 +88,9 @@ class SimCLR(L.LightningModule):
 
         sim_argsort = comb_sim.argsort(dim=-1, descending=True).argmin(dim=-1)
 
-        self.log(mode + "_acc_top1", (sim_argsort == 0).float().mean(), prog_bar = True)
-        self.log(mode + "_acc_top5", (sim_argsort < 5).float().mean(), prog_bar = True)
-        self.log(mode + "_acc_mean_pos", 1 + sim_argsort.float().mean(), prog_bar = True)
+        self.log(mode + "_acc_top1", (sim_argsort == 0).float().mean(), prog_bar=True)
+        self.log(mode + "_acc_top5", (sim_argsort < 5).float().mean(), prog_bar=True)
+        self.log(mode + "_acc_mean_pos", 1 + sim_argsort.float().mean(), prog_bar=True)
 
         return nll
 

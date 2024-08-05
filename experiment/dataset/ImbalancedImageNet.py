@@ -112,7 +112,12 @@ class ImbalancedImageNet(Dataset):
 
     @property
     def _indices_filename(self):
-        return f"dataset_pickles/{self.checkpoint_filename}_indices.pkl"
+        dataset_pickles = os.environ["BASE_CACHE_DIR"] + "/dataset_pickles"
+
+        if not os.path.exists(dataset_pickles):
+            os.makedirs(dataset_pickles)
+
+        return f"{dataset_pickles}/{self.checkpoint_filename}_indices.pkl"
 
     def _save_indices_to_pickle(self, indices: list[int]):
         with open(self._indices_filename, "wb") as f:
