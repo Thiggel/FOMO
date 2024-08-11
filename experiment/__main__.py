@@ -110,8 +110,7 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
 
     checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
 
-    if not os.path.exists(checkpoints_dir):
-        os.makedirs(checkpoints_dir)
+    os.makedirs(checkpoints_dir, exist_ok=True)
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=checkpoints_dir,
@@ -119,6 +118,8 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
         monitor="val_loss",
         mode="min",
     )
+
+    args.logger = False
 
     if args.logger and not args.test_mode:
         log_name = args.experiment_name if args.experiment_name else checkpoint_filename
@@ -199,7 +200,11 @@ def main():
 
     # add a timestamp to the additional data path
     args.additional_data_path = (
-        args.additional_data_path + "_" + generate_random_string()
+        os.environ["BASE_CACHE_DIR"]
+        + "/"
+        + args.additional_data_path
+        + "_"
+        + generate_random_string()
     )
 
     if not args.test_mode:
