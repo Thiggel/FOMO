@@ -7,7 +7,5 @@ python -m experiment \
 	--ood_augmentation \
 	--no-use_ood \
 	--n_epochs_per_cycle 20 \
-	--num_runs 1 \
-	--seeds 3 \
   --crop_size 96 \
   --experiment_name "ResNet50_UniformGeneration"
