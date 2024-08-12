@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=stepwise-ViTBase
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=80:00:00
+#SBATCH --output=job_logs/stepwise-ViTBase-%A.out
+
+cd $HOME/FOMO
+
+. jobs/ViTBase/ablations/stepwiseBaseline.sh

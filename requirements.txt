@@ -20,3 +20,5 @@ faiss-cpu
 scikit-learn
 wandb
 mypy
+python-dotenv
+deepspeed

@@ -1,4 +1,6 @@
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 import time
 import argparse
 from argparse import Namespace
@@ -19,6 +21,7 @@ from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
 from experiment.utils.get_training_args import get_training_args
 from experiment.utils.get_model_name import get_model_name
+from experiment.utils.generate_random_string import generate_random_string
 
 from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
 from experiment.models.ModelTypes import ModelTypes
@@ -105,16 +108,23 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
 
     ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
 
+    checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
+
+    os.makedirs(checkpoints_dir, exist_ok=True)
+
     checkpoint_callback = ModelCheckpoint(
-        dirpath="checkpoints/",
+        dirpath=checkpoints_dir,
         filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
     )
 
+    args.logger = False
+
     if args.logger and not args.test_mode:
+        log_name = args.experiment_name if args.experiment_name else checkpoint_filename
         wandb_logger = WandbLogger(
-            entity="organize", project="FOMO", name=checkpoint_filename
+            project="FOMO2", name=log_name + str(seed), group=log_name
         )
         wandb_logger.watch(model, log="all")
 
@@ -128,7 +138,6 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
         "callbacks": callbacks,
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
-        "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
         "devices": "auto",
     }
 
@@ -168,7 +177,9 @@ def run_different_seeds(args: Namespace) -> dict:
 
         run_args = set_checkpoint_for_run(args, run_idx)
 
-        results = run(run_args, seed=args.seeds[run_idx], save_class_distribution=(run_idx== 0))
+        results = run(
+            run_args, seed=args.seeds[run_idx], save_class_distribution=(run_idx == 0)
+        )
 
         end_time = time.time()
         seconds_to_hours = 3600
@@ -183,12 +194,21 @@ def run_different_seeds(args: Namespace) -> dict:
 
 
 def main():
+    load_dotenv()
+
     args = get_training_args()
 
     # add a timestamp to the additional data path
-    args.additional_data_path = args.additional_data_path + "_" + str(datetime.now())
+    args.additional_data_path = (
+        os.environ["BASE_CACHE_DIR"]
+        + "/"
+        + args.additional_data_path
+        + "_"
+        + generate_random_string()
+    )
 
     if not args.test_mode:
+        api_key = os.getenv("WANDB_API_KEY")
         wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
 
     all_results = run_different_seeds(args)

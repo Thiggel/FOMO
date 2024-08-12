@@ -100,11 +100,7 @@ class CIFAR10FineTuner(L.LightningModule):
         return features
 
     def configure_optimizers(self):
-        optimizer = optim.AdamW(
-            self.parameters(),
-            lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay,
-        )
+        optimizer = optim.AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
         lr_scheduler = optim.lr_scheduler.MultiStepLR(
             optimizer,
             milestones=[

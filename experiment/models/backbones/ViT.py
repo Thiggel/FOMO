@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from transformers import ViTModel
+from transformers import ViTModel, ViTConfig
 
 
 class ViT(nn.Module):
@@ -13,9 +13,10 @@ class ViT(nn.Module):
         self.num_features = self.config.hidden_size
 
     def _load_model(self, model_name: str) -> nn.Module:
-        model = ViTModel.from_pretrained(model_name)
+        config = ViTConfig.from_pretrained(model_name)
+        model = ViTModel(config)
 
-        return model, model.config
+        return model, config
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
         output = self.model(images).last_hidden_state[:, 0, :]
