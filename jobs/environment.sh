@@ -4,7 +4,7 @@ module load Anaconda3/2023.07-2
 module load GCC/12.3.0
 module load CUDA/12.1.1
 
-export SCRATCH_LOCAL="$HOME/../../../scratch-local"
+export SCRATCH_LOCAL="$HOME/../../../projects/prjs1147"
 
 cd $SCRATCH_LOCAL
 mkdir FOMO
@@ -33,6 +33,6 @@ export PYTORCH_LIGHTNING_HOME="$BASE_CACHE_DIR/lightning_logs"
 
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 
-activate fomo
+activate letting_nns_think
 
 pip install -r requirements.txt

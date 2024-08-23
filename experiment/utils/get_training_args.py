@@ -100,7 +100,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument("--classification_head", action="store_true")
 
     parser.add_argument(
-        "--seeds", nargs="+", type=int, default=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        "--seeds", nargs="+", type=int, default=[123, 456, 231, 567, 342, 154, 325, 452]
     )
 
     # I-Jepa Args

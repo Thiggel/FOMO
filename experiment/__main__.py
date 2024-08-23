@@ -1,4 +1,5 @@
 from datetime import datetime
+import shutil
 import os
 from dotenv import load_dotenv
 import time
@@ -84,8 +85,17 @@ def init_ssl_type(
     return ssl_type.initialize(**ssl_args)
 
 
-def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -> dict:
+def run(args: Namespace, seed: int = 42, save_class_distribution: bool = False) -> dict:
     set_seed(seed)
+
+    # add a timestamp to the additional data path
+    args.additional_data_path = (
+        os.environ["BASE_CACHE_DIR"]
+        + "/"
+        + args.additional_data_path
+        + "_"
+        + generate_random_string()
+    )
 
     checkpoint_filename = (
         args.model_name
@@ -97,7 +107,7 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
         + str(datetime.now())
     )
 
-    dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
+    dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method + "_" + generate_random_string()
 
     datamodule = init_datamodule(
         args,
@@ -156,6 +166,11 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
     if args.logger and not args.test_mode:
         wandb_logger.experiment.unwatch()
 
+    try:
+        shutil.rmtree(args.additional_data_path)
+    except Exception as e:
+        print(e)
+
     return results
 
 
@@ -198,14 +213,6 @@ def main():
 
     args = get_training_args()
 
-    # add a timestamp to the additional data path
-    args.additional_data_path = (
-        os.environ["BASE_CACHE_DIR"]
-        + "/"
-        + args.additional_data_path
-        + "_"
-        + generate_random_string()
-    )
 
     if not args.test_mode:
         api_key = os.getenv("WANDB_API_KEY")
