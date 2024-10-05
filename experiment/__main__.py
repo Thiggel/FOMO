@@ -184,7 +184,9 @@ def run_different_seeds(args: Namespace) -> dict:
         run_args = set_checkpoint_for_run(args, run_idx)
 
         results = run(
-            run_args, seed=args.seeds[run_idx], save_class_distribution=(run_idx == 0)
+            run_args,
+            seed=args.seeds[run_idx],
+            save_class_distribution=False,  # (run_idx == 0)
         )
 
         end_time = time.time()
