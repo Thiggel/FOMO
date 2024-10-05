@@ -141,6 +141,12 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
         "devices": "auto",
     }
 
+    if torch.cuda.is_available():
+        trainer_args["strategy"] = "deepspeed_stage_3_offload"
+        trainer_args["default_root_dir"] = os.environ["PYTORCH_LIGHTNING_HOME"]
+        print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
+        print("GPUs Available: ", torch.cuda.device_count())
+
     imbalanced_training = ImbalancedTraining(
         args,
         trainer_args,

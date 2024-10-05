@@ -6,6 +6,9 @@ import lightning.pytorch as L
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
+from pytorch_lightning.utilities.deepspeed import (
+    convert_zero_checkpoint_to_fp32_state_dict,
+)
 from experiment.ood.ood import OOD
 from diffusers import StableUnCLIPImg2ImgPipeline
 from torchvision import transforms
@@ -58,9 +61,14 @@ class ImbalancedTraining:
             if not self.args.test_mode and os.path.exists(
                 self.checkpoint_callback.best_model_path
             ):
-                self.ssl_method.load_state_dict(
-                    torch.load(self.checkpoint_callback.best_model_path)["state_dict"]
+                output_path = (self.checkpoint_callback.best_model_path + "_fp32.pt",)
+
+                convert_zero_checkpoint_to_fp32_state_dict(
+                    self.checkpoint_callback.best_model_path,
+                    output_path,
                 )
+
+                self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
 
             try:
                 trainer = L.Trainer(**self.trainer_args)
