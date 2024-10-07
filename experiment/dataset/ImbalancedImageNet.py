@@ -128,12 +128,7 @@ class ImbalancedImageNet(Dataset):
             return pickle.load(f)
 
     def _load_or_create_indices(self):
-        try:
-            return self._load_indices_from_pickle()
-        except FileNotFoundError:
-            return self._create_indices()
-
-        return self.indices
+        return self._create_indices()
 
     def __len__(self):
         """
