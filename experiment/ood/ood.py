@@ -8,6 +8,7 @@ import os
 from torchvision.utils import save_image
 from experiment.utils.get_num_workers import get_num_workers
 
+
 class OOD:
     def __init__(
         self,
@@ -30,23 +31,35 @@ class OOD:
         self.cycle_idx = cycle_idx
 
     def extract_features(self):
-        train_loader = DataLoader(self.train, batch_size=self.batch_size, shuffle=False, num_workers = self.num_workers) #these two are the issue
-        test_loader = DataLoader(self.test, batch_size=self.batch_size, shuffle=False, num_workers = self.num_workers) #Because of these two we are using to many dataloader workers 
+        train_loader = DataLoader(
+            self.train,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )  # these two are the issue
+        test_loader = DataLoader(
+            self.test,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )  # Because of these two we are using to many dataloader workers
+
+        device = next(self.feature_extractor.parameters()).device
 
         # Extract features from the train dataset
         for batch, _ in tqdm(train_loader, desc="Extracting train features"):
-            features = self.feature_extractor(batch).cpu().detach()
+            features = self.feature_extractor(batch.to(device)).cpu().detach()
             self.train_features.append(features)
 
         # Extract features from the test dataset
         for batch, _ in tqdm(test_loader, desc="Extracting test features"):
-            features = self.feature_extractor(batch).cpu().detach()
+            features = self.feature_extractor(batch.to(device)).cpu().detach()
             self.test_features.append(features)
 
         self.train_features = torch.cat(self.train_features)
         self.test_features = torch.cat(self.test_features)
 
-        #garbage collection 
+        # garbage collection
         train_loader = None
         test_loader = None
 
@@ -82,13 +95,13 @@ class OOD:
 
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
             os.makedirs(f"./ood_logs/{self.cycle_idx}")
-            
+
         np.save(f"./ood_logs/{self.cycle_idx}/scores_ood.npy", scores_ood)
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}/images"):
             os.makedirs(f"./ood_logs/{self.cycle_idx}/images")
         top_k_indices = np.argsort(scores_ood)[-10:][::-1]
         for i, index in enumerate(top_k_indices):
-            image = self.test[index][0] 
+            image = self.test[index][0]
             if len(image.shape) in [3, 4]:
                 distance = scores_ood[index]
                 image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
