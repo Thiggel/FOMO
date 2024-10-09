@@ -88,7 +88,7 @@ def run(args: Namespace, seed: int = 42, save_class_distribution: bool = True) -
     set_seed(seed)
 
     checkpoint_filename = (
-        +args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
+        args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
     )
 
     dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
