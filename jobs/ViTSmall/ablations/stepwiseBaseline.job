@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #SBATCH --partition=gpu
-#SBATCH --gpus=4
+#SBATCH --gpus=1
 #SBATCH --job-name=stepwise-ViTSmall
-#SBATCH --ntasks=4
+#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --time=80:00:00
 #SBATCH --output=job_logs/stepwise-ViTSmall-%A.out
