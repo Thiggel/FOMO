@@ -3,7 +3,6 @@
 #SBATCH --gres=gpu:3
 #SBATCH --job-name=OODAugmentationBalanced-ViTBase
 #SBATCH --ntasks=3
-#SBATCH --mem=124G
 #SBATCH --mem=cpus-per-task=48
 #SBATCH --time=80:00:00
 #SBATCH --output=job_logs/OODAugmentationBalanced-ViTBase-%A.out
