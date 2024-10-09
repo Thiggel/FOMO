@@ -117,7 +117,7 @@ class CIFAR10FineTuner(L.LightningModule):
         outputs = self.probe(outputs)
 
         loss = self.loss(outputs, targets)
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True, sync_dist=True)
         return loss
 
     def validation_step(
@@ -129,8 +129,8 @@ class CIFAR10FineTuner(L.LightningModule):
 
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_accuracy", accuracy, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
+        self.log("val_accuracy", accuracy, prog_bar=True, sync_dist=True)
         return loss
 
     def test_step(
@@ -142,6 +142,6 @@ class CIFAR10FineTuner(L.LightningModule):
 
         loss = self.loss(outputs, targets)
         accuracy = (outputs.argmax(dim=1) == targets).float().mean()
-        self.log("cifar10_test_loss", loss, prog_bar=True)
-        self.log("cifar10_test_accuracy", accuracy, prog_bar=True)
+        self.log("cifar10_test_loss", loss, prog_bar=True, sync_dist=True)
+        self.log("cifar10_test_accuracy", accuracy, prog_bar=True, sync_dist=True)
         return loss
