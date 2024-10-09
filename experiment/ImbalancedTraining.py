@@ -70,13 +70,8 @@ class ImbalancedTraining:
 
                 self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
 
-            try:
-                trainer = L.Trainer(**self.trainer_args)
-                return trainer.test(model=self.ssl_method, datamodule=self.datamodule)[
-                    0
-                ]
-            except Exception:
-                pass
+            trainer = L.Trainer(**self.trainer_args)
+            return trainer.test(model=self.ssl_method, datamodule=self.datamodule)[0]
 
         return self.finetune() if self.args.finetune else {}
 
