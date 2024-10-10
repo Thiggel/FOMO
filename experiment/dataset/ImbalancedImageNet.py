@@ -98,6 +98,18 @@ class ImbalancedImageNet(Dataset):
         """
         indices = []
 
+        import traceback
+
+        def print_stack_trace():
+            print("Current stack trace:")
+            for line in traceback.format_stack()[
+                :-1
+            ]:  # [:-1] to exclude the call to this function
+                print(line.strip())
+            print("--------------------")
+
+        print_stack_trace()
+
         for index, sample in tqdm(
             enumerate(self.dataset),
             total=len(self.dataset),
