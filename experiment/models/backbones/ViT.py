@@ -25,4 +25,5 @@ class ViT(nn.Module):
         return output
 
     def extract_features(self, images: torch.Tensor) -> torch.Tensor:
+        print("images", images.device)
         return self.model(images).last_hidden_state[:, 0, :]

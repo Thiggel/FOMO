@@ -46,7 +46,10 @@ class OOD:
 
         # Extract features from the train dataset
         for batch, _ in tqdm(train_loader, desc="Extracting train features"):
-            features = self.feature_extractor(batch)
+            # print which device the batch is on
+            device = batch.device
+            print(f"Batch device: {device}")
+            features = self.feature_extractor(batch).cpu().detach()
             self.train_features.append(features)
 
         # Extract features from the test dataset
