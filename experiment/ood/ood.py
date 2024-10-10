@@ -1,9 +1,9 @@
 import numpy as np
 import torch
-from torch.utils.data import Dataset
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
 import faiss
 from tqdm import tqdm
-from torch.utils.data import DataLoader
 import os
 from torchvision.utils import save_image
 from experiment.utils.get_num_workers import get_num_workers
@@ -17,7 +17,6 @@ class OOD:
         test: Dataset,
         feature_extractor,
         cycle_idx: int = None,
-        device: torch.device = torch.device("cuda"),
     ):
         self.train = train
         self.test = test
@@ -30,52 +29,58 @@ class OOD:
         self.train_features = []
         self.test_features = []
         self.cycle_idx = cycle_idx
-        self.device = device
+
+        # Set up multi-GPU environment
+        self.num_gpus = torch.cuda.device_count()
+        if self.num_gpus > 1:
+            print(f"Using {self.num_gpus} GPUs!")
+            self.feature_extractor = nn.DataParallel(self.feature_extractor)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.feature_extractor.to(self.device)
 
     def extract_features(self):
         train_loader = DataLoader(
             self.train,
-            batch_size=self.batch_size,
+            batch_size=self.batch_size
+            * self.num_gpus,  # Increase batch size for multi-GPU
             shuffle=False,
             num_workers=self.num_workers,
-        )  # these two are the issue
+            pin_memory=True,
+        )
         test_loader = DataLoader(
             self.test,
-            batch_size=self.batch_size,
+            batch_size=self.batch_size
+            * self.num_gpus,  # Increase batch size for multi-GPU
             shuffle=False,
             num_workers=self.num_workers,
-        )  # Because of these two we are using to many dataloader workers
+            pin_memory=True,
+        )
 
-        # Extract features from the train dataset
-        for batch, _ in tqdm(train_loader, desc="Extracting train features"):
-            batch = batch.to(self.device)
-            # print which device the batch is on
-            device = batch.device
-            print(f"Batch device: {device}")
-            features = self.feature_extractor(batch).cpu().detach()
-            self.train_features.append(features)
+        self.feature_extractor.eval()
 
-        # Extract features from the test dataset
-        for batch, _ in tqdm(test_loader, desc="Extracting test features"):
-            features = self.feature_extractor(batch.to(device)).cpu().detach()
-            self.test_features.append(features)
+        with torch.no_grad():
+            # Extract features from the train dataset
+            for batch, _ in tqdm(train_loader, desc="Extracting train features"):
+                batch = batch.to(self.device, non_blocking=True)
+                features = self.feature_extractor.extract_features(batch).cpu()
+                self.train_features.append(features)
+
+            # Extract features from the test dataset
+            for batch, _ in tqdm(test_loader, desc="Extracting test features"):
+                batch = batch.to(self.device, non_blocking=True)
+                features = self.feature_extractor.extract_features(batch).cpu()
+                self.test_features.append(features)
 
         self.train_features = torch.cat(self.train_features)
         self.test_features = torch.cat(self.test_features)
 
-        # garbage collection
-        train_loader = None
-        test_loader = None
+        # Clear GPU memory
+        torch.cuda.empty_cache()
 
     def normalize(self, x):
         return x / (torch.linalg.norm(x, axis=-1, keepdims=True) + 1e-10)
 
     def ood(self, normalize=True):
-        """
-        Since we dont have a set that we know is in-distribution to estimate lambda,
-        we will control it with the pct_ood parameter. If we set pct_ood to a conservative value,
-        we will always augment the most-OOD samples.
-        """
         dim = self.train_features.shape[1]
         train_size = self.train_features.shape[0]
 
@@ -86,13 +91,25 @@ class OOD:
             self.train_features = self.normalize(self.train_features)
             self.test_features = self.normalize(self.test_features)
 
-        index = faiss.IndexFlatL2(dim)
+        # Use multiple GPUs for FAISS if available
+        resources = [faiss.StandardGpuResources() for i in range(self.num_gpus)]
+        config = faiss.GpuMultipleClonerOptions()
+        config.shard = True  # Distribute index across GPUs
 
-        index.add(self.train_features.numpy())
+        cpu_index = faiss.IndexFlatL2(dim)
+        gpu_index = faiss.index_cpu_to_gpu_multiple_py(resources, cpu_index, config)
 
-        ################### Using KNN distance Directly ###################
-        D, _ = index.search(self.test_features, K)
-        scores_ood = D[:, -1]  # extracting dist to k-th nearest neighbor
+        gpu_index.add(self.train_features.numpy())
+
+        # Perform search in batches to avoid GPU memory issues
+        batch_size = 10000 * self.num_gpus  # Increase batch size for multi-GPU
+        scores_ood = []
+        for i in range(0, len(self.test_features), batch_size):
+            batch = self.test_features[i : i + batch_size].numpy()
+            D, _ = gpu_index.search(batch, K)
+            scores_ood.append(D[:, -1])  # extracting dist to k-th nearest neighbor
+
+        scores_ood = np.concatenate(scores_ood)
         threshold = np.percentile(scores_ood, 100 * (1 - self.pct_ood))
         is_ood = scores_ood >= threshold
         ood_indices = [i for i, ood_flag in enumerate(is_ood) if ood_flag]
