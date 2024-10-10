@@ -34,14 +34,13 @@ class Supervised(L.LightningModule):
             pass
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
+        optimizer = AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
 
-            optimizer = DeepSpeedCPUAdam(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
-        else:
-            optimizer = AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
+        lr_scheduler = CosineAnnealingLR(
+            optimizer, T_max=self.hparams.max_epochs, eta_min=self.hparams.lr / 50
+        )
 
-        return [optimizer]
+        return [optimizer], [lr_scheduler]
 
     def step(self, batch, mode="train"):
         imgs, labels = batch
