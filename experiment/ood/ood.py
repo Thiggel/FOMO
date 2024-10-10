@@ -17,9 +17,6 @@ class OOD:
         test: Dataset,
         feature_extractor,
         cycle_idx: int = None,
-        device: torch.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        ),
     ):
         self.train = train
         self.test = test
@@ -32,7 +29,6 @@ class OOD:
         self.train_features = []
         self.test_features = []
         self.cycle_idx = cycle_idx
-        self.device = device
 
     def extract_features(self):
         train_loader = DataLoader(
@@ -50,7 +46,7 @@ class OOD:
 
         # Extract features from the train dataset
         for batch, _ in tqdm(train_loader, desc="Extracting train features"):
-            features = self.feature_extractor(batch.to(self.device)).cpu().detach()
+            features = self.feature_extractor(batch)
             self.train_features.append(features)
 
         # Extract features from the test dataset
