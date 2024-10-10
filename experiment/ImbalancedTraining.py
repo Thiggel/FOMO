@@ -161,12 +161,15 @@ class ImbalancedTraining:
         return torch.randperm(len(ood_train_dataset))[:num_samples].tolist()
 
     def get_ood_indices(self, ood_train_dataset, ood_test_dataset, cycle_idx) -> list:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.ssl_method.to(device)
         ood = OOD(
             args=self.args,
             train=ood_train_dataset,
             test=ood_test_dataset,
-            feature_extractor=self.ssl_method.model,
+            feature_extractor=self.ssl_method.model.extract_features,
             cycle_idx=cycle_idx,
+            device=self.ssl_method.device,
         )
 
         ood.extract_features()
