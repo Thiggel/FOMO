@@ -22,3 +22,4 @@ wandb
 mypy
 python-dotenv
 deepspeed
+accelerate
