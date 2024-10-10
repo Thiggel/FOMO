@@ -9,6 +9,15 @@ from torchvision.utils import save_image
 from experiment.utils.get_num_workers import get_num_workers
 
 
+class FeatureExtractor(nn.Module):
+    def __init__(self, module: nn.Module):
+        super().__init__()
+        self.module = module
+
+    def forward(self, x):
+        return self.module.extract_features(x)
+
+
 class OOD:
     def __init__(
         self,
@@ -21,7 +30,7 @@ class OOD:
         self.train = train
         self.test = test
         self.num_workers = get_num_workers()
-        self.feature_extractor = feature_extractor
+        self.feature_extractor = FeatureExtractor(feature_extractor)
         self.batch_size = args.fe_batch_size
         self.K = args.k
         self.pct_ood = args.pct_ood
@@ -62,13 +71,13 @@ class OOD:
             # Extract features from the train dataset
             for batch, _ in tqdm(train_loader, desc="Extracting train features"):
                 batch = batch.to(self.device, non_blocking=True)
-                features = self.feature_extractor.extract_features(batch).cpu()
+                features = self.feature_extractor(batch).cpu()
                 self.train_features.append(features)
 
             # Extract features from the test dataset
             for batch, _ in tqdm(test_loader, desc="Extracting test features"):
                 batch = batch.to(self.device, non_blocking=True)
-                features = self.feature_extractor.extract_features(batch).cpu()
+                features = self.feature_extractor(batch).cpu()
                 self.test_features.append(features)
 
         self.train_features = torch.cat(self.train_features)
