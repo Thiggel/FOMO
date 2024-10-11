@@ -109,3 +109,6 @@ class SimCLR(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         self.info_nce_loss(batch, mode="val")
+
+    def test_step(self, batch, batch_idx):
+        self.info_nce_loss(batch, mode="test")
