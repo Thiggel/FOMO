@@ -61,9 +61,11 @@ class ImbalancedTraining:
             if not self.args.test_mode and os.path.exists(
                 self.checkpoint_callback.best_model_path
             ):
-                output_path = (self.checkpoint_callback.best_model_path + "_fp32.pt",)
+                output_path = (
+                    self.checkpoint_callback.best_model_path
+                    + "_fp32.pt".replace(":", "_").replace(" ", "_")
+                )
 
-                print(self.checkpoint_callback.best_model_path)
                 convert_zero_checkpoint_to_fp32_state_dict(
                     self.checkpoint_callback.best_model_path,
                     output_path,
