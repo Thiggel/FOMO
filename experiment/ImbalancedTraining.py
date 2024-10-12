@@ -63,6 +63,7 @@ class ImbalancedTraining:
             ):
                 output_path = (self.checkpoint_callback.best_model_path + "_fp32.pt",)
 
+                print(self.checkpoint_callback.best_model_path)
                 convert_zero_checkpoint_to_fp32_state_dict(
                     self.checkpoint_callback.best_model_path,
                     output_path,
