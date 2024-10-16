@@ -56,6 +56,7 @@ class CIFAR10KNNClassifier(L.LightningModule):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
+            multiprocessing_context="spawn",
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -65,6 +66,7 @@ class CIFAR10KNNClassifier(L.LightningModule):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            multiprocessing_context="spawn",
         )
 
     def extract_features(self, dataloader):
