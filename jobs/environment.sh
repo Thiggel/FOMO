@@ -4,6 +4,8 @@ module load Anaconda3/2023.07-2
 module load GCC/12.3.0
 module load CUDA/12.1.1
 
+ulimit -n 4096
+
 export SCRATCH_LOCAL="$HOME/../../../scratch-local"
 
 cd $SCRATCH_LOCAL

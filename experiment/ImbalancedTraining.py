@@ -261,14 +261,6 @@ class ImbalancedTraining:
                 "minutes": 25,
             }
 
-            # if finetuner.use_deepspeed:
-            #    self.trainer_arrgs["strategy"] = strategy
-            #    print("Using Deepspeed!")
-            # else:
-            #    self.trainer_args.pop("strategy")
-            #    print("No Deepspeed!")
-
-            print(self.trainer_args)
             trainer = L.Trainer(**self.trainer_args)
 
             trainer.fit(model=finetuner)
