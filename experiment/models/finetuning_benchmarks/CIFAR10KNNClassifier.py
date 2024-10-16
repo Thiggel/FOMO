@@ -27,6 +27,7 @@ class CIFAR10KNNClassifier(L.LightningModule):
         **kwargs,
     ):
         super().__init__()
+        self.max_epochs = 1
         self.save_hyperparameters(ignore=["model"])
         self.transform = transform
         self.model = model
