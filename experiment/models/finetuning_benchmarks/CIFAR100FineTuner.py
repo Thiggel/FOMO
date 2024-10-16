@@ -28,6 +28,7 @@ class CIFAR100FineTuner(L.LightningModule):
         *args,
         **kwargs,
     ):
+        self.use_deepspeed = True
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.transform = transform

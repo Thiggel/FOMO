@@ -71,9 +71,7 @@ class ImbalancedTraining:
                     output_path,
                 )
 
-                self.ssl_method.model.load_state_dict(
-                    torch.load(output_path)["state_dict"]
-                )
+                self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
 
             trainer = L.Trainer(**self.trainer_args)
 
@@ -235,6 +233,10 @@ class ImbalancedTraining:
 
         self.trainer_args.pop("callbacks")
 
+        torch.multiprocessing.set_sharing_strategy("file_system")
+
+        strategy = self.trainer_args.get("strategy")
+
         for benchmark in benchmarks:
             print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
 
@@ -258,6 +260,11 @@ class ImbalancedTraining:
             self.trainer_args["max_time"] = {
                 "minutes": 25,
             }
+
+            if finetuner.use_deepspeed:
+                self.trainer_arrgs["strategy"] = strategy
+            else:
+                self.trainer_args.pop("strategy")
 
             trainer = L.Trainer(**self.trainer_args)
 
