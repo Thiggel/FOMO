@@ -55,7 +55,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=self.num_workers,
+            num_workers=self.num_workers // 2,
             persistent_workers=True,
             multiprocessing_context="spawn",
         )
@@ -65,7 +65,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=self.num_workers,
+            num_workers=self.num_workers // 2,
             persistent_workers=True,
             multiprocessing_context="spawn",
         )
