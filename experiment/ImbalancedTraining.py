@@ -71,7 +71,9 @@ class ImbalancedTraining:
                     output_path,
                 )
 
-                self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
+                self.ssl_method.model.load_state_dict(
+                    torch.load(output_path)["state_dict"]
+                )
 
             trainer = L.Trainer(**self.trainer_args)
 

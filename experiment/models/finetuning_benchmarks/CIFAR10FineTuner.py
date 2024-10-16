@@ -29,7 +29,7 @@ class CIFAR10FineTuner(L.LightningModule):
         **kwargs,
     ):
         super().__init__()
-        self.max_epochs = 10
+        self.max_epochs = max_epochs
         self.batch_size = 32
         self.transform = transform
 
@@ -100,7 +100,11 @@ class CIFAR10FineTuner(L.LightningModule):
         return features
 
     def configure_optimizers(self):
-        optimizer = optim.AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
+        optimizer = optim.AdamW(
+            [p for p in self.parameters() if p.requires_grad],
+            lr=1e-3,
+            betas=(0.9, 0.95),
+        )
         lr_scheduler = optim.lr_scheduler.MultiStepLR(
             optimizer,
             milestones=[

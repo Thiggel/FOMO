@@ -1,14 +1,13 @@
 import os
+import torch
 from torch import nn, optim
 from torchvision.datasets import CIFAR100
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms, models
-import torch
 import lightning.pytorch as L
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
-
 from experiment.utils.get_num_workers import get_num_workers
 
 
@@ -28,25 +27,22 @@ class CIFAR100KNNClassifier(L.LightningModule):
         **kwargs,
     ):
         super().__init__()
-
         self.save_hyperparameters(ignore=["model"])
         self.transform = transform
-
-        (self.train_dataset, self.test_dataset) = self.get_datasets()
-
         self.model = model
         self.batch_size = batch_size
-        self.max_epochs = 1
+        self.k = k
+        self.knn = None  # We'll initialize this later
 
-        self.knn = KNeighborsClassifier(n_neighbors=k)
-
-    def get_datasets(self) -> tuple[Dataset, Dataset, Dataset]:
-        train_dataset = CIFAR100(root="data", download=True, transform=self.transform)
-        test_dataset = CIFAR100(
-            root="data", train=False, download=True, transform=self.transform
-        )
-
-        return train_dataset, test_dataset
+    def setup(self, stage=None):
+        if stage == "fit" or stage is None:
+            self.train_dataset = CIFAR100(
+                root="data", train=True, download=True, transform=self.transform
+            )
+        if stage == "test" or stage is None:
+            self.test_dataset = CIFAR100(
+                root="data", train=False, download=True, transform=self.transform
+            )
 
     @property
     def num_workers(self) -> int:
@@ -73,37 +69,37 @@ class CIFAR100KNNClassifier(L.LightningModule):
     def extract_features(self, dataloader):
         features = []
         labels = []
-
+        self.model.eval()
         with torch.no_grad():
             for inputs, label in tqdm(dataloader, desc="Extracting features"):
-                outputs = self.model.extract_features(inputs.to(self.device))
-                features.append(outputs)
+                inputs = inputs.to(self.device)
+                outputs = self.model.extract_features(inputs)
+                features.append(outputs.cpu())
                 labels.append(label)
-
         return torch.cat(features), torch.cat(labels)
 
-    def fit_knn(self):
+    def on_train_start(self):
+        # Fit KNN at the start of training
         train_loader = self.train_dataloader()
         train_features, train_labels = self.extract_features(train_loader)
-        self.knn.fit(train_features.cpu().numpy(), train_labels.cpu().numpy())
+        self.knn = KNeighborsClassifier(n_neighbors=self.k)
+        self.knn.fit(train_features.numpy(), train_labels.numpy())
 
     def training_step(self, batch, batch_idx):
-        self.fit_knn()
-        self.trainer.should_stop = True
-        return None
+        # No need for actual training, return zero tensor to satisfy PyTorch Lightning
+        return torch.tensor(0.0, requires_grad=True)
 
     def test_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
         inputs, targets = batch
-
+        inputs = inputs.to(self.device)
         features = self.model.extract_features(inputs)
         predictions = self.knn.predict(features.cpu().numpy())
         accuracy = accuracy_score(targets.cpu().numpy(), predictions)
-
         self.log("cifar100_knn_test_accuracy", accuracy, prog_bar=True, sync_dist=True)
+        return torch.tensor(accuracy)
 
-        return accuracy
-
-    def configure_optimizers(self) -> optim.Optimizer:
-        return None
+    def configure_optimizers(self):
+        # Return a dummy optimizer to satisfy DeepSpeed
+        return optim.SGD(self.parameters(), lr=0)
