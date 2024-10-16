@@ -160,12 +160,12 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
     def add_n_samples_by_index(self, n):
         # get all the indices currently not in use
-        unused_indices = set(range(len(self.train_dataset))).difference(
-            set(self.train_dataset.indices)
+        unused_indices = list(
+            set(range(len(self.dataset))) - set(self.train_dataset.indices)
         )
 
         # randomly sample n indices from the unused indices
-        new_indices = random.sample(unused_indices, n)
+        new_indices = random.sample(unused_indices, min(n, len(unused_indices)))
 
         # add the new indices to the indices list
         self.train_dataset.indices.extend(new_indices)
