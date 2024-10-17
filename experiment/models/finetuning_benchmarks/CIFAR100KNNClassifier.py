@@ -35,6 +35,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
         self.batch_size = batch_size
         self.k = k
         self.knn = None  # We'll initialize this later
+        self.linear = nn.Linear(1, 2)  # Dummy linear layer to satisfy PyTorch Lightning
 
     def setup(self, stage=None):
         if stage == "fit" or stage is None:
