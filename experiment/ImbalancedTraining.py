@@ -31,8 +31,10 @@ class ImbalancedTraining:
         checkpoint_callback: L.Callback,
         checkpoint_filename: str,
         save_class_distribution: bool = False,
+        run_idx: int = 0,
     ):
         self.args = args
+        self.run_idx = run_idx
         self.trainer_args = trainer_args
         self.ssl_method = ssl_method
         self.datamodule = datamodule
@@ -216,6 +218,7 @@ class ImbalancedTraining:
             )
 
         for cycle_idx in range(self.max_cycles):
+            print(f"Run {self.run_idx + 1}/{self.args.num_runs}")
             print(f"Pretraining cycle {cycle_idx + 1}/{self.max_cycles}")
             self.pretrain_cycle(cycle_idx)
 
@@ -286,6 +289,7 @@ class ImbalancedTraining:
                 variation="fp16",
             )
         pipe = pipe.to(device)
+        pipe.enable_progress_bar(False)
         return pipe
 
     def generate_new_data(
@@ -305,7 +309,9 @@ class ImbalancedTraining:
             os.makedirs(save_subfolder)
 
         k = 0
-        for b_start in range(0, len(ood_samples), batch_size):
+        for b_start in tqdm(
+            range(0, len(ood_samples), batch_size), desc="Generating New Data..."
+        ):
             batch = [
                 ood_samples[i + b_start][0]
                 for i in range(min(len(ood_samples) - b_start, batch_size))
