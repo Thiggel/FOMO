@@ -134,26 +134,27 @@ class ImbalancedTraining:
 
         ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
 
-        self.datamodule.train_dataset.dataset.transform = None
-        diffusion_pipe = self.initialize_model(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        if cycle_idx < self.max_cycles - 1:
+            self.datamodule.train_dataset.dataset.transform = None
+            diffusion_pipe = self.initialize_model(
+                "cuda" if torch.cuda.is_available() else "cpu"
+            )
 
-        self.generate_new_data(
-            ood_samples,
-            pipe=diffusion_pipe,
-            batch_size=self.args.sd_batch_size,
-            save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
-        )
+            self.generate_new_data(
+                ood_samples,
+                pipe=diffusion_pipe,
+                batch_size=self.args.sd_batch_size,
+                save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
+            )
 
-        labels = [label for _, label in ood_samples]
+            labels = [label for _, label in ood_samples]
 
-        self.datamodule.update_dataset(
-            aug_path=f"{self.args.additional_data_path}/{cycle_idx}",
-            labels=labels,
-        )
+            self.datamodule.update_dataset(
+                aug_path=f"{self.args.additional_data_path}/{cycle_idx}",
+                labels=labels,
+            )
 
-        self.datamodule.train_dataset.dataset.transform = ssl_transform
+            self.datamodule.train_dataset.dataset.transform = ssl_transform
 
     def get_num_samples_to_generate(self) -> int:
         return int(
