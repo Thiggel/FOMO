@@ -70,7 +70,7 @@ class SimCLR(L.LightningModule):
         nll = nll.mean()
 
         # Logging loss
-        self.log(mode + "_loss", nll, prog_bar=True, sync_dist=True)
+        self.log(mode + "_loss", nll, sync_dist=True)
 
         # Get ranking position of positive example
         comb_sim = torch.cat(
@@ -86,19 +86,16 @@ class SimCLR(L.LightningModule):
         self.log(
             mode + "_acc_top1",
             (sim_argsort == 0).float().mean(),
-            prog_bar=True,
             sync_dist=True,
         )
         self.log(
             mode + "_acc_top5",
             (sim_argsort < 5).float().mean(),
-            prog_bar=True,
             sync_dist=True,
         )
         self.log(
             mode + "_acc_mean_pos",
             1 + sim_argsort.float().mean(),
-            prog_bar=True,
             sync_dist=True,
         )
 
