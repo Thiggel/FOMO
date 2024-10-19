@@ -317,7 +317,9 @@ class ImbalancedTraining:
                 for i in range(min(len(ood_samples) - b_start, batch_size))
             ]
 
-            v_imgs = pipe(batch, num_images_per_prompt=nr_to_gen).images
+            v_imgs = pipe(
+                batch, num_images_per_prompt=nr_to_gen, callback_steps=0
+            ).images
             for i, img in enumerate(v_imgs):
                 name = f"/ood_variation_{k}.png"  # TODO: include index?
                 img.save(save_subfolder + name)
