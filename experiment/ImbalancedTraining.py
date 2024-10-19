@@ -290,7 +290,6 @@ class ImbalancedTraining:
                 variation="fp16",
             )
         pipe = pipe.to(device)
-        pipe.enable_progress_bar(False)
         return pipe
 
     def generate_new_data(
