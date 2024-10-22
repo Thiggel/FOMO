@@ -1,3 +1,4 @@
+import sys
 from tqdm import tqdm
 import torch
 import traceback
@@ -312,6 +313,10 @@ class ImbalancedTraining:
         for b_start in tqdm(
             range(0, len(ood_samples), batch_size), desc="Generating New Data..."
         ):
+            # Redirect stdout to avoid printing progress bar
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
+
             batch = [
                 ood_samples[i + b_start][0]
                 for i in range(min(len(ood_samples) - b_start, batch_size))
@@ -325,3 +330,6 @@ class ImbalancedTraining:
                 name = f"/ood_variation_{k}.png"  # TODO: include index?
                 img.save(save_subfolder + name)
                 k += 1
+
+            # Reset stdout
+            sys.stdout = old_stdout

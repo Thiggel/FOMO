@@ -51,7 +51,6 @@ class OOD:
             batch = batch.to(self.device)
             # print which device the batch is on
             device = batch.device
-            print(f"Batch device: {device}")
             features = self.feature_extractor(batch).cpu().detach()
             self.train_features.append(features)
 
