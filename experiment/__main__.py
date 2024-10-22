@@ -22,6 +22,7 @@ from experiment.utils.print_mean_std import print_mean_std
 from experiment.utils.get_training_args import get_training_args
 from experiment.utils.get_model_name import get_model_name
 from experiment.utils.generate_random_string import generate_random_string
+from experiment.utils.calc_novelty_score import calc_novelty_score
 
 from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
 from experiment.models.ModelTypes import ModelTypes
@@ -51,7 +52,7 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
     )
 
 
-def init_model(args: Namespace, datamodule: L.LightningDataModule) -> nn.Module:
+def init_model(args: Namespace) -> nn.Module:
     model_type = ModelTypes.get_model_type(args.model_name)
 
     model_args = {
@@ -68,7 +69,8 @@ def init_model(args: Namespace, datamodule: L.LightningDataModule) -> nn.Module:
 
 
 def init_ssl_type(
-    args: Namespace, model: nn.Module, iterations_per_epoch
+    args: Namespace,
+    model: nn.Module,
 ) -> L.LightningModule:
     ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
     ssl_args = {
@@ -78,7 +80,6 @@ def init_ssl_type(
         "weight_decay": args.weight_decay,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
         "parserargs": args,
-        "iterations_per_epoch": iterations_per_epoch,
     }
 
     return ssl_type.initialize(**ssl_args)
@@ -98,14 +99,22 @@ def run(
 
     dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
 
-    datamodule = init_datamodule(
-        args,
-        dataset_pickle_filename,
-    )
+    if not args.calc_novelty_score:
+        datamodule = init_datamodule(
+            args,
+            dataset_pickle_filename,
+        )
 
-    model = init_model(args, datamodule)
+    model = init_model(args)
 
-    ssl_type = init_ssl_type(args, model, len(datamodule.train_dataloader()))
+    ssl_type = init_ssl_type(args, model)
+
+    if args.calc_novelty_score:
+        return calc_novelty_score(args, ssl_type)
+
+    if args.checkpoint is not None:
+        print("Loading checkpoint:", args.checkpoint)
+        ssl_type.load_state_dict(torch.load(args.checkpoint)["state_dict"])
 
     checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
 
