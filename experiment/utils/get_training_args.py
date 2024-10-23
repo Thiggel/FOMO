@@ -97,6 +97,9 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.set_defaults(logger=True)
     parser.add_argument("--no-logger", action="store_false", dest="logger")
 
+    parser.add_argument("--calc_novelty_score", action="store_true")
+    parser.set_defaults(calc_novelty_score=False)
+
     parser.add_argument("--classification_head", action="store_true")
 
     parser.add_argument(

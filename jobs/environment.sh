@@ -6,7 +6,7 @@ module load CUDA/12.1.1
 
 ulimit -n 4096
 
-export SCRATCH_LOCAL="$HOME/../../../scratch-local"
+export SCRATCH_LOCAL="$HOME/../../../scratch-local/nmidavaine1"
 
 cd $SCRATCH_LOCAL
 mkdir FOMO
