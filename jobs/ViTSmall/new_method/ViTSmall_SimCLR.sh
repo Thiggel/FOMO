@@ -1,6 +1,6 @@
 . jobs/environment.sh
 
-python -m experiment \
+srun python -m experiment \
 	--model ViTSmall \
 	--imbalance_method power_law_imbalance \
 	--max_cycles 5 \

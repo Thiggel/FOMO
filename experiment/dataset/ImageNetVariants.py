@@ -16,7 +16,7 @@ class ImageNetVariants(Enum):
 
     ImageNet1k = ImageNetVariant(
         name="1k",
-        path="imagenet-1k",
+        path="ILSVRC/imagenet-1k",
     )
 
     ImageNetDummy = ImageNetVariant(
