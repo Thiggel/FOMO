@@ -30,6 +30,19 @@ class SSLTypes(Enum):
     @staticmethod
     def ssl_types():
         return {
+            "Dino": SSLType(
+                module=lambda model, *args, **kwargs: SimCLR(
+                    model=model, max_epochs=max_epochs, *args, **kwargs
+                ),
+                transforms=lambda parserargs: transforms.Compose(
+                    [
+                        transforms.Resize((parserargs.crop_size, parserargs.crop_size)),
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.5,), (0.5,)),
+                    ]
+                ),
+                collate_fn=lambda parserargs: simclr_collate,
+            ),
             "SimCLR": SSLType(
                 module=lambda model, lr, temperature, weight_decay, max_epochs, *args, **kwargs: SimCLR(
                     model=model,
