@@ -3,7 +3,7 @@
 #SBATCH --partition=gpu
 #SBATCH --gpus=4
 #SBATCH --job-name=ViTSmall_SimCLR_NewMethod
-#SBATCH --ntasks=4
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=18
 #SBATCH --time=80:00:00
 #SBATCH --output=job_logs/ViTSmallSimCLRNewMethod-%A.out
