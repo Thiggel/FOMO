@@ -5,11 +5,13 @@ import torch.nn as nn
 from torchvision import models, transforms
 
 from experiment.dataset.ContrastiveTransformations import ContrastiveTransformations
+from experiment.dataset.MultiCropTransformation import MultiCropTransformation
 from experiment.models.SSLMethods.SimCLR import SimCLR
+from experiment.models.SSLMethods.Dino import Dino
 from experiment.models.SSLMethods.IJepa import IJepa
 from experiment.models.SSLMethods.Supervised import Supervised
 from experiment.models.SSLMethods.TestSSLMethod import TestSSLMethod
-from experiment.utils.collate_functions import simclr_collate
+from experiment.utils.collate_functions import simclr_collate, dino_collate
 
 from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
 from experiment.dataset.transforms import make_transforms
@@ -31,17 +33,21 @@ class SSLTypes(Enum):
     def ssl_types():
         return {
             "Dino": SSLType(
-                module=lambda model, *args, **kwargs: SimCLR(
-                    model=model, max_epochs=max_epochs, *args, **kwargs
+                module=lambda model, lr, weight_decay, max_epochs, *args, **kwargs: Dino(
+                    model=model,
+                    lr=lr,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    *args,
+                    **kwargs
                 ),
-                transforms=lambda parserargs: transforms.Compose(
-                    [
-                        transforms.Resize((parserargs.crop_size, parserargs.crop_size)),
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.5,), (0.5,)),
-                    ]
+                transforms=lambda parserargs: MultiCropTransformation(
+                    size=parserargs.crop_size,
+                    global_crops_scale=(0.4, 1.0),
+                    local_crops_scale=(0.05, 0.4),
+                    local_crops_number=6,  # You can adjust this number
                 ),
-                collate_fn=lambda parserargs: simclr_collate,
+                collate_fn=lambda parserargs: dino_collate,
             ),
             "SimCLR": SSLType(
                 module=lambda model, lr, temperature, weight_decay, max_epochs, *args, **kwargs: SimCLR(
