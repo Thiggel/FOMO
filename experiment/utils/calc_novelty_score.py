@@ -145,16 +145,24 @@ def calc_novelty_score(args, ssl_method):
     )
 
     datasets_dict = {
-        "cifar10": {
-            "train": load_dataset("cifar10", split="train"),
-            "test": load_dataset("cifar10", split="test"),
-            "num_classes": 10,
+        # "birds": {
+        #    "train": load_dataset("cassiekang/cub200_dataset", split="train"),
+        #    "test": load_dataset("cassiekang/cub200_dataset", split="test"),
+        # },
+        "flowers": {
+            "train": load_dataset("nelorth/oxford-flowers", split="train"),
+            "test": load_dataset("nelorth/oxford-flowers", split="test"),
         },
-        "cifar100": {
-            "train": load_dataset("cifar100", split="train"),
-            "test": load_dataset("cifar100", split="test"),
-            "num_classes": 100,
-        },
+        # "cifar10": {
+        #    "train": load_dataset("cifar10", split="train"),
+        #    "test": load_dataset("cifar10", split="test"),
+        #    "num_classes": 10,
+        # },
+        # "cifar100": {
+        #    "train": load_dataset("cifar100", split="train"),
+        #    "test": load_dataset("cifar100", split="test"),
+        #    "num_classes": 100,
+        # },
     }
 
     dataset_scores = {}  # Store mean AUROC scores per dataset
@@ -163,6 +171,8 @@ def calc_novelty_score(args, ssl_method):
     k = 5
 
     for dataset_name, dataset_info in datasets_dict.items():
+        print(dataset_info)
+        exit()
         print(f"\nProcessing dataset: {dataset_name}")
         dataset_auroc_scores = []
 
@@ -252,4 +262,4 @@ def calc_novelty_score(args, ssl_method):
     for dataset_name, score in dataset_scores.items():
         print(f"{dataset_name}: {score:.4f}")
 
-    return dataset_scores, class_scores
+    return dataset_scores
