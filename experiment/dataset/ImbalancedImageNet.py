@@ -51,7 +51,7 @@ class ImbalancedImageNet(Dataset):
         self.transform = transform
         split = "train+validation"
 
-        self.dataset = load_dataset(dataset_path, split=split)
+        self.dataset = load_dataset(dataset_path, split=split, trust_remote_code=True)
 
         self.classes = self.dataset.features["label"].names
         self.num_classes = len(self.classes)

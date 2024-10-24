@@ -16,6 +16,7 @@ import torch
 from torch import nn
 import torch.multiprocessing as mp
 from torchvision import transforms
+from huggingface_hub import login
 
 from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
@@ -213,6 +214,7 @@ def run_different_seeds(args: Namespace) -> dict:
 
 def main():
     load_dotenv()
+    login(token=os.getenv("HUGGINGFACE_TOKEN"))
 
     args = get_training_args()
 
@@ -227,7 +229,7 @@ def main():
 
     if not args.test_mode:
         api_key = os.getenv("WANDB_API_KEY")
-        wandb.login(key="14e08a8ed088fe5809b918751c947bebef1448cc")
+        wandb.login(key=api_key)
 
     all_results = run_different_seeds(args)
 

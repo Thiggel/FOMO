@@ -1,12 +1,13 @@
 . jobs/environment.sh
 
-srun python -m experiment \
+python -m experiment \
 	--model ViTBase \
 	--imbalance_method power_law_imbalance \
 	--max_cycles 5 \
 	--ood_augmentation \
-	--remove_diffusion \
 	--n_epochs_per_cycle 20 \
 	--pct_ood 0.15 \
-  --crop_size 224 \
-  --experiment_name "ViTBase_stepwiseBaseline"
+	--crop_size 224 \
+  --num_runs 1 \
+  --imagenet_variant 1k \
+  --experiment_name "NewMethod_ViTBase_SimCLR_Imbalanced_ImageNet1k"
