@@ -115,7 +115,7 @@ class ImbalancedImageNet(Dataset):
         dataset_pickles = os.environ["BASE_CACHE_DIR"] + "/dataset_pickles"
 
         if not os.path.exists(dataset_pickles):
-            os.makedirs(dataset_pickles)
+            os.makedirs(dataset_pickles, exsist_ok=True)
 
         return f"{dataset_pickles}/{self.checkpoint_filename}_indices.pkl"
 
