@@ -81,7 +81,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
 
     parser.add_argument("--splits", nargs="+", type=float, default=[0.8, 0.1, 0.1])
     parser.add_argument(
-        "--batch_size", type=int, default=256
+        "--batch_size", type=int, default=64
     )  # this should be the simclr batch size but ofxourse depends on gpu a bit
     parser.add_argument("--checkpoint", nargs="+", type=str, default=None)
 
