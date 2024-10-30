@@ -161,11 +161,13 @@ def run(
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
+        "accumulate_grad_batches": 4096 // args.batch_size,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
         "devices": "auto",
     }
 
     if torch.cuda.is_available():
+        os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
         trainer_args["strategy"] = "deepspeed_stage_1"
         trainer_args["default_root_dir"] = os.environ["PYTORCH_LIGHTNING_HOME"]
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))

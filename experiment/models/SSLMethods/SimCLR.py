@@ -2,7 +2,7 @@ import lightning.pytorch as L
 import torch
 from torch import nn
 from torch.optim import AdamW, Optimizer
-from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler
+from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler, LambdaLR
 import torch.nn.functional as F
 
 
@@ -41,11 +41,30 @@ class SimCLR(L.LightningModule):
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer = AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
 
-        lr_scheduler = CosineAnnealingLR(
-            optimizer, T_max=self.hparams.max_epochs, eta_min=self.hparams.lr / 50
+        # Define the number of warmup epochs
+        warmup_epochs = 10
+        max_epochs = self.hparams.max_epochs
+        base_lr = self.hparams.lr
+
+        # Linear warmup function for the first `warmup_epochs` epochs
+        def lr_lambda(epoch):
+            if epoch < warmup_epochs:
+                return (epoch + 1) / warmup_epochs  # Linearly scale up to 1.0
+            else:
+                return 1  # Keep at 1 until switching to CosineAnnealingLR
+
+        # Linear warmup scheduler
+        warmup_scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
+
+        # Cosine annealing scheduler after warmup
+        cosine_scheduler = CosineAnnealingLR(
+            optimizer, T_max=max_epochs - warmup_epochs, eta_min=base_lr / 50
         )
 
-        return [optimizer], [lr_scheduler]
+        # Combine warmup and cosine schedulers
+        scheduler = [warmup_scheduler, cosine_scheduler]
+
+        return [optimizer], scheduler
 
     def info_nce_loss(self, batch, mode="train"):
         imgs, _ = batch
