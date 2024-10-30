@@ -1,6 +1,6 @@
 . jobs/environment.sh
 
-srun python -m experiment \
+python -m experiment \
 	--model_name ResNet50 \
   --num_runs 1 \
   --imagenet_variant 1k \
