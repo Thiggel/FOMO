@@ -55,7 +55,8 @@ class ImbalancedTraining:
                 ),
             ]
         )
-        self.initial_train_ds_size = len(self.datamodule.train_dataset)
+        if self.datamodule is not None:
+            self.initial_train_ds_size = len(self.datamodule.train_dataset)
         # self.pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
 
     def run(self) -> dict:

@@ -5,7 +5,7 @@
 #SBATCH --job-name=ResNet18_Supervised_NewMethod
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=80:00:00
+#SBATCH --time=30:00:00
 #SBATCH --output=job_logs/ResNet18SupervisedNewMethod-%A.out
 
 cd $HOME/FOMO
