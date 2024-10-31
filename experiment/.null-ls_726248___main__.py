@@ -161,6 +161,7 @@ def run(
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
+        "accumulate_grad_batches": 4096 // args.batch_size,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
         "devices": "auto",
     }
