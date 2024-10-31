@@ -39,32 +39,31 @@ class SimCLR(L.LightningModule):
             pass
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer = AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
+        optimizer = AdamW(self.parameters(), lr=self.hparams.lr, betas=(0.9, 0.95))
 
         # Define the number of warmup epochs
         warmup_epochs = 10
         max_epochs = self.hparams.max_epochs
         base_lr = self.hparams.lr
 
-        # Linear warmup function for the first `warmup_epochs` epochs
+        # Combined linear warmup and cosine annealing function
         def lr_lambda(epoch):
             if epoch < warmup_epochs:
-                return (epoch + 1) / warmup_epochs  # Linearly scale up to 1.0
+                # Linear warmup phase
+                return (epoch + 1) / warmup_epochs
             else:
-                return 1  # Keep at 1 until switching to CosineAnnealingLR
+                # Cosine annealing phase
+                progress = (epoch - warmup_epochs) / (max_epochs - warmup_epochs)
+                return (
+                    0.5
+                    * (1 + math.cos(math.pi * progress))
+                    * (base_lr / (base_lr * 50))
+                )
 
-        # Linear warmup scheduler
-        warmup_scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
+        # Single scheduler with combined behavior
+        scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
-        # Cosine annealing scheduler after warmup
-        cosine_scheduler = CosineAnnealingLR(
-            optimizer, T_max=max_epochs - warmup_epochs, eta_min=base_lr / 50
-        )
-
-        # Combine warmup and cosine schedulers
-        scheduler = [warmup_scheduler, cosine_scheduler]
-
-        return [optimizer], scheduler
+        return [optimizer], [scheduler]
 
     def info_nce_loss(self, batch, mode="train"):
         imgs, _ = batch
