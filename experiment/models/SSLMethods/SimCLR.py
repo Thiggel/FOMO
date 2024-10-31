@@ -4,6 +4,7 @@ from torch import nn
 from torch.optim import AdamW, Optimizer
 from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler, LambdaLR
 import torch.nn.functional as F
+import math
 
 
 class SimCLR(L.LightningModule):
