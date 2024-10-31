@@ -100,11 +100,14 @@ def run(
 
     dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
 
-    if not args.calc_novelty_score:
+    if not args.calc_novelty_score and args.pretrain:
         datamodule = init_datamodule(
             args,
             dataset_pickle_filename,
         )
+
+    else:
+        datamodule = None
 
     model = init_model(args)
 
@@ -115,7 +118,19 @@ def run(
 
     if args.checkpoint is not None:
         print("Loading checkpoint:", args.checkpoint)
-        ssl_type.load_state_dict(torch.load(args.checkpoint)["state_dict"])
+        checkpoint = torch.load(args.checkpoint)
+        state_dict = checkpoint["state_dict"]
+        # is backbone inside any key string?
+        if sum(["backbone" in key for key in state_dict.keys()]):
+            # Create a new state dict with renamed keys
+            new_state_dict = {}
+            for key in state_dict.keys():
+                new_key = key.replace("backbone", "model.resnet")
+                new_state_dict[new_key] = state_dict[key]
+
+            checkpoint["state_dict"] = new_state_dict
+
+        ssl_type.load_state_dict(checkpoint["state_dict"], strict=False)
 
     checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
 
