@@ -83,7 +83,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
     @property
     def num_workers(self) -> int:
-        return get_num_workers()
+        return get_num_workers() // 2
 
     def set_dataloaders_none(self):
         self._train_dataloader = None
@@ -96,7 +96,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=False,
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -108,7 +108,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=False,
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -119,7 +119,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=False,
             collate_fn=self.collate_fn,
             drop_last=True,
         )
