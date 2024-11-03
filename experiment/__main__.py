@@ -155,7 +155,6 @@ def run(
     callbacks = [checkpoint_callback, stats_monitor]
 
     trainer_args = {
-        "max_time": {"hours": int(args.max_hours_per_run) - 1},
         "max_epochs": args.n_epochs_per_cycle,
         "callbacks": callbacks,
         "enable_checkpointing": True,
