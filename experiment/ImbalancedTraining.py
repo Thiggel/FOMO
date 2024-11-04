@@ -17,8 +17,6 @@ from torchvision import transforms
 import copy
 import matplotlib.pyplot as plt
 
-from torchvision.transforms.functional import to_pil_image
-from PIL import Image
 import os
 import pickle
 
@@ -35,6 +33,7 @@ class ImbalancedTraining:
         save_class_distribution: bool = False,
         run_idx: int = 0,
     ):
+        self.current_cycle = 0
         self.args = args
         self.run_idx = run_idx
         self.trainer_args = trainer_args
@@ -78,29 +77,19 @@ class ImbalancedTraining:
 
                 self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
 
-            trainer = L.Trainer(**self.trainer_args)
-
         return self.finetune() if self.args.finetune else {}
 
     def pretrain_cycle(self, cycle_idx) -> None:
-        """
-        1. Fit for n epochs
-        2. assess OOD samples
-        3. generate new data for OOD
-        """
+        """Run pretrain cycle with current cycle tracking"""
+        self.current_cycle = cycle_idx
         trainer = L.Trainer(**self.trainer_args)
 
-        # handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too.
-
         trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
-        # Set the dataloaders to None for garbage collection
         self.datamodule.set_dataloaders_none()
-        # They will be reinstantiate anyway in the next trainer.fit
 
         if not self.args.ood_augmentation:
             return
 
-        # Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
         if self.args.remove_diffusion:
             print(f"initial dataset size: {self.initial_train_ds_size}")
             print(f"dataset_size: {len(self.datamodule.train_dataset)}")
@@ -108,13 +97,10 @@ class ImbalancedTraining:
                 self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size
             )
             self.datamodule.add_n_samples_by_index(num_samples_to_generate)
-            print(
-                f"added {num_samples_to_generate} samples to the training set, dataset size is now {len(self.datamodule.train_dataset.indices)}"
-            )
+            print(f"added {num_samples_to_generate} samples to the training set")
             return
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
-
         self.datamodule.train_dataset.dataset.transform = self.transform
 
         train_dataset = Subset(
@@ -122,7 +108,6 @@ class ImbalancedTraining:
         )
 
         num_ood_test = int(self.ood_test_split * len(train_dataset))
-
         num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
@@ -146,15 +131,8 @@ class ImbalancedTraining:
             self.generate_new_data(
                 ood_samples,
                 pipe=diffusion_pipe,
-                batch_size=self.args.sd_batch_size,
                 save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
-            )
-
-            labels = [label for _, label in ood_samples]
-
-            self.datamodule.update_dataset(
-                aug_path=f"{self.args.additional_data_path}/{cycle_idx}",
-                labels=labels,
+                batch_size=self.args.sd_batch_size,
             )
 
             self.datamodule.train_dataset.dataset.transform = ssl_transform
@@ -298,24 +276,13 @@ class ImbalancedTraining:
     def generate_new_data(
         self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
     ) -> None:
-        """
-        Generate new data based on out-of-distribution (OOD) samples using StableUnclip Img2Img.
+        """Generate new data and save directly to HDF5"""
+        labels = [label for _, label in ood_samples]
+        generated_images = []
 
-        Args:
-        - ood_samples (Dataset): Dataset of OOD samples.
-        - pipe (DiffusionPipeline): The diffusion model pipeline to generate new data.
-        - save_subfolder (str): Path to the folder where generated images will be saved.
-        - batch_size (int): Number of samples per batch.
-        - nr_to_gen (int): Number of images to generate per sample.
-        """
-        if not os.path.exists(save_subfolder):
-            os.makedirs(save_subfolder)
-
-        k = 0
         for b_start in tqdm(
             range(0, len(ood_samples), batch_size), desc="Generating New Data..."
         ):
-            # Redirect stdout to avoid printing progress bar
             old_stdout = sys.stdout
             sys.stdout = io.StringIO()
 
@@ -324,14 +291,13 @@ class ImbalancedTraining:
                 for i in range(min(len(ood_samples) - b_start, batch_size))
             ]
 
-            v_imgs = pipe(
-                batch,
-                num_images_per_prompt=nr_to_gen,
-            ).images
-            for i, img in enumerate(v_imgs):
-                name = f"/ood_variation_{k}.png"  # TODO: include index?
-                img.save(save_subfolder + name)
-                k += 1
+            batch_images = pipe(batch, num_images_per_prompt=nr_to_gen).images
+            generated_images.extend(batch_images)
 
-            # Reset stdout
             sys.stdout = old_stdout
+
+        # Save all generated images at once
+        cycle_idx = self.current_cycle
+        self.datamodule.train_dataset.dataset.save_additional_datapoint(
+            generated_images, labels, cycle_idx
+        )
