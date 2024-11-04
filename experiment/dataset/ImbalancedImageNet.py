@@ -68,14 +68,19 @@ class ImageStorage:
                     del cycle_group[image_name]
                     del cycle_group[f"{image_name}_label"]
 
-                # Add compression and chunking for better performance with large datasets
+                # Convert bytes to numpy array before storing
+                img_data = np.frombuffer(img_byte_arr, dtype=np.uint8)
+
+                # Only apply compression and chunking for the image data
                 cycle_group.create_dataset(
                     image_name,
-                    data=np.array(img_byte_arr),
+                    data=img_data,
                     compression="gzip",
                     compression_opts=4,
                     chunks=True,
                 )
+
+                # Store label as a simple dataset without compression
                 cycle_group.create_dataset(f"{image_name}_label", data=label)
 
     def load_image(self, cycle_idx: int, image_idx: int) -> Tuple[Image.Image, int]:
@@ -101,8 +106,9 @@ class ImageStorage:
                 if image_name not in cycle_group:
                     raise KeyError(f"Image {image_idx} not found in cycle {cycle_idx}")
 
-                img_bytes = cycle_group[image_name][()]
-                img = Image.open(io.BytesIO(img_bytes.tobytes()))
+                # Load the image data as bytes
+                img_data = cycle_group[image_name][()].tobytes()
+                img = Image.open(io.BytesIO(img_data))
                 label = cycle_group[f"{image_name}_label"][()]
 
                 return img, label
