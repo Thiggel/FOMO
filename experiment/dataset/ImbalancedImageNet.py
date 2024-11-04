@@ -71,7 +71,7 @@ class ImageStorage:
                 # Add compression and chunking for better performance with large datasets
                 cycle_group.create_dataset(
                     image_name,
-                    data=np.void(img_byte_arr),
+                    data=np.array(img_byte_arr),
                     compression="gzip",
                     compression_opts=4,
                     chunks=True,
