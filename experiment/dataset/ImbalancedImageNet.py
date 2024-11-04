@@ -35,6 +35,11 @@ class ImageStorage:
         self.storage_path = storage_path
         os.makedirs(os.path.dirname(storage_path), exist_ok=True)
 
+        # Create the file if it doesn't exist
+        if not os.path.exists(storage_path):
+            with h5py.File(storage_path, "w") as f:
+                pass
+
     def save_images(
         self, images: List[Image.Image], cycle_idx: int, labels: List[int]
     ) -> None:
@@ -62,7 +67,15 @@ class ImageStorage:
                 if image_name in cycle_group:
                     del cycle_group[image_name]
                     del cycle_group[f"{image_name}_label"]
-                cycle_group.create_dataset(image_name, data=np.void(img_byte_arr))
+
+                # Add compression and chunking for better performance with large datasets
+                cycle_group.create_dataset(
+                    image_name,
+                    data=np.void(img_byte_arr),
+                    compression="gzip",
+                    compression_opts=4,
+                    chunks=True,
+                )
                 cycle_group.create_dataset(f"{image_name}_label", data=label)
 
     def load_image(self, cycle_idx: int, image_idx: int) -> Tuple[Image.Image, int]:
@@ -76,27 +89,42 @@ class ImageStorage:
         Returns:
             Tuple of (PIL Image, label)
         """
-        with h5py.File(self.storage_path, "r") as f:
-            group_name = f"cycle_{cycle_idx}"
-            if group_name not in f:
-                raise KeyError(f"Cycle {cycle_idx} not found")
+        try:
+            with h5py.File(self.storage_path, "r") as f:
+                group_name = f"cycle_{cycle_idx}"
+                if group_name not in f:
+                    raise KeyError(f"Cycle {cycle_idx} not found")
 
-            cycle_group = f[group_name]
-            image_name = f"image_{image_idx}"
+                cycle_group = f[group_name]
+                image_name = f"image_{image_idx}"
 
-            img_bytes = cycle_group[image_name][()]
-            img = Image.open(io.BytesIO(img_bytes.tobytes()))
-            label = cycle_group[f"{image_name}_label"][()]
+                if image_name not in cycle_group:
+                    raise KeyError(f"Image {image_idx} not found in cycle {cycle_idx}")
 
-            return img, label
+                img_bytes = cycle_group[image_name][()]
+                img = Image.open(io.BytesIO(img_bytes.tobytes()))
+                label = cycle_group[f"{image_name}_label"][()]
+
+                return img, label
+        except Exception as e:
+            print(f"Error loading image from {self.storage_path}: {str(e)}")
+            raise
 
     def get_cycle_length(self, cycle_idx: int) -> int:
         """Get number of images in a cycle"""
-        with h5py.File(self.storage_path, "r") as f:
-            group_name = f"cycle_{cycle_idx}"
-            if group_name not in f:
+        try:
+            with h5py.File(self.storage_path, "r") as f:
+                group_name = f"cycle_{cycle_idx}"
+                if group_name not in f:
+                    return 0
+                return len(
+                    [k for k in f[group_name].keys() if not k.endswith("_label")]
+                )
+        except OSError as e:
+            if "unable to open file" in str(e):
+                # File doesn't exist yet, return 0
                 return 0
-            return len([k for k in f[group_name].keys() if not k.endswith("_label")])
+            raise  # Re-raise other OSErrors
 
 
 class DataPoint(TypedDict):
