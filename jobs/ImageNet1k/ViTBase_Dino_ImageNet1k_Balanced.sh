@@ -8,6 +8,8 @@ python -m experiment \
   --num_runs 1 \
   --imagenet_variant 1k \
 	--n_epochs_per_cycle 100 \
+  --batch_size 16 \
+  --grad_acc_steps 64 \
   --crop_size 224 \
   --batch_size 32 \
   --grad_acc_steps 32 \
