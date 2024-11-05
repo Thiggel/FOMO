@@ -83,6 +83,9 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument(
         "--batch_size", type=int, default=1024
     )  # this should be the simclr batch size but ofxourse depends on gpu a bit
+    parser.add_argument(
+        "--grad_acc_steps", type=int, default=1
+    )  # this should be the simclr batch size but ofxourse depends on gpu a bit
     parser.add_argument("--checkpoint", nargs="+", type=str, default=None)
 
     parser.add_argument("--no-pretrain", action="store_false", dest="pretrain")

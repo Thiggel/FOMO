@@ -156,6 +156,7 @@ def run(
 
     trainer_args = {
         "max_epochs": args.n_epochs_per_cycle,
+        "accumulate_grad_batches": args.grad_acc_steps,
         "callbacks": callbacks,
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger and not args.test_mode else None,

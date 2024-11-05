@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=Dino-Baseline-100
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=80:00:00
+#SBATCH --output=job_logs/ViTBase_Dino_ImageNet1k_Balanced-%A.out
+
+cd $HOME/FOMO
+
+. jobs/environment.sh
+
+python -m experiment \
+	--model_name ViTBase \
+	--imbalance_method no_imbalance \
+  --ssl_method Dino \
+	--max_cycles 1 \
+  --num_runs 1 \
+	--n_epochs_per_cycle 100 \
+  --crop_size 224 \
+  --batch_size 32 \
+  --grad_acc_steps 32 \
+  --experiment_name "Baseline_ViTBase_Dino_ImageNet100_AllData"
