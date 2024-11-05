@@ -20,6 +20,6 @@ python -m experiment \
   --num_runs 1 \
 	--n_epochs_per_cycle 100 \
   --crop_size 224 \
-  --batch_size 32 \
-  --grad_acc_steps 32 \
+  --batch_size 16 \
+  --grad_acc_steps 64 \
   --experiment_name "Baseline_ViTBase_Dino_ImageNet100_AllData"
