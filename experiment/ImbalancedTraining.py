@@ -273,31 +273,27 @@ class ImbalancedTraining:
         pipe = pipe.to(device)
         return pipe
 
-    def generate_new_data(
-        self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
-    ) -> None:
-        """Generate new data and save directly to HDF5"""
-        labels = [label for _, label in ood_samples]
-        generated_images = []
 
-        for b_start in tqdm(
-            range(0, len(ood_samples), batch_size), desc="Generating New Data..."
-        ):
-            old_stdout = sys.stdout
-            sys.stdout = io.StringIO()
+def generate_new_data(
+    self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
+) -> None:
+    """Generate new data and save directly to storage"""
+    labels = [label for _, label in ood_samples]
+    generated_images = []
 
-            batch = [
-                ood_samples[i + b_start][0]
-                for i in range(min(len(ood_samples) - b_start, batch_size))
-            ]
+    for b_start in tqdm(
+        range(0, len(ood_samples), batch_size), desc="Generating New Data..."
+    ):
+        batch = [
+            ood_samples[i + b_start][0]
+            for i in range(min(len(ood_samples) - b_start, batch_size))
+        ]
 
-            batch_images = pipe(batch, num_images_per_prompt=nr_to_gen).images
-            generated_images.extend(batch_images)
+        batch_images = pipe(batch, num_images_per_prompt=nr_to_gen).images
+        generated_images.extend(batch_images)
 
-            sys.stdout = old_stdout
-
-        # Save all generated images at once
-        cycle_idx = self.current_cycle
-        self.datamodule.train_dataset.dataset.save_additional_datapoint(
-            generated_images, labels, cycle_idx
-        )
+    # Save all generated images at once
+    cycle_idx = self.current_cycle
+    self.datamodule.train_dataset.dataset.save_additional_datapoint(
+        generated_images, labels, cycle_idx
+    )

@@ -19,158 +19,176 @@ import os
 from typing import List, Tuple
 from tqdm import tqdm
 import filelock
-import time
+import torch.distributed as dist
 
 
-class ImageStorage:
+class DistributedImageStorage:
     """
-    Handles efficient storage of multiple images using HDF5 format with proper file locking
-    for concurrent access.
+    Handles efficient storage of images with separate paths for reading and writing,
+    optimized for distributed GPU training.
     """
 
-    def __init__(
-        self, storage_path: str, max_retries: int = 5, retry_delay: float = 1.0
-    ):
+    def __init__(self, storage_path: str):
         """
-        Initialize the storage with a path to the HDF5 file.
+        Initialize the storage system.
 
         Args:
-            storage_path: Path where the HDF5 file will be stored
-            max_retries: Maximum number of retries for file operations
-            retry_delay: Delay between retries in seconds
+            storage_path: Base path for storage
         """
-        self.storage_path = storage_path
-        self.max_retries = max_retries
-        self.retry_delay = retry_delay
+        self.base_path = storage_path
+        self.write_path = f"{storage_path}_write.h5"
+        self.read_path = f"{storage_path}_read.h5"
         self.lock_path = f"{storage_path}.lock"
+        self.cache_dir = f"{storage_path}_cache"
 
-        # Create directory if it doesn't exist
+        # Create directories
         os.makedirs(os.path.dirname(storage_path), exist_ok=True)
+        os.makedirs(self.cache_dir, exist_ok=True)
 
-        # Create the file if it doesn't exist
-        if not os.path.exists(storage_path):
-            with self._get_file_lock():
-                with h5py.File(storage_path, "w") as f:
-                    pass
+        # Initialize if needed
+        if not os.path.exists(self.read_path):
+            with h5py.File(self.read_path, "w") as f:
+                pass
 
     def _get_file_lock(self):
         """Get a file lock for thread-safe operations"""
-        return filelock.FileLock(self.lock_path, timeout=30)  # 30 second timeout
-
-    def _retry_operation(self, operation, *args, **kwargs):
-        """Retry an operation with exponential backoff"""
-        last_exception = None
-        for attempt in range(self.max_retries):
-            try:
-                return operation(*args, **kwargs)
-            except (BlockingIOError, OSError) as e:
-                last_exception = e
-                if attempt < self.max_retries - 1:
-                    time.sleep(self.retry_delay * (2**attempt))
-                continue
-        raise last_exception
+        return filelock.FileLock(self.lock_path, timeout=30)
 
     def save_images(
         self, images: List[Image.Image], cycle_idx: int, labels: List[int]
     ) -> None:
         """
-        Save a batch of PIL images to HDF5 storage with proper locking.
-
-        Args:
-            images: List of PIL Image objects
-            cycle_idx: Current training cycle index
-            labels: List of corresponding labels
+        Save new images to a separate write file, then merge with read file when complete.
+        Only rank 0 performs the write operation.
         """
+        # Only rank 0 should write
+        if dist.is_initialized() and dist.get_rank() != 0:
+            return
 
-        def _save_operation():
-            with self._get_file_lock():
-                with h5py.File(self.storage_path, "a") as f:
-                    group_name = f"cycle_{cycle_idx}"
-                    if group_name not in f:
-                        cycle_group = f.create_group(group_name)
-                    else:
-                        cycle_group = f[group_name]
+        with self._get_file_lock():
+            # Write to temporary file
+            with h5py.File(self.write_path, "a") as f:
+                group_name = f"cycle_{cycle_idx}"
+                if group_name not in f:
+                    cycle_group = f.create_group(group_name)
+                else:
+                    cycle_group = f[group_name]
 
-                    for idx, (img, label) in enumerate(zip(images, labels)):
-                        img_byte_arr = io.BytesIO()
-                        img.save(img_byte_arr, format="PNG")
-                        img_byte_arr = img_byte_arr.getvalue()
+                for idx, (img, label) in enumerate(zip(images, labels)):
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format="PNG")
+                    img_byte_arr = img_byte_arr.getvalue()
 
-                        image_name = f"image_{idx}"
-                        if image_name in cycle_group:
-                            del cycle_group[image_name]
-                            del cycle_group[f"{image_name}_label"]
+                    image_name = f"image_{idx}"
+                    if image_name in cycle_group:
+                        del cycle_group[image_name]
+                        del cycle_group[f"{image_name}_label"]
 
-                        img_data = np.frombuffer(img_byte_arr, dtype=np.uint8)
-                        cycle_group.create_dataset(
-                            image_name,
-                            data=img_data,
-                            compression="gzip",
-                            compression_opts=4,
-                            chunks=True,
-                        )
-                        cycle_group.create_dataset(f"{image_name}_label", data=label)
+                    img_data = np.frombuffer(img_byte_arr, dtype=np.uint8)
+                    cycle_group.create_dataset(
+                        image_name,
+                        data=img_data,
+                        compression="gzip",
+                        compression_opts=4,
+                        chunks=True,
+                    )
+                    cycle_group.create_dataset(f"{image_name}_label", data=label)
 
-        self._retry_operation(_save_operation)
+            # Merge write file into read file
+            self._merge_files()
+
+    def _merge_files(self):
+        """Merge write file into read file and update all processes"""
+        if not os.path.exists(self.write_path):
+            return
+
+        temp_path = f"{self.read_path}.temp"
+
+        # Copy current read file to temp
+        if os.path.exists(self.read_path):
+            shutil.copy2(self.read_path, temp_path)
+
+        # Merge write file into temp file
+        with h5py.File(temp_path, "a") as dest, h5py.File(self.write_path, "r") as src:
+            for cycle_name, cycle_group in src.items():
+                if cycle_name not in dest:
+                    dest.create_group(cycle_name)
+
+                for name, dataset in cycle_group.items():
+                    if name in dest[cycle_name]:
+                        del dest[cycle_name][name]
+                    dest[cycle_name].create_dataset(
+                        name,
+                        data=dataset[()],
+                        compression="gzip" if not name.endswith("_label") else None,
+                        compression_opts=4 if not name.endswith("_label") else None,
+                        chunks=True if not name.endswith("_label") else False,
+                    )
+
+        # Atomically replace read file
+        os.replace(temp_path, self.read_path)
+
+        # Clear write file
+        with h5py.File(self.write_path, "w") as f:
+            pass
+
+        # Signal other processes to reload
+        if dist.is_initialized():
+            dist.barrier()
 
     def load_image(self, cycle_idx: int, image_idx: int) -> Tuple[Image.Image, int]:
         """
-        Load a single image and its label with proper locking.
-
-        Args:
-            cycle_idx: The training cycle index
-            image_idx: The index of the image within the cycle
-
-        Returns:
-            Tuple of (PIL Image, label)
+        Load a single image and its label from the read-only file or cache.
         """
+        cache_key = f"{cycle_idx}_{image_idx}"
+        cache_path = os.path.join(self.cache_dir, f"{cache_key}.npz")
 
-        def _load_operation():
-            with self._get_file_lock():
-                with h5py.File(self.storage_path, "r") as f:
-                    group_name = f"cycle_{cycle_idx}"
-                    if group_name not in f:
-                        raise KeyError(f"Cycle {cycle_idx} not found")
+        # Try loading from cache first
+        if os.path.exists(cache_path):
+            try:
+                data = np.load(cache_path)
+                img_data = data["image"]
+                label = int(data["label"])
+                return Image.open(io.BytesIO(img_data)), label
+            except:
+                # If cache is corrupted, fall back to loading from HDF5
+                if os.path.exists(cache_path):
+                    os.remove(cache_path)
 
-                    cycle_group = f[group_name]
-                    image_name = f"image_{image_idx}"
+        # Load from HDF5
+        with h5py.File(self.read_path, "r") as f:
+            group_name = f"cycle_{cycle_idx}"
+            if group_name not in f:
+                raise KeyError(f"Cycle {cycle_idx} not found")
 
-                    if image_name not in cycle_group:
-                        raise KeyError(
-                            f"Image {image_idx} not found in cycle {cycle_idx}"
-                        )
+            cycle_group = f[group_name]
+            image_name = f"image_{image_idx}"
 
-                    img_data = cycle_group[image_name][()].tobytes()
-                    img = Image.open(io.BytesIO(img_data))
-                    label = cycle_group[f"{image_name}_label"][()]
+            if image_name not in cycle_group:
+                raise KeyError(f"Image {image_idx} not found in cycle {cycle_idx}")
 
-                    return img, label
+            img_data = cycle_group[image_name][()].tobytes()
+            label = cycle_group[f"{image_name}_label"][()]
 
-        return self._retry_operation(_load_operation)
+            # Cache the result
+            np.savez_compressed(cache_path, image=img_data, label=label)
+
+            return Image.open(io.BytesIO(img_data)), label
 
     def get_cycle_length(self, cycle_idx: int) -> int:
-        """Get number of images in a cycle with proper locking"""
-
-        def _get_length_operation():
-            try:
-                with self._get_file_lock():
-                    with h5py.File(self.storage_path, "r") as f:
-                        group_name = f"cycle_{cycle_idx}"
-                        if group_name not in f:
-                            return 0
-                        return len(
-                            [
-                                k
-                                for k in f[group_name].keys()
-                                if not k.endswith("_label")
-                            ]
-                        )
-            except OSError as e:
-                if "unable to open file" in str(e):
+        """Get number of images in a cycle"""
+        try:
+            with h5py.File(self.read_path, "r") as f:
+                group_name = f"cycle_{cycle_idx}"
+                if group_name not in f:
                     return 0
-                raise
-
-        return self._retry_operation(_get_length_operation)
+                return len(
+                    [k for k in f[group_name].keys() if not k.endswith("_label")]
+                )
+        except OSError as e:
+            if "unable to open file" in str(e):
+                return 0
+            raise
 
 
 class DataPoint(TypedDict):
@@ -223,7 +241,7 @@ class ImbalancedImageNet(Dataset):
         storage_path = os.path.join(
             os.environ["BASE_CACHE_DIR"], f"{checkpoint_filename}_generated_images.h5"
         )
-        self.image_storage = ImageStorage(storage_path)
+        self.image_storage = DistributedImageStorage(storage_path)
 
         # Store cycle information
         self.cycle_lengths = {}
