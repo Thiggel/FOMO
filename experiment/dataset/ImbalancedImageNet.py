@@ -11,6 +11,7 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethods,
     ImbalanceMethod,
 )
+import shutil
 import h5py
 import numpy as np
 from PIL import Image
