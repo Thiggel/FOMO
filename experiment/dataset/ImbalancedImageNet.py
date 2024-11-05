@@ -18,74 +18,104 @@ import io
 import os
 from typing import List, Tuple
 from tqdm import tqdm
+import filelock
+import time
 
 
 class ImageStorage:
     """
-    Handles efficient storage of multiple images using HDF5 format.
+    Handles efficient storage of multiple images using HDF5 format with proper file locking
+    for concurrent access.
     """
 
-    def __init__(self, storage_path: str):
+    def __init__(
+        self, storage_path: str, max_retries: int = 5, retry_delay: float = 1.0
+    ):
         """
         Initialize the storage with a path to the HDF5 file.
 
         Args:
             storage_path: Path where the HDF5 file will be stored
+            max_retries: Maximum number of retries for file operations
+            retry_delay: Delay between retries in seconds
         """
         self.storage_path = storage_path
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.lock_path = f"{storage_path}.lock"
+
+        # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(storage_path), exist_ok=True)
 
         # Create the file if it doesn't exist
         if not os.path.exists(storage_path):
-            with h5py.File(storage_path, "w") as f:
-                pass
+            with self._get_file_lock():
+                with h5py.File(storage_path, "w") as f:
+                    pass
+
+    def _get_file_lock(self):
+        """Get a file lock for thread-safe operations"""
+        return filelock.FileLock(self.lock_path, timeout=30)  # 30 second timeout
+
+    def _retry_operation(self, operation, *args, **kwargs):
+        """Retry an operation with exponential backoff"""
+        last_exception = None
+        for attempt in range(self.max_retries):
+            try:
+                return operation(*args, **kwargs)
+            except (BlockingIOError, OSError) as e:
+                last_exception = e
+                if attempt < self.max_retries - 1:
+                    time.sleep(self.retry_delay * (2**attempt))
+                continue
+        raise last_exception
 
     def save_images(
         self, images: List[Image.Image], cycle_idx: int, labels: List[int]
     ) -> None:
         """
-        Save a batch of PIL images to HDF5 storage.
+        Save a batch of PIL images to HDF5 storage with proper locking.
 
         Args:
             images: List of PIL Image objects
             cycle_idx: Current training cycle index
             labels: List of corresponding labels
         """
-        with h5py.File(self.storage_path, "a") as f:
-            group_name = f"cycle_{cycle_idx}"
-            if group_name not in f:
-                cycle_group = f.create_group(group_name)
-            else:
-                cycle_group = f[group_name]
 
-            for idx, (img, label) in enumerate(zip(images, labels)):
-                img_byte_arr = io.BytesIO()
-                img.save(img_byte_arr, format="PNG")
-                img_byte_arr = img_byte_arr.getvalue()
+        def _save_operation():
+            with self._get_file_lock():
+                with h5py.File(self.storage_path, "a") as f:
+                    group_name = f"cycle_{cycle_idx}"
+                    if group_name not in f:
+                        cycle_group = f.create_group(group_name)
+                    else:
+                        cycle_group = f[group_name]
 
-                image_name = f"image_{idx}"
-                if image_name in cycle_group:
-                    del cycle_group[image_name]
-                    del cycle_group[f"{image_name}_label"]
+                    for idx, (img, label) in enumerate(zip(images, labels)):
+                        img_byte_arr = io.BytesIO()
+                        img.save(img_byte_arr, format="PNG")
+                        img_byte_arr = img_byte_arr.getvalue()
 
-                # Convert bytes to numpy array before storing
-                img_data = np.frombuffer(img_byte_arr, dtype=np.uint8)
+                        image_name = f"image_{idx}"
+                        if image_name in cycle_group:
+                            del cycle_group[image_name]
+                            del cycle_group[f"{image_name}_label"]
 
-                # Only apply compression and chunking for the image data
-                cycle_group.create_dataset(
-                    image_name,
-                    data=img_data,
-                    compression="gzip",
-                    compression_opts=4,
-                    chunks=True,
-                )
+                        img_data = np.frombuffer(img_byte_arr, dtype=np.uint8)
+                        cycle_group.create_dataset(
+                            image_name,
+                            data=img_data,
+                            compression="gzip",
+                            compression_opts=4,
+                            chunks=True,
+                        )
+                        cycle_group.create_dataset(f"{image_name}_label", data=label)
 
-                # Store label as a simple dataset without compression
-                cycle_group.create_dataset(f"{image_name}_label", data=label)
+        self._retry_operation(_save_operation)
 
     def load_image(self, cycle_idx: int, image_idx: int) -> Tuple[Image.Image, int]:
         """
-        Load a single image and its label.
+        Load a single image and its label with proper locking.
 
         Args:
             cycle_idx: The training cycle index
@@ -94,43 +124,53 @@ class ImageStorage:
         Returns:
             Tuple of (PIL Image, label)
         """
-        try:
-            with h5py.File(self.storage_path, "r") as f:
-                group_name = f"cycle_{cycle_idx}"
-                if group_name not in f:
-                    raise KeyError(f"Cycle {cycle_idx} not found")
 
-                cycle_group = f[group_name]
-                image_name = f"image_{image_idx}"
+        def _load_operation():
+            with self._get_file_lock():
+                with h5py.File(self.storage_path, "r") as f:
+                    group_name = f"cycle_{cycle_idx}"
+                    if group_name not in f:
+                        raise KeyError(f"Cycle {cycle_idx} not found")
 
-                if image_name not in cycle_group:
-                    raise KeyError(f"Image {image_idx} not found in cycle {cycle_idx}")
+                    cycle_group = f[group_name]
+                    image_name = f"image_{image_idx}"
 
-                # Load the image data as bytes
-                img_data = cycle_group[image_name][()].tobytes()
-                img = Image.open(io.BytesIO(img_data))
-                label = cycle_group[f"{image_name}_label"][()]
+                    if image_name not in cycle_group:
+                        raise KeyError(
+                            f"Image {image_idx} not found in cycle {cycle_idx}"
+                        )
 
-                return img, label
-        except Exception as e:
-            print(f"Error loading image from {self.storage_path}: {str(e)}")
-            raise
+                    img_data = cycle_group[image_name][()].tobytes()
+                    img = Image.open(io.BytesIO(img_data))
+                    label = cycle_group[f"{image_name}_label"][()]
+
+                    return img, label
+
+        return self._retry_operation(_load_operation)
 
     def get_cycle_length(self, cycle_idx: int) -> int:
-        """Get number of images in a cycle"""
-        try:
-            with h5py.File(self.storage_path, "r") as f:
-                group_name = f"cycle_{cycle_idx}"
-                if group_name not in f:
+        """Get number of images in a cycle with proper locking"""
+
+        def _get_length_operation():
+            try:
+                with self._get_file_lock():
+                    with h5py.File(self.storage_path, "r") as f:
+                        group_name = f"cycle_{cycle_idx}"
+                        if group_name not in f:
+                            return 0
+                        return len(
+                            [
+                                k
+                                for k in f[group_name].keys()
+                                if not k.endswith("_label")
+                            ]
+                        )
+            except OSError as e:
+                if "unable to open file" in str(e):
                     return 0
-                return len(
-                    [k for k in f[group_name].keys() if not k.endswith("_label")]
-                )
-        except OSError as e:
-            if "unable to open file" in str(e):
-                # File doesn't exist yet, return 0
-                return 0
-            raise  # Re-raise other OSErrors
+                raise
+
+        return self._retry_operation(_get_length_operation)
 
 
 class DataPoint(TypedDict):

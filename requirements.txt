@@ -25,3 +25,4 @@ deepspeed
 accelerate
 huggingface_hub
 h5py
+filelock
