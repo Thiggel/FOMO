@@ -21,7 +21,7 @@ class OOD:
     ):
         self.train = train
         self.test = test
-        self.num_workers = get_num_workers()
+        self.num_workers = get_num_workers() // 2
         self.feature_extractor = feature_extractor
         self.batch_size = args.fe_batch_size
         self.K = args.k
