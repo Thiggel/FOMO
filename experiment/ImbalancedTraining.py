@@ -275,24 +275,36 @@ class ImbalancedTraining:
 
     def generate_new_data(
         self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
-    ) -> None:
-        """Generate new data and save directly to storage"""
+    ):
         labels = [label for _, label in ood_samples]
         generated_images = []
 
-        for b_start in tqdm(
-            range(0, len(ood_samples), batch_size), desc="Generating New Data..."
+        # Process in smaller chunks to avoid memory issues
+        chunk_size = min(100, len(ood_samples))
+
+        for chunk_start in tqdm(
+            range(0, len(ood_samples), chunk_size), desc="Processing chunks..."
         ):
-            batch = [
-                ood_samples[i + b_start][0]
-                for i in range(min(len(ood_samples) - b_start, batch_size))
-            ]
+            chunk_end = min(chunk_start + chunk_size, len(ood_samples))
+            chunk_labels = labels[chunk_start:chunk_end]
 
-            batch_images = pipe(batch, num_images_per_prompt=nr_to_gen).images
-            generated_images.extend(batch_images)
+            # Generate images in batches within the chunk
+            chunk_images = []
+            for b_start in range(0, chunk_end - chunk_start, batch_size):
+                b_end = min(b_start + batch_size, chunk_end - chunk_start)
+                batch = [ood_samples[i + chunk_start][0] for i in range(b_start, b_end)]
 
-        # Save all generated images at once
-        cycle_idx = self.current_cycle
-        self.datamodule.train_dataset.dataset.save_additional_datapoint(
-            generated_images, labels, cycle_idx
-        )
+                with torch.cuda.amp.autocast():  # Use mixed precision
+                    batch_images = pipe(batch, num_images_per_prompt=nr_to_gen).images
+                    chunk_images.extend(batch_images)
+
+                torch.cuda.empty_cache()  # Clear GPU cache after each batch
+
+            # Save chunk immediately
+            self.datamodule.train_dataset.dataset.save_additional_datapoint(
+                chunk_images, chunk_labels, self.current_cycle
+            )
+
+            # Clear memory
+            del chunk_images
+            torch.cuda.empty_cache()

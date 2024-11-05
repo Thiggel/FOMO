@@ -83,7 +83,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
     @property
     def num_workers(self) -> int:
-        return get_num_workers() // 2
+        return min(4, get_num_workers() // 2)
 
     def set_dataloaders_none(self):
         self._train_dataloader = None

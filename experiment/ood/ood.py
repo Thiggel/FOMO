@@ -12,59 +12,75 @@ from experiment.utils.get_num_workers import get_num_workers
 class OOD:
     def __init__(
         self,
-        args: dict,
-        train: Dataset,
-        test: Dataset,
+        args,
+        train,
+        test,
         feature_extractor,
-        cycle_idx: int = None,
-        device: torch.device = torch.device("cuda"),
+        cycle_idx=None,
+        device=torch.device("cuda"),
     ):
         self.train = train
         self.test = test
-        self.num_workers = get_num_workers() // 2
+        self.num_workers = min(4, get_num_workers() // 2)  # Limit workers
         self.feature_extractor = feature_extractor
         self.batch_size = args.fe_batch_size
         self.K = args.k
         self.pct_ood = args.pct_ood
         self.pct_train = args.pct_train
-        self.train_features = []
-        self.test_features = []
         self.cycle_idx = cycle_idx
         self.device = device
 
     def extract_features(self):
+        # Configure DataLoader with better memory management
         train_loader = DataLoader(
             self.train,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-        )  # these two are the issue
+            persistent_workers=True,
+            pin_memory=True,
+            prefetch_factor=2,
+        )
+
         test_loader = DataLoader(
             self.test,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-        )  # Because of these two we are using to many dataloader workers
+            persistent_workers=True,
+            pin_memory=True,
+            prefetch_factor=2,
+        )
 
-        # Extract features from the train dataset
-        for batch, _ in tqdm(train_loader, desc="Extracting train features"):
-            batch = batch.to(self.device)
-            # print which device the batch is on
-            device = batch.device
-            features = self.feature_extractor(batch).cpu().detach()
-            self.train_features.append(features)
+        # Pre-allocate lists with approximate size
+        train_features = []
+        test_features = []
 
-        # Extract features from the test dataset
-        for batch, _ in tqdm(test_loader, desc="Extracting test features"):
-            features = self.feature_extractor(batch.to(device)).cpu().detach()
-            self.test_features.append(features)
+        with torch.cuda.amp.autocast():  # Use mixed precision
+            # Extract train features
+            for batch, _ in tqdm(train_loader, desc="Extracting train features"):
+                with torch.no_grad():  # Reduce memory usage
+                    batch = batch.to(self.device, non_blocking=True)
+                    features = self.feature_extractor(batch).cpu()
+                    train_features.append(features)
+                torch.cuda.empty_cache()  # Clear GPU cache periodically
 
-        self.train_features = torch.cat(self.train_features)
-        self.test_features = torch.cat(self.test_features)
+            # Extract test features
+            for batch, _ in tqdm(test_loader, desc="Extracting test features"):
+                with torch.no_grad():
+                    features = self.feature_extractor(
+                        batch.to(self.device, non_blocking=True)
+                    ).cpu()
+                    test_features.append(features)
+                torch.cuda.empty_cache()
 
-        # garbage collection
-        train_loader = None
-        test_loader = None
+        # Concatenate all features at once
+        self.train_features = torch.cat(train_features)
+        self.test_features = torch.cat(test_features)
+
+        # Clear memory
+        del train_features, test_features, train_loader, test_loader
+        torch.cuda.empty_cache()
 
     def normalize(self, x):
         return x / (torch.linalg.norm(x, axis=-1, keepdims=True) + 1e-10)
