@@ -273,6 +273,7 @@ class ImbalancedTraining:
         pipe = pipe.to(device)
         return pipe
 
+
     def generate_new_data(
         self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
     ) -> None:

@@ -296,3 +296,4 @@ class ImbalancedTraining:
         self.datamodule.train_dataset.dataset.save_additional_datapoint(
             generated_images, labels, cycle_idx
         )
+
