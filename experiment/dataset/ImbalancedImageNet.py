@@ -30,121 +30,64 @@ class DistributedImageStorage:
     """
 
     def __init__(self, storage_path: str):
-        """
-        Initialize the storage system.
-
-        Args:
-            storage_path: Base path for storage
-        """
         self.base_path = storage_path
-        self.write_path = f"{storage_path}_write.h5"
-        self.read_path = f"{storage_path}_read.h5"
         self.lock_path = f"{storage_path}.lock"
         self.cache_dir = f"{storage_path}_cache"
 
-        # Create directories
-        os.makedirs(os.path.dirname(storage_path), exist_ok=True)
         os.makedirs(self.cache_dir, exist_ok=True)
-
-        # Initialize if needed
-        if not os.path.exists(self.read_path):
-            with h5py.File(self.read_path, "w") as f:
-                pass
 
     def _get_file_lock(self):
         """Get a file lock for thread-safe operations"""
         return filelock.FileLock(self.lock_path, timeout=30)
 
     def save_images(
-        self, images: List[Image.Image], cycle_idx: int, labels: List[int]
+        self,
+        images: List[Image.Image],
+        cycle_idx: int,
+        batch_idx: int,
+        labels: List[int],
     ) -> None:
         """
-        Save new images to a separate write file, then merge with read file when complete.
+        Save new images to individual batch files per cycle.
         Only rank 0 performs the write operation.
         """
         # Only rank 0 should write
         if dist.is_initialized() and dist.get_rank() != 0:
             return
 
-        with self._get_file_lock():
-            # Write to temporary file
-            with h5py.File(self.write_path, "a") as f:
-                group_name = f"cycle_{cycle_idx}"
-                if group_name not in f:
-                    cycle_group = f.create_group(group_name)
-                else:
-                    cycle_group = f[group_name]
+        cycle_folder = os.path.join(self.base_path, f"cycle_{cycle_idx}")
+        os.makedirs(cycle_folder, exist_ok=True)
 
+        file_path = os.path.join(cycle_folder, f"batch_{batch_idx}.h5")
+
+        with self._get_file_lock():
+            with h5py.File(file_path, "a") as f:
                 for idx, (img, label) in enumerate(zip(images, labels)):
                     img_byte_arr = io.BytesIO()
                     img.save(img_byte_arr, format="PNG")
                     img_byte_arr = img_byte_arr.getvalue()
 
-                    image_name = f"image_{idx}"
-                    if image_name in cycle_group:
-                        del cycle_group[image_name]
-                        del cycle_group[f"{image_name}_label"]
-
                     img_data = np.frombuffer(img_byte_arr, dtype=np.uint8)
-                    cycle_group.create_dataset(
+                    image_name = f"image_{idx}"
+
+                    f.create_dataset(
                         image_name,
                         data=img_data,
                         compression="gzip",
                         compression_opts=4,
                         chunks=True,
                     )
-                    cycle_group.create_dataset(f"{image_name}_label", data=label)
+                    f.create_dataset(f"{image_name}_label", data=label)
 
-            # Merge write file into read file
-            self._merge_files()
-
-    def _merge_files(self):
-        """Merge write file into read file and update all processes"""
-        if not os.path.exists(self.write_path):
-            return
-
-        temp_path = f"{self.read_path}.temp"
-
-        # Copy current read file to temp
-        if os.path.exists(self.read_path):
-            shutil.copy2(self.read_path, temp_path)
-
-        # Merge write file into temp file
-        with h5py.File(temp_path, "a") as dest, h5py.File(self.write_path, "r") as src:
-            for cycle_name, cycle_group in src.items():
-                if cycle_name not in dest:
-                    dest.create_group(cycle_name)
-
-                for name, dataset in cycle_group.items():
-                    if name in dest[cycle_name]:
-                        del dest[cycle_name][name]
-                    dest[cycle_name].create_dataset(
-                        name,
-                        data=dataset[()],
-                        compression="gzip" if not name.endswith("_label") else None,
-                        compression_opts=4 if not name.endswith("_label") else None,
-                        chunks=True if not name.endswith("_label") else False,
-                    )
-
-        # Atomically replace read file
-        os.replace(temp_path, self.read_path)
-
-        # Clear write file
-        with h5py.File(self.write_path, "w") as f:
-            pass
-
-        # Signal other processes to reload
-        if dist.is_initialized():
-            dist.barrier()
-
-    def load_image(self, cycle_idx: int, image_idx: int) -> Tuple[Image.Image, int]:
+    def load_image(
+        self, cycle_idx: int, batch_idx: int, image_idx: int
+    ) -> Tuple[Image.Image, int]:
         """
-        Load a single image and its label from the read-only file or cache.
+        Load a single image and its label from the specified batch HDF5 file or cache.
         """
-        cache_key = f"{cycle_idx}_{image_idx}"
+        cache_key = f"{cycle_idx}_{batch_idx}_{image_idx}"
         cache_path = os.path.join(self.cache_dir, f"{cache_key}.npz")
 
-        # Try loading from cache first
         if os.path.exists(cache_path):
             try:
                 data = np.load(cache_path)
@@ -152,44 +95,33 @@ class DistributedImageStorage:
                 label = int(data["label"])
                 return Image.open(io.BytesIO(img_data)), label
             except:
-                # If cache is corrupted, fall back to loading from HDF5
-                if os.path.exists(cache_path):
-                    os.remove(cache_path)
+                os.remove(cache_path)  # Clear corrupted cache
 
-        # Load from HDF5
-        with h5py.File(self.read_path, "r") as f:
-            group_name = f"cycle_{cycle_idx}"
-            if group_name not in f:
-                raise KeyError(f"Cycle {cycle_idx} not found")
-
-            cycle_group = f[group_name]
+        file_path = os.path.join(
+            self.base_path, f"cycle_{cycle_idx}", f"batch_{batch_idx}.h5"
+        )
+        with h5py.File(file_path, "r") as f:
             image_name = f"image_{image_idx}"
+            img_data = f[image_name][()].tobytes()
+            label = f[f"{image_name}_label"][()]
 
-            if image_name not in cycle_group:
-                raise KeyError(f"Image {image_idx} not found in cycle {cycle_idx}")
-
-            img_data = cycle_group[image_name][()].tobytes()
-            label = cycle_group[f"{image_name}_label"][()]
-
-            # Cache the result
             np.savez_compressed(cache_path, image=img_data, label=label)
-
             return Image.open(io.BytesIO(img_data)), label
 
     def get_cycle_length(self, cycle_idx: int) -> int:
-        """Get number of images in a cycle"""
-        try:
-            with h5py.File(self.read_path, "r") as f:
-                group_name = f"cycle_{cycle_idx}"
-                if group_name not in f:
-                    return 0
-                return len(
-                    [k for k in f[group_name].keys() if not k.endswith("_label")]
-                )
-        except OSError as e:
-            if "unable to open file" in str(e):
-                return 0
-            raise
+        """
+        Get number of images in a cycle by counting entries across all batch files.
+        """
+        cycle_folder = os.path.join(self.base_path, f"cycle_{cycle_idx}")
+        if not os.path.exists(cycle_folder):
+            return 0
+
+        total_length = 0
+        for batch_file in os.listdir(cycle_folder):
+            if batch_file.endswith(".h5"):
+                with h5py.File(os.path.join(cycle_folder, batch_file), "r") as f:
+                    total_length += sum(1 for k in f.keys() if not k.endswith("_label"))
+        return total_length
 
 
 class DataPoint(TypedDict):
