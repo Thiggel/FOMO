@@ -149,13 +149,6 @@ class ImbalancedTraining:
                 save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
             )
 
-            labels = [label for _, label in ood_samples]
-
-            self.datamodule.update_dataset(
-                aug_path=f"{self.args.additional_data_path}/{cycle_idx}",
-                labels=labels,
-            )
-
             self.datamodule.train_dataset.dataset.transform = ssl_transform
 
     def get_num_samples_to_generate(self) -> int:

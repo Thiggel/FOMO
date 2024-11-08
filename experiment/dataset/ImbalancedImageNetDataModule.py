@@ -150,14 +150,6 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
         return data, stacked_labels
 
-    def update_dataset(self, aug_path: str, labels: list[int] = []):
-        images = os.listdir(aug_path)
-        images.sort()
-
-        for image, label in zip(images, labels):
-            self.dataset.save_additional_datapoint(aug_path + "/" + image, label)
-            self.train_dataset.indices.append(len(self.dataset) - 1)
-
     def add_n_samples_by_index(self, n):
         # get all the indices currently not in use
         unused_indices = list(
