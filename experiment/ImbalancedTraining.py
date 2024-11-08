@@ -2,8 +2,7 @@ import sys
 import io
 from tqdm import tqdm
 import torch
-import traceback
-from torch.utils.data import DataLoader, Subset, random_split, Dataset
+from torch.utils.data import Subset, random_split, Dataset
 import lightning.pytorch as L
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
@@ -20,6 +19,8 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 
+from experiment.dataset.ImageStorage import ImageStorage
+
 
 class ImbalancedTraining:
     def __init__(
@@ -33,7 +34,6 @@ class ImbalancedTraining:
         save_class_distribution: bool = False,
         run_idx: int = 0,
     ):
-        self.current_cycle = 0
         self.args = args
         self.run_idx = run_idx
         self.trainer_args = trainer_args
@@ -77,19 +77,29 @@ class ImbalancedTraining:
 
                 self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
 
+            trainer = L.Trainer(**self.trainer_args)
+
         return self.finetune() if self.args.finetune else {}
 
     def pretrain_cycle(self, cycle_idx) -> None:
-        """Run pretrain cycle with current cycle tracking"""
-        self.current_cycle = cycle_idx
+        """
+        1. Fit for n epochs
+        2. assess OOD samples
+        3. generate new data for OOD
+        """
         trainer = L.Trainer(**self.trainer_args)
 
+        # handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too.
+
         trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
+        # Set the dataloaders to None for garbage collection
         self.datamodule.set_dataloaders_none()
+        # They will be reinstantiate anyway in the next trainer.fit
 
         if not self.args.ood_augmentation:
             return
 
+        # Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
         if self.args.remove_diffusion:
             print(f"initial dataset size: {self.initial_train_ds_size}")
             print(f"dataset_size: {len(self.datamodule.train_dataset)}")
@@ -97,10 +107,13 @@ class ImbalancedTraining:
                 self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size
             )
             self.datamodule.add_n_samples_by_index(num_samples_to_generate)
-            print(f"added {num_samples_to_generate} samples to the training set")
+            print(
+                f"added {num_samples_to_generate} samples to the training set, dataset size is now {len(self.datamodule.train_dataset.indices)}"
+            )
             return
 
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
+
         self.datamodule.train_dataset.dataset.transform = self.transform
 
         train_dataset = Subset(
@@ -108,6 +121,7 @@ class ImbalancedTraining:
         )
 
         num_ood_test = int(self.ood_test_split * len(train_dataset))
+
         num_ood_train = len(train_dataset) - num_ood_test
 
         ood_train_dataset, ood_test_dataset = random_split(
@@ -131,8 +145,15 @@ class ImbalancedTraining:
             self.generate_new_data(
                 ood_samples,
                 pipe=diffusion_pipe,
-                save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
                 batch_size=self.args.sd_batch_size,
+                save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
+            )
+
+            labels = [label for _, label in ood_samples]
+
+            self.datamodule.update_dataset(
+                aug_path=f"{self.args.additional_data_path}/{cycle_idx}",
+                labels=labels,
             )
 
             self.datamodule.train_dataset.dataset.transform = ssl_transform
@@ -275,36 +296,25 @@ class ImbalancedTraining:
 
     def generate_new_data(
         self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
-    ):
-        labels = [label for _, label in ood_samples]
-        generated_images = []
+    ) -> None:
+        cycle_idx = int(save_subfolder.split("/")[-1])  # Extract cycle index from path
+        image_storage = ImageStorage(self.args.additional_data_path)
 
-        # Process in smaller chunks to avoid memory issues
-        chunk_size = min(100, len(ood_samples))
-
-        for chunk_start in tqdm(
-            range(0, len(ood_samples), chunk_size), desc="Processing chunks..."
+        k = 0
+        for b_start in tqdm(
+            range(0, len(ood_samples), batch_size), desc="Generating New Data..."
         ):
-            chunk_end = min(chunk_start + chunk_size, len(ood_samples))
-            chunk_labels = labels[chunk_start:chunk_end]
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
 
-            # Generate images in batches within the chunk
-            chunk_images = []
-            for b_start in range(0, chunk_end - chunk_start, batch_size):
-                b_end = min(b_start + batch_size, chunk_end - chunk_start)
-                batch = [ood_samples[i + chunk_start][0] for i in range(b_start, b_end)]
+            batch = [
+                ood_samples[i + b_start][0]
+                for i in range(min(len(ood_samples) - b_start, batch_size))
+            ]
+            v_imgs = pipe(batch, num_images_per_prompt=nr_to_gen).images
 
-                with torch.cuda.amp.autocast():  # Use mixed precision
-                    batch_images = pipe(batch, num_images_per_prompt=nr_to_gen).images
-                    chunk_images.extend(batch_images)
+            # Save batch of images
+            image_storage.save_batch(v_imgs, cycle_idx, k)
+            k += len(v_imgs)
 
-                torch.cuda.empty_cache()  # Clear GPU cache after each batch
-
-            # Save chunk immediately
-            self.datamodule.train_dataset.dataset.save_additional_datapoint(
-                chunk_images, chunk_labels, self.current_cycle
-            )
-
-            # Clear memory
-            del chunk_images
-            torch.cuda.empty_cache()
+            sys.stdout = old_stdout
