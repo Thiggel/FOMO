@@ -21,7 +21,7 @@ class OOD:
     ):
         self.train = train
         self.test = test
-        self.num_workers = min(4, get_num_workers() // 2)  # Limit workers
+        self.num_workers = min(12, get_num_workers() // 2)  # Limit workers
         self.feature_extractor = feature_extractor
         self.batch_size = args.fe_batch_size
         self.K = args.k
