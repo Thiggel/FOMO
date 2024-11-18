@@ -13,7 +13,19 @@ class TestSSLMethod(L.LightningModule):
         self.model = torch.nn.Linear(1, 1)  # Dummy linear layer
 
     def configure_optimizers(self) -> Optimizer:
-        optimizer = AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
+        adam_params = {
+            "lr": 1e-3
+            "betas": (0.9, 0.95),
+        }
+
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(
+                self.parameters(), **adam_params, adamw_mode=True
+            )
+        else:
+            optimizer = AdamW(self.parameters(), **adam_params)
 
         return optimizer
 

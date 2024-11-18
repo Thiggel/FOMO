@@ -172,7 +172,8 @@ def run(
 
     if torch.cuda.is_available():
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
-        trainer_args["strategy"] = "deepspeed_stage_1"
+        trainer_args["strategy"] = "deepspeed_stage_3_offload"
+        trainer_args["precision"] = "bf16"
         trainer_args["default_root_dir"] = os.environ["PYTORCH_LIGHTNING_HOME"]
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
         print("GPUs Available: ", torch.cuda.device_count())

@@ -201,7 +201,17 @@ class Dino(L.LightningModule):
             },
         ]
 
-        optimizer = AdamW(param_groups, lr=self.hparams.lr)
+        adam_params = {
+            "lr": self.hparams.lr,
+            "betas": (0.9, 0.95),
+        }
+
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(param_groups, **adam_params, adamw_mode=True)
+        else:
+            optimizer = AdamW(param_groups, **adam_params)
 
         # Set up learning rate scheduler
         warmup_scheduler = torch.optim.lr_scheduler.LinearLR(

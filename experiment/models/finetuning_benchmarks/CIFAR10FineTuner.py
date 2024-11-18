@@ -101,11 +101,22 @@ class CIFAR10FineTuner(L.LightningModule):
         return features
 
     def configure_optimizers(self):
-        optimizer = optim.AdamW(
-            [p for p in self.parameters() if p.requires_grad],
-            lr=1e-3,
-            betas=(0.9, 0.95),
-        )
+        adam_params = {
+            "lr": 1e-3,
+            "betas": (0.9, 0.95),
+        }
+
+        param_groups = [p for p in self.parameters() if p.requires_grad]
+
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(param_groups, **adam_params, adamw_mode=True)
+        else:
+            from torch.optim import AdamW
+
+            optimizer = AdamW(param_groups, **adam_params)
+
         lr_scheduler = optim.lr_scheduler.MultiStepLR(
             optimizer,
             milestones=[
