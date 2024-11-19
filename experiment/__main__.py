@@ -94,9 +94,7 @@ def run(
 ) -> dict:
     set_seed(seed)
 
-    checkpoint_filename = (
-        args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
-    )
+    checkpoint_filename = args.experiment_name + "_" + args.imagenet_variant
 
     dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
 
@@ -242,11 +240,7 @@ def main():
 
     # add a timestamp to the additional data path
     args.additional_data_path = (
-        os.environ["BASE_CACHE_DIR"]
-        + "/"
-        + args.additional_data_path
-        + "_"
-        + generate_random_string()
+        os.environ["BASE_CACHE_DIR"] + "/" + args.additional_data_path
     )
 
     if not args.test_mode:
