@@ -40,7 +40,19 @@ class SimCLR(L.LightningModule):
             pass
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer = AdamW(self.parameters(), lr=self.hparams.lr, betas=(0.9, 0.95))
+        adam_params = {
+            "lr": self.hparams.lr,
+            "betas": (0.9, 0.95),
+        }
+
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(
+                self.parameters(), **adam_params, adamw_mode=True
+            )
+        else:
+            optimizer = AdamW(self.parameters(), **adam_params)
 
         # Define the number of warmup epochs
         warmup_epochs = 10

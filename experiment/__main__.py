@@ -136,11 +136,18 @@ def run(
 
     os.makedirs(checkpoints_dir, exist_ok=True)
 
-    checkpoint_callback = ModelCheckpoint(
-        dirpath=checkpoints_dir,
-        filename=checkpoint_filename + "-{epoch}-{val_loss:.2f}",
-        monitor="train_loss",
-        mode="min",
+    last_epoch_checkpoint = ModelCheckpoint(
+        dirpath="checkpoints",
+        filename=checkpoint_filename + "-last-epoch-{epoch}-{val_loss:.4f}",
+        save_last=True,  # Automatically saves the latest checkpoint
+        save_top_k=0,  # Setting this to 0 disables saving based on a metric
+    )
+
+    every_20_epoch_checkpoint = ModelCheckpoint(
+        dirpath="checkpoints",
+        filename=checkpoint_filename + "-epoch-{epoch}-{val_loss:.4f}",
+        every_n_epochs=20,  # Save every 20 epochs
+        save_top_k=-1,  # This allows saving all checkpoints matching every_n_epochs
     )
 
     if args.logger and not args.test_mode:
@@ -152,7 +159,7 @@ def run(
 
     stats_monitor = DeviceStatsMonitor()
 
-    callbacks = [checkpoint_callback, stats_monitor]
+    callbacks = [last_epoch_checkpoint, every_20_epoch_checkpoint, stats_monitor]
 
     trainer_args = {
         "max_epochs": args.n_epochs_per_cycle,
@@ -165,7 +172,8 @@ def run(
 
     if torch.cuda.is_available():
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
-        trainer_args["strategy"] = "deepspeed_stage_1"
+        trainer_args["strategy"] = "deepspeed_stage_3_offload"
+        trainer_args["precision"] = "bf16"
         trainer_args["default_root_dir"] = os.environ["PYTORCH_LIGHTNING_HOME"]
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
         print("GPUs Available: ", torch.cuda.device_count())

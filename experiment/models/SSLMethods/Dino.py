@@ -31,7 +31,7 @@ class Dino(L.LightningModule):
         self.save_hyperparameters(ignore=["model"])
 
         # Create student and teacher networks
-        self.student = model
+        self.model = model
         self.teacher = copy.deepcopy(model)
 
         # Get the actual output dimension from the model
@@ -83,7 +83,7 @@ class Dino(L.LightningModule):
         """Updates teacher model using momentum update."""
         m = self.hparams.momentum_teacher
         for param_student, param_teacher in zip(
-            self.student.parameters(), self.teacher.parameters()
+            self.model.parameters(), self.teacher.parameters()
         ):
             param_teacher.data.mul_(m).add_((1 - m) * param_student.detach().data)
 
@@ -111,7 +111,7 @@ class Dino(L.LightningModule):
         """Get student output for all views."""
         student_output = []
         for view in views:
-            feat = self.student(view)
+            feat = self.model(view)
             out = self.student_head(feat)
             # Normalize
             out = F.normalize(out, dim=-1)
@@ -201,7 +201,17 @@ class Dino(L.LightningModule):
             },
         ]
 
-        optimizer = AdamW(param_groups, lr=self.hparams.lr)
+        adam_params = {
+            "lr": self.hparams.lr,
+            "betas": (0.9, 0.95),
+        }
+
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(param_groups, **adam_params, adamw_mode=True)
+        else:
+            optimizer = AdamW(param_groups, **adam_params)
 
         # Set up learning rate scheduler
         warmup_scheduler = torch.optim.lr_scheduler.LinearLR(

@@ -1,4 +1,5 @@
 import os
+from numpy import who
 import torch
 from torch import nn, optim
 from torchvision.datasets import CIFAR10
@@ -107,4 +108,14 @@ class CIFAR10KNNClassifier(L.LightningModule):
 
     def configure_optimizers(self):
         # Return a dummy optimizer to satisfy DeepSpeed
-        return optim.SGD(self.parameters(), lr=0)
+
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(self.parameters(), lr=0)
+        else:
+            from torch.optim import AdamW
+
+            optimizer = AdamW(self.parameters(), lr=0)
+
+        return optimizer
