@@ -280,7 +280,7 @@ class ImbalancedTraining:
             pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
                 "stabilityai/stable-diffusion-2-1-unclip",
                 torch_dtype=torch.float16,
-                variation="fp16",
+                variation="bf16",
             )
         pipe = pipe.to(device)
         return pipe

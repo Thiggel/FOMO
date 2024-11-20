@@ -20,11 +20,4 @@ class PowerLawImbalancedness(Imbalancedness):
 
         (I think its fine to not use numclasses here)
         """
-        probs = 1 / ((class_indices + 1) ** 0.5)
-        print(class_indices)
-        print(probs)
-
-        if isinstance(class_indices, torch.Tensor):
-            exit()
-
-        return probs
+        return 1 / ((class_indices + 1) ** 0.5)
