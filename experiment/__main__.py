@@ -181,7 +181,7 @@ def run(
             config={
                 "bf16": {"enabled": True},
                 "zero_optimization": {
-                    "stage": 2,
+                    "stage": 3,
                     "offload_optimizer": {"device": "cpu", "pin_memory": True},
                     "offload_param": {"device": "cpu", "pin_memory": True},
                 },
