@@ -189,7 +189,7 @@ def run(
             }
         )
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
-        trainer_args["strategy"] = "deepspeed_stage_1_offload"
+        trainer_args["strategy"] = strategy
         trainer_args["precision"] = "bf16"
         trainer_args["default_root_dir"] = os.environ["PYTORCH_LIGHTNING_HOME"]
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
