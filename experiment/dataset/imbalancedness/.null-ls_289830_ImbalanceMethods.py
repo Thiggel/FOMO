@@ -57,5 +57,4 @@ class ImbalanceMethods(Enum):
     @staticmethod
     def get_default_method():
         print(ImbalanceMethods.get_methods()[0])
-        exit()
         return ImbalanceMethods.get_methods()[0]
