@@ -24,4 +24,7 @@ class PowerLawImbalancedness(Imbalancedness):
         print(class_indices)
         print(probs)
 
+        if isinstance(class_indices, torch.Tensor):
+            exit()
+
         return probs

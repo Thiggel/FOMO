@@ -4,9 +4,6 @@ from dataclasses import dataclass
 from experiment.dataset.imbalancedness.LinearlyIncreasingImbalancedness import (
     LinearlyIncreasingImbalancedness,
 )
-from experiment.dataset.imbalancedness.ExponentiallyIncreasingImbalancedness import (
-    ExponentiallyIncreasingImbalancedness,
-)
 from experiment.dataset.imbalancedness.NoImbalancedness import NoImbalancedness
 from experiment.dataset.imbalancedness.PowerLawImbalancedness import (
     PowerLawImbalancedness,
@@ -36,11 +33,6 @@ class ImbalanceMethods(Enum):
         impl=LinearlyIncreasingImbalancedness,
     )
 
-    ExponentiallyIncreasing = ImbalanceMethod(
-        name="exponentially_increasing",
-        impl=ExponentiallyIncreasingImbalancedness,
-    )
-
     NoImbalance = ImbalanceMethod(
         name="no_imbalance",
         impl=NoImbalancedness,
@@ -56,6 +48,4 @@ class ImbalanceMethods(Enum):
 
     @staticmethod
     def get_default_method():
-        print(ImbalanceMethods.get_methods()[0])
-        exit()
         return ImbalanceMethods.get_methods()[0]
