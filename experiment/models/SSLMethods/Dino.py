@@ -86,9 +86,6 @@ class Dino(L.LightningModule):
             self.model.parameters(), self.teacher.parameters()
         ):
             param_teacher.data.mul_(m).add_((1 - m) * param_student.detach().data)
-            print(param_teacher.data)
-            print(param_student.detach().data)
-            exit()
 
         for param_student, param_teacher in zip(
             self.student_head.parameters(), self.teacher_head.parameters()

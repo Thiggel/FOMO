@@ -1,4 +1,5 @@
 from datetime import datetime
+from lightning.pytorch.strategies import DeepSpeedStrategy
 import os
 from dotenv import load_dotenv
 import time
@@ -175,13 +176,15 @@ def run(
     }
 
     if torch.cuda.is_available():
-        from lightning.pytorch.strategies import DeepSpeedStrategy
 
         strategy = DeepSpeedStrategy(
             config={
+                "train_batch_size": args.batch_size
+                * args.grad_acc_steps
+                * torch.cuda.device_count(),
                 "bf16": {"enabled": True},
                 "zero_optimization": {
-                    "stage": 3,
+                    "stage": 2,
                     "offload_optimizer": {"device": "cpu", "pin_memory": True},
                     "offload_param": {"device": "cpu", "pin_memory": True},
                 },
