@@ -171,9 +171,11 @@ class ImbalancedImageNet(Dataset):
         print("labels:", labels)
 
         # Get imbalance probabilities for all labels
+        print(self.imbalancedness)
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
 
         print("Probs:", imbalance_probs)
+        exit()
 
         # Generate random numbers for each sample
         random_numbers = torch.rand(len(labels), device="cuda")
