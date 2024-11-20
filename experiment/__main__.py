@@ -183,8 +183,8 @@ def run(
         trainer_args,
         ssl_type,
         datamodule,
-        checkpoint_callback,
-        checkpoint_filename,
+        checkpoint_filename=checkpoint_filename,
+        checkpoint_callback=callbacks[0],
         save_class_distribution=save_class_distribution and args.ood_augmentation,
         run_idx=run_idx,
     )
