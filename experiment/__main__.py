@@ -179,10 +179,9 @@ def run(
 
         strategy = DeepSpeedStrategy(
             config={
-                "train_batch_size": args.batch_size,
                 "bf16": {"enabled": True},
                 "zero_optimization": {
-                    "stage": 1,
+                    "stage": 2,
                     "offload_optimizer": {"device": "cpu", "pin_memory": True},
                     "offload_param": {"device": "cpu", "pin_memory": True},
                 },
