@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 import torch
 from typing import TypedDict
 from PIL import Image
@@ -167,11 +168,17 @@ class ImbalancedImageNet(Dataset):
 
         # Load labels to a GPU tensor
         labels = torch.tensor(
-            [sample["label"] for sample in self.dataset], device="cuda"
+            [
+                sample["label"]
+                for sample in tqdm(self.dataset, desc="Creating Labels...")
+            ],
+            device="cuda",
         )
 
         # Get imbalance probabilities for all labels
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
+
+        print(imbalance_probs)
 
         # Generate random numbers for each sample
         random_numbers = torch.rand(len(labels), device="cuda")
