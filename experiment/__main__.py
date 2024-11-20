@@ -175,7 +175,7 @@ def run(
     }
 
     if torch.cuda.is_available():
-        from pytorch_lightning.strategies import DeepSpeedStrategy
+        from lightning.pytorch.strategies import DeepSpeedStrategy
 
         strategy = DeepSpeedStrategy(
             config={
