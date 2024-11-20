@@ -175,6 +175,19 @@ def run(
     }
 
     if torch.cuda.is_available():
+        from pytorch_lightning.strategies import DeepSpeedStrategy
+
+        strategy = DeepSpeedStrategy(
+            config={
+                "train_batch_size": 16,
+                "bf16": {"enabled": True},
+                "zero_optimization": {
+                    "stage": 1,
+                    "offload_optimizer": {"device": "cpu", "pin_memory": True},
+                    "offload_param": {"device": "cpu", "pin_memory": True},
+                },
+            }
+        )
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
         trainer_args["strategy"] = "deepspeed_stage_1_offload"
         trainer_args["precision"] = "bf16"
