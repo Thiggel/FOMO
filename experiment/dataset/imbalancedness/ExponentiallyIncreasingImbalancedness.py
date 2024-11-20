@@ -11,4 +11,8 @@ class ExponentiallyIncreasingImbalancedness(Imbalancedness):
         E.g., class 0 has an imbalance score of about 0.1
         and class num_classes - 1 has an imbalance score of 0.9.
         """
-        return 0.9 * 10 ** (class_index / self.num_classes - 1)
+        print("class_indices", class_index)
+        probs = 0.9 * 10 ** (class_index / self.num_classes - 1)
+        print(probs)
+
+        return probs
