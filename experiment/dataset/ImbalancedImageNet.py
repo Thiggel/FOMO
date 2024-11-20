@@ -167,18 +167,13 @@ class ImbalancedImageNet(Dataset):
         print("Creating dataset indices on GPU...")
 
         # Load labels to a GPU tensor
-        labels = torch.tensor(
-            [
-                sample["label"]
-                for sample in tqdm(self.dataset, desc="Creating Labels...")
-            ],
-            device="cuda",
-        )
+        labels = torch.tensor(self.dataset["label"], device="cuda")
+        print("labels:", labels)
 
         # Get imbalance probabilities for all labels
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
 
-        print(imbalance_probs)
+        print("Probs:", imbalance_probs)
 
         # Generate random numbers for each sample
         random_numbers = torch.rand(len(labels), device="cuda")
