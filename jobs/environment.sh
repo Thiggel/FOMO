@@ -1,12 +1,9 @@
 module purge
-module load 2023
-module load Anaconda3/2023.07-2
-module load GCC/12.3.0
-module load CUDA/12.1.1
+module load cuda12.3/toolkit/12.3
 
 ulimit -n 4096
 
-export SCRATCH_LOCAL="$HOME/../../../scratch-local/nmidavaine1"
+export SCRATCH_LOCAL="/var/scratch/ssalehid/"
 
 cd $SCRATCH_LOCAL
 mkdir FOMO
