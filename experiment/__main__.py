@@ -142,14 +142,14 @@ def run(
     os.makedirs(checkpoints_dir, exist_ok=True)
 
     last_epoch_checkpoint = ModelCheckpoint(
-        dirpath="checkpoints",
+        dirpath=checkpoints_dir,
         filename=checkpoint_filename + "-last-epoch-{epoch}-{val_loss:.4f}",
         save_last=True,  # Automatically saves the latest checkpoint
         save_top_k=0,  # Setting this to 0 disables saving based on a metric
     )
 
     every_20_epoch_checkpoint = ModelCheckpoint(
-        dirpath="checkpoints",
+        dirpath=checkpoints_dir,
         filename=checkpoint_filename + "-epoch-{epoch}-{val_loss:.4f}",
         every_n_epochs=20,  # Save every 20 epochs
         save_top_k=-1,  # This allows saving all checkpoints matching every_n_epochs
@@ -157,11 +157,13 @@ def run(
 
     if args.logger and not args.test_mode:
         log_name = args.experiment_name if args.experiment_name else checkpoint_filename
+        os.environ["WANDB_DIR"] = os.environ["BASE_CACHE_DIR"]
         wandb_logger = WandbLogger(
             project="FOMO2",
             name=log_name + str(seed),
             group=log_name,
             log_model="all",
+            save_dir=os.environ["BASE_CACHE_DIR"],
         )
         wandb_logger.watch(model, log="all")
 
