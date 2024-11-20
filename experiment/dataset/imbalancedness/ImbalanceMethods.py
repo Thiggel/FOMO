@@ -21,14 +21,14 @@ class ImbalanceMethod:
 
 
 class ImbalanceMethods(Enum):
-    AllData = ImbalanceMethod(
-        name="all_data",
-        impl=AllData,
-    )
-
     PowerLawImbalance = ImbalanceMethod(
         name="power_law_imbalance",
         impl=PowerLawImbalancedness,
+    )
+
+    AllData = ImbalanceMethod(
+        name="all_data",
+        impl=AllData,
     )
 
     LinearlyIncreasing = ImbalanceMethod(
