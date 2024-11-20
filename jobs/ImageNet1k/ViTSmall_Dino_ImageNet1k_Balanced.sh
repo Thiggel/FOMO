@@ -3,7 +3,7 @@
 python -m experiment \
 	--model_name ViTSmall \
 	--imbalance_method no_imbalance \
-  --ssl_method DINO \
+  --ssl_method Dino \
 	--max_cycles 1 \
   --num_runs 1 \
   --imagenet_variant 1k \
