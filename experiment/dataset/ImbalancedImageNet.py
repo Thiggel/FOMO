@@ -1,9 +1,8 @@
 import os
+import torch
 from typing import TypedDict
 from PIL import Image
-from random import random
 from torch.utils.data import Dataset
-from tqdm import tqdm
 import pickle
 
 from datasets import load_dataset
@@ -160,18 +159,34 @@ class ImbalancedImageNet(Dataset):
 
         return image, label
 
-    # Keep the original indices-related methods unchanged
     def _create_indices(self) -> list[int]:
-        indices = []
-        for index, sample in tqdm(
-            enumerate(self.dataset),
-            total=len(self.dataset),
-            desc="Making dataset imbalanced",
-        ):
-            if self.imbalancedness.get_imbalance(sample["label"]) < random():
-                indices.append(index)
-        self._save_indices_to_pickle(indices)
-        return indices
+        """
+        Create imbalanced dataset indices using GPU acceleration.
+        """
+        print("Creating dataset indices on GPU...")
+
+        # Load labels to a GPU tensor
+        labels = torch.tensor(
+            [sample["label"] for sample in self.dataset], device="cuda"
+        )
+
+        # Get imbalance probabilities for all labels
+        imbalance_probs = self.imbalancedness.get_imbalance(labels)
+
+        # Generate random numbers for each sample
+        random_numbers = torch.rand(len(labels), device="cuda")
+
+        # Create mask to filter indices
+        mask = imbalance_probs >= random_numbers
+        selected_indices = torch.nonzero(mask, as_tuple=True)[0]
+
+        # Convert to CPU and Python list
+        selected_indices_list = selected_indices.cpu().tolist()
+
+        # Save to pickle
+        self._save_indices_to_pickle(selected_indices_list)
+
+        return selected_indices_list
 
     @property
     def _indices_filename(self):

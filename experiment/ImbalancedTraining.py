@@ -77,8 +77,6 @@ class ImbalancedTraining:
 
                 self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
 
-            trainer = L.Trainer(**self.trainer_args)
-
         return self.finetune() if self.args.finetune else {}
 
     def pretrain_cycle(self, cycle_idx) -> None:
