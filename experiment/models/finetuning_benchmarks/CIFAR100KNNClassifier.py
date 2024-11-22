@@ -88,7 +88,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
         train_loader = self.train_dataloader()
         train_features, train_labels = self.extract_features(train_loader)
         self.knn = KNeighborsClassifier(n_neighbors=self.k)
-        self.knn.fit(train_features.numpy(), train_labels.numpy())
+        self.knn.fit(train_features.to(torch.float32).numpy(), train_labels.numpy())
 
     def training_step(self, batch, batch_idx):
         # No need for actual training, return zero tensor to satisfy PyTorch Lightning
@@ -100,7 +100,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
         inputs, targets = batch
         inputs = inputs.to(self.device)
         features = self.model.extract_features(inputs)
-        predictions = self.knn.predict(features.cpu().numpy())
+        predictions = self.knn.predict(features.to(torch.float32).cpu().numpy())
         accuracy = accuracy_score(targets.cpu().numpy(), predictions)
         self.log("cifar100_knn_test_accuracy", accuracy, prog_bar=True, sync_dist=True)
         return torch.tensor(accuracy)
