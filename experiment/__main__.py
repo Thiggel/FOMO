@@ -163,7 +163,7 @@ def run(
             log_model="all",
             save_dir=os.environ["BASE_CACHE_DIR"],
         )
-        wandb_logger.watch(model, log="all")
+        # wandb_logger.watch(model, log="all")
 
     stats_monitor = DeviceStatsMonitor()
 
