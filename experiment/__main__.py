@@ -120,7 +120,6 @@ def run(
     if args.checkpoint is not None:
         print("Loading checkpoint:", args.checkpoint)
         checkpoint = torch.load(args.checkpoint)
-        print(checkpoint)
         state_dict = (
             checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
         )
@@ -132,9 +131,9 @@ def run(
                 new_key = key.replace("backbone", "model.resnet")
                 new_state_dict[new_key] = state_dict[key]
 
-            checkpoint["state_dict"] = new_state_dict
+            state_dict = new_state_dict
 
-        ssl_type.load_state_dict(checkpoint["state_dict"], strict=False)
+        ssl_type.load_state_dict(state_dict, strict=False)
 
     checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
 
