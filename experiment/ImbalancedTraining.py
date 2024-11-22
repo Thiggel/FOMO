@@ -232,8 +232,6 @@ class ImbalancedTraining:
 
         torch.multiprocessing.set_sharing_strategy("file_system")
 
-        strategy = self.trainer_args.get("strategy")
-
         for benchmark in benchmarks:
             print("\n -- Finetuning benchmark:", benchmark.__name__, "--\n")
 
@@ -257,6 +255,8 @@ class ImbalancedTraining:
             self.trainer_args["max_time"] = {
                 "minutes": 25,
             }
+
+            self.trainer_args["accelerator"] = "gpu"
 
             trainer = L.Trainer(**self.trainer_args)
 
