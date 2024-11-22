@@ -24,7 +24,7 @@ class CIFAR100FineTuner(L.LightningModule):
         ),
         weight_decay=1e-3,
         max_epochs=25,
-        batch_size=32,
+        batch_size=64,
         *args,
         **kwargs,
     ):

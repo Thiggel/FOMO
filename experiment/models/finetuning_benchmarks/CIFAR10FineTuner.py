@@ -14,7 +14,7 @@ class CIFAR10FineTuner(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        batch_size: int = 32,
+        batch_size: int = 64,
         lr: float = 0.01,
         output_size: int = 10,
         weight_decay=1e-3,

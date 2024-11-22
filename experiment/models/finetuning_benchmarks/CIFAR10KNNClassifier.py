@@ -16,7 +16,7 @@ class CIFAR10KNNClassifier(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        batch_size: int = 32,
+        batch_size: int = 64,
         k: int = 5,
         transform: transforms.Compose = transforms.Compose(
             [
