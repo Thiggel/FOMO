@@ -271,6 +271,7 @@ class ImbalancedTraining:
                     },
                 }
             )
+            self.trainer_args["batch_size"] = 64
             self.trainer_args["strategy"] = strategy
 
             trainer = L.Trainer(**self.trainer_args)
