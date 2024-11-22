@@ -120,7 +120,10 @@ def run(
     if args.checkpoint is not None:
         print("Loading checkpoint:", args.checkpoint)
         checkpoint = torch.load(args.checkpoint)
-        state_dict = checkpoint["state_dict"]
+        print(checkpoint)
+        state_dict = (
+            checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
+        )
         # is backbone inside any key string?
         if sum(["backbone" in key for key in state_dict.keys()]):
             # Create a new state dict with renamed keys
