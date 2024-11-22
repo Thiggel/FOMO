@@ -3,6 +3,7 @@ import io
 from tqdm import tqdm
 import torch
 from torch.utils.data import Subset, random_split, Dataset
+from lightning.pytorch.strategies import DeepSpeedStrategy
 import lightning.pytorch as L
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
@@ -256,7 +257,22 @@ class ImbalancedTraining:
                 "minutes": 25,
             }
 
+            self.trainer_args["accumulate_grad_batches"] = 1
             self.trainer_args["accelerator"] = "gpu"
+
+            strategy = DeepSpeedStrategy(
+                config={
+                    "train_batch_size": self.trainer_args["batch_size"]
+                    * torch.cuda.device_count(),
+                    "bf16": {"enabled": True},
+                    "zero_optimization": {
+                        "stage": 2,
+                        "offload_optimizer": {"device": "cpu", "pin_memory": True},
+                        "offload_param": {"device": "cpu", "pin_memory": True},
+                    },
+                }
+            )
+            self.trainer_args["strategy"] = strategy
 
             trainer = L.Trainer(**self.trainer_args)
 
