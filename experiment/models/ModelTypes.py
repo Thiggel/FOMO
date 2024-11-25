@@ -6,7 +6,7 @@ from torchvision import models
 
 from experiment.models.backbones.ViT import ViT
 from experiment.models.backbones.JeppaViT import VisionTransformer, partial
-from experiment.models.backbones.Resnet import ResNet18, ResNet50
+from experiment.models.backbones.Resnet import ResNet101, ResNet18, ResNet50, ResNet100
 
 
 @dataclass
@@ -23,6 +23,9 @@ class ModelTypes(Enum):
         return {
             "ResNet50": ModelType(
                 model=lambda output_size, *args, **kwargs: ResNet50(output_size),
+            ),
+            "ResNet101": ModelType(
+                model=lambda output_size, *args, **kwargs: ResNet101(output_size),
             ),
             "ResNet18": ModelType(
                 model=lambda output_size, *args, **kwargs: ResNet18(output_size),
