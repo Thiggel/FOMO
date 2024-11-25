@@ -90,7 +90,7 @@ class ImbalancedTraining:
 
         # handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too.
 
-        trainer.fit(model=self.ssl_method, datamodule=self.datamodule, ckpt_path="last")
+        trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
         # Set the dataloaders to None for garbage collection
         self.datamodule.set_dataloaders_none()
         # They will be reinstantiate anyway in the next trainer.fit
