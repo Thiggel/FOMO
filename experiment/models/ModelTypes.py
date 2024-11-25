@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 import torch.nn as nn
-from torchvision import models
 
 
 from experiment.models.backbones.ViT import ViT
