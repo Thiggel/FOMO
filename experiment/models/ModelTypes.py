@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from experiment.models.backbones.ViT import ViT
 from experiment.models.backbones.JeppaViT import VisionTransformer, partial
-from experiment.models.backbones.Resnet import ResNet101, ResNet18, ResNet50, ResNet100
+from experiment.models.backbones.Resnet import ResNet101, ResNet18, ResNet50, ResNet101
 
 
 @dataclass
