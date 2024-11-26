@@ -17,6 +17,10 @@ class ResNet(nn.Module):
     def forward(self, x):
         return self.resnet(x)
 
+    @property
+    def dtype(self):
+        return self.resnet.dtype
+
     def extract_features(self, x):
         with torch.no_grad():
             features = self.resnet.conv1(x)
