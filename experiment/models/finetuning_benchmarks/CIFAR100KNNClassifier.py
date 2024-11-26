@@ -77,7 +77,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
         self.model.eval()
         with torch.no_grad():
             for inputs, label in tqdm(dataloader, desc="Extracting features"):
-                inputs = inputs.to(self.device)
+                inputs = inputs.to(device=self.device, dtype=self.model.dtype)
                 outputs = self.model.extract_features(inputs)
                 features.append(outputs.cpu())
                 labels.append(label)
