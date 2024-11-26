@@ -15,11 +15,11 @@ class ResNet(nn.Module):
         self.num_features = self.resnet.fc.in_features
 
     def forward(self, x):
-        return next(self.parameters()).dtype
+        return self.resnet(x)
 
     @property
     def dtype(self):
-        return self.resnet.dtype
+        return next(self.parameters()).dtype
 
     def extract_features(self, x):
         with torch.no_grad():
