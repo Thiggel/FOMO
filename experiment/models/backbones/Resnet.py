@@ -15,7 +15,7 @@ class ResNet(nn.Module):
         self.num_features = self.resnet.fc.in_features
 
     def forward(self, x):
-        return self.resnet(x)
+        return next(self.parameters()).dtype
 
     @property
     def dtype(self):
