@@ -176,7 +176,7 @@ class ImbalancedImageNet(Dataset):
         random_numbers = torch.rand(len(labels), device="cuda")
 
         # Create mask to filter indices
-        mask = imbalance_probs >= random_numbers
+        mask = imbalance_probs < random_numbers
         selected_indices = torch.nonzero(mask, as_tuple=True)[0]
 
         # Convert to CPU and Python list
@@ -206,7 +206,4 @@ class ImbalancedImageNet(Dataset):
             return pickle.load(f)
 
     def _load_or_create_indices(self):
-        try:
-            return self._load_indices_from_pickle()
-        except FileNotFoundError:
-            return self._create_indices()
+        return self._create_indices()
