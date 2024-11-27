@@ -60,7 +60,11 @@ class OOD:
             # Extract train features
             for batch, _ in tqdm(train_loader, desc="Extracting train features"):
                 with torch.no_grad():  # Reduce memory usage
-                    batch = batch.to(self.device, non_blocking=True)
+                    batch = batch.to(
+                        device=self.device,
+                        non_blocking=True,
+                        dtype=self.feature_extractor.dtype,
+                    )
                     features = self.feature_extractor(batch).cpu()
                     train_features.append(features)
                 torch.cuda.empty_cache()  # Clear GPU cache periodically
@@ -69,7 +73,11 @@ class OOD:
             for batch, _ in tqdm(test_loader, desc="Extracting test features"):
                 with torch.no_grad():
                     features = self.feature_extractor(
-                        batch.to(self.device, non_blocking=True)
+                        batch.to(
+                            device=self.device,
+                            non_blocking=True,
+                            dtype=self.feature_extractor.dtype,
+                        )
                     ).cpu()
                     test_features.append(features)
                 torch.cuda.empty_cache()
