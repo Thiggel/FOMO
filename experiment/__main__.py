@@ -95,6 +95,8 @@ def run(
 ) -> dict:
     set_seed(seed)
 
+    args.batch_size = args.batch_size // torch.cuda.device_count()
+
     checkpoint_filename = (
         args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
     )
