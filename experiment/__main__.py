@@ -37,6 +37,7 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.ImbalancedTraining import ImbalancedTraining
 
 mp.set_start_method("spawn")
+torch.multiprocessing.set_sharing_strategy("file_system")
 
 
 def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
