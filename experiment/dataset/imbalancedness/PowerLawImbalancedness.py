@@ -20,4 +20,8 @@ class PowerLawImbalancedness(Imbalancedness):
 
         (I think its fine to not use numclasses here)
         """
-        return 1 / ((class_indices + 1) ** 3)
+        imbalance = 1 / ((class_indices + 1) ** 3)
+
+        print("Class indices", class_indices)
+        print("Imbalance: ", imbalance)
+        exit()
