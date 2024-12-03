@@ -22,8 +22,4 @@ class PowerLawImbalancedness(Imbalancedness):
         """
         imbalance = 1 / ((class_indices + 1) ** 3)
 
-        if isinstance(class_indices, torch.Tensor):
-            print("Class indices", class_indices)
-            print("Imbalance: ", imbalance)
-            exit()
         return imbalance
