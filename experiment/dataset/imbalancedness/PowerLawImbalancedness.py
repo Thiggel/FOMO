@@ -20,6 +20,6 @@ class PowerLawImbalancedness(Imbalancedness):
 
         (I think its fine to not use numclasses here)
         """
-        imbalance = 1 / ((class_indices + 1) ** 3)
+        imbalance = 1 / ((class_indices + 1) ** 0.5)
 
         return imbalance
