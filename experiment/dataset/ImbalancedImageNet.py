@@ -172,16 +172,11 @@ class ImbalancedImageNet(Dataset):
         # Get imbalance probabilities for all labels
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
 
-        imbalance_probs = self.imbalancedness.get_imbalance(torch.arange(1000))
-        print(self.imbalancedness.__class__.__name__)
-        print(imbalance_probs)
-        exit()
-
         # Generate random numbers for each sample
         random_numbers = torch.rand(len(labels), device="cuda")
 
         # Create mask to filter indices
-        mask = imbalance_probs < random_numbers
+        mask = imbalance_probs >= random_numbers
         selected_indices = torch.nonzero(mask, as_tuple=True)[0]
 
         # Convert to CPU and Python list
