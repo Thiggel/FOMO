@@ -66,7 +66,7 @@ class CIFAR10FineTuner(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return get_num_workers()
+        return min(24, get_num_workers())
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
