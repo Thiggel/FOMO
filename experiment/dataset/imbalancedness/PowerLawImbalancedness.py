@@ -24,4 +24,3 @@ class PowerLawImbalancedness(Imbalancedness):
 
         print("Class indices", class_indices)
         print("Imbalance: ", imbalance)
-        exit()
