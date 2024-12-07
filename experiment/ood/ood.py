@@ -18,6 +18,7 @@ class OOD:
         feature_extractor,
         cycle_idx=None,
         device=torch.device("cuda"),
+        dtype=torch.float32,
     ):
         self.train = train
         self.test = test
@@ -29,6 +30,7 @@ class OOD:
         self.pct_train = args.pct_train
         self.cycle_idx = cycle_idx
         self.device = device
+        self.dtype = dtype
 
     def extract_features(self):
         # Configure DataLoader with better memory management
@@ -63,7 +65,7 @@ class OOD:
                     batch = batch.to(
                         device=self.device,
                         non_blocking=True,
-                        dtype=self.feature_extractor.dtype,
+                        dtype=self.dtype,
                     )
                     features = self.feature_extractor(batch).cpu()
                     train_features.append(features)
@@ -76,7 +78,7 @@ class OOD:
                         batch.to(
                             device=self.device,
                             non_blocking=True,
-                            dtype=self.feature_extractor.dtype,
+                            dtype=self.dtype,
                         )
                     ).cpu()
                     test_features.append(features)

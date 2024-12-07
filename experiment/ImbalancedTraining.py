@@ -169,6 +169,7 @@ class ImbalancedTraining:
             feature_extractor=self.ssl_method.model.extract_features,
             cycle_idx=cycle_idx,
             device=self.ssl_method.device,
+            dtype=self.ssl_method.dtype,
         )
 
         ood.extract_features()
