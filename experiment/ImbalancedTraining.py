@@ -260,7 +260,6 @@ class ImbalancedTraining:
             }
 
             self.trainer_args["accumulate_grad_batches"] = 1
-            self.trainer_args["accelerator"] = "gpu"
 
             strategy = DeepSpeedStrategy(
                 config={
