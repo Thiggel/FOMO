@@ -270,9 +270,11 @@ class ImbalancedTraining:
                         "offload_optimizer": {"device": "cpu", "pin_memory": True},
                         "offload_param": {"device": "cpu", "pin_memory": True},
                     },
-                }
+                },
+                accelerator="cuda",
             )
             self.trainer_args["strategy"] = strategy
+            self.trainer_args.pop("accelerator", None)
 
             trainer = L.Trainer(**self.trainer_args)
 
