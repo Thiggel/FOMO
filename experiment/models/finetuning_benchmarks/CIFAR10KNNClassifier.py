@@ -50,7 +50,7 @@ class CIFAR10KNNClassifier(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return min(12, get_num_workers() // 2)
+        return min(6, get_num_workers() // 2)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
