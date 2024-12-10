@@ -86,7 +86,29 @@ class ImbalancedTraining:
         2. assess OOD samples
         3. generate new data for OOD
         """
-        trainer = L.Trainer(**self.trainer_args)
+
+        cycle_trainer_args = self.trainer_args.copy()
+
+        # Ensure strategy is properly configured for each cycle
+        if torch.cuda.is_available():
+            strategy = DeepSpeedStrategy(
+                config={
+                    "train_batch_size": self.args.batch_size
+                    * self.args.grad_acc_steps
+                    * torch.cuda.device_count(),
+                    "bf16": {"enabled": True},
+                    "zero_optimization": {
+                        "stage": 2,
+                        "offload_optimizer": {"device": "cpu", "pin_memory": True},
+                        "offload_param": {"device": "cpu", "pin_memory": True},
+                    },
+                }
+            )
+            cycle_trainer_args["strategy"] = strategy
+            cycle_trainer_args["accelerator"] = "cuda"
+            cycle_trainer_args["devices"] = "auto"
+
+        trainer = L.Trainer(**cycle_trainer_args)
 
         # handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too.
 
