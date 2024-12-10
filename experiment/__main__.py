@@ -178,11 +178,9 @@ def run(
         "callbacks": callbacks,
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger and not args.test_mode else None,
-        "devices": "auto",
     }
 
     if torch.cuda.is_available():
-
         strategy = DeepSpeedStrategy(
             config={
                 "train_batch_size": args.batch_size
@@ -197,9 +195,15 @@ def run(
             }
         )
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
-        trainer_args["strategy"] = strategy
-        trainer_args["precision"] = "bf16"
-        trainer_args["default_root_dir"] = os.environ["PYTORCH_LIGHTNING_HOME"]
+        trainer_args.update(
+            {
+                "strategy": strategy,
+                "precision": "bf16",
+                "accelerator": "cuda",  # Explicitly set accelerator
+                "devices": "auto",  # Let PyTorch Lightning handle device selection
+                "default_root_dir": os.environ["PYTORCH_LIGHTNING_HOME"],
+            }
+        )
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
         print("GPUs Available: ", torch.cuda.device_count())
 
