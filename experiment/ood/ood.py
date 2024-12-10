@@ -123,11 +123,11 @@ class OOD:
         ood_indices = [i for i, ood_flag in enumerate(is_ood) if ood_flag]
 
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
-            os.makedirs(f"./ood_logs/{self.cycle_idx}")
+            os.makedirs(f"./ood_logs/{self.cycle_idx}", exist_ok=True)
 
         np.save(f"./ood_logs/{self.cycle_idx}/scores_ood.npy", scores_ood)
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}/images"):
-            os.makedirs(f"./ood_logs/{self.cycle_idx}/images")
+            os.makedirs(f"./ood_logs/{self.cycle_idx}/images", exist_ok=True)
         top_k_indices = np.argsort(scores_ood)[-10:][::-1]
         for i, index in enumerate(top_k_indices):
             image = self.test[index][0]
