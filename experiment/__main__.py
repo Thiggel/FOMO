@@ -192,18 +192,18 @@ def run(
                     "offload_optimizer": {"device": "cpu", "pin_memory": True},
                     "offload_param": {"device": "cpu", "pin_memory": True},
                 },
-            }
+            },
         )
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
         trainer_args.update(
             {
                 "strategy": strategy,
                 "precision": "bf16",
-                "accelerator": "cuda",  # Explicitly set accelerator
                 "devices": "auto",  # Let PyTorch Lightning handle device selection
                 "default_root_dir": os.environ["PYTORCH_LIGHTNING_HOME"],
             }
         )
+        trainer_args.pop("accelerator", None)
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
         print("GPUs Available: ", torch.cuda.device_count())
 
