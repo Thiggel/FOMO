@@ -5,7 +5,7 @@ python -m experiment \
 	--imbalance_method no_imbalance \
   --ssl_method Dino \
 	--max_cycles 1 \
-  --num_runs 1 \
+  --num_runs 3 \
   --imagenet_variant 1k \
 	--n_epochs_per_cycle 300 \
   --batch_size 32 \
