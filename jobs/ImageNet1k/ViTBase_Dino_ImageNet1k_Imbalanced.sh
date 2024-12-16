@@ -7,7 +7,7 @@ python -m experiment \
   --num_runs 3 \
   --imagenet_variant 1k \
 	--n_epochs_per_cycle 300 \
-  --batch_size 64 \
-  --grad_acc_steps 16 \
+  --batch_size 256 \
+  --grad_acc_steps 4 \
   --crop_size 224 \
   --experiment_name "Baseline_ViTBase_Dino_ImageNet1k_Imbalanced"
