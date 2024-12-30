@@ -163,7 +163,6 @@ def run(
             project="FOMO2",
             name=log_name + str(seed),
             group=log_name,
-            log_model="all",
             save_dir=os.environ["BASE_CACHE_DIR"],
         )
         # wandb_logger.watch(model, log="all")
