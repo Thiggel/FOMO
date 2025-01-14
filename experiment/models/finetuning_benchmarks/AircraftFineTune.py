@@ -1,10 +1,86 @@
+import os
 from torch import nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-from torchvision.datasets import Aircraft
+from torchvision.datasets.utils import download_and_extract_archive, verify_str_arg
+import os
+from PIL import Image
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
+
+
+class FGVCAircraft(Dataset):
+    """
+    FGVC Aircraft dataset
+    """
+
+    def __init__(self, root, split="train", transform=None, download=False):
+        self.root = root
+        self.split = verify_str_arg(split, "split", ("train", "val", "test"))
+        self.transform = transform
+
+        self.url = "https://www.robots.ox.ac.uk/~vgg/data/fgvc-aircraft/archives/fgvc-aircraft-2013b.tar.gz"
+        self.class_types = "variant"  # Use variant level annotations (100 classes)
+
+        if download:
+            self._download()
+
+        self._load_metadata()
+
+    def _download(self):
+        if os.path.exists(os.path.join(self.root, "fgvc-aircraft-2013b")):
+            return
+
+        download_and_extract_archive(
+            self.url,
+            self.root,
+            extract_root=self.root,
+            filename="fgvc-aircraft-2013b.tar.gz",
+            remove_finished=True,
+        )
+
+    def _load_metadata(self):
+        import scipy.io
+
+        data_dir = os.path.join(self.root, "fgvc-aircraft-2013b")
+
+        # Load variant names
+        variants_path = os.path.join(data_dir, "data", "variants.txt")
+        with open(variants_path, "r") as f:
+            self.classes = [line.strip() for line in f.readlines()]
+
+        self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
+
+        # Load image paths and labels based on split
+        split_map = {
+            "train": "images_variant_train.txt",
+            "val": "images_variant_val.txt",
+            "test": "images_variant_test.txt",
+        }
+
+        annotations_path = os.path.join(data_dir, "data", split_map[self.split])
+        with open(annotations_path, "r") as f:
+            content = [line.strip().split(" ", 1) for line in f.readlines()]
+            self.samples = [
+                (
+                    os.path.join(data_dir, "data", "images", f"{img}.jpg"),
+                    self.class_to_idx[label],
+                )
+                for img, label in content
+            ]
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        path, target = self.samples[idx]
+        img = Image.open(path).convert("RGB")
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, target
 
 
 class AircraftFineTune(TransferLearningBenchmark):
@@ -14,7 +90,7 @@ class AircraftFineTune(TransferLearningBenchmark):
         lr: float,
         transform: transforms.Compose,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             model=model, lr=lr, transform=transform, num_classes=100, *args, **kwargs
@@ -24,17 +100,15 @@ class AircraftFineTune(TransferLearningBenchmark):
     def get_datasets(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            train_dataset = Aircraft(
+            train_dataset = FGVCAircraft(
                 root="data", split="train", download=True, transform=self.transform
             )
-            test_dataset = Aircraft(
+            val_dataset = FGVCAircraft(
+                root="data", split="val", download=True, transform=self.transform
+            )
+            test_dataset = FGVCAircraft(
                 root="data", split="test", download=True, transform=self.transform
             )
-
-        # Split train into train/val
-        train_size = int(0.9 * len(train_dataset))
-        val_size = len(train_dataset) - train_size
-        train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
 
         return train_dataset, val_dataset, test_dataset
 
