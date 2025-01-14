@@ -342,7 +342,7 @@ class ImbalancedTraining:
 
             early_stop_callback = EarlyStopping(
                 monitor='val_loss',
-                patience=3,
+                patience=10,
                 mode='min'
             )
 

@@ -14,7 +14,7 @@ class TransferLearningBenchmark(L.LightningModule):
         transform: transforms.Compose,
         batch_size: int = 64,
         weight_decay: float = 1e-3,
-        max_epochs: int = 100,
+        max_epochs: int = 500,
         num_classes: int = None,
         crop_size: int = 224,
         *args,
