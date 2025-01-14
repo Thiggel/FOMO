@@ -17,6 +17,9 @@ class CarsFineTune(TransferLearningBenchmark):
         *args,
         **kwargs
     ):
+        super().__init__()
+        self.crop_size = crop_size
+        self.transform = self.get_transform()  # Get transform first
         super().__init__(
             model=model, lr=lr, transform=None, num_classes=196, *args, **kwargs
         )

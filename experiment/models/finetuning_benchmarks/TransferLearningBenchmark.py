@@ -105,20 +105,20 @@ class TransferLearningBenchmark(L.LightningModule):
         return loss
 
     def get_transform(self):
-        # First create a temporary transform without normalization
+        # Create initial dataset with basic transform
         temp_transform = transforms.Compose([
             transforms.Resize((self.crop_size, self.crop_size)),
             transforms.ToTensor(),
         ])
         
-        # Create temporary dataset with this transform
-        temp_dataset = self.train_dataset.dataset if hasattr(self.train_dataset, 'dataset') else self.train_dataset
-        temp_dataset.transform = temp_transform
+        # Initialize dataset with temporary transform
+        self.transform = temp_transform
+        temp_dataset = self.get_datasets()[0]  # Get just the training dataset
         
         # Calculate mean and std
         mean, std = calculate_mean_std(temp_dataset)
         
-        # Create final transform with calculated normalization
+        # Create final transform
         final_transform = transforms.Compose([
             transforms.Resize((self.crop_size, self.crop_size)),
             transforms.ToTensor(),
