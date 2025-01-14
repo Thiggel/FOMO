@@ -28,4 +28,6 @@ class NoImbalancedness(Imbalancedness):
         return total_imbalance / self.num_classes
 
     def get_imbalance(self, class_index: int) -> float:
+        print(self.total_imbalance)
+        exit()
         return self.total_imbalance
