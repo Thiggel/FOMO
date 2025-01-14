@@ -30,7 +30,7 @@ class FGVCAircraft(Dataset):
 
     def _download(self):
         if os.path.exists(os.path.join(self.root, "fgvc-aircraft-2013b")):
-            print(os.path.listdir(os.path.join(self.root)))
+            print(os.listdir(os.path.join(self.root)))
             return
 
         download_and_extract_archive(
