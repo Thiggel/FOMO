@@ -98,16 +98,17 @@ class AircraftFineTune(TransferLearningBenchmark):
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
+        base_path = os.getenv("BASE_CACHE_DIR")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             train_dataset = FGVCAircraft(
-                root="data", split="train", download=True, transform=self.transform
+                root=base_path + "/data", split="train", download=True, transform=self.transform
             )
             val_dataset = FGVCAircraft(
-                root="data", split="val", download=True, transform=self.transform
+                root=base_path + "/data", split="val", download=True, transform=self.transform
             )
             test_dataset = FGVCAircraft(
-                root="data", split="test", download=True, transform=self.transform
+                root=base_path + "/data", split="test", download=True, transform=self.transform
             )
 
         return train_dataset, val_dataset, test_dataset

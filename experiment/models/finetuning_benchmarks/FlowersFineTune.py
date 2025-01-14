@@ -22,9 +22,10 @@ class FlowersFineTune(TransferLearningBenchmark):
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
+        base_dir = os.getenv("BASE_CACHE_DIR")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dataset = Flowers102(root="data", download=True, transform=self.transform)
+            dataset = Flowers102(root=base_dir + "/data", download=True, transform=self.transform)
 
         train_size = int(
             0.7 * len(dataset)

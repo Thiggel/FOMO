@@ -5,13 +5,14 @@ from .BaseKNNClassifier import BaseKNNClassifier
 
 class CIFAR100KNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
+        base_path = os.getenv("BASE_CACHE_DIR")
         if stage == "fit" or stage is None:
             self.train_dataset = CIFAR100(
-                root="data", train=True, download=True, transform=self.transform
+                root=base_path + "/data", train=True, download=True, transform=self.transform
             )
         if stage == "test" or stage is None:
             self.test_dataset = CIFAR100(
-                root="data", train=False, download=True, transform=self.transform
+                root=base_path + "/data", train=False, download=True, transform=self.transform
             )
 
     def train_dataloader(self) -> DataLoader:

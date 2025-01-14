@@ -22,15 +22,16 @@ class CIFAR100FineTuner(TransferLearningBenchmark):
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
+        base_path = os.getenv("BASE_CACHE_DIR")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dataset = CIFAR100(root="data", download=True, transform=self.transform)
+            dataset = CIFAR100(root=base_path + "/data", download=True, transform=self.transform)
 
         train_size = int(0.9 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
         test_dataset = CIFAR100(
-            root="data", train=False, download=True, transform=self.transform
+            root=base_path + "/data", train=False, download=True, transform=self.transform
         )
 
         return train_dataset, val_dataset, test_dataset
