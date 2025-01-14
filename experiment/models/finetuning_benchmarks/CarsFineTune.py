@@ -6,6 +6,7 @@ from torchvision.datasets import StanfordCars
 import warnings
 from PIL import Image
 import scipy.io as sio
+import kaggle
 from .TransferLearningBenchmark import TransferLearningBenchmark
 
 class CarsFineTune(TransferLearningBenchmark):
@@ -24,16 +25,17 @@ class CarsFineTune(TransferLearningBenchmark):
 
     def get_datasets(self):
         base_path = os.getenv("BASE_CACHE_DIR")
+        kaggle.api.dataset_download_files('rickyyyyyyy/torchvision-stanford-cars', path=base_path, unzip=True)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             train_dataset = StanfordCars(
-                root=os.path.join(base_path, 'stanford_cars'),
-                download=True,
+                root=base_path,
+                download=False,
                 transform=self.transform
             )
             test_dataset = StanfordCars(
-                root=os.path.join(base_path, 'stanford_cars'),
-                download=True,
+                root=base_path,
+                download=False,
                 transform=self.transform
             )
 
