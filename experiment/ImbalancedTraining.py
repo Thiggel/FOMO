@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import Subset, random_split, Dataset
 from lightning.pytorch.strategies import DeepSpeedStrategy
 import lightning.pytorch as L
+from lightning.pytorch.callbacks import EarlyStopping
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
@@ -338,6 +339,14 @@ class ImbalancedTraining:
             )
 
             self.trainer_args["max_epochs"] = finetuner.max_epochs
+
+            early_stop_callback = EarlyStopping(
+                monitor='val_loss',
+                patience=3,
+                mode='min'
+            )
+
+            self.trainer_args["callbacks"] = [early_stop_callback]
 
             self.trainer_args["max_time"] = {
                 "minutes": 25,

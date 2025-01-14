@@ -18,8 +18,10 @@ class FlowersFineTune(TransferLearningBenchmark):
         **kwargs
     ):
         super().__init__(
-            model=model, lr=lr, transform=transform, num_classes=102, *args, **kwargs
+            model=model, lr=lr, transform=None, num_classes=102, *args, **kwargs
         )
+        self.transform = self.get_transform()
+
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):

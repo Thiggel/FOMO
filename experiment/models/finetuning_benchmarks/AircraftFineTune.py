@@ -82,6 +82,7 @@ class FGVCAircraft(Dataset):
             if self.transform is not None:
                 img = self.transform(img)
         except UnidentifiedImageError:
+            print(f"Error loading image at index {idx}. Skipping...")
             return self.__getitem__(idx + 1)
 
         return img, target

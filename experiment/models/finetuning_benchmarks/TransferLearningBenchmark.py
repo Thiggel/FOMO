@@ -3,6 +3,7 @@ from torch import nn, optim
 from torchvision import transforms
 import torch
 from experiment.utils.get_num_workers import get_num_workers
+from experiment.utils.calculate_mean_std import calculate_mean_std
 
 
 class TransferLearningBenchmark(L.LightningModule):
@@ -13,7 +14,7 @@ class TransferLearningBenchmark(L.LightningModule):
         transform: transforms.Compose,
         batch_size: int = 64,
         weight_decay: float = 1e-3,
-        max_epochs: int = 50,
+        max_epochs: int = 100,
         num_classes: int = None,
         *args,
         **kwargs,
@@ -100,3 +101,26 @@ class TransferLearningBenchmark(L.LightningModule):
         self.log(f"{dataset_name}_test_loss", loss, sync_dist=True)
         self.log(f"{dataset_name}_test_accuracy", accuracy, sync_dist=True)
         return loss
+
+    def get_transform(self):
+        # First create a temporary transform without normalization
+        temp_transform = transforms.Compose([
+            transforms.Resize((self.args.crop_size, self.args.crop_size)),
+            transforms.ToTensor(),
+        ])
+        
+        # Create temporary dataset with this transform
+        temp_dataset = self.train_dataset.dataset if hasattr(self.train_dataset, 'dataset') else self.train_dataset
+        temp_dataset.transform = temp_transform
+        
+        # Calculate mean and std
+        mean, std = calculate_mean_std(temp_dataset)
+        
+        # Create final transform with calculated normalization
+        final_transform = transforms.Compose([
+            transforms.Resize((self.args.crop_size, self.args.crop_size)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std),
+        ])
+        
+        return final_transform
