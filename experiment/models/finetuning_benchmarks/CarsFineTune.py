@@ -28,6 +28,8 @@ class StanfordCars(Dataset):
                 filename_label_pairs.sort(key=lambda x: x[0])
                 self.labels = [label for _, label in filename_label_pairs]
 
+        print('Labels:', len(self.labels) if self.labels else 'None')
+
     def __len__(self):
         return len(self.images)
 
@@ -40,6 +42,7 @@ class StanfordCars(Dataset):
         # Return both image and label if labels are available, otherwise just image
         if self.labels is not None:
             return image, self.labels[index]
+
         return image, -1  # Return -1 as label if no annotations available
 
 class CarsFineTune(TransferLearningBenchmark):
