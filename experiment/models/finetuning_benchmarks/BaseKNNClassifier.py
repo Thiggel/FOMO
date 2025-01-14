@@ -1,12 +1,11 @@
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
-from torchvision.datasets import CIFAR10, CIFAR100
 import lightning.pytorch as L
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
-import warnings
+from torchvision import transforms
+
 from experiment.utils.get_num_workers import get_num_workers
 
 
