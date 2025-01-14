@@ -335,7 +335,7 @@ class ImbalancedTraining:
 
             # dataloader is already handled fine here because each loop should set the past loader to None.
             finetuner = benchmark(
-                model=self.ssl_method.model, lr=self.args.lr, transform=transform
+                model=self.ssl_method.model, lr=self.args.lr, transform=transform, crop_size=self.args.crop_size
             )
 
             self.trainer_args["max_epochs"] = finetuner.max_epochs

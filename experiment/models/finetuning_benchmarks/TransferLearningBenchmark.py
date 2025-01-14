@@ -16,6 +16,7 @@ class TransferLearningBenchmark(L.LightningModule):
         weight_decay: float = 1e-3,
         max_epochs: int = 100,
         num_classes: int = None,
+        crop_size: int = 224,
         *args,
         **kwargs,
     ):
@@ -24,6 +25,7 @@ class TransferLearningBenchmark(L.LightningModule):
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.transform = transform
+        self.crop_size = crop_size
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
@@ -105,7 +107,7 @@ class TransferLearningBenchmark(L.LightningModule):
     def get_transform(self):
         # First create a temporary transform without normalization
         temp_transform = transforms.Compose([
-            transforms.Resize((self.args.crop_size, self.args.crop_size)),
+            transforms.Resize((self.crop_size, self.crop_size)),
             transforms.ToTensor(),
         ])
         
@@ -118,7 +120,7 @@ class TransferLearningBenchmark(L.LightningModule):
         
         # Create final transform with calculated normalization
         final_transform = transforms.Compose([
-            transforms.Resize((self.args.crop_size, self.args.crop_size)),
+            transforms.Resize((self.crop_size, self.crop_size)),
             transforms.ToTensor(),
             transforms.Normalize(mean=mean, std=std),
         ])
