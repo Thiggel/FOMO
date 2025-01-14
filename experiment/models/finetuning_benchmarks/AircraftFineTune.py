@@ -82,7 +82,7 @@ class FGVCAircraft(Dataset):
             if self.transform is not None:
                 img = self.transform(img)
         except UnidentifiedImageError:
-            return None, None
+            return self.__getitem__(idx + 1)
 
         return img, target
 
