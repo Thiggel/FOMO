@@ -7,7 +7,7 @@ class AllData(Imbalancedness):
         self.total_imbalance = self.get_total_imbalance()
 
     def get_total_imbalance(self) -> float:
-        return 0.0
+        return 1.0
 
     def get_imbalance(self, class_index: int) -> float:
         return self.total_imbalance
