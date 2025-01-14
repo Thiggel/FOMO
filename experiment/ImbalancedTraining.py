@@ -57,7 +57,10 @@ class ImbalancedTraining:
         )
         if self.datamodule is not None:
             self.initial_train_ds_size = len(self.datamodule.train_dataset)
-        # self.pipe = self.initialize_model("cuda" if torch.cuda.is_available() else "cpu")
+            # Track which indices have been added back to prevent duplicates
+            self.added_indices = set()
+            # Store original dataset indices for sampling
+            self.original_indices = set(range(self.initial_train_ds_size))
 
     def run(self) -> dict:
         if self.args.pretrain:
@@ -80,13 +83,55 @@ class ImbalancedTraining:
 
         return self.finetune() if self.args.finetune else {}
 
+    def get_class_of_index(self, dataset, idx):
+        """Helper function to get class label for a given index"""
+        _, label = dataset[idx]
+        return label
+
+    def get_ood_classes(self, ood_indices, dataset):
+        """Get class distribution of OOD points"""
+        class_counts = {}
+        for idx in ood_indices:
+            label = self.get_class_of_index(dataset, idx)
+            class_counts[label] = class_counts.get(label, 0) + 1
+        return class_counts
+
+    def sample_from_class(self, dataset, target_class, exclude_indices, num_samples):
+        """Sample indices from a specific class, excluding already added indices"""
+        available_indices = []
+        for idx in self.original_indices - self.added_indices:
+            if self.get_class_of_index(dataset, idx) == target_class:
+                available_indices.append(idx)
+
+        # If we don't have enough samples from the target class,
+        # return all available ones
+        if len(available_indices) <= num_samples:
+            return available_indices
+
+        return np.random.choice(
+            available_indices, size=num_samples, replace=False
+        ).tolist()
+
+    def sample_uniformly(self, num_samples):
+        """Sample uniformly from remaining indices when class-based sampling is not possible"""
+        available_indices = list(self.original_indices - self.added_indices)
+        if (
+            not available_indices
+        ):  # If no indices left, sample from all original indices
+            available_indices = list(self.original_indices)
+
+        return np.random.choice(
+            available_indices,
+            size=min(num_samples, len(available_indices)),
+            replace=False,
+        ).tolist()
+
     def pretrain_cycle(self, cycle_idx) -> None:
         """
         1. Fit for n epochs
         2. assess OOD samples
-        3. generate new data for OOD
+        3. generate new data for OOD samples or add back removed data
         """
-
         cycle_trainer_args = self.trainer_args.copy()
 
         # Ensure strategy is properly configured for each cycle
@@ -109,32 +154,13 @@ class ImbalancedTraining:
             cycle_trainer_args["devices"] = "auto"
 
         trainer = L.Trainer(**cycle_trainer_args)
-
-        # handle dataloader worker issue -> note: finetuning has the same issue, make sure to se the loaders to None there too.
-
         trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
-        # Set the dataloaders to None for garbage collection
         self.datamodule.set_dataloaders_none()
-        # They will be reinstantiate anyway in the next trainer.fit
 
         if not self.args.ood_augmentation:
             return
 
-        # Removing the diffusion model and adding the samples from the training set. Selecting random images and adding them to the dataset without caring about the balancedness parameter.
-        if self.args.remove_diffusion:
-            print(f"initial dataset size: {self.initial_train_ds_size}")
-            print(f"dataset_size: {len(self.datamodule.train_dataset)}")
-            num_samples_to_generate = int(
-                self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size
-            )
-            self.datamodule.add_n_samples_by_index(num_samples_to_generate)
-            print(
-                f"added {num_samples_to_generate} samples to the training set, dataset size is now {len(self.datamodule.train_dataset.indices)}"
-            )
-            return
-
         ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
-
         self.datamodule.train_dataset.dataset.transform = self.transform
 
         train_dataset = Subset(
@@ -142,34 +168,70 @@ class ImbalancedTraining:
         )
 
         num_ood_test = int(self.ood_test_split * len(train_dataset))
-
         num_ood_train = len(train_dataset) - num_ood_test
-
         ood_train_dataset, ood_test_dataset = random_split(
             train_dataset, [num_ood_train, num_ood_test]
         )
 
+        # Get OOD indices using the existing method
         indices_to_be_augmented = (
             self.get_ood_indices(ood_train_dataset, ood_test_dataset, cycle_idx)
             if self.args.use_ood
             else self.get_random_indices(ood_train_dataset)
         )
 
-        ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
+        if self.args.remove_diffusion:
+            # Get the class distribution of OOD points
+            ood_class_dist = self.get_ood_classes(
+                indices_to_be_augmented, ood_train_dataset
+            )
 
+            # Calculate number of samples to generate per class
+            num_samples_per_class = {
+                cls: int(count * self.args.pct_ood * self.ood_test_split)
+                for cls, count in ood_class_dist.items()
+            }
+
+            new_indices = []
+            # First try to sample from each OOD class
+            for cls, num_samples in num_samples_per_class.items():
+                class_indices = self.sample_from_class(
+                    train_dataset, cls, self.added_indices, num_samples
+                )
+                new_indices.extend(class_indices)
+
+            # If we still need more samples, sample uniformly
+            total_samples_needed = int(
+                self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size
+            )
+            if len(new_indices) < total_samples_needed:
+                additional_indices = self.sample_uniformly(
+                    total_samples_needed - len(new_indices)
+                )
+                new_indices.extend(additional_indices)
+
+            # Update the set of added indices
+            self.added_indices.update(new_indices)
+
+            # Add the selected indices to the dataset
+            self.datamodule.add_samples_by_index(new_indices)
+
+            print(f"Added {len(new_indices)} samples back to the training set")
+            return
+
+        # Original diffusion-based augmentation code
+        ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
         if cycle_idx < self.max_cycles - 1:
             self.datamodule.train_dataset.dataset.transform = None
             diffusion_pipe = self.initialize_model(
                 "cuda" if torch.cuda.is_available() else "cpu"
             )
-
             self.generate_new_data(
                 ood_samples,
                 pipe=diffusion_pipe,
                 batch_size=self.args.sd_batch_size,
                 save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
             )
-
             self.datamodule.train_dataset.dataset.transform = ssl_transform
 
     def get_num_samples_to_generate(self) -> int:
