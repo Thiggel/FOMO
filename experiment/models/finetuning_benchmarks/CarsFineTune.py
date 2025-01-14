@@ -11,7 +11,7 @@ class StanfordCars(Dataset):
         self.images = [os.path.join(root_path, file) for file in os.listdir(root_path)]
         self.transform = transform
 
-        print(len(self.images))
+        print('len', len(self.images))
 
     def __len__(self):
         return len(self.images)
@@ -22,7 +22,6 @@ class StanfordCars(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        print(image)
         return image[None]
 
 
@@ -44,10 +43,10 @@ class CarsFineTune(TransferLearningBenchmark):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             train_dataset = StanfordCars(
-                root_path=os.getenv("BASE_CACHE_DIR") + '/cars_train', transform=self.transform
+                root_path=os.getenv("BASE_CACHE_DIR") + '/cars_train/cars_train/', transform=self.transform
             )
             test_dataset = StanfordCars(
-                root_path=os.getenv("BASE_CACHE_DIR") + '/cars_test', transform=self.transform
+                root_path=os.getenv("BASE_CACHE_DIR") + '/cars_test/cars_test/', transform=self.transform
             )
 
         # Split train into train/val
