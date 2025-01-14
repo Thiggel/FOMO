@@ -40,10 +40,10 @@ class CarsFineTune(TransferLearningBenchmark):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             train_dataset = StanfordCars(
-                root_path=os.getenv("BASE_CACHE_DIR") + 'cars_train',
+                root_path=os.getenv("BASE_CACHE_DIR") + '/cars_train',
             )
             test_dataset = StanfordCars(
-                root_path=os.getenv("BASE_CACHE_DIR") + 'cars_test',
+                root_path=os.getenv("BASE_CACHE_DIR") + '/cars_test',
             )
 
         # Split train into train/val
