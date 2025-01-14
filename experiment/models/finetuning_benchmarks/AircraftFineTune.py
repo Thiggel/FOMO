@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets.utils import download_and_extract_archive, verify_str_arg
 import os
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
@@ -75,11 +75,14 @@ class FGVCAircraft(Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        path, target = self.samples[idx]
-        img = Image.open(path).convert("RGB")
+        try:
+            path, target = self.samples[idx]
+            img = Image.open(path).convert("RGB")
 
-        if self.transform is not None:
-            img = self.transform(img)
+            if self.transform is not None:
+                img = self.transform(img)
+        except UnidentifiedImageError:
+            return None, None
 
         return img, target
 
