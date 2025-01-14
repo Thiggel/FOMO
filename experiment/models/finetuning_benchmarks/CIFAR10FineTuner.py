@@ -1,3 +1,4 @@
+import os
 from torch import nn
 from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader, random_split

@@ -1,3 +1,4 @@
+import os
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR100
 from .BaseKNNClassifier import BaseKNNClassifier
