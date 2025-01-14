@@ -1,12 +1,12 @@
 import os
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Dataset
 from torch import nn
 from torchvision import transforms
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
 
-class StanfordCars(torch.utils.data.Dataset):
+class StanfordCars(Dataset):
     def __init__(self, root_path, transform = None):
         self.images = [os.path.join(root_path, file) for file in os.listdir(root_path)]
         self.transform = transform
