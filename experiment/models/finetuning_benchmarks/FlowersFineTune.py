@@ -20,9 +20,9 @@ class FlowersFineTune(TransferLearningBenchmark):
         super().__init__(
             model=model, lr=lr, transform=None, num_classes=102, *args, **kwargs
         )
+        self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
         self.transform = self.get_transform()
 
-        self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
         base_dir = os.getenv("BASE_CACHE_DIR")

@@ -98,9 +98,10 @@ class AircraftFineTune(TransferLearningBenchmark):
         **kwargs,
     ):
         super().__init__(
-            model=model, lr=lr, transform=transform, num_classes=100, *args, **kwargs
+            model=model, lr=lr, transform=None, num_classes=100, *args, **kwargs
         )
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
+        self.transform = self.get_transform()
 
     def get_datasets(self):
         base_path = os.getenv("BASE_CACHE_DIR")
