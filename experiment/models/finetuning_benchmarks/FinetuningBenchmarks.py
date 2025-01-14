@@ -18,8 +18,8 @@ from experiment.models.finetuning_benchmarks.SecondTestFineTuner import (
 
 class FinetuningBenchmarks:
     benchmarks = [
-        FlowersFineTune,
         AircraftFineTune,
+        FlowersFineTune,
         CarsFineTune,
         PetsFineTune,
         CIFAR100KNNClassifier,
