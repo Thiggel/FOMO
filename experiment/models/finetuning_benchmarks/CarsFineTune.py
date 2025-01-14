@@ -28,12 +28,12 @@ class CarsFineTune(TransferLearningBenchmark):
             warnings.simplefilter("ignore")
             train_dataset = StanfordCars(
                 root=os.path.join(base_path, 'stanford_cars'),
-                download=False,
+                download=True,
                 transform=self.transform
             )
             test_dataset = StanfordCars(
                 root=os.path.join(base_path, 'stanford_cars'),
-                download=False,
+                download=True,
                 transform=self.transform
             )
 
