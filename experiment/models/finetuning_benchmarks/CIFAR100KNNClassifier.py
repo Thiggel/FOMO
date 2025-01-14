@@ -1,42 +1,9 @@
-import os
-import torch
-from torch import nn, optim
+from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR100
-from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision import transforms, models
-import lightning.pytorch as L
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
-from tqdm import tqdm
-from experiment.utils.get_num_workers import get_num_workers
+from .BaseKNNClassifier import BaseKNNClassifier
 
 
-class CIFAR100KNNClassifier(L.LightningModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        batch_size: int = 64,
-        k: int = 5,
-        transform: transforms.Compose = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            ]
-        ),
-        *args,
-        **kwargs,
-    ):
-        super().__init__()
-        self.use_deepspeed = False
-        self.max_epochs = 1
-        self.save_hyperparameters(ignore=["model"])
-        self.transform = transform
-        self.model = model
-        self.batch_size = batch_size
-        self.k = k
-        self.knn = None  # We'll initialize this later
-        self.linear = nn.Linear(1, 2)  # Dummy linear layer to satisfy PyTorch Lightning
-
+class CIFAR100KNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
         if stage == "fit" or stage is None:
             self.train_dataset = CIFAR100(
@@ -47,16 +14,12 @@ class CIFAR100KNNClassifier(L.LightningModule):
                 root="data", train=False, download=True, transform=self.transform
             )
 
-    @property
-    def num_workers(self) -> int:
-        return min(6, get_num_workers() // 2)
-
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=self.num_workers // 2,
+            num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
         )
@@ -66,55 +29,7 @@ class CIFAR100KNNClassifier(L.LightningModule):
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=self.num_workers // 2,
+            num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
         )
-
-    def extract_features(self, dataloader):
-        features = []
-        labels = []
-        self.model.eval()
-        with torch.no_grad():
-            for inputs, label in tqdm(dataloader, desc="Extracting features"):
-                dtype = next(self.model.parameters()).dtype
-                inputs = inputs.to(device=self.device, dtype=dtype)
-                outputs = self.model.extract_features(inputs)
-                features.append(outputs.cpu())
-                labels.append(label)
-        return torch.cat(features), torch.cat(labels)
-
-    def on_train_start(self):
-        # Fit KNN at the start of training
-        train_loader = self.train_dataloader()
-        train_features, train_labels = self.extract_features(train_loader)
-        self.knn = KNeighborsClassifier(n_neighbors=self.k)
-        self.knn.fit(train_features.to(torch.float32).numpy(), train_labels.numpy())
-
-    def training_step(self, batch, batch_idx):
-        # No need for actual training, return zero tensor to satisfy PyTorch Lightning
-        return torch.tensor(0.0, requires_grad=True)
-
-    def test_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
-        inputs, targets = batch
-        inputs = inputs.to(self.device)
-        features = self.model.extract_features(inputs)
-        predictions = self.knn.predict(features.to(torch.float32).cpu().numpy())
-        accuracy = accuracy_score(targets.cpu().numpy(), predictions)
-        self.log("cifar100_knn_test_accuracy", accuracy, prog_bar=True, sync_dist=True)
-        return torch.tensor(accuracy)
-
-    def configure_optimizers(self):
-        # Return a dummy optimizer to satisfy DeepSpeed
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(self.parameters(), lr=0)
-        else:
-            from torch.optim import AdamW
-
-            optimizer = AdamW(self.parameters(), lr=0)
-
-        return optimizer

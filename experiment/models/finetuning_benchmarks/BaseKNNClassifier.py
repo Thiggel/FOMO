@@ -1,0 +1,84 @@
+import torch
+from torch import nn
+from torch.utils.data import DataLoader, Dataset
+from torchvision.datasets import CIFAR10, CIFAR100
+import lightning.pytorch as L
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+from tqdm import tqdm
+import warnings
+from experiment.utils.get_num_workers import get_num_workers
+
+
+class BaseKNNClassifier(L.LightningModule):
+    def __init__(
+        self,
+        model: nn.Module,
+        batch_size: int = 64,
+        k: int = 5,
+        transform: transforms.Compose = None,
+        *args,
+        **kwargs,
+    ):
+        super().__init__()
+        self.use_deepspeed = False
+        self.max_epochs = 1
+        self.save_hyperparameters(ignore=["model"])
+        self.transform = transform
+        self.model = model
+        self.batch_size = batch_size
+        self.k = k
+        self.knn = None
+        self.linear = nn.Linear(1, 2)  # Dummy linear layer to satisfy PyTorch Lightning
+
+    @property
+    def num_workers(self) -> int:
+        return min(6, get_num_workers() // 2)
+
+    def extract_features(self, dataloader):
+        features = []
+        labels = []
+        self.model.eval()
+        with torch.no_grad():
+            for inputs, label in tqdm(dataloader, desc="Extracting features"):
+                dtype = next(self.model.parameters()).dtype
+                inputs = inputs.to(device=self.device, dtype=dtype)
+                outputs = self.model.extract_features(inputs)
+                features.append(outputs.cpu())
+                labels.append(label)
+        return torch.cat(features), torch.cat(labels)
+
+    def on_train_start(self):
+        # Fit KNN at the start of training
+        train_loader = self.train_dataloader()
+        train_features, train_labels = self.extract_features(train_loader)
+        self.knn = KNeighborsClassifier(n_neighbors=self.k)
+        self.knn.fit(train_features.to(torch.float32).numpy(), train_labels.numpy())
+
+    def training_step(self, batch, batch_idx):
+        return torch.tensor(0.0, requires_grad=True)
+
+    def test_step(
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
+        inputs, targets = batch
+        inputs = inputs.to(self.device)
+        features = self.model.extract_features(inputs)
+        predictions = self.knn.predict(features.to(torch.float32).cpu().numpy())
+        accuracy = accuracy_score(targets.cpu().numpy(), predictions)
+        dataset_name = self.__class__.__name__.lower().replace("classifier", "")
+        self.log(
+            f"{dataset_name}_knn_test_accuracy", accuracy, prog_bar=True, sync_dist=True
+        )
+        return torch.tensor(accuracy)
+
+    def configure_optimizers(self):
+        if torch.cuda.is_available():
+            from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+            optimizer = DeepSpeedCPUAdam(self.parameters(), lr=0)
+        else:
+            from torch.optim import AdamW
+
+            optimizer = AdamW(self.parameters(), lr=0)
+        return optimizer

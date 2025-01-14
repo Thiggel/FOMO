@@ -1,61 +1,31 @@
-import os
-import lightning.pytorch as L
 from torch import nn
-from torch.optim import AdamW, Optimizer
-from torch import optim
-from torchvision.datasets import CIFAR100
-from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision.datasets import CIFAR10
+from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
-import torch
+import warnings
 
-from experiment.utils.get_num_workers import get_num_workers
+from .TransferLearningBenchmark import TransferLearningBenchmark
 
 
-class CIFAR100FineTuner(L.LightningModule):
+class CIFAR100FineTuner(TransferLearningBenchmark):
     def __init__(
         self,
         model: nn.Module,
         lr: float,
-        transform: transforms.Compose = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            ]
-        ),
-        weight_decay=1e-3,
-        max_epochs=25,
-        batch_size=64,
+        transform: transforms.Compose,
         *args,
-        **kwargs,
+        **kwargs
     ):
-        self.use_deepspeed = True
-        self.max_epochs = max_epochs
-        self.batch_size = batch_size
-        self.transform = transform
+        super().__init__(
+            model=model, lr=lr, transform=transform, num_classes=100, *args, **kwargs
+        )
+        self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
-        super().__init__()
-        self.save_hyperparameters(ignore=["model"])
+    def get_datasets(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            dataset = CIFAR100(root="data", download=True, transform=self.transform)
 
-        (self.train_dataset, _, _) = self.get_datasets()
-
-        self.model = model
-        self.batch_size = batch_size
-        self.max_epochs = max_epochs
-
-        for param in self.model.parameters():
-            param.requires_grad = False
-
-        # Determine the number of input features
-        self.num_features = self.model.num_features
-
-        self.probe = nn.Linear(self.num_features, 100)
-
-        (self.train_dataset, self.val_dataset, self.test_dataset) = self.get_datasets()
-
-        self.loss = nn.CrossEntropyLoss()
-
-    def get_datasets(self) -> tuple[Dataset, Dataset, Dataset]:
-        dataset = CIFAR100(root="data", download=True, transform=self.transform)
         train_size = int(0.9 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
@@ -64,10 +34,6 @@ class CIFAR100FineTuner(L.LightningModule):
         )
 
         return train_dataset, val_dataset, test_dataset
-
-    @property
-    def num_workers(self) -> int:
-        return get_num_workers()
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -95,68 +61,3 @@ class CIFAR100FineTuner(L.LightningModule):
             num_workers=self.num_workers,
             persistent_workers=True,
         )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        with torch.no_grad():
-            features = self.model.extract_features(x)
-        return features
-
-    def configure_optimizers(self):
-        adam_params = {
-            "lr": 1e-3,
-            "betas": (0.9, 0.95),
-        }
-
-        param_groups = [p for p in self.parameters() if p.requires_grad]
-
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(param_groups, **adam_params, adamw_mode=True)
-        else:
-            from torch.optim import AdamW
-
-            optimizer = AdamW(param_groups, **adam_params)
-        lr_scheduler = optim.lr_scheduler.MultiStepLR(
-            optimizer,
-            milestones=[
-                int(self.hparams.max_epochs * 0.6),
-                int(self.hparams.max_epochs * 0.8),
-            ],
-            gamma=0.1,
-        )
-        return [optimizer], [lr_scheduler]
-
-    def training_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
-        inputs, targets = batch
-        outputs = self(inputs)
-        outputs = self.probe(outputs)
-        loss = self.loss(outputs, targets)
-        self.log("train_loss", loss, sync_dist=True)
-        return loss
-
-    def validation_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
-        inputs, targets = batch
-        outputs = self(inputs)
-        outputs = self.probe(outputs)
-        loss = self.loss(outputs, targets)
-        accuracy = (outputs.argmax(dim=1) == targets).float().mean()
-        self.log("val_loss", loss, sync_dist=True)
-        self.log("val_accuracy", accuracy, sync_dist=True)
-        return loss
-
-    def test_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
-        inputs, targets = batch
-        outputs = self(inputs)
-        outputs = self.probe(outputs)
-        loss = self.loss(outputs, targets)
-        accuracy = (outputs.argmax(dim=1) == targets).float().mean()
-        self.log("cifar100_test_loss", loss, sync_dist=True)
-        self.log("cifar10_0test_accuracy", accuracy, sync_dist=True)
-        return loss

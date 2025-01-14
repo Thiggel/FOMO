@@ -1,13 +1,13 @@
 from torch import nn
-from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
+from torchvision.datasets import Aircraft
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
 
 
-class CIFAR10FineTuner(TransferLearningBenchmark):
+class AircraftFineTune(TransferLearningBenchmark):
     def __init__(
         self,
         model: nn.Module,
@@ -17,21 +17,24 @@ class CIFAR10FineTuner(TransferLearningBenchmark):
         **kwargs
     ):
         super().__init__(
-            model=model, lr=lr, transform=transform, num_classes=10, *args, **kwargs
+            model=model, lr=lr, transform=transform, num_classes=100, *args, **kwargs
         )
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dataset = CIFAR10(root="data", download=True, transform=self.transform)
+            train_dataset = Aircraft(
+                root="data", split="train", download=True, transform=self.transform
+            )
+            test_dataset = Aircraft(
+                root="data", split="test", download=True, transform=self.transform
+            )
 
-        train_size = int(0.9 * len(dataset))
-        val_size = len(dataset) - train_size
-        train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-        test_dataset = CIFAR10(
-            root="data", train=False, download=True, transform=self.transform
-        )
+        # Split train into train/val
+        train_size = int(0.9 * len(train_dataset))
+        val_size = len(train_dataset) - train_size
+        train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
 
         return train_dataset, val_dataset, test_dataset
 

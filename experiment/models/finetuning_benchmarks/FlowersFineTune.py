@@ -1,0 +1,38 @@
+from torch import nn
+from torch.utils.data import random_split
+from torchvision import transforms
+from torchvision.datasets import Flowers102
+import warnings
+
+from .TransferLearningBenchmark import TransferLearningBenchmark
+
+
+class FlowersFineTune(TransferLearningBenchmark):
+    def __init__(
+        self,
+        model: nn.Module,
+        lr: float,
+        transform: transforms.Compose,
+        *args,
+        **kwargs
+    ):
+        super().__init__(
+            model=model, lr=lr, transform=transform, num_classes=102, *args, **kwargs
+        )
+        self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
+
+    def get_datasets(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            dataset = Flowers102(root="data", download=True, transform=self.transform)
+
+        train_size = int(
+            0.7 * len(dataset)
+        )  # Flowers102 is smaller, so we use more for training
+        val_size = int(0.15 * len(dataset))
+        test_size = len(dataset) - train_size - val_size
+
+        train_dataset, val_dataset, test_dataset = random_split(
+            dataset, [train_size, val_size, test_size]
+        )
+        return train_dataset, val_dataset, test_dataset

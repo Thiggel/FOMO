@@ -1,13 +1,13 @@
 from torch import nn
-from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
+from torchvision.datasets import OxfordIIITPet
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
 
 
-class CIFAR10FineTuner(TransferLearningBenchmark):
+class PetsFineTune(TransferLearningBenchmark):
     def __init__(
         self,
         model: nn.Module,
@@ -17,22 +17,24 @@ class CIFAR10FineTuner(TransferLearningBenchmark):
         **kwargs
     ):
         super().__init__(
-            model=model, lr=lr, transform=transform, num_classes=10, *args, **kwargs
+            model=model, lr=lr, transform=transform, num_classes=37, *args, **kwargs
         )
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dataset = CIFAR10(root="data", download=True, transform=self.transform)
+            dataset = OxfordIIITPet(
+                root="data", download=True, transform=self.transform
+            )
 
-        train_size = int(0.9 * len(dataset))
-        val_size = len(dataset) - train_size
-        train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-        test_dataset = CIFAR10(
-            root="data", train=False, download=True, transform=self.transform
+        train_size = int(0.8 * len(dataset))
+        val_size = int(0.1 * len(dataset))
+        test_size = len(dataset) - train_size - val_size
+
+        train_dataset, val_dataset, test_dataset = random_split(
+            dataset, [train_size, val_size, test_size]
         )
-
         return train_dataset, val_dataset, test_dataset
 
     def train_dataloader(self) -> DataLoader:

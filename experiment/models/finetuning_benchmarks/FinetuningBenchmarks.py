@@ -6,6 +6,10 @@ from experiment.models.finetuning_benchmarks.CIFAR10KNNClassifier import (
 from experiment.models.finetuning_benchmarks.CIFAR100KNNClassifier import (
     CIFAR100KNNClassifier,
 )
+from experiment.models.finetuning_benchmarks.PetsFineTune import PetsFineTune
+from experiment.models.finetuning_benchmarks.CarsFineTune import CarsFineTune
+from experiment.models.finetuning_benchmarks.FlowersFineTune import FlowersFineTune
+from experiment.models.finetuning_benchmarks.AircraftFineTune import AircraftFineTune
 from experiment.models.finetuning_benchmarks.TestFineTuner import TestFineTuner
 from experiment.models.finetuning_benchmarks.SecondTestFineTuner import (
     SecondTestFineTuner,
@@ -14,6 +18,10 @@ from experiment.models.finetuning_benchmarks.SecondTestFineTuner import (
 
 class FinetuningBenchmarks:
     benchmarks = [
+        PetsFineTune,
+        CarsFineTune,
+        FlowersFineTune,
+        AircraftFineTune,
         CIFAR100KNNClassifier,
         CIFAR10KNNClassifier,
         CIFAR10FineTuner,
