@@ -3,17 +3,21 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 
-def calculate_mean_std(dataset, batch_size=128, num_workers=4):
+def calculate_mean_std(dataset, crop_size, batch_size=128, num_workers=4):
     """Calculate mean and std of a dataset"""
     # Create a loader with ToTensor transform
     temp_transform = transforms.Compose([
-        transforms.Resize((dataset.transform.transforms[0].size)),  # Use same size as final transform
+        transforms.Resize((crop_size, crop_size)),
         transforms.ToTensor(),
     ])
     
-    # Temporarily replace transform
-    original_transform = dataset.transform
-    dataset.transform = temp_transform
+    # Handle both Dataset and Subset cases
+    if hasattr(dataset, 'dataset'):  # If it's a Subset
+        original_transform = dataset.dataset.transform
+        dataset.dataset.transform = temp_transform
+    else:  # If it's a Dataset
+        original_transform = dataset.transform
+        dataset.transform = temp_transform
     
     loader = DataLoader(
         dataset,
@@ -48,4 +52,7 @@ def calculate_mean_std(dataset, batch_size=128, num_workers=4):
     
     finally:
         # Restore original transform
-        dataset.transform = original_transform
+        if hasattr(dataset, 'dataset'):
+            dataset.dataset.transform = original_transform
+        else:
+            dataset.transform = original_transform

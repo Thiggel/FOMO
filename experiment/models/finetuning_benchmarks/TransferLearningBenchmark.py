@@ -113,10 +113,10 @@ class TransferLearningBenchmark(L.LightningModule):
         
         # Initialize dataset with temporary transform
         self.transform = temp_transform
-        temp_dataset = self.get_datasets()[0]  # Get just the training dataset
+        train_dataset = self.get_datasets()[0]  # Get training dataset
         
         # Calculate mean and std
-        mean, std = calculate_mean_std(temp_dataset)
+        mean, std = calculate_mean_std(train_dataset, self.crop_size)
         
         # Create final transform
         final_transform = transforms.Compose([
