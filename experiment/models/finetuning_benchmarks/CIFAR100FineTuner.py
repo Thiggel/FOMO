@@ -1,6 +1,6 @@
 import os
 from torch import nn
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR100
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 import warnings
@@ -27,13 +27,18 @@ class CIFAR100FineTuner(TransferLearningBenchmark):
         base_path = os.getenv("BASE_CACHE_DIR")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dataset = CIFAR100(root=base_path + "/data", download=True, transform=self.transform)
+            dataset = CIFAR100(
+                root=base_path + "/data", download=True, transform=self.transform
+            )
 
         train_size = int(0.9 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
         test_dataset = CIFAR100(
-            root=base_path + "/data", train=False, download=True, transform=self.transform
+            root=base_path + "/data",
+            train=False,
+            download=True,
+            transform=self.transform,
         )
 
         return train_dataset, val_dataset, test_dataset
@@ -64,4 +69,3 @@ class CIFAR100FineTuner(TransferLearningBenchmark):
             num_workers=self.num_workers,
             persistent_workers=True,
         )
-
