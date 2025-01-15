@@ -343,10 +343,12 @@ class ImbalancedTraining:
             early_stop_callback = EarlyStopping(
                 monitor='val_loss',
                 patience=10,
-                mode='min'
+                mode='min',
+                verbose=True
             )
 
-            self.trainer_args["callbacks"] = [early_stop_callback]
+            if not 'KNN' in benchmark.__name__:
+                self.trainer_args["callbacks"] = [early_stop_callback]
 
             self.trainer_args["max_time"] = {
                 "minutes": 25,
