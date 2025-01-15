@@ -349,6 +349,8 @@ class ImbalancedTraining:
 
             if not 'KNN' in benchmark.__name__:
                 self.trainer_args["callbacks"] = [early_stop_callback]
+            else:
+                self.trainer_args["callbacks"] = []
 
             self.trainer_args["max_time"] = {
                 "minutes": 25,
