@@ -18,10 +18,10 @@ class CarsFineTune(TransferLearningBenchmark):
         **kwargs
     ):
         super().__init__(
-            model=model, lr=lr, transform=None, num_classes=196, *args, **kwargs
+            model=model, lr=lr, transform=transform, num_classes=196, *args, **kwargs
         )
+        self.get_transform()
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
-        self.transform = self.get_transform()
 
     def get_datasets(self):
         base_path = os.getenv("BASE_CACHE_DIR")
@@ -71,45 +71,3 @@ class CarsFineTune(TransferLearningBenchmark):
             persistent_workers=True,
         )
 
-    def calculate_normalization(self, crop_size):
-        temp_transform = transforms.Compose([
-            transforms.Resize((crop_size, crop_size)),
-            transforms.ToTensor(),
-        ])
-        
-        # Save original transform
-        original_transform = self.transform
-        self.transform = temp_transform
-        
-        loader = DataLoader(
-            self,
-            batch_size=128,
-            num_workers=4,
-            shuffle=False
-        )
-        
-        mean = 0.0
-        std = 0.0
-        total_images = 0
-        
-        # Calculate mean
-        for images, _ in tqdm(loader, desc="Calculating mean"):
-            batch_samples = images.size(0)
-            images = images.view(batch_samples, images.size(1), -1)
-            mean += images.mean(2).sum(0)
-            total_images += batch_samples
-        
-        mean /= total_images
-        
-        # Calculate std
-        for images, _ in tqdm(loader, desc="Calculating std"):
-            batch_samples = images.size(0)
-            images = images.view(batch_samples, images.size(1), -1)
-            std += ((images - mean.unsqueeze(1))**2).mean(2).sum(0)
-        
-        std = torch.sqrt(std / total_images)
-        
-        # Restore original transform
-        self.transform = original_transform
-        
-        return mean.tolist(), std.tolist()
