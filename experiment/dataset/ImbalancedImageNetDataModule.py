@@ -59,6 +59,10 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             self.test_dataset,
         ) = self._split_dataset(self.dataset, splits)
 
+        # Initialize storage for original indices
+        self.original_train_indices = None
+        self.added_sample_indices = []
+
     def _split_dataset(
         self,
         dataset: Dataset,
@@ -148,14 +152,37 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
         return data, stacked_labels
 
-    def add_n_samples_by_index(self, n):
-        # get all the indices currently not in use
-        unused_indices = list(
-            set(range(len(self.dataset))) - set(self.train_dataset.indices)
-        )
+    def add_samples_by_index(self, indices_to_add: list[int]) -> None:
+        """
+        Add specific samples from the original dataset back into the training set.
 
-        # randomly sample n indices from the unused indices
-        new_indices = random.sample(unused_indices, min(n, len(unused_indices)))
+        Args:
+            indices_to_add (list[int]): List of indices from the original dataset to add back
+        """
+        if self.original_train_indices is None:
+            # Store original indices first time this is called
+            self.original_train_indices = self.train_dataset.indices.copy()
 
-        # add the new indices to the indices list
-        self.train_dataset.indices.extend(new_indices)
+        # Get current training indices
+        current_indices = list(self.train_dataset.indices)
+
+        # Add new indices
+        new_indices = current_indices + indices_to_add
+
+        # Create new Subset with updated indices
+        self.train_dataset = Subset(self.train_dataset.dataset, new_indices)
+
+        # Store which samples we've added
+        self.added_sample_indices.extend(indices_to_add)
+
+        print(f"Dataset size after adding samples: {len(self.train_dataset)}")
+        print(f"Total samples added so far: {len(self.added_sample_indices)}")
+
+    def get_added_samples(self) -> list[int]:
+        """
+        Get list of indices that have been added back to the dataset.
+
+        Returns:
+            list[int]: List of added sample indices
+        """
+        return self.added_sample_indices
