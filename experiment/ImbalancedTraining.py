@@ -216,7 +216,7 @@ class ImbalancedTraining:
             self.added_indices.update(new_indices)
 
             # Add the selected indices to the dataset
-            self.datamodule.add_samples_by_index(new_indices)
+            self.datamodule.add_n_samples_by_index(new_indices)
 
             print(f"Added {len(new_indices)} samples back to the training set")
             return
