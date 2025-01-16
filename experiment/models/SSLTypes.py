@@ -9,7 +9,6 @@ from experiment.dataset.MultiCropTransformation import MultiCropTransformation
 from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.Dino import Dino
 from experiment.models.SSLMethods.Supervised import Supervised
-from experiment.models.SSLMethods.TestSSLMethod import TestSSLMethod
 from experiment.utils.collate_functions import simclr_collate, dino_collate
 
 from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
