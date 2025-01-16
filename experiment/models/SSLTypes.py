@@ -11,7 +11,6 @@ from experiment.models.SSLMethods.Dino import Dino
 from experiment.models.SSLMethods.Supervised import Supervised
 from experiment.utils.collate_functions import simclr_collate, dino_collate
 
-from experiment.models.SSLMethods.masks.multiblock import MaskCollator as MBMaskCollator
 from experiment.dataset.transforms import make_transforms
 
 
@@ -25,7 +24,6 @@ class SSLType:
         return self.module(*args, **kwargs)
 
 
-# TODO I dont understand how this all works very well, so please check if the lambda thing to initialize jepa transforms and collate are correct.
 class SSLTypes(Enum):
     @staticmethod
     def ssl_types():
