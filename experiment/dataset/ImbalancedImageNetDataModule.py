@@ -1,7 +1,7 @@
 import lightning.pytorch as L
 import torch
 from torch import Tensor
-from torch.utils.data import random_split, DataLoader, Dataset
+from torch.utils.data import random_split, DataLoader, Dataset, Subset
 from typing import Callable
 from experiment.dataset.ImageNetVariants import ImageNetVariants
 from experiment.dataset.ImbalancedImageNet import DummyImageNet, ImbalancedImageNet

@@ -10,10 +10,6 @@ from experiment.models.finetuning_benchmarks.PetsFineTune import PetsFineTune
 from experiment.models.finetuning_benchmarks.CarsFineTune import CarsFineTune
 from experiment.models.finetuning_benchmarks.FlowersFineTune import FlowersFineTune
 from experiment.models.finetuning_benchmarks.AircraftFineTune import AircraftFineTune
-from experiment.models.finetuning_benchmarks.TestFineTuner import TestFineTuner
-from experiment.models.finetuning_benchmarks.SecondTestFineTuner import (
-    SecondTestFineTuner,
-)
 
 
 class FinetuningBenchmarks:
@@ -30,7 +26,7 @@ class FinetuningBenchmarks:
         SecondTestFineTuner,
     ]
 
-    test_benchmarks = [TestFineTuner, SecondTestFineTuner]
+    test_benchmarks = []
 
     @staticmethod
     def get_benchmarks(benchmark_names: list[str]):
