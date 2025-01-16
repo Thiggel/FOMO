@@ -8,7 +8,6 @@ from experiment.dataset.ContrastiveTransformations import ContrastiveTransformat
 from experiment.dataset.MultiCropTransformation import MultiCropTransformation
 from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.Dino import Dino
-from experiment.models.SSLMethods.IJepa import IJepa
 from experiment.models.SSLMethods.Supervised import Supervised
 from experiment.models.SSLMethods.TestSSLMethod import TestSSLMethod
 from experiment.utils.collate_functions import simclr_collate, dino_collate
@@ -104,47 +103,6 @@ class SSLTypes(Enum):
                     ]
                 ),
                 collate_fn=lambda _: None,
-            ),
-            "I-Jepa": SSLType(
-                module=lambda model, lr, temperature, weight_decay, max_epochs, parserargs, iterations_per_epoch, *args, **kwargs: IJepa(
-                    model=model,
-                    lr=lr,
-                    args=parserargs,
-                    weight_decay=weight_decay,
-                    max_epochs=max_epochs,
-                    iterations_per_epoch=iterations_per_epoch,
-                    *args,
-                    **kwargs
-                ),
-                collate_fn=lambda parserargs: MBMaskCollator(
-                    input_size=parserargs.crop_size,
-                    patch_size=parserargs.patch_size,
-                    pred_mask_scale=parserargs.pred_mask_scale,
-                    enc_mask_scale=parserargs.enc_mask_scale,
-                    aspect_ratio=parserargs.aspect_ratio,
-                    nenc=parserargs.num_enc_masks,
-                    npred=parserargs.num_pred_masks,
-                    allow_overlap=parserargs.allow_overlap,
-                    min_keep=parserargs.min_keep,
-                ),
-                transforms=lambda parserargs: make_transforms(
-                    crop_size=parserargs.crop_size,
-                    crop_scale=parserargs.crop_scale,
-                    gaussian_blur=parserargs.use_gaussian_blur,
-                    horizontal_flip=parserargs.use_horizontal_flip,
-                    color_distortion=parserargs.use_color_distortion,
-                    color_jitter=parserargs.color_jitter_strength,
-                ),
-            ),
-            "TestSSLMethod": SSLType(
-                module=lambda *args, **kwargs: TestSSLMethod(),
-                transforms=lambda *args, **kwargs: transforms.Compose(
-                    [
-                        transforms.Resize((30, 30)),
-                        transforms.ToTensor(),
-                    ]
-                ),
-                collate_fn=lambda *args, **kwargs: None,
             ),
         }
 
