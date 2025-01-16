@@ -2,6 +2,7 @@ import sys
 import io
 from tqdm import tqdm
 import torch
+import numpy as np
 from torch.utils.data import Subset, random_split, Dataset
 from lightning.pytorch.strategies import DeepSpeedStrategy
 import lightning.pytorch as L
@@ -335,19 +336,19 @@ class ImbalancedTraining:
 
             # dataloader is already handled fine here because each loop should set the past loader to None.
             finetuner = benchmark(
-                model=self.ssl_method.model, lr=self.args.lr, transform=transform, crop_size=self.args.crop_size
+                model=self.ssl_method.model,
+                lr=self.args.lr,
+                transform=transform,
+                crop_size=self.args.crop_size,
             )
 
             self.trainer_args["max_epochs"] = finetuner.max_epochs
 
             early_stop_callback = EarlyStopping(
-                monitor='val_loss',
-                patience=10,
-                mode='min',
-                verbose=True
+                monitor="val_loss", patience=10, mode="min", verbose=True
             )
 
-            if not 'KNN' in benchmark.__name__:
+            if not "KNN" in benchmark.__name__:
                 self.trainer_args["callbacks"] = [early_stop_callback]
             else:
                 self.trainer_args["callbacks"] = []
