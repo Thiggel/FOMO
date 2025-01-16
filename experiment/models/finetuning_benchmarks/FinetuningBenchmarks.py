@@ -22,8 +22,6 @@ class FinetuningBenchmarks:
         PetsFineTune,
         CIFAR10KNNClassifier,
         CIFAR100FineTuner,
-        TestFineTuner,
-        SecondTestFineTuner,
     ]
 
     test_benchmarks = []
