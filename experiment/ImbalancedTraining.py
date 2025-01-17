@@ -134,107 +134,124 @@ class ImbalancedTraining:
         2. assess OOD samples
         3. generate new data for OOD samples or add back removed data
         """
-        cycle_trainer_args = self.trainer_args.copy()
+        try:
+            cycle_trainer_args = self.trainer_args.copy()
 
-        # Ensure strategy is properly configured for each cycle
-        if torch.cuda.is_available():
-            strategy = DeepSpeedStrategy(
-                config={
-                    "train_batch_size": self.args.batch_size
-                    * self.args.grad_acc_steps
-                    * torch.cuda.device_count(),
-                    "bf16": {"enabled": True},
-                    "zero_optimization": {
-                        "stage": 2,
-                        "offload_optimizer": {"device": "cpu", "pin_memory": True},
-                        "offload_param": {"device": "cpu", "pin_memory": True},
-                    },
-                }
+            # Ensure strategy is properly configured for each cycle
+            if torch.cuda.is_available():
+                strategy = DeepSpeedStrategy(
+                    config={
+                        "train_batch_size": self.args.batch_size
+                        * self.args.grad_acc_steps
+                        * torch.cuda.device_count(),
+                        "bf16": {"enabled": True},
+                        "zero_optimization": {
+                            "stage": 2,
+                            "offload_optimizer": {"device": "cpu", "pin_memory": True},
+                            "offload_param": {"device": "cpu", "pin_memory": True},
+                        },
+                    }
+                )
+                cycle_trainer_args["strategy"] = strategy
+                cycle_trainer_args["accelerator"] = "cuda"
+                cycle_trainer_args["devices"] = "auto"
+
+            trainer = L.Trainer(**cycle_trainer_args)
+            trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
+
+            if not self.args.ood_augmentation:
+                return
+
+            ssl_transform = copy.deepcopy(
+                self.datamodule.train_dataset.dataset.transform
             )
-            cycle_trainer_args["strategy"] = strategy
-            cycle_trainer_args["accelerator"] = "cuda"
-            cycle_trainer_args["devices"] = "auto"
+            self.datamodule.train_dataset.dataset.transform = self.transform
 
-        trainer = L.Trainer(**cycle_trainer_args)
-        trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
+            train_dataset = Subset(
+                self.datamodule.train_dataset, list(range(self.initial_train_ds_size))
+            )
+
+            num_ood_test = int(self.ood_test_split * len(train_dataset))
+            num_ood_train = len(train_dataset) - num_ood_test
+            ood_train_dataset, ood_test_dataset = random_split(
+                train_dataset, [num_ood_train, num_ood_test]
+            )
+
+            indices_to_be_augmented = (
+                self.get_ood_indices(ood_train_dataset, ood_test_dataset, cycle_idx)
+                if self.args.use_ood
+                else self.get_random_indices(ood_train_dataset)
+            )
+
+            if self.args.remove_diffusion:
+                # Get the class distribution of OOD points
+                ood_class_dist = self.get_ood_classes(
+                    indices_to_be_augmented, ood_train_dataset
+                )
+
+                # Calculate number of samples to generate per class
+                num_samples_per_class = {
+                    cls: int(count * self.args.pct_ood * self.ood_test_split)
+                    for cls, count in ood_class_dist.items()
+                }
+
+                new_indices = []
+                # First try to sample from each OOD class
+                for cls, num_samples in num_samples_per_class.items():
+                    class_indices = self.sample_from_class(
+                        train_dataset, cls, self.added_indices, num_samples
+                    )
+                    new_indices.extend(class_indices)
+
+                # If we still need more samples, sample uniformly
+                total_samples_needed = int(
+                    self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size
+                )
+                if len(new_indices) < total_samples_needed:
+                    additional_indices = self.sample_uniformly(
+                        total_samples_needed - len(new_indices)
+                    )
+                    new_indices.extend(additional_indices)
+
+                # Update the set of added indices
+                self.added_indices.update(new_indices)
+
+                # Add the selected indices to the dataset
+                self.datamodule.add_samples_by_index(new_indices)
+
+                print(f"Added {len(new_indices)} samples back to the training set")
+            else:
+                # Original diffusion-based augmentation code
+                ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
+                diffusion_pipe = self.initialize_model(
+                    "cuda" if torch.cuda.is_available() else "cpu"
+                )
+                self.generate_new_data(
+                    ood_samples,
+                    pipe=diffusion_pipe,
+                    batch_size=self.args.sd_batch_size,
+                    save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
+                )
+
+            # Reset transforms
+            self.datamodule.train_dataset.dataset.transform = ssl_transform
+
+        finally:
+            # Clean up resources
+            self._cleanup_cycle_resources(trainer)
+
+    def _cleanup_cycle_resources(self, trainer):
+        """Clean up resources after each cycle."""
+        # Clear DataLoaders
         self.datamodule.set_dataloaders_none()
 
-        if not self.args.ood_augmentation:
-            return
+        # Clean up trainer
+        if hasattr(trainer, "strategy") and hasattr(trainer.strategy, "cleanup"):
+            trainer.strategy.cleanup()
 
-        ssl_transform = copy.deepcopy(self.datamodule.train_dataset.dataset.transform)
-        self.datamodule.train_dataset.dataset.transform = self.transform
-
-        train_dataset = Subset(
-            self.datamodule.train_dataset, list(range(self.initial_train_ds_size))
-        )
-
-        num_ood_test = int(self.ood_test_split * len(train_dataset))
-        num_ood_train = len(train_dataset) - num_ood_test
-        ood_train_dataset, ood_test_dataset = random_split(
-            train_dataset, [num_ood_train, num_ood_test]
-        )
-
-        # Get OOD indices using the existing method
-        indices_to_be_augmented = (
-            self.get_ood_indices(ood_train_dataset, ood_test_dataset, cycle_idx)
-            if self.args.use_ood
-            else self.get_random_indices(ood_train_dataset)
-        )
-
-        if self.args.remove_diffusion:
-            # Get the class distribution of OOD points
-            ood_class_dist = self.get_ood_classes(
-                indices_to_be_augmented, ood_train_dataset
-            )
-
-            # Calculate number of samples to generate per class
-            num_samples_per_class = {
-                cls: int(count * self.args.pct_ood * self.ood_test_split)
-                for cls, count in ood_class_dist.items()
-            }
-
-            new_indices = []
-            # First try to sample from each OOD class
-            for cls, num_samples in num_samples_per_class.items():
-                class_indices = self.sample_from_class(
-                    train_dataset, cls, self.added_indices, num_samples
-                )
-                new_indices.extend(class_indices)
-
-            # If we still need more samples, sample uniformly
-            total_samples_needed = int(
-                self.args.pct_ood * self.ood_test_split * self.initial_train_ds_size
-            )
-            if len(new_indices) < total_samples_needed:
-                additional_indices = self.sample_uniformly(
-                    total_samples_needed - len(new_indices)
-                )
-                new_indices.extend(additional_indices)
-
-            # Update the set of added indices
-            self.added_indices.update(new_indices)
-
-            # Add the selected indices to the dataset
-            self.datamodule.add_samples_by_index(new_indices)
-
-            print(f"Added {len(new_indices)} samples back to the training set")
-            return
-
-        # Original diffusion-based augmentation code
-        ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
-        if cycle_idx < self.max_cycles - 1:
-            self.datamodule.train_dataset.dataset.transform = None
-            diffusion_pipe = self.initialize_model(
-                "cuda" if torch.cuda.is_available() else "cpu"
-            )
-            self.generate_new_data(
-                ood_samples,
-                pipe=diffusion_pipe,
-                batch_size=self.args.sd_batch_size,
-                save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
-            )
-            self.datamodule.train_dataset.dataset.transform = ssl_transform
+        # Force release CUDA memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def get_num_samples_to_generate(self) -> int:
         return int(
