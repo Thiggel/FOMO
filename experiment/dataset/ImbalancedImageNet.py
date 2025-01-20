@@ -186,7 +186,7 @@ class ImbalancedImageNet(Dataset):
         self._save_indices_to_pickle(selected_indices_list)
 
         remaining = len(selected_indices_list) / labels.size(0)
-        print("Portion of dataset remaining: ", remaining)
+        print("\n--- Portion of dataset remaining: ", remaining, "\n ---")
 
         return selected_indices_list
 

@@ -59,7 +59,9 @@ class SSLTypes(Enum):
                             transforms.RandomGrayscale(p=0.2),
                             transforms.GaussianBlur(kernel_size=9),
                             transforms.ToTensor(),
-                            transforms.Normalize((0.5,), (0.5,)),
+                            transforms.Normalize(
+                                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                            ),
                         ]
                     ),
                     n_views=2,
@@ -96,7 +98,9 @@ class SSLTypes(Enum):
                     [
                         transforms.Resize((parserargs.crop_size, parserargs.crop_size)),
                         transforms.ToTensor(),
-                        transforms.Normalize((0.5,), (0.5,)),
+                        transforms.Normalize(
+                            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                        ),
                     ]
                 ),
                 collate_fn=lambda _: None,

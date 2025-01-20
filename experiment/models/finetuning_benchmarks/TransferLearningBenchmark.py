@@ -2,8 +2,8 @@ import lightning.pytorch as L
 from torch import nn, optim
 from torchvision import transforms
 import torch
+import os
 from experiment.utils.get_num_workers import get_num_workers
-from experiment.utils.calculate_mean_std import calculate_mean_std
 
 
 class TransferLearningBenchmark(L.LightningModule):
@@ -24,7 +24,8 @@ class TransferLearningBenchmark(L.LightningModule):
         self.use_deepspeed = True
         self.max_epochs = max_epochs
         self.batch_size = batch_size
-        self.transform = transform
+        self.base_transform = transform  # Store original transform
+        self.transform = None  # Will be set in setup
         self.crop_size = crop_size
         self.save_hyperparameters(ignore=["model"])
 
@@ -35,6 +36,11 @@ class TransferLearningBenchmark(L.LightningModule):
         self.num_features = self.model.num_features
         self.probe = nn.Linear(self.num_features, num_classes)
         self.loss = nn.CrossEntropyLoss()
+
+    def setup(self, stage=None):
+        """Setup runs on every GPU."""
+        if stage == "fit" or stage is None:
+            self.transform = self._get_transform()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
@@ -104,25 +110,41 @@ class TransferLearningBenchmark(L.LightningModule):
         self.log(f"{dataset_name}_test_accuracy", accuracy, sync_dist=True)
         return loss
 
-    def get_transform(self):
-        # Create initial dataset with basic transform
-        temp_transform = transforms.Compose([
-            transforms.Resize((self.crop_size, self.crop_size)),
-            transforms.ToTensor(),
-        ])
-        
-        # Initialize dataset with temporary transform
-        self.transform = temp_transform
-        train_dataset = self.get_datasets()[0]  # Get training dataset
-        
-        # Calculate mean and std
-        mean, std = calculate_mean_std(train_dataset, self.crop_size)
-        
-        # Create final transform
-        final_transform = transforms.Compose([
-            transforms.Resize((self.crop_size, self.crop_size)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std),
-        ])
-        
-        return final_transform
+    def get_transform(self) -> transforms.Compose:
+        """Get dataset-specific transforms with proper normalization."""
+        # Get training dataset
+        train_dataset = self.get_datasets()[0]
+
+        # Calculate stats
+        cache_dir = os.path.join(
+            os.environ.get("BASE_CACHE_DIR", "./"), "dataset_stats"
+        )
+        dataset_name = self.__class__.__name__.lower()
+
+        # Create transform chain
+        train_transform = transforms.Compose(
+            [
+                # Resize with proper interpolation
+                transforms.Resize(
+                    (self.crop_size, self.crop_size),
+                    interpolation=transforms.InterpolationMode.BICUBIC,
+                ),
+                # Data augmentation for training
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply(
+                    [transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8
+                ),
+                transforms.RandomGrayscale(p=0.2),
+                # Convert to tensor and normalize
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+        return train_transform
+
+    def get_datasets(self):
+        """Must be implemented by subclasses."""
+        raise NotImplementedError
