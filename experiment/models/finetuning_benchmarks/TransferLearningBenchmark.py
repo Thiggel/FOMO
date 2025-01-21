@@ -40,7 +40,7 @@ class TransferLearningBenchmark(L.LightningModule):
     def setup(self, stage=None):
         """Setup runs on every GPU."""
         if stage == "fit" or stage is None:
-            self.transform = self._get_transform()
+            self.transform = self.get_transform()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():

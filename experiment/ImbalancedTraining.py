@@ -280,23 +280,37 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         return ood_indices
 
-    def save_class_dist(self, dataset: Dataset, filename="class_distribution") -> None:
+    def save_class_distribution(self, cycle_idx: int) -> None:
         """
-        Visualize the class distribution of the dataset.
+        GPU-optimized version to save the number of samples per class for current cycle.
         """
-        class_distribution = [0] * self.datamodule.dataset.num_classes
+        loader = torch.utils.data.DataLoader(
+            self.datamodule.train_dataset,
+            batch_size=512,  # Large batch size for GPU efficiency
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=True,
+        )
 
-        for index in tqdm(range(len(dataset)), desc="Calculating class distribution"):
-            class_distribution[dataset[index][1]] += 1
+        # Process in batches on GPU
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        class_counts = torch.zeros(self.datamodule.dataset.num_classes, device=device)
 
-        with open(filename + ".pkl", "wb") as f:
-            pickle.dump(class_distribution, f)
+        with torch.no_grad():
+            for _, labels in tqdm(
+                loader, desc=f"Counting samples for cycle {cycle_idx}"
+            ):
+                labels = labels.to(device)
+                # Use torch.bincount for efficient counting
+                counts = torch.bincount(
+                    labels, minlength=self.datamodule.dataset.num_classes
+                )
+                class_counts += counts
 
-        plt.bar(range(self.datamodule.dataset.num_classes), class_distribution)
-        plt.xlabel("Class Index")
-        plt.ylabel("Number of Samples")
-        plt.savefig(filename + ".pdf", format="pdf")
-        plt.close()
+        # Save distribution
+        save_path = f"{os.environ['BASE_CACHE_DIR']}/class_distributions/{self.checkpoint_filename}"
+        os.makedirs(save_path, exist_ok=True)
+        torch.save(class_counts.cpu(), f"{save_path}/dist_cycle_{cycle_idx}.pt")
 
     def pretrain_imbalanced(
         self,
@@ -312,10 +326,8 @@ class ImbalancedTraining:
         )
         os.makedirs(visualization_dir, exist_ok=True)
 
-        if self.save_class_distribution:
-            self.save_class_dist(
-                self.datamodule.train_dataset, f"{visualization_dir}/initial_class_dist"
-            )
+        if cycle_idx < self.max_cycles - 1:
+            self.save_class_distribution(cycle_idx)
 
         for cycle_idx in range(self.max_cycles):
             print(f"Run {self.run_idx + 1}/{self.args.num_runs}")
