@@ -50,6 +50,7 @@ class CIFAR100FineTuner(TransferLearningBenchmark):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -59,6 +60,7 @@ class CIFAR100FineTuner(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -68,4 +70,5 @@ class CIFAR100FineTuner(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )

@@ -110,6 +110,9 @@ class TransferLearningBenchmark(L.LightningModule):
         self.log(f"{dataset_name}_test_accuracy", accuracy, sync_dist=True)
         return loss
 
+    def collate_fn(self, batch):
+        return torch.stack([self.transform(img) for img in batch])
+
     def get_transform(self) -> transforms.Compose:
         """Get dataset-specific transforms with proper normalization."""
         # Get training dataset

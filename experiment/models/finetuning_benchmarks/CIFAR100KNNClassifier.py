@@ -9,11 +9,17 @@ class CIFAR100KNNClassifier(BaseKNNClassifier):
         base_path = os.getenv("BASE_CACHE_DIR")
         if stage == "fit" or stage is None:
             self.train_dataset = CIFAR100(
-                root=base_path + "/data", train=True, download=True, transform=self.transform
+                root=base_path + "/data",
+                train=True,
+                download=True,
+                transform=self.transform,
             )
         if stage == "test" or stage is None:
             self.test_dataset = CIFAR100(
-                root=base_path + "/data", train=False, download=True, transform=self.transform
+                root=base_path + "/data",
+                train=False,
+                download=True,
+                transform=self.transform,
             )
 
     def train_dataloader(self) -> DataLoader:
@@ -24,6 +30,7 @@ class CIFAR100KNNClassifier(BaseKNNClassifier):
             num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
+            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -34,4 +41,5 @@ class CIFAR100KNNClassifier(BaseKNNClassifier):
             num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
+            collate_fn=self.collate_fn,
         )

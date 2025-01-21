@@ -108,13 +108,22 @@ class AircraftFineTune(TransferLearningBenchmark):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             train_dataset = FGVCAircraft(
-                root=base_path + "/data", split="train", download=True, transform=self.transform
+                root=base_path + "/data",
+                split="train",
+                download=True,
+                transform=self.transform,
             )
             val_dataset = FGVCAircraft(
-                root=base_path + "/data", split="val", download=True, transform=self.transform
+                root=base_path + "/data",
+                split="val",
+                download=True,
+                transform=self.transform,
             )
             test_dataset = FGVCAircraft(
-                root=base_path + "/data", split="test", download=True, transform=self.transform
+                root=base_path + "/data",
+                split="test",
+                download=True,
+                transform=self.transform,
             )
 
         return train_dataset, val_dataset, test_dataset
@@ -126,6 +135,7 @@ class AircraftFineTune(TransferLearningBenchmark):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -135,6 +145,7 @@ class AircraftFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -144,5 +155,5 @@ class AircraftFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
-

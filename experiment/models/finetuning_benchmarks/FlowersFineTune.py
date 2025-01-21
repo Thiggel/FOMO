@@ -23,12 +23,13 @@ class FlowersFineTune(TransferLearningBenchmark):
         self.get_transform()
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
-
     def get_datasets(self):
         base_dir = os.getenv("BASE_CACHE_DIR")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dataset = Flowers102(root=base_dir + "/data", download=True, transform=self.transform)
+            dataset = Flowers102(
+                root=base_dir + "/data", download=True, transform=self.transform
+            )
 
         train_size = int(
             0.7 * len(dataset)
@@ -40,7 +41,7 @@ class FlowersFineTune(TransferLearningBenchmark):
             dataset, [train_size, val_size, test_size]
         )
         return train_dataset, val_dataset, test_dataset
- 
+
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self.train_dataset,
@@ -48,6 +49,7 @@ class FlowersFineTune(TransferLearningBenchmark):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -57,6 +59,7 @@ class FlowersFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -66,5 +69,5 @@ class FlowersFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
-

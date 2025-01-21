@@ -8,6 +8,7 @@ from PIL import Image
 import scipy.io as sio
 from .TransferLearningBenchmark import TransferLearningBenchmark
 
+
 class CarsFineTune(TransferLearningBenchmark):
     def __init__(
         self,
@@ -28,14 +29,10 @@ class CarsFineTune(TransferLearningBenchmark):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             train_dataset = StanfordCars(
-                root=base_path,
-                download=False,
-                transform=self.transform
+                root=base_path, download=False, transform=self.transform
             )
             test_dataset = StanfordCars(
-                root=base_path,
-                download=False,
-                transform=self.transform
+                root=base_path, download=False, transform=self.transform
             )
 
         # Split train into train/val
@@ -51,6 +48,7 @@ class CarsFineTune(TransferLearningBenchmark):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -60,6 +58,7 @@ class CarsFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -69,5 +68,5 @@ class CarsFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
+            collate_fn=self.collate_fn,
         )
-
