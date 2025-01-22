@@ -23,7 +23,7 @@ class BaseKNNClassifier(L.LightningModule):
         self.use_deepspeed = False
         self.max_epochs = 1
         self.save_hyperparameters(ignore=["model"])
-        self.transform = transform if transform is not None else self.get_transform()
+        self.transform = self.get_transform()
         self.model = model
         self.batch_size = batch_size
         self.k = k
