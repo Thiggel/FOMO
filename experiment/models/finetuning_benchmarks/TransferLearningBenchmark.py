@@ -16,7 +16,6 @@ class TransferLearningBenchmark(L.LightningModule):
         weight_decay: float = 1e-3,
         max_epochs: int = 500,
         num_classes: int = None,
-        crop_size: int = 224,
         *args,
         **kwargs,
     ):
@@ -25,8 +24,7 @@ class TransferLearningBenchmark(L.LightningModule):
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.base_transform = transform  # Store original transform
-        self.transform = None  # Will be set in setup
-        self.crop_size = crop_size
+        self.transform = transform
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
@@ -123,32 +121,6 @@ class TransferLearningBenchmark(L.LightningModule):
         else:
             # Images only
             return torch.stack([self.transform(img) for img in batch])
-
-    def get_transform(self) -> transforms.Compose:
-        """Get dataset-specific transforms with proper normalization."""
-        # Create transform chain
-        train_transform = transforms.Compose(
-            [
-                # Resize with proper interpolation
-                transforms.Resize(
-                    (self.crop_size, self.crop_size),
-                    interpolation=transforms.InterpolationMode.BICUBIC,
-                ),
-                transforms.ToTensor(),
-                # Data augmentation for training
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomApply(
-                    [transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8
-                ),
-                transforms.RandomGrayscale(p=0.2),
-                # Convert to tensor and normalize
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
-        )
-
-        return train_transform
 
     def get_datasets(self):
         """Must be implemented by subclasses."""

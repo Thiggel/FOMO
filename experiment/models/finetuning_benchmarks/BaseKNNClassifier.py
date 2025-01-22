@@ -23,31 +23,12 @@ class BaseKNNClassifier(L.LightningModule):
         self.use_deepspeed = False
         self.max_epochs = 1
         self.save_hyperparameters(ignore=["model"])
-        self.transform = self.get_transform()
+        self.transform = transform
         self.model = model
         self.batch_size = batch_size
         self.k = k
         self.knn = None
         self.linear = nn.Linear(1, 2)  # Dummy linear layer to satisfy PyTorch Lightning
-
-    def get_transform(self) -> transforms.Compose:
-        """Get dataset-specific transforms with proper normalization."""
-        # Create transform chain
-        train_transform = transforms.Compose(
-            [
-                # Resize with proper interpolation
-                transforms.Resize(
-                    (self.crop_size, self.crop_size),
-                    interpolation=transforms.InterpolationMode.BICUBIC,
-                ),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-                transforms.ToTensor(),
-            ]
-        )
-
-        return train_transform
 
     def collate_fn(self, batch):
         if not batch:
