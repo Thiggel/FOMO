@@ -57,7 +57,18 @@ class BaseKNNClassifier(L.LightningModule):
         return train_transform
 
     def collate_fn(self, batch):
-        return torch.stack([self.transform(img) for img in batch])
+        if not batch:
+            return None
+
+        if isinstance(batch[0], tuple):
+            # Handle (image, label) pairs
+            images, labels = zip(*batch)
+            images = torch.stack([self.transform(img) for img in images])
+            labels = torch.tensor(labels)
+            return images, labels
+        else:
+            # Images only
+            return torch.stack([self.transform(img) for img in batch])
 
     @property
     def num_workers(self) -> int:
