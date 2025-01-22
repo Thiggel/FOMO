@@ -31,7 +31,6 @@ class CIFAR10KNNClassifier(BaseKNNClassifier):
             num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
-            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -42,5 +41,4 @@ class CIFAR10KNNClassifier(BaseKNNClassifier):
             num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
-            collate_fn=self.collate_fn,
         )

@@ -6,6 +6,10 @@ from .BaseKNNClassifier import BaseKNNClassifier
 
 class CIFAR100KNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
+        print(self.transform)
+        for t in self.transform.transforms:
+            print(t)
+        exit()
         base_path = os.getenv("BASE_CACHE_DIR")
         if stage == "fit" or stage is None:
             self.train_dataset = CIFAR100(
@@ -30,7 +34,6 @@ class CIFAR100KNNClassifier(BaseKNNClassifier):
             num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
-            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -41,5 +44,4 @@ class CIFAR100KNNClassifier(BaseKNNClassifier):
             num_workers=self.num_workers,
             persistent_workers=True,
             multiprocessing_context="spawn",
-            collate_fn=self.collate_fn,
         )
