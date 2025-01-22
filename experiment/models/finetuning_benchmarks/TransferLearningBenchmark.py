@@ -134,6 +134,7 @@ class TransferLearningBenchmark(L.LightningModule):
                     (self.crop_size, self.crop_size),
                     interpolation=transforms.InterpolationMode.BICUBIC,
                 ),
+                transforms.ToTensor(),
                 # Data augmentation for training
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomApply(
@@ -141,7 +142,6 @@ class TransferLearningBenchmark(L.LightningModule):
                 ),
                 transforms.RandomGrayscale(p=0.2),
                 # Convert to tensor and normalize
-                transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
                 ),
