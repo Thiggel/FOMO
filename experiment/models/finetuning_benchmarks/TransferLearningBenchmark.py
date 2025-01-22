@@ -115,15 +115,6 @@ class TransferLearningBenchmark(L.LightningModule):
 
     def get_transform(self) -> transforms.Compose:
         """Get dataset-specific transforms with proper normalization."""
-        # Get training dataset
-        train_dataset = self.get_datasets()[0]
-
-        # Calculate stats
-        cache_dir = os.path.join(
-            os.environ.get("BASE_CACHE_DIR", "./"), "dataset_stats"
-        )
-        dataset_name = self.__class__.__name__.lower()
-
         # Create transform chain
         train_transform = transforms.Compose(
             [

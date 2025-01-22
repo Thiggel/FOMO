@@ -23,12 +23,41 @@ class BaseKNNClassifier(L.LightningModule):
         self.use_deepspeed = False
         self.max_epochs = 1
         self.save_hyperparameters(ignore=["model"])
-        self.transform = transform
+        self.transform = transform if transform is not None else self.get_transform()
         self.model = model
         self.batch_size = batch_size
         self.k = k
         self.knn = None
         self.linear = nn.Linear(1, 2)  # Dummy linear layer to satisfy PyTorch Lightning
+
+    def get_transform(self) -> transforms.Compose:
+        """Get dataset-specific transforms with proper normalization."""
+        # Create transform chain
+        train_transform = transforms.Compose(
+            [
+                # Resize with proper interpolation
+                transforms.Resize(
+                    (self.crop_size, self.crop_size),
+                    interpolation=transforms.InterpolationMode.BICUBIC,
+                ),
+                # Data augmentation for training
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply(
+                    [transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8
+                ),
+                transforms.RandomGrayscale(p=0.2),
+                # Convert to tensor and normalize
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+        return train_transform
+
+    def collate_fn(self, batch):
+        return torch.stack([self.transform(img) for img in batch])
 
     @property
     def num_workers(self) -> int:
