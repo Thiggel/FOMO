@@ -35,11 +35,6 @@ class TransferLearningBenchmark(L.LightningModule):
         self.probe = nn.Linear(self.num_features, num_classes)
         self.loss = nn.CrossEntropyLoss()
 
-    def setup(self, stage=None):
-        """Setup runs on every GPU."""
-        if stage == "fit" or stage is None:
-            self.transform = self.get_transform()
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
             features = self.model.extract_features(x)

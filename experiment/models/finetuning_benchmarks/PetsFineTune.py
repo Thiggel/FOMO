@@ -21,7 +21,6 @@ class PetsFineTune(TransferLearningBenchmark):
             model=model, lr=lr, transform=transform, num_classes=37, *args, **kwargs
         )
 
-        self.get_transform()
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
@@ -48,7 +47,6 @@ class PetsFineTune(TransferLearningBenchmark):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -58,7 +56,6 @@ class PetsFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
-            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -68,5 +65,4 @@ class PetsFineTune(TransferLearningBenchmark):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
-            collate_fn=self.collate_fn,
         )
