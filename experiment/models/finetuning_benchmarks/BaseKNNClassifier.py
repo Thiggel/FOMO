@@ -34,13 +34,18 @@ class BaseKNNClassifier(L.LightningModule):
         if not batch:
             return None
 
+        print(batch)
+        exit()
+
         if isinstance(batch[0], tuple):
+            print(type(batch[0]))
             # Handle (image, label) pairs
             images, labels = zip(*batch)
             images = torch.stack([self.transform(img) for img in images])
             labels = torch.tensor(labels)
             return images, labels
         else:
+            print("no labels", type(batch[0]))
             # Images only
             return torch.stack([self.transform(img) for img in batch])
 
