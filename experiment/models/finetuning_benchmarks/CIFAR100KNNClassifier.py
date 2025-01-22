@@ -7,9 +7,6 @@ from .BaseKNNClassifier import BaseKNNClassifier
 class CIFAR100KNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
         print(self.transform)
-        for t in self.transform.transforms:
-            print(t)
-        exit()
         base_path = os.getenv("BASE_CACHE_DIR")
         if stage == "fit" or stage is None:
             self.train_dataset = CIFAR100(
