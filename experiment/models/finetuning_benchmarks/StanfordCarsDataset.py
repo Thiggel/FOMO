@@ -54,4 +54,4 @@ class StanfordCarsDataset(Dataset):
             image = self.transform(image)
 
         # Always return a label even if -1
-        return image, label
+        return image, label - 1
