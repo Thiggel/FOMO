@@ -11,14 +11,14 @@ class CarsKNNClassifier(BaseKNNClassifier):
 
         if stage == "fit" or stage is None:
             self.train_dataset = StanfordCarsDataset(
-                root=base_path + "/cars_train",
+                root_dir=base_path + "/cars_train",
                 annotations_file=base_path + "/devkit/cars_train_annos.mat",
                 transform=self.transform,
             )
 
         if stage == "test" or stage is None:
             self.test_dataset = StanfordCarsDataset(
-                root=base_path + "/cars_test",
+                root_dir=base_path + "/cars_test",
                 annotations_file=base_path + "/devkit/cars_test_annos.mat",
                 transform=self.transform,
             )
