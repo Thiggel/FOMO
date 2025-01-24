@@ -53,5 +53,7 @@ class StanfordCarsDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
+        print("Label: ", label)
+
         # Always return a label even if -1
         return image, label
