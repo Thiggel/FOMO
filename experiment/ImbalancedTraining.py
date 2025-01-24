@@ -312,9 +312,7 @@ class ImbalancedTraining:
         os.makedirs(save_path, exist_ok=True)
         torch.save(class_counts.cpu(), f"{save_path}/dist_cycle_{cycle_idx}.pt")
 
-    def pretrain_imbalanced(
-        self,
-    ) -> None:
+    def pretrain_imbalanced(self, cycle_idx: int) -> None:
         """
         1. Fit for n_epochs_per_cycle epochs,
         2. Use validation set to determine OOD samples
