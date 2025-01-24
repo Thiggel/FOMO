@@ -19,13 +19,14 @@ class StanfordCarsDataset(Dataset):
         if annotations_file:
             self.annotations_file = sio.loadmat(annotations_file)
             print(self.annotations_file.keys())
+            print(self.annotations_file["__header__"])
             self.annotations = self.annotations_file["annotations"][
                 0
             ]  # Load annotations
             print(self.annotations)
             if test:
                 self.filename_to_label = {
-                    ann[4][0]: int(ann[0][0][0]) for ann in self.annotations
+                    ann[4][1]: int(ann[0][0][0]) for ann in self.annotations
                 }  # Assign -1 to all test images
             else:
                 self.filename_to_label = {
