@@ -25,6 +25,7 @@ class CarsKNNClassifier(BaseKNNClassifier):
                 int(0.8 * len(base_dataset)),
                 len(base_dataset) - int(0.8 * len(base_dataset)),
             ],
+            generator=generator,
         )
 
     def train_dataloader(self) -> DataLoader:
