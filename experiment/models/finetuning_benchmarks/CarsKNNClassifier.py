@@ -1,5 +1,5 @@
 import os
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import StanfordCars
 from .BaseKNNClassifier import BaseKNNClassifier
 from .StanfordCarsDataset import StanfordCarsDataset
