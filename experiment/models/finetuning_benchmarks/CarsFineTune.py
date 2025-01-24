@@ -7,6 +7,7 @@ import warnings
 from PIL import Image
 import scipy.io as sio
 from .TransferLearningBenchmark import TransferLearningBenchmark
+from .StanfordCarsDataset import StanfordCarsDataset
 
 
 class CarsFineTune(TransferLearningBenchmark):
@@ -27,11 +28,15 @@ class CarsFineTune(TransferLearningBenchmark):
         base_path = os.getenv("BASE_CACHE_DIR")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            train_dataset = StanfordCars(
-                root=base_path, download=False, transform=self.transform
+            train_dataset = StanfordCarsDataset(
+                root_dir=base_path + "/cars_train",
+                annotations_file=base_path + "/devkit/cars_train_annos.mat",
+                transform=self.transform,
             )
-            test_dataset = StanfordCars(
-                root=base_path, download=False, transform=self.transform
+            test_dataset = StanfordCarsDataset(
+                root_dir=base_path + "/cars_test",
+                annotations_file=base_path + "/devkit/cars_test_annos.mat",
+                transform=self.transform,
             )
 
         # Split train into train/val

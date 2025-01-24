@@ -19,6 +19,8 @@ class StanfordCarsDataset(Dataset):
             self.annotations = sio.loadmat(annotations_file)["annotations"][
                 0
             ]  # Load annotations
+            print(self.annotations)
+            exit()
             if test:
                 self.filename_to_label = {
                     ann[4][0]: -1 for ann in self.annotations
