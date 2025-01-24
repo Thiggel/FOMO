@@ -15,6 +15,7 @@ class StanfordCarsDataset(Dataset):
             if filename.endswith(".jpg")
         ]
 
+        print(annotations_file)
         if annotations_file:
             self.annotations = sio.loadmat(annotations_file)["annotations"][
                 0
@@ -26,7 +27,7 @@ class StanfordCarsDataset(Dataset):
                 }  # Assign -1 to all test images
             else:
                 self.filename_to_label = {
-                    ann[5][0]: int(ann[4][0][0]) for ann in self.annotations
+                    ann[-1][0]: int(ann[-2][0][0]) for ann in self.annotations
                 }  # Create mapping
         else:
             self.filename_to_label = (
