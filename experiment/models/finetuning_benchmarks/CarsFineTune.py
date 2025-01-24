@@ -1,5 +1,6 @@
 import os
 from torch.utils.data import DataLoader, random_split, Dataset
+import torch
 from torch import nn
 from torchvision import transforms
 from torchvision.datasets import StanfordCars
