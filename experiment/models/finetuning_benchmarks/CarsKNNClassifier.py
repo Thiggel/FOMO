@@ -15,6 +15,10 @@ class CarsKNNClassifier(BaseKNNClassifier):
             transform=self.transform,
         )
 
+        # always get the same train and test sets
+        # because train and test is loaded independentl
+        # and otherwise there is leakage
+        generator = torch.Generator().manual_seed(42)
         self.train_dataset, self.test_dataset = random_split(
             base_dataset,
             [
