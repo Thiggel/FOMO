@@ -25,7 +25,7 @@ class CarsFineTune(TransferLearningBenchmark):
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
-        base_path = os.getenv("BASE_CACHE_DIR")
+        base_path = os.getenv("BASE_CACHE_DIR") + "/stanford_cars"
         base_dataset = StanfordCarsDataset(
             root_dir=base_path + "/cars_train",
             annotations_file=base_path + "/devkit/cars_train_annos.mat",
