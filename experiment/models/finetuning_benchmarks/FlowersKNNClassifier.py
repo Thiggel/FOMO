@@ -1,23 +1,23 @@
 import os
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100
+from torchvision.datasets import Flowers102
 from .BaseKNNClassifier import BaseKNNClassifier
 
 
-class CIFAR100KNNClassifier(BaseKNNClassifier):
+class FlowersKNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
         base_path = os.getenv("BASE_CACHE_DIR")
         if stage == "fit" or stage is None:
-            self.train_dataset = CIFAR100(
+            self.train_dataset = Flowers102(
                 root=base_path + "/data",
-                train=True,
+                split="train",
                 download=True,
                 transform=self.transform,
             )
         if stage == "test" or stage is None:
-            self.test_dataset = CIFAR100(
+            self.test_dataset = Flowers102(
                 root=base_path + "/data",
-                train=False,
+                split="test",
                 download=True,
                 transform=self.transform,
             )

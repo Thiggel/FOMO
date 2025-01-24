@@ -10,10 +10,22 @@ from experiment.models.finetuning_benchmarks.PetsFineTune import PetsFineTune
 from experiment.models.finetuning_benchmarks.CarsFineTune import CarsFineTune
 from experiment.models.finetuning_benchmarks.FlowersFineTune import FlowersFineTune
 from experiment.models.finetuning_benchmarks.AircraftFineTune import AircraftFineTune
+from experiment.models.finetuning_benchmarks.PetsKNNClassifier import PetsKNNClassifier
+from experiment.models.finetuning_benchmarks.AircraftKNNClassifier import (
+    AircraftKNNClassifier,
+)
+from experiment.models.finetuning_benchmarks.CarsKNNClassifier import CarsKNNClassifier
+from experiment.models.finetuning_benchmarks.FlowersKNNClassifier import (
+    FlowersKNNClassifier,
+)
 
 
 class FinetuningBenchmarks:
     benchmarks = [
+        CarsKNNClassifier,
+        AircraftKNNClassifier,
+        FlowersKNNClassifier,
+        PetsKNNClassifier,
         CIFAR100KNNClassifier,
         CIFAR10FineTuner,
         AircraftFineTune,
