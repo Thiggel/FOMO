@@ -9,20 +9,19 @@ class CarsKNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
         base_path = os.getenv("BASE_CACHE_DIR") + "/stanford_cars"
 
-        if stage == "fit" or stage is None:
-            self.train_dataset = StanfordCarsDataset(
-                root_dir=base_path + "/cars_train",
-                annotations_file=base_path + "/devkit/cars_train_annos.mat",
-                transform=self.transform,
-            )
+        base_dataset = StanfordCarsDataset(
+            root_dir=base_path + "/cars_train",
+            annotations_file=base_path + "/devkit/cars_train_annos.mat",
+            transform=self.transform,
+        )
 
-        if stage == "test" or stage is None:
-            self.test_dataset = StanfordCarsDataset(
-                root_dir=base_path + "/cars_test",
-                annotations_file=base_path + "/devkit/cars_test_annos.mat",
-                transform=self.transform,
-                test=True,
-            )
+        self.train_dataset, self.test_dataset = random_split(
+            base_dataset,
+            [
+                int(0.8 * len(base_dataset)),
+                len(base_dataset) - int(0.8 * len(base_dataset)),
+            ],
+        )
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
