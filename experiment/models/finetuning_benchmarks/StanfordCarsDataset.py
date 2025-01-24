@@ -15,15 +15,11 @@ class StanfordCarsDataset(Dataset):
             if filename.endswith(".jpg")
         ]
 
-        print(annotations_file)
         if annotations_file:
             self.annotations_file = sio.loadmat(annotations_file)
-            print(self.annotations_file.keys())
-            print(self.annotations_file["__globals__"])
             self.annotations = self.annotations_file["annotations"][
                 0
             ]  # Load annotations
-            print(self.annotations)
             if test:
                 self.filename_to_label = {
                     ann[4][0]: int(ann[0][0][0]) for ann in self.annotations
@@ -50,10 +46,12 @@ class StanfordCarsDataset(Dataset):
             filename, -1
         )  # Use -1 as default label if not in the annotations
 
+        if label == -1:
+            print("No label found for image: ", filename, ". Skipping...")
+            return self.__getitem__(idx + 1)
+
         if self.transform:
             image = self.transform(image)
-
-        print("Label: ", label)
 
         # Always return a label even if -1
         return image, label
