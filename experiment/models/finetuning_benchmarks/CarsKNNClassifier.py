@@ -2,18 +2,25 @@ import os
 from torch.utils.data import DataLoader
 from torchvision.datasets import StanfordCars
 from .BaseKNNClassifier import BaseKNNClassifier
+from .StanfordCarsDataset import StanfordCarsDataset
 
 
 class CarsKNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
-        base_path = os.getenv("BASE_CACHE_DIR")
+        base_path = os.getenv("BASE_CACHE_DIR") + "/stanford_cars"
+
         if stage == "fit" or stage is None:
-            self.train_dataset = StanfordCars(
-                root=base_path, split="train", download=False, transform=self.transform
+            self.train_dataset = StanfordCarsDataset(
+                root=base_path + "/cars_train",
+                annotations_file=base_path + "/devkit/cars_train_annos.mat",
+                transform=self.transform,
             )
+
         if stage == "test" or stage is None:
-            self.test_dataset = StanfordCars(
-                root=base_path, split="test", download=False, transform=self.transform
+            self.test_dataset = StanfordCarsDataset(
+                root=base_path + "/cars_test",
+                annotations_file=base_path + "/devkit/cars_test_annos.mat",
+                transform=self.transform,
             )
 
     def train_dataloader(self) -> DataLoader:
