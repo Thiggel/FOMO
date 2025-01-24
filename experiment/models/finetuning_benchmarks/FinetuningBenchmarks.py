@@ -22,6 +22,7 @@ from experiment.models.finetuning_benchmarks.FlowersKNNClassifier import (
 
 class FinetuningBenchmarks:
     benchmarks = [
+        CarsFineTune,
         CarsKNNClassifier,
         AircraftKNNClassifier,
         FlowersKNNClassifier,
@@ -30,7 +31,6 @@ class FinetuningBenchmarks:
         CIFAR10FineTuner,
         AircraftFineTune,
         FlowersFineTune,
-        CarsFineTune,
         PetsFineTune,
         CIFAR10KNNClassifier,
         CIFAR100FineTuner,

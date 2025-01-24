@@ -26,23 +26,25 @@ class CarsFineTune(TransferLearningBenchmark):
 
     def get_datasets(self):
         base_path = os.getenv("BASE_CACHE_DIR")
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            train_dataset = StanfordCarsDataset(
-                root_dir=base_path + "/cars_train",
-                annotations_file=base_path + "/devkit/cars_train_annos.mat",
-                transform=self.transform,
-            )
-            test_dataset = StanfordCarsDataset(
-                root_dir=base_path + "/cars_test",
-                annotations_file=base_path + "/devkit/cars_test_annos.mat",
-                transform=self.transform,
-            )
+        base_dataset = StanfordCarsDataset(
+            root_dir=base_path + "/cars_train",
+            annotations_file=base_path + "/devkit/cars_train_annos.mat",
+            transform=self.transform,
+        )
 
-        # Split train into train/val
-        train_size = int(0.9 * len(train_dataset))
-        val_size = len(train_dataset) - train_size
-        train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
+        # always get the same train and test sets
+        # because train and test is loaded independentl
+        # and otherwise there is leakage
+        generator = torch.Generator().manual_seed(42)
+        train_dataset, val_dataset, test_dataset = random_split(
+            base_dataset,
+            [
+                int(0.8 * len(base_dataset)),
+                int(0.1 * len(base_dataset)),
+                len(base_dataset) - int(0.9 * len(base_dataset)),
+            ],
+            generator=generator,
+        )
         return train_dataset, val_dataset, test_dataset
 
     def train_dataloader(self) -> DataLoader:
