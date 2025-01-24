@@ -23,11 +23,11 @@ class StanfordCarsDataset(Dataset):
             print(self.annotations)
             if test:
                 self.filename_to_label = {
-                    ann[4][0]: -1 for ann in self.annotations
+                    ann[4][0]: int(ann[1][0][0]) for ann in self.annotations
                 }  # Assign -1 to all test images
             else:
                 self.filename_to_label = {
-                    ann[-1][0]: int(ann[-2][0][0]) for ann in self.annotations
+                    ann[5][0]: int(ann[4][0][0]) for ann in self.annotations
                 }  # Create mapping
         else:
             self.filename_to_label = (

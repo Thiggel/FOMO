@@ -21,6 +21,7 @@ class CarsKNNClassifier(BaseKNNClassifier):
                 root_dir=base_path + "/cars_test",
                 annotations_file=base_path + "/devkit/cars_test_annos.mat",
                 transform=self.transform,
+                test=True,
             )
 
     def train_dataloader(self) -> DataLoader:
