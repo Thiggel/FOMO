@@ -7,6 +7,6 @@ python -m experiment \
 	--imbalance-method no_imbalance \
 	--max-cycles 1 \
 	--n-epochs-per-cycle 100 \
-  --batch-size 4096 \
+  --batch-size 1024 \
   --experiment-name "Baseline_ResNet50_SimCLR_Balanced_ImageNet1k"
 
