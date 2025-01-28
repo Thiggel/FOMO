@@ -106,7 +106,7 @@ class OOD:
             all_scores.append(batch_scores)
 
         # Combine scores from all batches
-        scores_ood = torch.cat(all_scores)
+        scores_ood = torch.cat(all_scores).float()
 
         # Compute threshold and OOD indices
         threshold = torch.quantile(scores_ood, 1 - self.pct_ood)
