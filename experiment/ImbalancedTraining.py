@@ -427,8 +427,21 @@ class ImbalancedTraining:
     def generate_new_data(
         self, ood_samples, pipe, save_subfolder, batch_size=4, nr_to_gen=1
     ) -> None:
-        cycle_idx = int(save_subfolder.split("/")[-1])  # Extract cycle index from path
+        """
+        Generate new data using the diffusion model.
+        """
+        cycle_idx = int(save_subfolder.split("/")[-1])
         image_storage = ImageStorage(self.args.additional_data_path)
+
+        # Create a simple transform for denormalization
+        denorm = transforms.Compose(
+            [
+                transforms.Normalize(
+                    mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+                    std=[1 / 0.229, 1 / 0.224, 1 / 0.225],
+                ),
+            ]
+        )
 
         k = 0
         for b_start in tqdm(
@@ -437,13 +450,17 @@ class ImbalancedTraining:
             old_stdout = sys.stdout
             sys.stdout = io.StringIO()
 
+            # Get and denormalize batch
             batch = [
                 ood_samples[i + b_start][0]
                 for i in range(min(len(ood_samples) - b_start, batch_size))
             ]
+            batch = [denorm(img) for img in batch]
+
+            # Generate images
             v_imgs = pipe(batch, num_images_per_prompt=nr_to_gen).images
 
-            # Save batch of images
+            # Save batch
             image_storage.save_batch(v_imgs, cycle_idx, k)
             k += len(v_imgs)
 
