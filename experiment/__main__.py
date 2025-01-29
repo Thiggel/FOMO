@@ -38,6 +38,54 @@ from experiment.ImbalancedTraining import ImbalancedTraining
 
 mp.set_start_method("spawn")
 torch.multiprocessing.set_sharing_strategy("file_system")
+import os
+import shutil
+import torch.multiprocessing as mp
+from pathlib import Path
+
+
+def cleanup_torch_shm():
+    """Clean up PyTorch shared memory files that might be left over from previous crashes."""
+    try:
+        # Get the shared memory directory
+        shm_dir = Path("/dev/shm")
+
+        # Look for torch_* files and remove them
+        if shm_dir.exists():
+            for file in shm_dir.glob("torch_*"):
+                try:
+                    if file.is_file():
+                        file.unlink()
+                    elif file.is_dir():
+                        shutil.rmtree(file)
+                except Exception as e:
+                    print(f"Warning: Could not remove {file}: {e}")
+
+        # Additional cleanup for torch shared memory
+        torch_shm_dir = Path("/tmp/torch_extensions")
+        if torch_shm_dir.exists():
+            try:
+                shutil.rmtree(torch_shm_dir)
+            except Exception as e:
+                print(f"Warning: Could not remove torch extensions directory: {e}")
+
+    except Exception as e:
+        print(f"Warning: Shared memory cleanup failed: {e}")
+
+
+def init_process():
+    """Initialize multiprocessing settings"""
+    # Set start method
+    try:
+        mp.set_start_method("spawn")
+    except RuntimeError:
+        pass  # Already set
+
+    # Set sharing strategy
+    torch.multiprocessing.set_sharing_strategy("file_system")
+
+    # Clean up any leftover shared memory
+    cleanup_torch_shm()
 
 
 def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
@@ -263,6 +311,8 @@ def run_different_seeds(args: Namespace) -> dict:
 
 
 def main():
+    init_process()
+
     load_dotenv()
     login(token=os.getenv("HUGGINGFACE_TOKEN"))
 

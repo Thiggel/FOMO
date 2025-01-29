@@ -11,8 +11,45 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
 )
 from torchvision import transforms
 import random
+import os
+from lightning.pytorch import LightningDataModule
+from torch.utils.data import DataLoader
+import torch.multiprocessing as mp
 
 from experiment.utils.get_num_workers import get_num_workers
+
+
+def worker_init_fn(worker_id):
+    """Initialize workers with appropriate settings"""
+    worker_info = torch.utils.data.get_worker_info()
+    if worker_info is not None:
+        # Set worker specific random seed
+        torch.manual_seed(worker_info.seed)
+        # Ensure each worker has its own CUDA stream
+        if torch.cuda.is_available():
+            torch.cuda.set_device(torch.cuda.current_device())
+
+
+class SafeDataLoader(DataLoader):
+    """DataLoader with additional safety checks and cleanup"""
+
+    def __init__(self, *args, **kwargs):
+        if "persistent_workers" in kwargs and kwargs["num_workers"] == 0:
+            kwargs["persistent_workers"] = False
+        super().__init__(*args, **kwargs)
+
+    def __iter__(self):
+        try:
+            return super().__iter__()
+        except RuntimeError as e:
+            if "torch_shm_manager" in str(e):
+                print("Handling shared memory error...")
+                # Attempt cleanup and retry
+                if hasattr(self, "_iterator"):
+                    del self._iterator
+                torch.multiprocessing.set_sharing_strategy("file_system")
+                return super().__iter__()
+            raise
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
@@ -92,40 +129,52 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self._val_dataloader = None
         self._test_dataloader = None
 
-    def train_dataloader(self) -> DataLoader:
-        self._train_dataloader = DataLoader(
-            self.train_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            persistent_workers=False,
-            collate_fn=self.collate_fn,
-            drop_last=True,
-        )
+    def _create_dataloader(self, dataset, shuffle=False):
+        """Create a dataloader with proper error handling"""
+        try:
+            return SafeDataLoader(
+                dataset,
+                batch_size=self.batch_size,
+                shuffle=shuffle,
+                num_workers=self.num_workers,
+                persistent_workers=self.num_workers > 0,
+                worker_init_fn=worker_init_fn,
+                collate_fn=self.collate_fn,
+                pin_memory=True,
+                drop_last=True,
+            )
+        except Exception as e:
+            print(f"Error creating dataloader: {e}")
+            # Fallback to single worker
+            return SafeDataLoader(
+                dataset,
+                batch_size=self.batch_size,
+                shuffle=shuffle,
+                num_workers=0,
+                persistent_workers=False,
+                collate_fn=self.collate_fn,
+                pin_memory=True,
+                drop_last=True,
+            )
 
-        return self._train_dataloader
+    def train_dataloader(self):
+        return self._create_dataloader(self.train_dataset, shuffle=True)
 
-    def val_dataloader(self) -> DataLoader:
-        self._val_dataloader = DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            persistent_workers=False,
-            collate_fn=self.collate_fn,
-            drop_last=True,
-        )
-        return self._val_dataloader
+    def val_dataloader(self):
+        return self._create_dataloader(self.val_dataset, shuffle=False)
 
-    def test_dataloader(self) -> DataLoader:
-        self._test_dataloader = DataLoader(
-            self.test_dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            persistent_workers=False,
-            collate_fn=self.collate_fn,
-            drop_last=True,
-        )
-        return self._test_dataloader
+    def test_dataloader(self):
+        return self._create_dataloader(self.test_dataset, shuffle=False)
+
+    def teardown(self, stage=None):
+        """Clean up resources when done"""
+        if hasattr(self, "_train_dataloader"):
+            del self._train_dataloader
+        if hasattr(self, "_val_dataloader"):
+            del self._val_dataloader
+        if hasattr(self, "_test_dataloader"):
+            del self._test_dataloader
+        torch.cuda.empty_cache()
 
     def collate(self, batch: list) -> tuple[list[Tensor], Tensor]:
         num_images = len(batch[0][0])
