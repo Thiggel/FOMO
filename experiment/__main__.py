@@ -1,6 +1,12 @@
 from datetime import datetime
 from lightning.pytorch.strategies import DeepSpeedStrategy
 import os
+
+# Force these settings before any other imports or operations
+os.environ["PYTHONWARNINGS"] = "ignore"  # Suppress Python warnings
+os.environ["TORCH_USE_RTLD_GLOBAL"] = "YES"  # Force global loading of torch symbols
+torch.set_num_threads(1)  # Limit CPU threads per process
+
 from dotenv import load_dotenv
 import time
 import argparse
@@ -310,8 +316,25 @@ def run_different_seeds(args: Namespace) -> dict:
     return all_results
 
 
+def init_torch_process():
+    """Initialize process-specific torch settings"""
+    torch.set_num_threads(1)
+    if torch.cuda.is_available():
+        torch.cuda.set_device(torch.cuda.current_device())
+
+
 def main():
     init_process()
+    init_torch_process()
+
+    # Set multiprocessing method first
+    try:
+        mp.set_start_method("spawn", force=True)
+    except RuntimeError:
+        pass
+
+    # Set sharing strategy to file_system explicitly
+    torch.multiprocessing.set_sharing_strategy("file_system")
 
     load_dotenv()
     login(token=os.getenv("HUGGINGFACE_TOKEN"))
