@@ -3,6 +3,8 @@ import torch
 from lightning.pytorch.strategies import DeepSpeedStrategy
 import os
 
+os.environ["TMPDIR"] = os.environ["BASE_CACHE_DIR"] + "/tmp"
+
 # Force these settings before any other imports or operations
 os.environ["PYTHONWARNINGS"] = "ignore"  # Suppress Python warnings
 os.environ["TORCH_USE_RTLD_GLOBAL"] = "YES"  # Force global loading of torch symbols
