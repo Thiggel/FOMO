@@ -202,7 +202,6 @@ def run(
     last_epoch_checkpoint = ModelCheckpoint(
         dirpath=checkpoints_dir,
         filename=checkpoint_filename + "-last-epoch-{epoch}-{val_loss:.4f}",
-        save_last=True,  # Automatically saves the latest checkpoint
         save_top_k=0,  # Setting this to 0 disables saving based on a metric
     )
 
