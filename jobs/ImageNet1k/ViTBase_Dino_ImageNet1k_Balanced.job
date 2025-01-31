@@ -3,6 +3,8 @@
 #SBATCH --partition=performance
 #SBATCH --gpus=8
 #SBATCH --time=6-23
+#SBATCH --mem=20
+#SBATCH --cpus-per-task=12
 #SBATCH --job-name=Baseline-ViTBase-DINO-ImageNet1k-Balanced
 #SBATCH --output=job_logs/Baseline-ViTBase-DINO-ImageNet1k-Balanced-%A.out
 
