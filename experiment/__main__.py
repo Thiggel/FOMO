@@ -3,13 +3,6 @@ import torch
 from lightning.pytorch.strategies import DeepSpeedStrategy
 import os
 
-os.environ["TMPDIR"] = os.environ["BASE_CACHE_DIR"] + "/tmp"
-
-# Force these settings before any other imports or operations
-os.environ["PYTHONWARNINGS"] = "ignore"  # Suppress Python warnings
-os.environ["TORCH_USE_RTLD_GLOBAL"] = "YES"  # Force global loading of torch symbols
-torch.set_num_threads(1)  # Limit CPU threads per process
-
 from dotenv import load_dotenv
 import time
 import argparse
@@ -51,50 +44,6 @@ import os
 import shutil
 import torch.multiprocessing as mp
 from pathlib import Path
-
-
-def cleanup_torch_shm():
-    """Clean up PyTorch shared memory files that might be left over from previous crashes."""
-    try:
-        # Get the shared memory directory
-        shm_dir = Path("/dev/shm")
-
-        # Look for torch_* files and remove them
-        if shm_dir.exists():
-            for file in shm_dir.glob("torch_*"):
-                try:
-                    if file.is_file():
-                        file.unlink()
-                    elif file.is_dir():
-                        shutil.rmtree(file)
-                except Exception as e:
-                    print(f"Warning: Could not remove {file}: {e}")
-
-        # Additional cleanup for torch shared memory
-        torch_shm_dir = Path("/tmp/torch_extensions")
-        if torch_shm_dir.exists():
-            try:
-                shutil.rmtree(torch_shm_dir)
-            except Exception as e:
-                print(f"Warning: Could not remove torch extensions directory: {e}")
-
-    except Exception as e:
-        print(f"Warning: Shared memory cleanup failed: {e}")
-
-
-def init_process():
-    """Initialize multiprocessing settings"""
-    # Set start method
-    try:
-        mp.set_start_method("spawn")
-    except RuntimeError:
-        pass  # Already set
-
-    # Set sharing strategy
-    torch.multiprocessing.set_sharing_strategy("file_system")
-
-    # Clean up any leftover shared memory
-    cleanup_torch_shm()
 
 
 def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
@@ -318,25 +267,7 @@ def run_different_seeds(args: Namespace) -> dict:
     return all_results
 
 
-def init_torch_process():
-    """Initialize process-specific torch settings"""
-    torch.set_num_threads(1)
-    if torch.cuda.is_available():
-        torch.cuda.set_device(torch.cuda.current_device())
-
-
 def main():
-    init_process()
-    init_torch_process()
-
-    # Set multiprocessing method first
-    try:
-        mp.set_start_method("spawn", force=True)
-    except RuntimeError:
-        pass
-
-    # Set sharing strategy to file_system explicitly
-    torch.multiprocessing.set_sharing_strategy("file_system")
 
     load_dotenv()
     login(token=os.getenv("HUGGINGFACE_TOKEN"))

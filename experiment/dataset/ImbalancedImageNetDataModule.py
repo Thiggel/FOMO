@@ -11,46 +11,8 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
 )
 from torchvision import transforms
 import random
-import os
-import torch
-from lightning.pytorch import LightningDataModule
-from torch.utils.data import DataLoader
-import torch.multiprocessing as mp
 
 from experiment.utils.get_num_workers import get_num_workers
-
-
-def worker_init_fn(worker_id):
-    """Initialize workers with appropriate settings"""
-    worker_info = torch.utils.data.get_worker_info()
-    if worker_info is not None:
-        # Set worker specific random seed
-        torch.manual_seed(worker_info.seed)
-        # Ensure each worker has its own CUDA stream
-        if torch.cuda.is_available():
-            torch.cuda.set_device(torch.cuda.current_device())
-
-
-class SafeDataLoader(DataLoader):
-    """DataLoader with additional safety checks and cleanup"""
-
-    def __init__(self, *args, **kwargs):
-        if "persistent_workers" in kwargs and kwargs["num_workers"] == 0:
-            kwargs["persistent_workers"] = False
-        super().__init__(*args, **kwargs)
-
-    def __iter__(self):
-        try:
-            return super().__iter__()
-        except RuntimeError as e:
-            if "torch_shm_manager" in str(e):
-                print("Handling shared memory error...")
-                # Attempt cleanup and retry
-                if hasattr(self, "_iterator"):
-                    del self._iterator
-                torch.multiprocessing.set_sharing_strategy("file_system")
-                return super().__iter__()
-            raise
 
 
 class ImbalancedImageNetDataModule(L.LightningDataModule):
