@@ -10,7 +10,7 @@ cd $HOME/FOMO
 
 . jobs/environment.sh
 
-python -m experiment \
+srun python -m experiment \
 	--model_name ViTBase \
 	--imbalance_method no_imbalance \
   --ssl_method Dino \
