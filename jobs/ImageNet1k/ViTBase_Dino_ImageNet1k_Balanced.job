@@ -11,14 +11,15 @@ cd $HOME/FOMO
 . jobs/environment.sh
 
 srun python -m experiment \
-	--model_name ViTBase \
-	--imbalance_method no_imbalance \
-  --ssl_method Dino \
-	--max_cycles 1 \
-  --imagenet_variant 1k \
-	--n_epochs_per_cycle 300 \
-  --batch_size 64 \
-  --grad_acc_steps 2 \
-  --crop_size 224 \
-  --experiment_name "Baseline_ViTBase_Dino_ImageNet1k_Balanced"
+  --model-name ViTBase \
+  --imbalance-method no_imbalance \
+  --ssl-method Dino \
+  --max-cycles 1 \
+  --num-runs 3 \
+  --imagenet-variant 1k \
+  --n-epochs-per-cycle 300 \
+  --batch-size 64 \
+  --grad-acc-steps 2 \
+  --crop-size 224 \
+  --experiment-name "Baseline_ViTBase_Dino_ImageNet1k_Balanced"
 
