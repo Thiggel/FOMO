@@ -3,6 +3,7 @@
 #SBATCH --partition=performance
 #SBATCH --gres=gpu:rtx_6000_ada:8
 #SBATCH --nodelist=hipster-cn001
+#SBATCH --ntasks-per-node=8
 #SBATCH --time=6-23
 #SBATCH --mem=128G
 #SBATCH --cpus-per-task=32
