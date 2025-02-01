@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --partition=performance
-#SBATCH --gpus=8
+#SBATCH --gres=gpu:rtx_6000_ada:8
 #SBATCH --nodelist=hipster-cn001
 #SBATCH --time=6-23
 #SBATCH --mem=128G
