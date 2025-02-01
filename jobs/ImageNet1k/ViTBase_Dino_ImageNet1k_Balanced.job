@@ -4,8 +4,8 @@
 #SBATCH --gpus=8
 #SBATCH --nodelist=hipster-cn001
 #SBATCH --time=6-23
-#SBATCH --mem=770000
-#SBATCH --cpus-per-task=16
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=32
 #SBATCH --job-name=Baseline-ViTBase-DINO-ImageNet1k-Balanced
 #SBATCH --output=job_logs/Baseline-ViTBase-DINO-ImageNet1k-Balanced-%A.out
 
