@@ -197,7 +197,9 @@ class ImbalancedTraining:
 
                 new_indices = []
                 # First try to sample from each OOD class
-                for cls, num_samples in num_samples_per_class.items():
+                for cls, num_samples in tqdm(
+                    num_samples_per_class.items(), desc="Sampling from OOD classes"
+                ):
                     class_indices = self.sample_from_class(
                         train_dataset, cls, self.added_indices, num_samples
                     )
