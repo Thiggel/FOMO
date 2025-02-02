@@ -98,21 +98,29 @@ class ImbalancedTraining:
             class_counts[label] = class_counts.get(label, 0) + 1
         return class_counts
 
-    def sample_from_class(self, dataset, target_class, exclude_indices, num_samples):
-        """Sample indices from a specific class, excluding already added indices"""
-        available_indices = []
-        for idx in self.original_indices - self.added_indices:
-            if self.get_class_of_index(dataset, idx) == target_class:
-                available_indices.append(idx)
+    def get_class_indices_map(self, dataset):
+        """Efficiently create a mapping of class labels to their indices"""
+        class_to_indices = {}
+        dataloader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=1024,
+            num_workers=self.datamodule.num_workers,
+            pin_memory=True,
+        )
 
-        # If we don't have enough samples from the target class,
-        # return all available ones
-        if len(available_indices) <= num_samples:
-            return available_indices
+        available_indices = list(self.original_indices - self.added_indices)
+        for batch_idx, (_, labels) in enumerate(
+            tqdm(dataloader, desc="Creating class index map")
+        ):
+            for i, label in enumerate(labels):
+                idx = batch_idx * dataloader.batch_size + i
+                if idx in available_indices:
+                    label_int = label.item()
+                    if label_int not in class_to_indices:
+                        class_to_indices[label_int] = []
+                    class_to_indices[label_int].append(idx)
 
-        return np.random.choice(
-            available_indices, size=num_samples, replace=False
-        ).tolist()
+        return class_to_indices
 
     def sample_uniformly(self, num_samples):
         """Sample uniformly from remaining indices when class-based sampling is not possible"""
@@ -150,7 +158,7 @@ class ImbalancedTraining:
                             "offload_optimizer": {"device": "cpu", "pin_memory": True},
                             "offload_param": {"device": "cpu", "pin_memory": True},
                         },
-                    }
+                    },
                 )
                 cycle_trainer_args["strategy"] = strategy
                 cycle_trainer_args["accelerator"] = "cuda"
@@ -195,15 +203,24 @@ class ImbalancedTraining:
                     for cls, count in ood_class_dist.items()
                 }
 
+                # Get efficient mapping of classes to indices
+                class_to_indices = self.get_class_indices_map(train_dataset)
                 new_indices = []
-                # First try to sample from each OOD class
+
+                # Sample from each OOD class efficiently
                 for cls, num_samples in tqdm(
                     num_samples_per_class.items(), desc="Sampling from OOD classes"
                 ):
-                    class_indices = self.sample_from_class(
-                        train_dataset, cls, self.added_indices, num_samples
-                    )
-                    new_indices.extend(class_indices)
+                    if cls in class_to_indices:
+                        available_class_indices = class_to_indices[cls]
+                        sampled_count = min(num_samples, len(available_class_indices))
+                        if sampled_count > 0:
+                            sampled_indices = np.random.choice(
+                                available_class_indices,
+                                size=sampled_count,
+                                replace=False,
+                            ).tolist()
+                            new_indices.extend(sampled_indices)
 
                 # If we still need more samples, sample uniformly
                 total_samples_needed = int(
