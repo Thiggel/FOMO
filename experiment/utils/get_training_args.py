@@ -371,7 +371,9 @@ def get_training_args(get_defaults: bool = False) -> dict:
         dest="finetune",
         help="Skip finetuning",
     )
-    parser.add_argument("--use-ood", action="store_true", help="Use OOD detection")
+    parser.add_argument(
+        "--no-use-ood", action="store_false", dest="use_ood", help="Use OOD detection"
+    )
     parser.add_argument(
         "--remove-diffusion",
         action="store_true",
