@@ -32,7 +32,7 @@ class BaseKNNClassifier(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return min(6, get_num_workers() // 2)
+        return max(6, min(6, get_num_workers() // 2))
 
     def extract_features(self, dataloader):
         features = []
