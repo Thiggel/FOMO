@@ -1,10 +1,13 @@
 #!/bin/bash
 
-#SBATCH --partition=capacity
-#SBATCH --gres=gpu:4
+#SBATCH --partition=performance
+#SBATCH --gres=gpu:rtx_6000_ada:8
 #SBATCH --nodelist=hipster-cn001
-#SBATCH --ntasks-per-node=4
-#SBATCH --ntasks=4
+#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks=8
+#SBATCH --time=6-23
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=32
 #SBATCH --time=4:00:00
 #SBATCH --job-name=Baseline-ViTBase-DINO-ImageNet1k-Balanced-Eval
 #SBATCH --output=job_logs/Baseline-ViTBase-DINO-ImageNet1k-Balanced-Eval-%A.out
