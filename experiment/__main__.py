@@ -146,6 +146,7 @@ def run(
 
         print("Missing keys:", missing)
         print("Unexpected keys:", unexpected)
+        exit()
 
     checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
 
