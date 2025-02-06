@@ -142,6 +142,15 @@ def run(
 
             state_dict = new_state_dict
 
+        if sum(["module" in key for key in state_dict.keys()]):
+            # Create a new state dict with renamed keys
+            new_state_dict = {}
+            for key in state_dict.keys():
+                new_key = key.replace("module", "model.resnet")
+                new_state_dict[new_key] = state_dict[key]
+
+            state_dict = new_state_dict
+
         missing, unexpected = ssl_type.load_state_dict(state_dict, strict=False)
 
         print("Missing keys:", missing)
