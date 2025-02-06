@@ -8,6 +8,7 @@ from experiment.dataset.ContrastiveTransformations import ContrastiveTransformat
 from experiment.dataset.MultiCropTransformation import MultiCropTransformation
 from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.Dino import Dino
+from experiment.models.SSLMethods.MoCo import MoCo, moco_transform
 from experiment.models.SSLMethods.Supervised import Supervised
 from experiment.utils.collate_functions import simclr_collate, dino_collate
 
@@ -67,6 +68,21 @@ class SSLTypes(Enum):
                     n_views=2,
                 ),
                 collate_fn=lambda parserargs: simclr_collate,
+            ),
+            "MoCo": SSLType(
+                module=lambda model, lr, temperature, weight_decay, max_epochs, *args, **kwargs: MoCo(
+                    model=model,
+                    lr=lr,
+                    temperature=temperature,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    *args,
+                    **kwargs
+                ),
+                transforms=lambda parserargs: moco_transform(
+                    crop_size=parserargs.crop_size
+                ),
+                collate_fn=lambda parserargs: simclr_collate,  # MoCo can use the same collate function as SimCLR
             ),
             "Dino": SSLType(
                 module=lambda model, lr, weight_decay, max_epochs, *args, **kwargs: Dino(
