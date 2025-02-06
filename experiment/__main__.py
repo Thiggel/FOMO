@@ -132,7 +132,6 @@ def run(
         state_dict = (
             checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
         )
-        print(state_dict.keys())
         # is backbone inside any key string?
         if sum(["backbone" in key for key in state_dict.keys()]):
             # Create a new state dict with renamed keys
@@ -143,7 +142,10 @@ def run(
 
             state_dict = new_state_dict
 
-        ssl_type.load_state_dict(state_dict, strict=False)
+        missing, unexpected = ssl_type.load_state_dict(state_dict, strict=False)
+
+        print("Missing keys:", missing)
+        print("Unexpected keys:", unexpected)
 
     checkpoints_dir = os.environ["BASE_CACHE_DIR"] + "/checkpoints"
 
