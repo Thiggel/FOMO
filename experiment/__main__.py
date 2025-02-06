@@ -132,6 +132,7 @@ def run(
         state_dict = (
             checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
         )
+        print(state_dict.keys())
         # is backbone inside any key string?
         if sum(["backbone" in key for key in state_dict.keys()]):
             # Create a new state dict with renamed keys
