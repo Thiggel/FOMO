@@ -8,7 +8,7 @@ python -m experiment \
   --num-runs 1 \
   --imagenet-variant 1k \
   --pct-ood 0.15 \
-  --num-cycles 5 \
+  --num-cycles 15 \
 	--n-epochs-per-cycle 20 \
   --batch-size 128 \
   --grad-acc-steps 32 \
