@@ -9,4 +9,6 @@ srun python -m experiment \
 	--pct-ood 0.15 \
 	--crop-size 224 \
   --ssl-method Dino \
+  --batch_size 335 \
+  --grad-acc-steps 4 \
   --experiment-name "NewMethod_ViTSmall_SimCLR_Imbalanced"
