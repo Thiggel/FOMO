@@ -146,7 +146,7 @@ def run(
             # Create a new state dict with renamed keys
             new_state_dict = {}
             for key in state_dict.keys():
-                new_key = key.replace("module", "model.resnet")
+                new_key = key.replace("module", "model.resnet").replace("fc.fc1", "fc")
                 new_state_dict[new_key] = state_dict[key]
 
             state_dict = new_state_dict
