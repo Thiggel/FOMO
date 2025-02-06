@@ -2,7 +2,7 @@
 
 #SBATCH --partition=performance
 #SBATCH --gres=gpu:rtx_6000_ada:8
-#SBATCH --nodelist=hipster-cn001
+#SBATCH --nodelist=hipster-cn002
 #SBATCH --ntasks-per-node=8
 #SBATCH --ntasks=8
 #SBATCH --time=6-23
