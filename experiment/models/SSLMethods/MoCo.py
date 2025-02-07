@@ -141,16 +141,24 @@ class MoCo(L.LightningModule):
         print(f"Batch size: {batch_size}")
         print(f"Feature dimension: {feat_dim}")
         print(f"Queue pointer: {ptr}")
-        print(f"Target slice shape: {self.queue[:, ptr:ptr + batch_size].shape}")
 
-        # Replace the keys at ptr (dequeue and enqueue)
-        try:
+        # Handle wrap-around case
+        if ptr + batch_size > self.hparams.K:
+            # Split the batch
+            first_part_size = self.hparams.K - ptr
+            second_part_size = batch_size - first_part_size
+
+            # Write first part at the end
+            self.queue[:, ptr:] = keys.T[:, :first_part_size]
+            # Write second part at the beginning
+            self.queue[:, :second_part_size] = keys.T[:, first_part_size:]
+        else:
+            # Normal case - no wrap around needed
             self.queue[:, ptr : ptr + batch_size] = keys.T
-            ptr = (ptr + batch_size) % self.hparams.K  # Move pointer
-            self.queue_ptr[0] = ptr
-        except RuntimeError as e:
-            print(f"Error during queue update: {str(e)}")
-            raise
+
+        # Update pointer
+        ptr = (ptr + batch_size) % self.hparams.K
+        self.queue_ptr[0] = ptr
 
     def forward(self, im_q, im_k):
         """Forward computation during training"""
