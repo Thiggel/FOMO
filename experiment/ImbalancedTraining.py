@@ -387,7 +387,11 @@ class ImbalancedTraining:
             self.trainer_args["max_epochs"] = finetuner.max_epochs
 
             early_stop_callback = EarlyStopping(
-                monitor="val_loss", patience=10, mode="min", verbose=True
+                monitor="val_loss",
+                patience=3,
+                mode="min",
+                verbose=True,
+                min_delta=0.0001,
             )
 
             if not "KNN" in benchmark.__name__:
