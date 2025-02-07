@@ -76,8 +76,6 @@ class MoCo(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
-        print(f"Initializing MoCo with dim={dim}, K={K}")
-
         # Create encoder Q (online network)
         self.encoder_q = model
 
@@ -89,7 +87,6 @@ class MoCo(L.LightningModule):
             dummy_input = torch.randn(1, 3, 224, 224)
             out = model(dummy_input)
             dim_mlp = out.shape[1]
-            print(f"Model output dimension: {dim_mlp}")
 
         # Add MLP projection head if specified (as in MoCo v2)
         if mlp:
@@ -103,8 +100,6 @@ class MoCo(L.LightningModule):
             self.encoder_q.fc = nn.Linear(dim_mlp, dim)
             self.encoder_k.fc = nn.Linear(dim_mlp, dim)
 
-        print(f"Projection head output dimension: {dim}")
-
         # Initialize momentum encoder
         for param_q, param_k in zip(
             self.encoder_q.parameters(), self.encoder_k.parameters()
@@ -116,7 +111,6 @@ class MoCo(L.LightningModule):
         self.register_buffer("queue", torch.randn(dim, K))
         self.queue = F.normalize(self.queue, dim=0)
         self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
-        print(f"Queue shape: {self.queue.shape}")
 
     @torch.no_grad()
     def _momentum_update_key_encoder(self):
@@ -133,14 +127,6 @@ class MoCo(L.LightningModule):
         batch_size = keys.shape[0]
         feat_dim = keys.shape[1]
         ptr = int(self.queue_ptr)
-
-        print(f"\nQueue operation debug:")
-        print(f"Queue shape: {self.queue.shape}")
-        print(f"Keys shape: {keys.shape}")
-        print(f"Keys.T shape: {keys.T.shape}")
-        print(f"Batch size: {batch_size}")
-        print(f"Feature dimension: {feat_dim}")
-        print(f"Queue pointer: {ptr}")
 
         # Handle wrap-around case
         if ptr + batch_size > self.hparams.K:
@@ -162,33 +148,22 @@ class MoCo(L.LightningModule):
 
     def forward(self, im_q, im_k):
         """Forward computation during training"""
-        # Print input shapes
-        print(f"\nForward pass shapes:")
-        print(f"Query input shape: {im_q.shape}")
-        print(f"Key input shape: {im_k.shape}")
-
         # Compute query features
         q = self.encoder_q(im_q)  # queries: NxC
         q = F.normalize(q, dim=1)
-        print(f"Query features shape: {q.shape}")
 
         # Compute key features
         with torch.no_grad():  # no gradient to keys
             self._momentum_update_key_encoder()  # update the key encoder
             k = self.encoder_k(im_k)  # keys: NxC
             k = F.normalize(k, dim=1)
-            print(f"Key features shape: {k.shape}")
 
         # Calculate logits
         l_pos = torch.einsum("nc,nc->n", [q, k]).unsqueeze(-1)
         l_neg = torch.einsum("nc,ck->nk", [q, self.queue.clone().detach()])
 
-        print(f"Positive logits shape: {l_pos.shape}")
-        print(f"Negative logits shape: {l_neg.shape}")
-
         # logits: Nx(1+K)
         logits = torch.cat([l_pos, l_neg], dim=1)
-        print(f"Combined logits shape: {logits.shape}")
 
         # apply temperature
         logits /= self.hparams.temperature
@@ -203,14 +178,7 @@ class MoCo(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         imgs, _ = batch  # imgs is a list containing im_q and im_k
-        print(f"\nBatch structure:")
-        print(f"Type of imgs: {type(imgs)}")
-        print(f"Length of imgs: {len(imgs)}")
-
         im_q, im_k = imgs
-        print(f"Query batch shape: {im_q.shape}")
-        print(f"Key batch shape: {im_k.shape}")
-
         # Forward pass
         output, target = self(im_q, im_k)
 
