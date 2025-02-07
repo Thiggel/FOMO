@@ -299,7 +299,7 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         return ood_indices
 
-    def save_class_distribution(self, cycle_idx: int) -> None:
+    def save_class_dist(self, cycle_idx: int) -> None:
         """
         GPU-optimized version to save the number of samples per class for current cycle.
         """
@@ -348,7 +348,7 @@ class ImbalancedTraining:
             print(f"Pretraining cycle {cycle_idx + 1}/{self.max_cycles}")
             self.pretrain_cycle(cycle_idx)
 
-            self.save_class_distribution(
+            self.save_class_dist(
                 self.datamodule.train_dataset,
                 f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}",
             )
