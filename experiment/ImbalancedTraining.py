@@ -348,10 +348,7 @@ class ImbalancedTraining:
             print(f"Pretraining cycle {cycle_idx + 1}/{self.max_cycles}")
             self.pretrain_cycle(cycle_idx)
 
-            self.save_class_dist(
-                self.datamodule.train_dataset,
-                f"{visualization_dir}/class_dist_after_cycle_{cycle_idx}",
-            )
+            self.save_class_dist(cycle_idx)
 
     def finetune(self) -> dict:
         benchmarks = FinetuningBenchmarks.get_benchmarks(
