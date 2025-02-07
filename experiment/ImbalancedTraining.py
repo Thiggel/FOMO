@@ -306,7 +306,7 @@ class ImbalancedTraining:
         loader = torch.utils.data.DataLoader(
             self.datamodule.train_dataset,
             batch_size=512,  # Large batch size for GPU efficiency
-            num_workers=self.num_workers,
+            num_workers.self.datamodule.num_workers,
             shuffle=False,
             pin_memory=True,
         )
