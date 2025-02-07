@@ -76,6 +76,8 @@ class MoCo(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
+        self.model = model
+
         # Create encoder Q (online network)
         self.encoder_q = model
 
