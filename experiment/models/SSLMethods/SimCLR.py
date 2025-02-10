@@ -61,16 +61,15 @@ class SimCLR(L.LightningModule):
 
         # Combined linear warmup and cosine annealing function
         def lr_lambda(epoch):
+            warmup_epochs = 10
+            total_epochs = 500
+            min_lr_ratio = 0.01  # e.g., final LR is 1% of base_lr
             if epoch < warmup_epochs:
-                # Linear warmup phase
                 return (epoch + 1) / warmup_epochs
             else:
-                # Cosine annealing phase
-                progress = (epoch - warmup_epochs) / (max_epochs - warmup_epochs)
-                return (
-                    0.5
-                    * (1 + math.cos(math.pi * progress))
-                    * (base_lr / (base_lr * 50))
+                progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
+                return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
+                    1 + math.cos(math.pi * progress)
                 )
 
         # Single scheduler with combined behavior
