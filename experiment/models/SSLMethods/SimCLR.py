@@ -81,9 +81,9 @@ class SimCLR(L.LightningModule):
         imgs, _ = batch
         imgs = torch.cat(imgs, dim=0)
 
-        feats = self.model(
-            imgs
-        )  # yep thats the issue, why can a resnet deal with two concatenated images??
+        feats = self.model(imgs)
+
+        feats = F.normalize(feats, dim=-1)
 
         cos_sim = F.cosine_similarity(feats[:, None, :], feats[None, :, :], dim=-1)
 
