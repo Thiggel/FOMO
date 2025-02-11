@@ -64,6 +64,8 @@ class ImbalancedTraining:
             # Store original dataset indices for sampling
             self.original_indices = set(range(self.initial_train_ds_size))
 
+        self.num_workers = self.datamodule.num_workers
+
     def run(self) -> dict:
         if self.args.pretrain:
             self.pretrain_imbalanced()
