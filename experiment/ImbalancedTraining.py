@@ -243,12 +243,6 @@ class ImbalancedTraining:
 
                 print(f"Added {len(new_indices)} samples back to the training set")
             else:
-                indices_to_be_augmented = (
-                    self.get_ood_indices(ood_train_dataset, ood_test_dataset, cycle_idx)
-                    if self.args.use_ood
-                    else self.get_random_indices(ood_train_dataset)
-                )
-
                 # Get labels for the OOD samples
                 ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
                 ood_labels = [
