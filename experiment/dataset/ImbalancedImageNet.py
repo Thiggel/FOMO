@@ -155,6 +155,11 @@ class ImbalancedImageNet(Dataset):
             image = datapoint["image"]
             label = datapoint["label"]
         else:
+            print("Getting additional image")
+            print(len(self.indices))
+            print(len(self))
+            print(self.additional_image_counts)
+            exit()
             # Get generated image
             cycle_idx, image_idx, label = self._get_additional_image_info(idx)
             image = self.image_storage.load_image(cycle_idx, image_idx)
