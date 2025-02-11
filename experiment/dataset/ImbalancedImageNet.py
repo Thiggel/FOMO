@@ -54,8 +54,6 @@ class ImbalancedImageNet(Dataset):
         self.transform = transform
         split = "train+validation"
         self.additional_data_path = additional_data_path
-        print("additional_data-path", self.additional_data_path)
-        exit()
 
         print("Loading dataset", dataset_path)
         self.dataset = load_dataset(dataset_path, split=split, trust_remote_code=True)
@@ -79,7 +77,8 @@ class ImbalancedImageNet(Dataset):
     def _load_or_create_image_counts(self) -> dict:
         """Load or create a dictionary tracking number of images per cycle."""
         counts_file = os.path.join(
-            os.environ["BASE_CACHE_DIR"], f"{self.checkpoint_filename}_image_counts.pkl"
+            os.environ["BASE_CACHE_DIR"],
+            f"{self.additional_data_path}_image_counts.pkl",
         )
         try:
             with open(counts_file, "rb") as f:
@@ -157,11 +156,6 @@ class ImbalancedImageNet(Dataset):
             image = datapoint["image"]
             label = datapoint["label"]
         else:
-            print("Getting additional image")
-            print(len(self.indices))
-            print(len(self))
-            print(self.additional_image_counts)
-            exit()
             # Get generated image
             cycle_idx, image_idx, label = self._get_additional_image_info(idx)
             image = self.image_storage.load_image(cycle_idx, image_idx)
