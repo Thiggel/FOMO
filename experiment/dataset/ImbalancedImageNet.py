@@ -43,6 +43,7 @@ class ImbalancedImageNet(Dataset):
     def __init__(
         self,
         dataset_path: str,
+        additional_data_path: str = "additional_data",
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
         transform=None,
@@ -52,6 +53,7 @@ class ImbalancedImageNet(Dataset):
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
         split = "train+validation"
+        self.additional_data_path = additional_data_path
 
         print("Loading dataset", dataset_path)
         self.dataset = load_dataset(dataset_path, split=split, trust_remote_code=True)
@@ -62,7 +64,9 @@ class ImbalancedImageNet(Dataset):
         self.indices = self._load_or_create_indices()
 
         # Initialize image storage
-        self.image_storage = ImageStorage(os.environ["BASE_CACHE_DIR"])
+        self.image_storage = ImageStorage(
+            os.path.join(os.environ["BASE_CACHE_DIR"], self.additional_data_path)
+        )
 
         # Keep track of additional images per cycle
         self.additional_image_counts = self._load_or_create_image_counts()

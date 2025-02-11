@@ -143,6 +143,7 @@ class ImbalancedTraining:
         3. generate new data for OOD samples or add back removed data
         """
         try:
+            initial_size = len(self.datamodule.train_dataset)
             cycle_trainer_args = self.trainer_args.copy()
 
             # Ensure strategy is properly configured for each cycle
@@ -240,8 +241,20 @@ class ImbalancedTraining:
 
                 print(f"Added {len(new_indices)} samples back to the training set")
             else:
-                # Original diffusion-based augmentation code
+                # Inside pretrain_cycle
+                indices_to_be_augmented = (
+                    self.get_ood_indices(ood_train_dataset, ood_test_dataset, cycle_idx)
+                    if self.args.use_ood
+                    else self.get_random_indices(ood_train_dataset)
+                )
+
+                # Get labels for the OOD samples
                 ood_samples = Subset(ood_train_dataset, indices_to_be_augmented)
+                ood_labels = [
+                    ood_samples[i][1] for i in range(len(ood_samples))
+                ]  # Get labels
+
+                # Original diffusion-based augmentation code
                 diffusion_pipe = self.initialize_model(
                     "cuda" if torch.cuda.is_available() else "cpu"
                 )
@@ -251,9 +264,30 @@ class ImbalancedTraining:
                     batch_size=self.args.sd_batch_size,
                     save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
                 )
+                # Add the generated image count and labels to the dataset
+                self.datamodule.train_dataset.dataset.add_generated_images(
+                    cycle_idx, len(ood_samples), ood_labels  # Pass the labels here
+                )
 
             # Reset transforms
             self.datamodule.train_dataset.dataset.transform = ssl_transform
+
+            if self.args.ood_augmentation:
+                final_size = len(self.datamodule.train_dataset)
+                assert final_size > initial_size, (
+                    f"Dataset size did not increase after augmentation. "
+                    f"Initial size: {initial_size}, Final size: {final_size}"
+                )
+
+                if cycle_idx > 0:
+                    previous_cycle_size = getattr(
+                        self, "previous_cycle_size", initial_size
+                    )
+                    assert final_size > previous_cycle_size, (
+                        f"Cycle {cycle_idx} size ({final_size}) not larger than "
+                        f"cycle {cycle_idx-1} size ({previous_cycle_size})"
+                    )
+                self.previous_cycle_size = final_size
 
         finally:
             # Clean up resources
@@ -299,32 +333,38 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         return ood_indices
 
-    def save_class_dist(self, cycle_idx: int) -> None:
+    def save_class_distribution(self, cycle_idx: int) -> None:
         """
-        GPU-optimized version to save the number of samples per class for current cycle.
+        Save the class distribution for current cycle, accounting for both original and augmented data.
         """
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        class_counts = torch.zeros(
+            self.datamodule.train_dataset.dataset.num_classes, device=device
+        )
+
         loader = torch.utils.data.DataLoader(
             self.datamodule.train_dataset,
-            batch_size=512,  # Large batch size for GPU efficiency
-            num_workers=self.datamodule.num_workers,
+            batch_size=2048,
+            num_workers=self.num_workers,
             shuffle=False,
             pin_memory=True,
         )
-
-        # Process in batches on GPU
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        class_counts = torch.zeros(self.datamodule.dataset.num_classes, device=device)
 
         with torch.no_grad():
             for _, labels in tqdm(
                 loader, desc=f"Counting samples for cycle {cycle_idx}"
             ):
                 labels = labels.to(device)
-                # Use torch.bincount for efficient counting
                 counts = torch.bincount(
-                    labels, minlength=self.datamodule.dataset.num_classes
+                    labels, minlength=self.datamodule.train_dataset.dataset.num_classes
                 )
                 class_counts += counts
+
+            # Print some validation info
+            print(f"\nCycle {cycle_idx} distribution:")
+            print(f"Total samples: {class_counts.sum().item()}")
+            print(f"Per-class counts: {class_counts.cpu().tolist()}")
+            print(f"Non-zero classes: {(class_counts > 0).sum().item()}\n")
 
         # Save distribution
         save_path = f"{os.environ['BASE_CACHE_DIR']}/class_distributions/{self.checkpoint_filename}"

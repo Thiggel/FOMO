@@ -34,6 +34,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
         test_mode: bool = False,
+        additional_data_path: str = "additional_data",
     ):
         super().__init__()
 
@@ -49,6 +50,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
                 transform=self.transform,
                 imbalance_method=imbalance_method,
                 checkpoint_filename=checkpoint_filename,
+                additional_data_path=additional_data_path,
             )
 
         self.num_classes = self.dataset.num_classes
