@@ -241,7 +241,6 @@ class ImbalancedTraining:
 
                 print(f"Added {len(new_indices)} samples back to the training set")
             else:
-                # Inside pretrain_cycle
                 indices_to_be_augmented = (
                     self.get_ood_indices(ood_train_dataset, ood_test_dataset, cycle_idx)
                     if self.args.use_ood
@@ -267,6 +266,13 @@ class ImbalancedTraining:
                 # Add the generated image count and labels to the dataset
                 self.datamodule.train_dataset.dataset.add_generated_images(
                     cycle_idx, len(ood_samples), ood_labels  # Pass the labels here
+                )
+
+                self.datamodule.train_dataset = torch.utils.data.Subset(
+                    self.datamodule.train_dataset.dataset,
+                    list(
+                        range(len(self.datamodule.train_dataset.dataset))
+                    ),  # Get all indices including new data
                 )
 
             # Reset transforms
