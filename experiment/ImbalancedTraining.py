@@ -339,7 +339,7 @@ class ImbalancedTraining:
         ood_indices, _ = ood.ood()
         return ood_indices
 
-    def save_class_distribution(self, cycle_idx: int) -> None:
+    def save_class_dist(self, cycle_idx: int) -> None:
         """
         Save the class distribution for current cycle, accounting for both original and augmented data.
         """
