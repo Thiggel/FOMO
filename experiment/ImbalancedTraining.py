@@ -353,7 +353,7 @@ class ImbalancedTraining:
         loader = torch.utils.data.DataLoader(
             self.datamodule.train_dataset,
             batch_size=2048,
-            num_workers=8
+            num_workers=8,
             shuffle=False,
             pin_memory=True,
         )
