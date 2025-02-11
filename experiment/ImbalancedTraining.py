@@ -337,41 +337,38 @@ class ImbalancedTraining:
 
     def save_class_dist(self, cycle_idx: int) -> None:
         """
-        Save the class distribution for current cycle, accounting for both original and augmented data.
+        Save class distribution for current cycle by directly counting labels.
         """
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        class_counts = torch.zeros(
-            self.datamodule.train_dataset.dataset.num_classes, device=device
-        )
+        num_classes = self.datamodule.train_dataset.dataset.num_classes
+        class_counts = torch.zeros(num_classes, device=device)
 
-        loader = torch.utils.data.DataLoader(
-            self.datamodule.train_dataset,
-            batch_size=2048,
-            num_workers=8,
-            shuffle=False,
-            pin_memory=True,
+        # Count original dataset labels
+        dataset = self.datamodule.train_dataset.dataset
+        original_labels = [dataset.dataset[idx]["label"] for idx in dataset.indices]
+        orig_counts = torch.bincount(
+            torch.tensor(original_labels, device=device), minlength=num_classes
         )
+        class_counts += orig_counts
 
-        with torch.no_grad():
-            for _, labels in tqdm(
-                loader, desc=f"Counting samples for cycle {cycle_idx}"
-            ):
-                labels = labels.to(device)
-                counts = torch.bincount(
-                    labels, minlength=self.datamodule.train_dataset.dataset.num_classes
+        # Count generated data labels from additional_image_counts
+        for cycle_data in dataset.additional_image_counts.values():
+            if "labels" in cycle_data and cycle_data["labels"]:
+                gen_counts = torch.bincount(
+                    torch.tensor(cycle_data["labels"], device=device),
+                    minlength=num_classes,
                 )
-                class_counts += counts
-
-            # Print some validation info
-            print(f"\nCycle {cycle_idx} distribution:")
-            print(f"Total samples: {class_counts.sum().item()}")
-            print(f"Per-class counts: {class_counts.cpu().tolist()}")
-            print(f"Non-zero classes: {(class_counts > 0).sum().item()}\n")
+                class_counts += gen_counts
 
         # Save distribution
         save_path = f"{os.environ['BASE_CACHE_DIR']}/class_distributions/{self.checkpoint_filename}"
         os.makedirs(save_path, exist_ok=True)
         torch.save(class_counts.cpu(), f"{save_path}/dist_cycle_{cycle_idx}.pt")
+
+        # Print some validation info
+        print(f"\nCycle {cycle_idx} distribution:")
+        print(f"Total samples: {class_counts.sum().item()}")
+        print(f"Non-zero classes: {(class_counts > 0).sum().item()}")
 
     def pretrain_imbalanced(self) -> None:
         """
