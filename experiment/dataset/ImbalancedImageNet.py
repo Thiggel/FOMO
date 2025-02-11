@@ -102,11 +102,18 @@ class ImbalancedImageNet(Dataset):
             num_images: Number of new images generated
             labels: List of labels for the generated images
         """
+
+        print(f"Adding {num_images} generated images for cycle {cycle_idx}")
+        print(f"Current additional_image_counts: {self.additional_image_counts}")
+
         self.additional_image_counts[cycle_idx] = {
             "count": num_images,
             "labels": labels,
         }
         self._save_image_counts()
+
+        print(f"Updated additional_image_counts: {self.additional_image_counts}")
+        print(f"New total length: {len(self)}")
 
     def __len__(self):
         """
@@ -152,10 +159,10 @@ class ImbalancedImageNet(Dataset):
             cycle_idx, image_idx, label = self._get_additional_image_info(idx)
             image = self.image_storage.load_image(cycle_idx, image_idx)
 
-            if image is None:
-                raise RuntimeError(
-                    f"Failed to load generated image at cycle {cycle_idx}, index {image_idx}"
-                )
+            assert image is not None, (
+                f"Failed to load generated image at cycle {cycle_idx}, "
+                f"index {image_idx}"
+            )
 
         image = image.convert("RGB")
 
