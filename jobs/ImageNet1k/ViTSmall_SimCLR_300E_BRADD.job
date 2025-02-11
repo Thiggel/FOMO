@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#SBATCH --partition=performance
+#SBATCH --gres=gpu:rtx_6000_ada:8
+#SBATCH --nodelist=hipster-cn001
+#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks=8
+#SBATCH --time=6-23
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=32
+#SBATCH --time=4:00:00
+#SBATCH --job-name=BRADD-ViTSmall-SimCLR-Imb
+#SBATCH --output=job_logs/BRADD-ViTS-SimCLR_Imb-%A.out
+
+python -m experiment \
+  --model-name ViTSmall \
+  --imbalance-method power_law_imbalance \
+  --max-cycles 15 \
+  --num-runs 1 \
+  --imagenet-variant 1k \ 
+  --n-epochs-per-cycle 20 \
+	--ood-augmentation \
+	--pct-ood 0.15 \
+  --crop-size 224 \
+  --batch-size 1024 \
+  --experiment-name "Baseline_ViTBase_SimCLR_ImageNet1k_Imbalanced"
