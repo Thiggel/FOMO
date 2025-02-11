@@ -54,6 +54,8 @@ class ImbalancedImageNet(Dataset):
         self.transform = transform
         split = "train+validation"
         self.additional_data_path = additional_data_path
+        print("additional_data-path", self.additional_data_path)
+        exit()
 
         print("Loading dataset", dataset_path)
         self.dataset = load_dataset(dataset_path, split=split, trust_remote_code=True)
