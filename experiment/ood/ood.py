@@ -37,8 +37,6 @@ class OOD:
         self.device = device
         self.dtype = dtype
 
-        print("DATASET", dataset)
-
         # Will store features and corresponding indices
         self.features = []
         self.indices = []  # Store original dataset indices

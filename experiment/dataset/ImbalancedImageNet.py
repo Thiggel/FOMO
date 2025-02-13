@@ -113,7 +113,6 @@ class ImbalancedImageNet(Dataset):
         }
         self._save_image_counts()
 
-        print(f"Updated additional_image_counts: {self.additional_image_counts}")
         print(f"New total length: {len(self)}")
 
     def __len__(self):
