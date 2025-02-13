@@ -30,31 +30,13 @@ class OOD:
 
         # Will store features
         self.features = []
-        self.indices = []  # Keep track of original indices
 
     @torch.cuda.amp.autocast()
     def extract_features(self):
         """Extract and normalize features from the entire dataset"""
-        # If dataset is a Subset, get all indices first
-        if hasattr(self.dataset, "indices"):
-            all_indices = self.dataset.indices
-            dataset_size = len(all_indices)
-        else:
-            dataset_size = len(self.dataset)
-            all_indices = torch.arange(dataset_size)
-
-        # Convert all_indices to tensor if it's not already
-        all_indices = torch.tensor(all_indices)
-
-        # Create DataLoader with a custom batch sampler to track indices
-        from torch.utils.data import BatchSampler, SequentialSampler
-
-        sampler = SequentialSampler(range(dataset_size))
-        batch_sampler = BatchSampler(sampler, self.batch_size, drop_last=False)
-
         loader = DataLoader(
             self.dataset,
-            batch_sampler=batch_sampler,
+            batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
             persistent_workers=True,
@@ -62,14 +44,10 @@ class OOD:
 
         # Extract and normalize features using GPU
         with torch.no_grad():
-            for batch_indices in tqdm(batch_sampler, desc="Extracting features"):
+            for batch_indices in tqdm(loader, desc="Extracting features"):
                 # Get data using explicit indices
                 batch = [self.dataset[i][0] for i in batch_indices]
                 batch = torch.stack(batch)
-
-                # Store the actual indices - fixed indexing
-                selected_indices = all_indices[torch.tensor(batch_indices)]
-                self.indices.extend(selected_indices.tolist())
 
                 # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
@@ -83,9 +61,7 @@ class OOD:
                 features = F.normalize(features, p=2, dim=-1)
                 self.features.append(features)
 
-        # Concatenate all features
         self.features = torch.cat(self.features)
-        self.indices = torch.tensor(self.indices, device=self.device)
 
     def compute_knn_distances(self):
         """Compute k-NN distances efficiently on GPU using batched operations"""
@@ -135,7 +111,7 @@ class OOD:
         )
 
         # Map back to original dataset indices
-        ood_indices = self.indices[top_indices]
+        ood_datapoints = self.dataset[top_indices]
 
         # Save visualizations and logs
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
@@ -153,7 +129,4 @@ class OOD:
                 image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
                 save_image(image, image_path)
 
-        return (
-            ood_indices.cpu(),
-            top_distances[0].cpu(),
-        )  # Return indices and largest distance as threshold
+        return ood_datapoints

@@ -147,18 +147,19 @@ class ImbalancedTraining:
                 f"\nSelecting OOD samples using {'OOD detection' if self.args.use_ood else 'random selection'}"
             )
 
-            indices_to_be_augmented = (
-                self.get_ood_indices(train_dataset, cycle_idx)
-                * self.args.num_generations_per_ood_sample
+            ood_samples = (
+                self.get_ood_datapoints(train_dataset, cycle_idx)
                 if self.args.use_ood
-                else self.get_random_indices(train_dataset)
+                else self.get_random_datapoints(train_dataset)
             )
+
+            print(ood_samples)
+            exit()
 
             print(f"Selected {len(indices_to_be_augmented)} samples for augmentation")
 
             if self.args.remove_diffusion:
                 # Get labels for efficient sampling from each class
-                ood_samples = Subset(train_dataset, indices_to_be_augmented)
                 ood_labels = [
                     label for _, label in tqdm(ood_samples, desc="Getting labels")
                 ]
@@ -178,7 +179,6 @@ class ImbalancedTraining:
                     f"Added {len(indices_to_be_augmented)} samples back to the training set"
                 )
             else:
-                ood_samples = Subset(train_dataset, indices_to_be_augmented)
                 ood_labels = [
                     label for _, label in tqdm(ood_samples, desc="Getting labels")
                 ]
@@ -272,13 +272,16 @@ class ImbalancedTraining:
 
         return self.finetune() if self.args.finetune else {}
 
-    def get_random_indices(self, dataset) -> list:
+    def get_random_datapoints(self, dataset) -> list:
         """Get random indices for augmentation"""
-        return torch.randperm(len(dataset))[
-            : self.args.num_ood_samples * self.args.num_generations_per_ood_sample
-        ].tolist()
+        return [
+            dataset[index]
+            for index in torch.randperm(len(dataset))[
+                : self.args.num_ood_samples
+            ].tolist()
+        ]
 
-    def get_ood_indices(self, dataset, cycle_idx) -> list:
+    def get_ood_samples(self, dataset, cycle_idx) -> list:
         """Get indices of OOD samples using feature-based detection"""
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.ssl_method.to(device)
@@ -293,8 +296,8 @@ class ImbalancedTraining:
             dtype=self.ssl_method.dtype,
         )
 
-        ood_indices, _ = ood.ood()
-        return ood_indices
+        ood_datapoints = ood.ood()
+        return ood_datapoints
 
     def save_class_dist(self, cycle_idx: int) -> None:
         """Save class distribution for current cycle using GPU acceleration"""
