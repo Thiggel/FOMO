@@ -8,6 +8,15 @@ from torchvision.utils import save_image
 from experiment.utils.get_num_workers import get_num_workers
 
 
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import os
+from torchvision.utils import save_image
+from experiment.utils.get_num_workers import get_num_workers
+
+
 class OOD:
     def __init__(
         self,
@@ -22,14 +31,17 @@ class OOD:
         self.num_workers = min(24, get_num_workers())
         self.feature_extractor = feature_extractor
         self.batch_size = args.val_batch_size
-        self.K = int(args.k)  # For ImageNet100, we use k=100
+        self.K = args.k  # For ImageNet100, we use k=100
         self.num_ood_samples = args.num_ood_samples  # Hyperparameter for threshold
         self.cycle_idx = cycle_idx
         self.device = device
         self.dtype = dtype
 
-        # Will store features
+        print("DATASET", dataset)
+
+        # Will store features and corresponding indices
         self.features = []
+        self.indices = []  # Store original dataset indices
 
     @torch.cuda.amp.autocast()
     def extract_features(self):
@@ -37,6 +49,7 @@ class OOD:
         loader = DataLoader(
             self.dataset,
             batch_size=self.batch_size,
+            shuffle=False,  # Important: keep order for index tracking
             num_workers=self.num_workers,
             pin_memory=True,
             persistent_workers=True,
@@ -44,11 +57,17 @@ class OOD:
 
         # Extract and normalize features using GPU
         with torch.no_grad():
-            for images, _ in tqdm(loader, desc="Extracting features"):
-                # Get data using explicit indices
+            for batch_idx, (batch, _) in enumerate(
+                tqdm(loader, desc="Extracting features")
+            ):
+                # Track indices for this batch
+                start_idx = batch_idx * self.batch_size
+                end_idx = start_idx + len(batch)
+                self.indices.extend(range(start_idx, end_idx))
+
                 # Extract features
-                images = images.to(device=self.device, dtype=self.dtype)
-                features = self.feature_extractor(images)
+                batch = batch.to(device=self.device, dtype=self.dtype)
+                features = self.feature_extractor(batch)
 
                 # Handle 1D case
                 if features.dim() == 1:
@@ -58,7 +77,9 @@ class OOD:
                 features = F.normalize(features, p=2, dim=-1)
                 self.features.append(features)
 
+        # Concatenate all features and convert indices to tensor
         self.features = torch.cat(self.features)
+        self.indices = torch.tensor(self.indices, device=self.device)
 
     def compute_knn_distances(self):
         """Compute k-NN distances efficiently on GPU using batched operations"""
@@ -103,12 +124,15 @@ class OOD:
         distances = self.compute_knn_distances()
 
         # Get indices of N samples with largest k-NN distances
-        top_distances, top_indices = torch.topk(
-            distances, k=int(self.num_ood_samples), largest=True
+        num_samples = (
+            int(self.num_ood_samples * len(self.dataset))
+            if isinstance(self.num_ood_samples, float)
+            else self.num_ood_samples
         )
+        top_distances, top_indices = torch.topk(distances, k=num_samples, largest=True)
 
         # Map back to original dataset indices
-        ood_datapoints = self.dataset[top_indices]
+        ood_indices = self.indices[top_indices].cpu()
 
         # Save visualizations and logs
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
@@ -120,10 +144,10 @@ class OOD:
         # Save example OOD images (save top 10 most OOD samples)
         num_vis = min(10, len(ood_indices))
         for i in range(num_vis):
-            image = self.dataset[int(ood_indices[i])][0]
-            if len(image.shape) in [3, 4]:
+            image, _ = self.dataset[int(ood_indices[i])]
+            if isinstance(image, torch.Tensor) and len(image.shape) in [3, 4]:
                 distance = top_distances[i]
                 image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
                 save_image(image, image_path)
 
-        return ood_datapoints
+        return ood_indices.tolist()
