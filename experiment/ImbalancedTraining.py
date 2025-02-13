@@ -69,7 +69,9 @@ class ImbalancedTraining:
         """Get labels for multiple indices efficiently using DataLoader"""
         subset = Subset(dataset, indices)
         loader = DataLoader(
-            subset, batch_size=self.args.val_batch_size, num_workers=self.num_workers
+            subset,
+            batch_size=min(self.args.val_batch_size, len(subset)),
+            num_workers=self.num_workers,
         )
         labels = []
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
