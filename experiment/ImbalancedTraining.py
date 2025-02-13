@@ -483,7 +483,7 @@ class ImbalancedTraining:
                 num_images_per_prompt=self.args.num_generations_per_ood_sample,
             ).images
 
-            print(len(batch), v_imgs.shape)
+            print(len(batch), len(v_imgs))
 
             # Save batch
             image_storage.save_batch(v_imgs, cycle_idx, k)
