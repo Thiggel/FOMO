@@ -66,33 +66,20 @@ class ImbalancedTraining:
             self.save_class_dist(0)
 
     def get_batch_labels(self, dataset, indices):
-        """Get labels for multiple indices efficiently using DataLoader.
-        Handles both regular datasets and Subset instances."""
-
+        """Get labels for multiple indices efficiently using DataLoader."""
         # If dataset is already a Subset, we need to map our indices through its indices
-        # Map the indices through the existing subset's indices
         actual_indices = [dataset.indices[i] for i in indices]
         # Create new subset from the base dataset
         subset = Subset(dataset.dataset, actual_indices)
 
-        print(subset)
-        print([datapoint for datapoint in subset])
-        exit()
-
-        loader = DataLoader(
-            subset,
-            batch_size=self.args.val_batch_size,
-            num_workers=self.num_workers,
-            pin_memory=True,
-        )
-
+        # We can actually just get labels directly without DataLoader since we have a small subset
         labels = []
+        for datapoint in subset:
+            _, label = datapoint  # Each datapoint is (tensor, label)
+            labels.append(label)
+
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        for _, batch_labels in loader:
-            labels.append(batch_labels.to(device))
-
-        return torch.cat(labels)
+        return torch.tensor(labels, device=device)
 
     def get_ood_classes(self, ood_indices, dataset):
         """Get class distribution using GPU-accelerated operations"""
