@@ -462,29 +462,11 @@ class ImbalancedTraining:
             ]
         )
         k = 0
-
-        # First, let's verify the indices and dataset
-        print(f"Total dataset size: {len(ood_samples.dataset)}")
-        print(f"Subset indices: {ood_samples.indices}")
-        print(f"Number of indices: {len(ood_samples.indices)}")
-        print(f"Max index value: {max(ood_samples.indices)}")
-
-        # Create a custom dataset that directly accesses the underlying data
-        class SubsetWrapper(Dataset):
-            def __init__(self, subset):
-                self.subset = subset
-
-            def __len__(self):
-                return len(self.subset.indices)
-
-            def __getitem__(self, idx):
-                return self.subset.dataset[self.subset.indices[idx]]
-
-        wrapped_dataset = SubsetWrapper(ood_samples)
+        print(123, ood_indices)
 
         # Create DataLoader with the wrapped dataset
         dataloader = DataLoader(
-            wrapped_dataset,
+            ood_indices,
             batch_size=self.args.sd_batch_size,
             num_workers=0,
             pin_memory=True,

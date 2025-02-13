@@ -77,6 +77,7 @@ class OOD:
         # Concatenate all features
         self.features = torch.cat(self.features)
         self.indices = torch.tensor(self.indices, device=self.device)
+        print("INDICES", self.indices)
 
     def compute_knn_distances(self):
         """Compute k-NN distances efficiently on GPU using batched operations"""
