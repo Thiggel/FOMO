@@ -68,18 +68,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
     # Training configuration
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
     parser.add_argument(
-        "--start-lr",
-        type=float,
-        default=0.0002,
-        help="Initial learning rate for warmup",
-    )
-    parser.add_argument(
-        "--final-lr",
-        type=float,
-        default=1e-4,
-        help="Final learning rate",
-    )
-    parser.add_argument(
         "--temperature",
         type=float,
         default=0.5,
@@ -90,12 +78,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
         type=float,
         default=1e-6,
         help="Weight decay",
-    )
-    parser.add_argument(
-        "--final-weight-decay",
-        type=float,
-        default=0.4,
-        help="Final weight decay value",
     )
     parser.add_argument(
         "--max-cycles",
@@ -112,13 +94,13 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument(
         "--warmup",
         type=int,
-        default=5,
+        default=10,
         help="Number of warmup epochs",
     )
 
     # Batch size and processing
     parser.add_argument(
-        "--batch-size",
+        "--train-batch-size",
         type=int,
         default=1024,
         help="Training batch size",
@@ -130,10 +112,10 @@ def get_training_args(get_defaults: bool = False) -> dict:
         help="Gradient accumulation steps",
     )
     parser.add_argument(
-        "--fe-batch-size",
+        "--val-batch-size",
         type=int,
-        default=32,
-        help="Feature extraction batch size",
+        default=512,
+        help="Validation batch size",
     )
     parser.add_argument(
         "--sd-batch-size",
@@ -149,43 +131,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
         default=224,
         help="Image crop size",
     )
-    parser.add_argument(
-        "--crop-scale",
-        type=float,
-        nargs=2,
-        default=[0.3, 1.0],
-        help="Range of crop scale",
-    )
-    parser.add_argument(
-        "--color-jitter-strength",
-        type=float,
-        default=0.0,
-        help="Color jitter strength",
-    )
-    parser.add_argument(
-        "--pin-mem",
-        type=bool,
-        default=True,
-        help="Pin memory for data loading",
-    )
-    parser.add_argument(
-        "--use-color-distortion",
-        type=bool,
-        default=False,
-        help="Apply color distortion",
-    )
-    parser.add_argument(
-        "--use-gaussian-blur",
-        type=bool,
-        default=False,
-        help="Apply gaussian blur",
-    )
-    parser.add_argument(
-        "--use-horizontal-flip",
-        type=bool,
-        default=False,
-        help="Apply horizontal flip",
-    )
 
     # Dataset and splitting
     parser.add_argument(
@@ -195,43 +140,30 @@ def get_training_args(get_defaults: bool = False) -> dict:
         default=[0.8, 0.1, 0.1],
         help="Dataset splits",
     )
-    parser.add_argument(
-        "--pct-train",
-        type=float,
-        default=1.0,
-        help="Percentage of training data to use",
-    )
-    parser.add_argument(
-        "--image-folder",
-        type=str,
-        default="imagenet_full_size/061417/",
-        help="Image folder path",
-    )
 
     # OOD and augmentation settings
     parser.add_argument(
         "--k",
         type=int,
-        default=1000,
-        help="k for kNN computation",
+        default=100,
+        help="k for kNN computation (number of neighbors to consider)",
     )
     parser.add_argument(
-        "--pct-ood",
+        "--num-ood-samples",
         type=float,
         default=0.15,
-        help="Percentage of OOD samples",
+        help="Select the N most OOD samples in the dataset for augmentation after each cycle",
     )
     parser.add_argument(
-        "--ood-test-split",
-        type=float,
-        default=0.1,
-        help="OOD test split ratio",
+        "--num-generations-per-ood-sample",
+        type=int,
+        default=5,
+        help="Number of augmentations to generate per OOD image",
     )
     parser.add_argument(
-        "--additional-data-path",
-        type=str,
-        default="additional_data",
-        help="Path for additional data",
+        "--save-class-distribution",
+        action="store_true",
+        help="Save class distribution of dataset",
     )
 
     # Masking settings for SSL
@@ -396,6 +328,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
         ood_augmentation=False,
         classification_head=False,
         calc_novelty_score=False,
+        save_class_distribution=False,
     )
 
     if get_defaults:

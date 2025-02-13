@@ -30,7 +30,8 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
             ]
         ),
         splits: tuple[int, int] = (0.8, 0.1, 0.1),
-        batch_size: int = 32,
+        train_batch_size: int = 32,
+        val_batch_size: int = 64,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
         test_mode: bool = False,
@@ -40,7 +41,8 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
 
         self.transform = transform
         self.collate_fn = collate_fn
-        self.batch_size = batch_size
+        self.train_batch_size = train_batch_size
+        self.val_batch_size = val_batch_size
 
         if test_mode:
             self.dataset = DummyImageNet(100, transform=self.transform)
@@ -97,7 +99,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
     def train_dataloader(self) -> DataLoader:
         self._train_dataloader = DataLoader(
             self.train_dataset,
-            batch_size=self.batch_size,
+            batch_size=self.train_batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=False,
@@ -110,7 +112,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
     def val_dataloader(self) -> DataLoader:
         self._val_dataloader = DataLoader(
             self.val_dataset,
-            batch_size=self.batch_size,
+            batch_size=self.val_batch_size,
             num_workers=self.num_workers,
             persistent_workers=False,
             collate_fn=self.collate_fn,
@@ -121,7 +123,7 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
     def test_dataloader(self) -> DataLoader:
         self._test_dataloader = DataLoader(
             self.test_dataset,
-            batch_size=self.batch_size,
+            batch_size=self.val_batch_size,
             num_workers=self.num_workers,
             persistent_workers=False,
             collate_fn=self.collate_fn,

@@ -65,7 +65,7 @@ class ImbalancedImageNet(Dataset):
 
         # Initialize image storage
         self.image_storage = ImageStorage(
-            os.path.join(os.environ["BASE_CACHE_DIR"], self.additional_data_path)
+            self.additional_data_path,
         )
 
         # Keep track of additional images per cycle

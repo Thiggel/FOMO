@@ -54,7 +54,8 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
         dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
         imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
         splits=args.splits,
-        batch_size=args.batch_size,
+        train_batch_size=args.train_batch_size,
+        val_batch_size=args.val_batch_size,
         checkpoint_filename=checkpoint_filename,
         transform=ssl_method.transforms(args),
         test_mode=args.test_mode,
@@ -67,7 +68,7 @@ def init_model(args: Namespace) -> nn.Module:
 
     model_args = {
         "model_name": args.model_name,
-        "batch_size": args.batch_size,
+        "batch_size": args.train_batch_size,
         "output_size": 128,  # simclear uses this hidden dim, vit doesnt use this parameter
         "image_size": args.crop_size,
         "classification_head": args.classification_head,
@@ -98,12 +99,11 @@ def init_ssl_type(
 def run(
     args: Namespace,
     seed: int = 42,
-    save_class_distribution: bool = True,
     run_idx: int = 0,
 ) -> dict:
     set_seed(seed)
 
-    args.batch_size = args.batch_size // torch.cuda.device_count()
+    args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
 
     checkpoint_filename = (
         args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
@@ -200,7 +200,7 @@ def run(
     if torch.cuda.is_available():
         strategy = DeepSpeedStrategy(
             config={
-                "train_batch_size": args.batch_size
+                "train_batch_size": args.train_batch_size
                 * args.grad_acc_steps
                 * torch.cuda.device_count(),
                 "bf16": {"enabled": True},
@@ -231,7 +231,6 @@ def run(
         datamodule,
         checkpoint_filename=checkpoint_filename,
         checkpoint_callback=callbacks[0],
-        save_class_distribution=save_class_distribution and args.ood_augmentation,
         run_idx=run_idx,
     )
 
@@ -264,7 +263,6 @@ def run_different_seeds(args: Namespace) -> dict:
         results = run(
             run_args,
             seed=args.seeds[run_idx],
-            save_class_distribution=False,  # (run_idx == 0)
             run_idx=run_idx,
         )
 

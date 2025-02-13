@@ -4,39 +4,37 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 from torchvision.utils import save_image
-from experiment.utils.get_num_workers import get_num_workers
 
 
 class OOD:
     def __init__(
         self,
         args,
-        train,
-        test,
+        dataset,  # Single dataset instead of train/test split
         feature_extractor,
         cycle_idx=None,
         device=torch.device("cuda"),
         dtype=torch.float32,
     ):
-        self.train = train
-        self.test = test
+        self.dataset = dataset
         self.num_workers = min(24, get_num_workers())
         self.feature_extractor = feature_extractor
-        self.batch_size = args.fe_batch_size
-        self.K = args.k
-        self.pct_ood = args.pct_ood
+        self.batch_size = args.val_batch_size
+        self.K = args.k  # For ImageNet100, we use k=100
+        self.num_ood_samples = args.num_ood_samples  # Hyperparameter for threshold
         self.cycle_idx = cycle_idx
         self.device = device
         self.dtype = dtype
 
-        # Will store feature batches
-        self.train_features_batches = []
-        self.test_features_batches = []
+        # Will store features
+        self.features = []
+        self.indices = []  # Keep track of original indices
 
     @torch.cuda.amp.autocast()
     def extract_features(self):
-        train_loader = DataLoader(
-            self.train,
+        """Extract and normalize features from the entire dataset"""
+        loader = DataLoader(
+            self.dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
@@ -44,91 +42,99 @@ class OOD:
             persistent_workers=True,
         )
 
-        test_loader = DataLoader(
-            self.test,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True,
-            persistent_workers=True,
-        )
-
-        # Extract and store features in batches
+        # Extract and normalize features using GPU
         with torch.no_grad():
-            for batch, _ in tqdm(train_loader, desc="Extracting train features"):
+            for batch_idx, (batch, _) in enumerate(
+                tqdm(loader, desc="Extracting features")
+            ):
+                # Get indices for this batch
+                start_idx = batch_idx * self.batch_size
+                end_idx = start_idx + len(batch)
+                self.indices.extend(range(start_idx, end_idx))
+
+                # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
                 features = self.feature_extractor(batch)
+
+                # Handle 1D case
                 if features.dim() == 1:
                     features = features.unsqueeze(0)
-                self.train_features_batches.append(features)
 
-            for batch, _ in tqdm(test_loader, desc="Extracting test features"):
-                batch = batch.to(device=self.device, dtype=self.dtype)
-                features = self.feature_extractor(batch)
-                if features.dim() == 1:
-                    features = features.unsqueeze(0)
-                self.test_features_batches.append(features)
+                # L2 normalize features as emphasized in paper
+                features = F.normalize(features, p=2, dim=-1)
+                self.features.append(features)
 
-    def compute_distances(self, query_batch):
-        distances_per_batch = []
+        # Concatenate all features
+        self.features = torch.cat(self.features)
+        self.indices = torch.tensor(self.indices, device=self.device)
 
-        # Normalize query batch
-        query_batch = F.normalize(query_batch, p=2, dim=-1)
+    def compute_knn_distances(self):
+        """Compute k-NN distances efficiently on GPU using batched operations"""
+        num_samples = self.features.size(0)
+        k = min(self.K, num_samples - 1)  # Ensure k is valid
 
-        # Compare with each train batch
-        for train_batch in self.train_features_batches:
-            train_batch = F.normalize(train_batch, p=2, dim=-1)
-            # Compute similarity for current batch pair
-            similarity = torch.matmul(query_batch, train_batch.T)
-            # Convert to distance
-            dist = 2 - 2 * similarity
-            distances_per_batch.append(dist)
+        all_distances = []
+        batch_size = 512  # Process in batches to manage memory
 
-        # Concatenate along the correct dimension to get all distances for this query batch
-        return torch.cat(distances_per_batch, dim=1)
+        for i in tqdm(
+            range(0, num_samples, batch_size), desc="Computing k-NN distances"
+        ):
+            # Get batch of query features
+            end_idx = min(i + batch_size, num_samples)
+            query_features = self.features[i:end_idx]
+
+            # Compute pairwise L2 distances with all features
+            # Using ||x-y||^2 = ||x||^2 + ||y||^2 - 2<x,y>
+            # Since features are normalized, ||x||^2 = ||y||^2 = 1
+            distances = 2 - 2 * torch.matmul(query_features, self.features.t())
+
+            # Mask out self-distances
+            mask = torch.arange(i, end_idx, device=self.device).unsqueeze(
+                1
+            ) == torch.arange(num_samples, device=self.device)
+            distances.masked_fill_(mask, float("inf"))
+
+            # Get k-nearest neighbor distances
+            knn_distances, _ = torch.topk(distances, k=k, dim=1, largest=False)
+            all_distances.append(
+                knn_distances[:, -1]
+            )  # Keep only k-th nearest neighbor distance
+
+        return torch.cat(all_distances)
 
     def ood(self):
-        all_scores = []
+        """Perform OOD detection and return N most OOD samples"""
+        # Extract normalized features
+        self.extract_features()
 
-        # Process each test batch
-        for test_batch in tqdm(self.test_features_batches, desc="Computing OOD scores"):
-            # Get distances from this test batch to all training samples
-            distances = self.compute_distances(test_batch)
+        # Compute k-NN distances
+        distances = self.compute_knn_distances()
 
-            # Get top-K smallest distances for each sample in batch
-            k = min(
-                self.K, sum(batch.shape[0] for batch in self.train_features_batches)
-            )
-            topk_distances, _ = torch.topk(distances, k=k, dim=1, largest=False)
+        # Get indices of N samples with largest k-NN distances
+        top_distances, top_indices = torch.topk(
+            distances, k=self.num_ood_samples, largest=True
+        )
 
-            # Use k-th nearest neighbor distance as anomaly score
-            batch_scores = topk_distances[:, -1]
-            all_scores.append(batch_scores)
+        # Map back to original dataset indices
+        ood_indices = self.indices[top_indices]
 
-        # Combine scores from all batches
-        scores_ood = torch.cat(all_scores).float()
-
-        # Compute threshold and OOD indices
-        threshold = torch.quantile(scores_ood, 1 - self.pct_ood)
-        is_ood = scores_ood >= threshold
-        ood_indices = torch.where(is_ood)[0]
-
-        # Save results
+        # Save visualizations and logs
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
-            os.makedirs(f"./ood_logs/{self.cycle_idx}", exist_ok=True)
+            os.makedirs(f"./ood_logs/{self.cycle_idx}/images", exist_ok=True)
 
-        torch.save(scores_ood, f"./ood_logs/{self.cycle_idx}/scores_ood.pt")
+        # Save distances distribution
+        torch.save(distances, f"./ood_logs/{self.cycle_idx}/distances.pt")
 
-        # Save top-K most OOD images
-        if not os.path.exists(f"./ood_logs/{self.cycle_idx}/images"):
-            os.makedirs(f"./ood_logs/{self.cycle_idx}/images")
-
-        top_k_indices = torch.argsort(scores_ood, descending=True)[:10]
-        for i, idx in enumerate(top_k_indices):
-            image = self.test[int(idx)][0]
+        # Save example OOD images (save top 10 most OOD samples)
+        num_vis = min(10, len(ood_indices))
+        for i in range(num_vis):
+            image = self.dataset[int(ood_indices[i])][0]
             if len(image.shape) in [3, 4]:
-                distance = scores_ood[idx].item()
+                distance = top_distances[i]
                 image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
                 save_image(image, image_path)
 
-        return ood_indices, threshold
+        return (
+            ood_indices.cpu(),
+            top_distances[0].cpu(),
+        )  # Return indices and largest distance as threshold
