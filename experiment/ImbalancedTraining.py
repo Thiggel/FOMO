@@ -470,7 +470,7 @@ class ImbalancedTraining:
             num_workers=self.num_workers,
             pin_memory=True,
         )
-        for batch in in tqdm(
+        for batch in tqdm(
             dataloader,
             desc="Generating New Data...",
         ):
