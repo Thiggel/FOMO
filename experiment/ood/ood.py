@@ -44,9 +44,10 @@ class OOD:
 
         # Extract and normalize features using GPU
         with torch.no_grad():
-            for batch_indices in tqdm(loader, desc="Extracting features"):
+            for batch in tqdm(loader, desc="Extracting features"):
                 # Get data using explicit indices
-                batch = [self.dataset[i][0] for i in batch_indices]
+                print(batch)
+                exit()
                 batch = torch.stack(batch)
 
                 # Extract features
