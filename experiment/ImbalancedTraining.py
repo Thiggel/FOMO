@@ -148,7 +148,7 @@ class ImbalancedTraining:
             )
 
             ood_samples = (
-                self.get_ood_datapoints(train_dataset, cycle_idx)
+                self.get_ood_samples(train_dataset, cycle_idx)
                 if self.args.use_ood
                 else self.get_random_datapoints(train_dataset)
             )
