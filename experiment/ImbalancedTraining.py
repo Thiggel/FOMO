@@ -484,7 +484,7 @@ class ImbalancedTraining:
             # Get and denormalize batch
             batch = [
                 ood_samples[i + b_start][0]
-                for i in range(min(len(ood_samples) - b_start, batch_size))
+                for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size))
             ]
             batch = [denorm(img) for img in batch]
             # Generate images
