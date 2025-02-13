@@ -123,6 +123,7 @@ class ImbalancedImageNet(Dataset):
         total_additional = sum(
             cycle_data["count"] for cycle_data in self.additional_image_counts.values()
         )
+        print("TOTAL ADDITIONAL: ", total_additional)
         return len(self.indices) + total_additional
 
     def _get_additional_image_info(self, idx: int) -> tuple[int, int, int]:

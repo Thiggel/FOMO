@@ -169,6 +169,7 @@ class ImbalancedTraining:
 
             indices_to_be_augmented = (
                 self.get_ood_indices(train_dataset, cycle_idx)
+                * self.args.num_generations_per_ood_sample
                 if self.args.use_ood
                 else self.get_random_indices(train_dataset)
             )
@@ -291,7 +292,9 @@ class ImbalancedTraining:
 
     def get_random_indices(self, dataset) -> list:
         """Get random indices for augmentation"""
-        return torch.randperm(len(dataset))[: self.args.num_ood_samples].tolist()
+        return torch.randperm(len(dataset))[
+            : self.args.num_ood_samples * self.args.num_generations_per_ood_sample
+        ].tolist()
 
     def get_ood_indices(self, dataset, cycle_idx) -> list:
         """Get indices of OOD samples using feature-based detection"""
