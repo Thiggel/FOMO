@@ -65,15 +65,6 @@ class ImbalancedTraining:
         if self.save_class_distribution:
             self.save_class_dist(0)
 
-    def get_batch_labels(self, indices):
-        """Get labels directly by indexing into dataset"""
-        for index in tqdm(indices, desc="Getting batch labels"):
-            print(index)
-            _, label = self.datamodule.train_dataset[index]
-            labels.append(label)
-
-        return torch.tensor(labels, device=device)
-
     def get_class_indices_map(self, dataset):
         """Efficiently create a mapping of class labels to their indices"""
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -168,7 +159,9 @@ class ImbalancedTraining:
             if self.args.remove_diffusion:
                 # Get labels for efficient sampling from each class
                 ood_samples = Subset(train_dataset, indices_to_be_augmented)
-                batch_labels = self.get_batch_labels(ood_samples)
+                ood_labels = [
+                    label for _, label in tqdm(ood_samples, desc="Getting labels")
+                ]
 
                 # Log class distribution
                 unique_labels, counts = torch.unique(batch_labels, return_counts=True)
@@ -186,7 +179,9 @@ class ImbalancedTraining:
                 )
             else:
                 ood_samples = Subset(train_dataset, indices_to_be_augmented)
-                ood_labels = self.get_batch_labels(ood_samples)
+                ood_labels = [
+                    label for _, label in tqdm(ood_samples, desc="Getting labels")
+                ]
 
                 expected_new_images = (
                     len(ood_samples) * self.args.num_generations_per_ood_sample
