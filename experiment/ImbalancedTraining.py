@@ -172,9 +172,11 @@ class ImbalancedTraining:
                 self.datamodule.add_samples_by_index(ood_indices)
                 print(f"Added {len(ood_indices)} samples back to the training set")
             else:
-                ood_labels = [
-                    label for _, label in tqdm(ood_samples, desc="Getting labels")
-                ]
+                ood_labels = torch.tensor(
+                    [label for _, label in tqdm(ood_samples, desc="Getting labels")]
+                )
+
+                print(ood_labels)
 
                 expected_new_images = (
                     len(ood_samples) * self.args.num_generations_per_ood_sample
