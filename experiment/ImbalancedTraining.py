@@ -463,18 +463,22 @@ class ImbalancedTraining:
             ]
         )
         k = 0
-        for b_start in tqdm(
-            range(0, len(ood_samples), self.args.sd_batch_size),
+
+        dataloader = DataLoader(
+            ood_samples,
+            batch_size=self.args.sd_batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+        for batch in in tqdm(
+            dataloader,
             desc="Generating New Data...",
         ):
             old_stdout = sys.stdout
             sys.stdout = io.StringIO()
             # Get and denormalize batch
-            print("-" * 50)
-            for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size)):
-                print(i, b_start)
-                print(ood_samples[i + b_start])
-            exit()
+            print(batch)
+            continue
             batch = [
                 ood_samples[i + b_start][0]
                 for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size))
@@ -488,3 +492,4 @@ class ImbalancedTraining:
             image_storage.save_batch(v_imgs, cycle_idx, k)
             k += len(v_imgs)
             sys.stdout = old_stdout
+        exit()
