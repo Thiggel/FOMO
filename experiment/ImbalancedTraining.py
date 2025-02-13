@@ -68,6 +68,7 @@ class ImbalancedTraining:
     def get_batch_labels(self, indices):
         """Get labels directly by indexing into dataset"""
         for index in tqdm(indices, desc="Getting batch labels"):
+            print(index)
             _, label = self.datamodule.train_dataset[index]
             labels.append(label)
 
