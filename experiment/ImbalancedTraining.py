@@ -3,7 +3,7 @@ import io
 from tqdm import tqdm
 import torch
 import numpy as np
-from torch.utils.data import Subset, random_split, Dataset
+from torch.utils.data import Subset, random_split, Dataset, DataLoader
 from lightning.pytorch.strategies import DeepSpeedStrategy
 import lightning.pytorch as L
 from lightning.pytorch.callbacks import EarlyStopping
