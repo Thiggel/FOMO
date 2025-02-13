@@ -62,6 +62,9 @@ class ImbalancedTraining:
 
         self.num_workers = self.datamodule.num_workers
 
+        if self.save_class_distribution:
+            self.save_class_dist(0)
+
     def get_batch_labels(self, dataset, indices):
         """Get labels for multiple indices efficiently using DataLoader"""
         subset = Subset(dataset, indices)
@@ -359,7 +362,7 @@ class ImbalancedTraining:
 
             # Save and visualize class distribution
             if self.save_class_distribution:
-                self.save_class_dist(cycle_idx)
+                self.save_class_dist(cycle_idx + 1)
 
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
