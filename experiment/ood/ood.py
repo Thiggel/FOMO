@@ -49,10 +49,18 @@ class OOD:
             for batch_idx, (batch, _) in enumerate(
                 tqdm(loader, desc="Extracting features")
             ):
-                # Get indices for this batch
-                start_idx = batch_idx * self.batch_size
-                end_idx = start_idx + len(batch)
-                self.indices.extend(range(start_idx, end_idx))
+                # If dataset is a Subset, get the actual indices
+                if hasattr(self.dataset, "indices"):
+                    start_idx = batch_idx * self.batch_size
+                    indices_in_batch = self.dataset.indices[
+                        start_idx : start_idx + len(batch)
+                    ]
+                    self.indices.extend(indices_in_batch.tolist())
+                else:
+                    # Original sequential indexing for non-Subset datasets
+                    start_idx = batch_idx * self.batch_size
+                    end_idx = start_idx + len(batch)
+                    self.indices.extend(range(start_idx, end_idx))
 
                 # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
