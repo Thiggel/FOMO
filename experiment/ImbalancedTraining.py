@@ -70,13 +70,14 @@ class ImbalancedTraining:
         Handles both regular datasets and Subset instances."""
 
         # If dataset is already a Subset, we need to map our indices through its indices
-        if isinstance(dataset, Subset):
-            # Map the indices through the existing subset's indices
-            actual_indices = [dataset.indices[i] for i in indices]
-            # Create new subset from the base dataset
-            subset = Subset(dataset.dataset, actual_indices)
-        else:
-            subset = Subset(dataset, indices)
+        # Map the indices through the existing subset's indices
+        actual_indices = [dataset.indices[i] for i in indices]
+        # Create new subset from the base dataset
+        subset = Subset(dataset.dataset, actual_indices)
+
+        print(subset)
+        print([datapoint for datapoint in subset])
+        exit()
 
         loader = DataLoader(
             subset,
