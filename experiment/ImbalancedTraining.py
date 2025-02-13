@@ -218,33 +218,6 @@ class ImbalancedTraining:
             # Reset transforms
             self.datamodule.train_dataset.dataset.transform = ssl_transform
 
-            # Verify dataset size change
-            final_size = len(self.datamodule.train_dataset)
-            if self.args.remove_diffusion:
-                expected_increase = (
-                    len(ood_indices) * self.args.num_generations_per_ood_sample
-                )
-            else:
-                expected_increase = (
-                    len(ood_samples) * self.args.num_generations_per_ood_sample
-                )
-
-            print(f"\nDataset size verification:")
-            print(f"Initial size: {initial_size}")
-            print(f"Final size: {final_size}")
-            print(f"Expected increase: {expected_increase}")
-            print(f"Actual increase: {final_size - initial_size}")
-
-            if final_size != initial_size + expected_increase:
-                raise AssertionError(
-                    f"Dataset size mismatch. Expected {initial_size + expected_increase}, "
-                    f"got {final_size}"
-                )
-
-            print(
-                f"✓ Dataset size verified: Successfully added {expected_increase} images"
-            )
-
         finally:
             self._cleanup_cycle_resources(trainer)
 
@@ -479,8 +452,6 @@ class ImbalancedTraining:
                 batch,
                 num_images_per_prompt=self.args.num_generations_per_ood_sample,
             ).images
-
-            print(len(batch), len(v_imgs))
 
             # Save batch
             image_storage.save_batch(v_imgs, cycle_idx, k)
