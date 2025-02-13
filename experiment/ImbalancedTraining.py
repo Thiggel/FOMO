@@ -66,32 +66,30 @@ class ImbalancedTraining:
             self.save_class_dist(0)
 
     def get_batch_labels(self, dataset, indices):
-        """Get labels for multiple indices efficiently using DataLoader"""
-        print("Dataset type:", type(dataset))
-        print("Dataset length:", len(dataset))
-        print("Indices:", indices)
-        print("Indices type:", type(indices))
+        """Get labels for multiple indices efficiently using DataLoader.
+        Handles both regular datasets and Subset instances."""
 
-        subset = Subset(dataset, indices)
-        print("Subset length:", len(subset))
+        # If dataset is already a Subset, we need to map our indices through its indices
+        if isinstance(dataset, Subset):
+            # Map the indices through the existing subset's indices
+            actual_indices = [dataset.indices[i] for i in indices]
+            # Create new subset from the base dataset
+            subset = Subset(dataset.dataset, actual_indices)
+        else:
+            subset = Subset(dataset, indices)
 
         loader = DataLoader(
-            subset, batch_size=self.args.val_batch_size, num_workers=self.num_workers
+            subset,
+            batch_size=self.args.val_batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
         )
 
         labels = []
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        try:
-            for batch in loader:
-                print("Batch type:", type(batch))
-                print("Batch contents:", batch)
-                _, batch_labels = batch
-                labels.append(batch_labels.to(device))
-        except Exception as e:
-            print("Error in DataLoader:", str(e))
-            print("Traceback:", e.__traceback__)
-            raise
+        for _, batch_labels in loader:
+            labels.append(batch_labels.to(device))
 
         return torch.cat(labels)
 
