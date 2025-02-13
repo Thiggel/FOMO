@@ -458,3 +458,40 @@ class ImbalancedTraining:
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
+    def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
+        """
+        Generate new data using the diffusion model.
+        """
+        cycle_idx = int(save_subfolder.split("/")[-1])
+        image_storage = ImageStorage(self.args.additional_data_path)
+        # Create a simple transform for denormalization
+        denorm = transforms.Compose(
+            [
+                transforms.Normalize(
+                    mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+                    std=[1 / 0.229, 1 / 0.224, 1 / 0.225],
+                ),
+            ]
+        )
+        k = 0
+        for b_start in tqdm(
+            range(0, len(ood_samples), self.args.sd_batch_size),
+            desc="Generating New Data...",
+        ):
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
+            # Get and denormalize batch
+            batch = [
+                ood_samples[i + b_start][0]
+                for i in range(min(len(ood_samples) - b_start, batch_size))
+            ]
+            batch = [denorm(img) for img in batch]
+            # Generate images
+            v_imgs = pipe(
+                batch, num_images_per_prompt=self.args.num_generations_per_ood_sample
+            ).images
+            # Save batch
+            image_storage.save_batch(v_imgs, cycle_idx, k)
+            k += len(v_imgs)
+            sys.stdout = old_stdout
