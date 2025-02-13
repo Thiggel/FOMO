@@ -453,7 +453,6 @@ class ImbalancedTraining:
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
         image_storage = ImageStorage(self.args.additional_data_path)
-        # Create a simple transform for denormalization
         denorm = transforms.Compose(
             [
                 transforms.Normalize(
@@ -464,37 +463,31 @@ class ImbalancedTraining:
         )
         k = 0
 
-        print(ood_samples)
-        print(ood_samples.indices)
-        print([ood_sample in ood_samples])
-        exit()
-
+        # Create DataLoader with num_workers=0 to avoid indexing issues
         dataloader = DataLoader(
             ood_samples,
             batch_size=self.args.sd_batch_size,
-            num_workers=self.num_workers,
+            num_workers=0,  # Set to 0 to avoid multi-processing issues
             pin_memory=True,
+            shuffle=False,  # Important to maintain order
         )
-        for batch in tqdm(
-            dataloader,
-            desc="Generating New Data...",
+
+        for batch_idx, (images, _) in enumerate(
+            tqdm(dataloader, desc="Generating New Data...")
         ):
             old_stdout = sys.stdout
             sys.stdout = io.StringIO()
-            # Get and denormalize batch
-            print(batch)
-            continue
-            batch = [
-                ood_samples[i + b_start][0]
-                for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size))
-            ]
-            batch = [denorm(img) for img in batch]
+
+            # Process batch directly
+            batch = [denorm(img) for img in images]
+
             # Generate images
             v_imgs = pipe(
                 batch, num_images_per_prompt=self.args.num_generations_per_ood_sample
             ).images
+
             # Save batch
             image_storage.save_batch(v_imgs, cycle_idx, k)
             k += len(v_imgs)
+
             sys.stdout = old_stdout
-        exit()
