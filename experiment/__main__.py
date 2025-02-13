@@ -289,7 +289,7 @@ def main():
     args.additional_data_path = (
         os.environ["BASE_CACHE_DIR"]
         + "/"
-        + args.additional_data_path
+        + "additional_data"
         + "_"
         + generate_random_string()
     )
