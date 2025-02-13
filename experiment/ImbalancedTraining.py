@@ -416,6 +416,8 @@ class ImbalancedTraining:
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
         Generate new data using the diffusion model.
+        Processes images in batches according to sd_batch_size, potentially feeding the same image
+        multiple times if num_generations_per_ood_sample is greater than sd_batch_size.
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
         image_storage = ImageStorage(self.args.additional_data_path)
@@ -428,12 +430,16 @@ class ImbalancedTraining:
             ]
         )
 
-        k = 0
+        total_images_saved = 0
+        generations_per_batch = min(
+            self.args.sd_batch_size, self.args.num_generations_per_ood_sample
+        )
 
-        # Create DataLoader with the wrapped dataset
+        # Create DataLoader with a batch size that accounts for multiple generations
+        effective_batch_size = max(1, self.args.sd_batch_size // generations_per_batch)
         dataloader = DataLoader(
             ood_samples,
-            batch_size=self.args.sd_batch_size,
+            batch_size=effective_batch_size,
             num_workers=0,
             pin_memory=True,
             shuffle=False,
@@ -442,15 +448,28 @@ class ImbalancedTraining:
         for batch_idx, (images, _) in enumerate(
             tqdm(dataloader, desc="Generating New Data...")
         ):
-            # Process batch
+            # Denormalize the batch
             batch = [denorm(img) for img in images]
 
-            # Generate images
-            v_imgs = pipe(
-                batch,
-                num_images_per_prompt=self.args.num_generations_per_ood_sample,
-            ).images
+            # Calculate how many passes we need for this batch
+            remaining_generations = self.args.num_generations_per_ood_sample
+            batch_images = []
 
-            # Save batch
-            image_storage.save_batch(v_imgs, cycle_idx, k)
-            k += len(v_imgs)
+            while remaining_generations > 0:
+                # Calculate number of images to generate this pass
+                current_generations = min(generations_per_batch, remaining_generations)
+
+                # Generate images
+                generated_images = pipe(
+                    batch,
+                    num_images_per_prompt=current_generations,
+                ).images
+
+                batch_images.extend(generated_images)
+                remaining_generations -= current_generations
+
+            # Save all generated images for this batch
+            image_storage.save_batch(batch_images, cycle_idx, total_images_saved)
+            total_images_saved += len(batch_images)
+
+        print(f"Total images generated and saved: {total_images_saved}")
