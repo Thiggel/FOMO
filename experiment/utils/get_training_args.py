@@ -250,13 +250,13 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument(
         "--num-runs",
         type=int,
-        default=3,
+        default=1,
         help="Number of training runs",
     )
     parser.add_argument(
         "--max-hours-per-run",
         type=int,
-        default=5,
+        default=12,
         help="Max hours per run",
     )
     parser.add_argument(
