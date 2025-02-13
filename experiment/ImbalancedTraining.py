@@ -463,6 +463,7 @@ class ImbalancedTraining:
             ]
         )
         k = 0
+        print(len(ood_samples), self.args.sd_batch_size)
         for b_start in tqdm(
             range(0, len(ood_samples), self.args.sd_batch_size),
             desc="Generating New Data...",
