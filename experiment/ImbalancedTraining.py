@@ -463,31 +463,58 @@ class ImbalancedTraining:
         )
         k = 0
 
-        # Create DataLoader with num_workers=0 to avoid indexing issues
+        # First, let's verify the indices and dataset
+        print(f"Total dataset size: {len(ood_samples.dataset)}")
+        print(f"Subset indices: {ood_samples.indices}")
+        print(f"Number of indices: {len(ood_samples.indices)}")
+        print(f"Max index value: {max(ood_samples.indices)}")
+
+        # Create a custom dataset that directly accesses the underlying data
+        class SubsetWrapper(Dataset):
+            def __init__(self, subset):
+                self.subset = subset
+
+            def __len__(self):
+                return len(self.subset.indices)
+
+            def __getitem__(self, idx):
+                return self.subset.dataset[self.subset.indices[idx]]
+
+        wrapped_dataset = SubsetWrapper(ood_samples)
+
+        # Create DataLoader with the wrapped dataset
         dataloader = DataLoader(
-            ood_samples,
+            wrapped_dataset,
             batch_size=self.args.sd_batch_size,
-            num_workers=0,  # Set to 0 to avoid multi-processing issues
+            num_workers=0,
             pin_memory=True,
-            shuffle=False,  # Important to maintain order
+            shuffle=False,
         )
 
-        for batch_idx, (images, _) in enumerate(
-            tqdm(dataloader, desc="Generating New Data...")
-        ):
-            old_stdout = sys.stdout
-            sys.stdout = io.StringIO()
+        try:
+            for batch_idx, (images, _) in enumerate(
+                tqdm(dataloader, desc="Generating New Data...")
+            ):
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
 
-            # Process batch directly
-            batch = [denorm(img) for img in images]
+                # Process batch
+                batch = [denorm(img) for img in images]
 
-            # Generate images
-            v_imgs = pipe(
-                batch, num_images_per_prompt=self.args.num_generations_per_ood_sample
-            ).images
+                # Generate images
+                v_imgs = pipe(
+                    batch,
+                    num_images_per_prompt=self.args.num_generations_per_ood_sample,
+                ).images
 
-            # Save batch
-            image_storage.save_batch(v_imgs, cycle_idx, k)
-            k += len(v_imgs)
+                # Save batch
+                image_storage.save_batch(v_imgs, cycle_idx, k)
+                k += len(v_imgs)
 
-            sys.stdout = old_stdout
+                sys.stdout = old_stdout
+
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")
+            print(f"Current batch_idx: {batch_idx}")
+            print(f"Number of processed images so far: {k}")
+            raise
