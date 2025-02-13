@@ -114,7 +114,7 @@ class OOD:
 
         # Get indices of N samples with largest k-NN distances
         top_distances, top_indices = torch.topk(
-            distances, k=self.num_ood_samples, largest=True
+            distances, k=int(self.num_ood_samples), largest=True
         )
 
         # Map back to original dataset indices

@@ -150,7 +150,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
     )
     parser.add_argument(
         "--num-ood-samples",
-        type=float,
+        type=int,
         default=1000,
         help="Select the N most OOD samples in the dataset for augmentation after each cycle",
     )
