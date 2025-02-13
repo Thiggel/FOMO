@@ -464,6 +464,11 @@ class ImbalancedTraining:
         )
         k = 0
 
+        print(ood_samples)
+        print(ood_samples.indices)
+        print([ood_sample in ood_samples])
+        exit()
+
         dataloader = DataLoader(
             ood_samples,
             batch_size=self.args.sd_batch_size,
