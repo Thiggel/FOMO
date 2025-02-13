@@ -471,6 +471,9 @@ class ImbalancedTraining:
             old_stdout = sys.stdout
             sys.stdout = io.StringIO()
             # Get and denormalize batch
+            for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size)):
+                print(i)
+                print(ood_samples[i + b_start][0])
             batch = [
                 ood_samples[i + b_start][0]
                 for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size))
