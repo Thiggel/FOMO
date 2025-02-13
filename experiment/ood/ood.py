@@ -35,10 +35,23 @@ class OOD:
     @torch.cuda.amp.autocast()
     def extract_features(self):
         """Extract and normalize features from the entire dataset"""
+        # If dataset is a Subset, get all indices first
+        if hasattr(self.dataset, "indices"):
+            all_indices = self.dataset.indices
+            dataset_size = len(all_indices)
+        else:
+            dataset_size = len(self.dataset)
+            all_indices = torch.arange(dataset_size)
+
+        # Create DataLoader with a custom batch sampler to track indices
+        from torch.utils.data import BatchSampler, SequentialSampler
+
+        sampler = SequentialSampler(range(dataset_size))
+        batch_sampler = BatchSampler(sampler, self.batch_size, drop_last=False)
+
         loader = DataLoader(
             self.dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
+            batch_sampler=batch_sampler,  # Use batch_sampler instead of batch_size
             num_workers=self.num_workers,
             pin_memory=True,
             persistent_workers=True,
@@ -46,21 +59,13 @@ class OOD:
 
         # Extract and normalize features using GPU
         with torch.no_grad():
-            for batch_idx, (batch, _) in enumerate(
-                tqdm(loader, desc="Extracting features")
-            ):
-                # If dataset is a Subset, get the actual indices
-                if hasattr(self.dataset, "indices"):
-                    start_idx = batch_idx * self.batch_size
-                    indices_in_batch = self.dataset.indices[
-                        start_idx : start_idx + len(batch)
-                    ]
-                    self.indices.extend(indices_in_batch)
-                else:
-                    # Original sequential indexing for non-Subset datasets
-                    start_idx = batch_idx * self.batch_size
-                    end_idx = start_idx + len(batch)
-                    self.indices.extend(range(start_idx, end_idx))
+            for batch_indices in tqdm(batch_sampler, desc="Extracting features"):
+                # Get data using explicit indices
+                batch = [self.dataset[i][0] for i in batch_indices]
+                batch = torch.stack(batch)
+
+                # Store the actual indices
+                self.indices.extend(all_indices[batch_indices].tolist())
 
                 # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
@@ -77,7 +82,6 @@ class OOD:
         # Concatenate all features
         self.features = torch.cat(self.features)
         self.indices = torch.tensor(self.indices, device=self.device)
-        print("INDICES", self.indices)
 
     def compute_knn_distances(self):
         """Compute k-NN distances efficiently on GPU using batched operations"""

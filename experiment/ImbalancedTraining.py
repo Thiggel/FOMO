@@ -462,7 +462,7 @@ class ImbalancedTraining:
             ]
         )
         k = 0
-        print(123, ood_indices)
+        print(123, ood_samples)
 
         # Create DataLoader with the wrapped dataset
         dataloader = DataLoader(
