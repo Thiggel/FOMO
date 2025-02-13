@@ -44,15 +44,11 @@ class OOD:
 
         # Extract and normalize features using GPU
         with torch.no_grad():
-            for batch in tqdm(loader, desc="Extracting features"):
+            for images, _ in tqdm(loader, desc="Extracting features"):
                 # Get data using explicit indices
-                print(batch)
-                exit()
-                batch = torch.stack(batch)
-
                 # Extract features
-                batch = batch.to(device=self.device, dtype=self.dtype)
-                features = self.feature_extractor(batch)
+                images = images.to(device=self.device, dtype=self.dtype)
+                features = self.feature_extractor(images)
 
                 # Handle 1D case
                 if features.dim() == 1:
