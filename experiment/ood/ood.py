@@ -65,7 +65,7 @@ class OOD:
                 batch = torch.stack(batch)
 
                 # Store the actual indices
-                self.indices.extend(all_indices[batch_indices].tolist())
+                self.indices.extend(all_indices[batch_indices])
 
                 # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
