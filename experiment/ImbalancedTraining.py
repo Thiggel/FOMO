@@ -491,30 +491,23 @@ class ImbalancedTraining:
             shuffle=False,
         )
 
-        try:
-            for batch_idx, (images, _) in enumerate(
-                tqdm(dataloader, desc="Generating New Data...")
-            ):
-                old_stdout = sys.stdout
-                sys.stdout = io.StringIO()
+        for batch_idx, (images, _) in enumerate(
+            tqdm(dataloader, desc="Generating New Data...")
+        ):
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
 
-                # Process batch
-                batch = [denorm(img) for img in images]
+            # Process batch
+            batch = [denorm(img) for img in images]
 
-                # Generate images
-                v_imgs = pipe(
-                    batch,
-                    num_images_per_prompt=self.args.num_generations_per_ood_sample,
-                ).images
+            # Generate images
+            v_imgs = pipe(
+                batch,
+                num_images_per_prompt=self.args.num_generations_per_ood_sample,
+            ).images
 
-                # Save batch
-                image_storage.save_batch(v_imgs, cycle_idx, k)
-                k += len(v_imgs)
+            # Save batch
+            image_storage.save_batch(v_imgs, cycle_idx, k)
+            k += len(v_imgs)
 
-                sys.stdout = old_stdout
-
-        except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            print(f"Current batch_idx: {batch_idx}")
-            print(f"Number of processed images so far: {k}")
-            raise
+            sys.stdout = old_stdout

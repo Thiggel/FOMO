@@ -55,7 +55,7 @@ class OOD:
                     indices_in_batch = self.dataset.indices[
                         start_idx : start_idx + len(batch)
                     ]
-                    self.indices.extend(indices_in_batch.tolist())
+                    self.indices.extend(indices_in_batch)
                 else:
                     # Original sequential indexing for non-Subset datasets
                     start_idx = batch_idx * self.batch_size
