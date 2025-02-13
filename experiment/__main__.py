@@ -286,6 +286,10 @@ def main():
 
     args = get_training_args()
 
+    # make train batch size not depend on number of gpus
+    # but instead let effective batch size be selectable by the user
+    args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
+
     # add a timestamp to the additional data path
     args.additional_data_path = (
         os.environ["BASE_CACHE_DIR"]
