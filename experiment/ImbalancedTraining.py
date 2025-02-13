@@ -80,7 +80,10 @@ class ImbalancedTraining:
             actual_indices = indices
 
         # Simply get each label directly
+        print(len(base_dataset))
+        print(base_dataset.indices)
         for idx in tqdm(actual_indices, desc="Getting batch labels"):
+            print(idx)
             _, label = base_dataset[idx]
             labels.append(label)
 
