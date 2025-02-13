@@ -43,6 +43,9 @@ class OOD:
             dataset_size = len(self.dataset)
             all_indices = torch.arange(dataset_size)
 
+        # Convert all_indices to tensor if it's not already
+        all_indices = torch.tensor(all_indices)
+
         # Create DataLoader with a custom batch sampler to track indices
         from torch.utils.data import BatchSampler, SequentialSampler
 
@@ -51,7 +54,7 @@ class OOD:
 
         loader = DataLoader(
             self.dataset,
-            batch_sampler=batch_sampler,  # Use batch_sampler instead of batch_size
+            batch_sampler=batch_sampler,
             num_workers=self.num_workers,
             pin_memory=True,
             persistent_workers=True,
@@ -64,8 +67,9 @@ class OOD:
                 batch = [self.dataset[i][0] for i in batch_indices]
                 batch = torch.stack(batch)
 
-                # Store the actual indices
-                self.indices.extend(all_indices[batch_indices])
+                # Store the actual indices - fixed indexing
+                selected_indices = all_indices[torch.tensor(batch_indices)]
+                self.indices.extend(selected_indices.tolist())
 
                 # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
