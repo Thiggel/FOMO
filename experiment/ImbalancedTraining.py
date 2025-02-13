@@ -65,7 +65,7 @@ class ImbalancedTraining:
     def get_batch_labels(self, dataset, indices):
         """Get labels for multiple indices efficiently using DataLoader"""
         subset = Subset(dataset, indices)
-        loader = DataLoader(subset, batch_size=512, num_workers=self.num_workers)
+        loader = DataLoader(subset, batch_size=self.args.val_batch_size, num_workers=self.num_workers)
         labels = []
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -88,7 +88,7 @@ class ImbalancedTraining:
         )
 
         dataloader = DataLoader(
-            dataset, batch_size=1024, num_workers=self.num_workers, pin_memory=True
+            dataset, batch_size=self.args.val_batch_size, num_workers=self.num_workers, pin_memory=True
         )
 
         class_to_indices = {}
@@ -123,7 +123,7 @@ class ImbalancedTraining:
             if torch.cuda.is_available():
                 strategy = DeepSpeedStrategy(
                     config={
-                        "train_batch_size": self.args.batch_size
+                        "train_batch_size": self.args.train_batch_size
                         * self.args.grad_acc_steps
                         * torch.cuda.device_count(),
                         "bf16": {"enabled": True},
@@ -405,7 +405,7 @@ class ImbalancedTraining:
             if torch.cuda.is_available():
                 strategy = DeepSpeedStrategy(
                     config={
-                        "train_batch_size": 64 * torch.cuda.device_count(),
+                        "train_batch_size": self.args.train_batch_size * self.args.grad_acc_steps * * torch.cuda.device_count(),
                         "bf16": {"enabled": True},
                         "zero_optimization": {
                             "stage": 2,
