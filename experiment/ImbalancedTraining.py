@@ -471,9 +471,6 @@ class ImbalancedTraining:
         for batch_idx, (images, _) in enumerate(
             tqdm(dataloader, desc="Generating New Data...")
         ):
-            old_stdout = sys.stdout
-            sys.stdout = io.StringIO()
-
             # Process batch
             batch = [denorm(img) for img in images]
 
@@ -488,5 +485,3 @@ class ImbalancedTraining:
             # Save batch
             image_storage.save_batch(v_imgs, cycle_idx, k)
             k += len(v_imgs)
-
-            sys.stdout = old_stdout
