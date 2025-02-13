@@ -11,7 +11,7 @@ class PowerLawImbalancedness(Imbalancedness):
 
     def __init__(self, num_classes: int):
         super().__init__(num_classes)
-        self.alpha = 3  # Pareto distribution parameter
+        self.alpha = 2.5  # Pareto distribution parameter
         self.max_samples = 1280  # Maximum samples per class as in ImageNet-LT
         self.min_samples = 5  # Minimum samples per class as in ImageNet-LT
 
