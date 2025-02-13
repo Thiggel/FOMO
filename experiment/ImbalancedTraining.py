@@ -138,25 +138,20 @@ class ImbalancedTraining:
             )
             self.datamodule.train_dataset.dataset.transform = self.transform
 
-            train_dataset = Subset(
-                self.datamodule.train_dataset, list(range(self.initial_train_ds_size))
-            )
-
             # Log OOD selection method
             print(
                 f"\nSelecting OOD samples using {'OOD detection' if self.args.use_ood else 'random selection'}"
             )
 
-            ood_samples = (
-                self.get_ood_samples(train_dataset, cycle_idx)
+            ood_indices = (
+                self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
                 if self.args.use_ood
-                else self.get_random_datapoints(train_dataset)
+                else self.get_random_indices(train_dataset)
             )
 
-            print(ood_samples)
-            exit()
+            ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
 
-            print(f"Selected {len(indices_to_be_augmented)} samples for augmentation")
+            print(f"Selected {len(ood_indices)} samples for augmentation")
 
             if self.args.remove_diffusion:
                 # Get labels for efficient sampling from each class
@@ -173,11 +168,9 @@ class ImbalancedTraining:
                     print(f"Class {label}: {count} samples")
 
                 # Add samples back to dataset
-                self.added_indices.update(indices_to_be_augmented)
-                self.datamodule.add_samples_by_index(indices_to_be_augmented)
-                print(
-                    f"Added {len(indices_to_be_augmented)} samples back to the training set"
-                )
+                self.added_indices.update(ood_indices)
+                self.datamodule.add_samples_by_index(ood_indices)
+                print(f"Added {len(ood_indices)} samples back to the training set")
             else:
                 ood_labels = [
                     label for _, label in tqdm(ood_samples, desc="Getting labels")
@@ -226,7 +219,9 @@ class ImbalancedTraining:
             # Verify dataset size change
             final_size = len(self.datamodule.train_dataset)
             if self.args.remove_diffusion:
-                expected_increase = len(indices_to_be_augmented)
+                expected_increase = (
+                    len(ood_indices) * self.args.num_generations_per_ood_sample
+                )
             else:
                 expected_increase = (
                     len(ood_samples) * self.args.num_generations_per_ood_sample
@@ -272,16 +267,11 @@ class ImbalancedTraining:
 
         return self.finetune() if self.args.finetune else {}
 
-    def get_random_datapoints(self, dataset) -> list:
+    def get_random_indices(self, dataset) -> list:
         """Get random indices for augmentation"""
-        return [
-            dataset[index]
-            for index in torch.randperm(len(dataset))[
-                : self.args.num_ood_samples
-            ].tolist()
-        ]
+        return torch.randperm(len(dataset))[: self.args.num_ood_samples].tolist()
 
-    def get_ood_samples(self, dataset, cycle_idx) -> list:
+    def get_ood_indices(self, dataset, cycle_idx) -> list:
         """Get indices of OOD samples using feature-based detection"""
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.ssl_method.to(device)
@@ -296,8 +286,8 @@ class ImbalancedTraining:
             dtype=self.ssl_method.dtype,
         )
 
-        ood_datapoints = ood.ood()
-        return ood_datapoints
+        ood_indices = ood.ood()
+        return ood_indices
 
     def save_class_dist(self, cycle_idx: int) -> None:
         """Save class distribution for current cycle using GPU acceleration"""
