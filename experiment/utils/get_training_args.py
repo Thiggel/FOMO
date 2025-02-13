@@ -66,11 +66,11 @@ def get_training_args(get_defaults: bool = False) -> dict:
     )
 
     # Training configuration
-    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
     parser.add_argument(
         "--temperature",
         type=float,
-        default=0.5,
+        default=0.07,
         help="Temperature for contrastive learning",
     )
     parser.add_argument(

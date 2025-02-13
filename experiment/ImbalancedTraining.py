@@ -463,7 +463,6 @@ class ImbalancedTraining:
             ]
         )
         k = 0
-        print(len(ood_samples), self.args.sd_batch_size)
         for b_start in tqdm(
             range(0, len(ood_samples), self.args.sd_batch_size),
             desc="Generating New Data...",
@@ -471,9 +470,11 @@ class ImbalancedTraining:
             old_stdout = sys.stdout
             sys.stdout = io.StringIO()
             # Get and denormalize batch
+            print("-" * 50)
             for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size)):
                 print(i)
                 print(ood_samples[i + b_start][0])
+            exit()
             batch = [
                 ood_samples[i + b_start][0]
                 for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size))
