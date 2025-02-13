@@ -67,20 +67,31 @@ class ImbalancedTraining:
 
     def get_batch_labels(self, dataset, indices):
         """Get labels for multiple indices efficiently using DataLoader"""
-        print("Getting batch labels")
-        print(indices)
+        print("Dataset type:", type(dataset))
+        print("Dataset length:", len(dataset))
+        print("Indices:", indices)
+        print("Indices type:", type(indices))
+
         subset = Subset(dataset, indices)
+        print("Subset length:", len(subset))
+
         loader = DataLoader(
-            subset,
-            batch_size=min(self.args.val_batch_size, len(subset)),
-            num_workers=self.num_workers,
+            subset, batch_size=self.args.val_batch_size, num_workers=self.num_workers
         )
+
         labels = []
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        exit()
 
-        for _, batch_labels in loader:
-            labels.append(batch_labels.to(device))
+        try:
+            for batch in loader:
+                print("Batch type:", type(batch))
+                print("Batch contents:", batch)
+                _, batch_labels = batch
+                labels.append(batch_labels.to(device))
+        except Exception as e:
+            print("Error in DataLoader:", str(e))
+            print("Traceback:", e.__traceback__)
+            raise
 
         return torch.cat(labels)
 
