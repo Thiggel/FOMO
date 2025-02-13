@@ -472,8 +472,8 @@ class ImbalancedTraining:
             # Get and denormalize batch
             print("-" * 50)
             for i in range(min(len(ood_samples) - b_start, self.args.sd_batch_size)):
-                print(i)
-                print(ood_samples[i + b_start][0])
+                print(i, b_start)
+                print(ood_samples[i + b_start])
             exit()
             batch = [
                 ood_samples[i + b_start][0]
