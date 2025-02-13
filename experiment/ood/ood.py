@@ -22,7 +22,7 @@ class OOD:
         self.num_workers = min(24, get_num_workers())
         self.feature_extractor = feature_extractor
         self.batch_size = args.val_batch_size
-        self.K = args.k  # For ImageNet100, we use k=100
+        self.K = int(args.k)  # For ImageNet100, we use k=100
         self.num_ood_samples = args.num_ood_samples  # Hyperparameter for threshold
         self.cycle_idx = cycle_idx
         self.device = device
