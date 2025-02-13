@@ -182,6 +182,7 @@ def run(
             name=log_name + str(seed),
             group=log_name,
             save_dir=os.environ["BASE_CACHE_DIR"],
+            settings=wandb.Settings(silent=True),
         )
         # wandb_logger.watch(model, log="all")
 
