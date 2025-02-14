@@ -23,7 +23,7 @@ import os
 import pickle
 
 from experiment.dataset.ImageStorage import ImageStorage
-from experiment.utils import get_num_workers
+from experiment.utils.get_num_workers import get_num_workers
 
 
 class ImbalancedTraining:
