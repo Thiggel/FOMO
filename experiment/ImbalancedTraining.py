@@ -23,6 +23,7 @@ import os
 import pickle
 
 from experiment.dataset.ImageStorage import ImageStorage
+from experiment.utils import get_num_workers
 
 
 class ImbalancedTraining:
@@ -60,7 +61,7 @@ class ImbalancedTraining:
             self.added_indices = set()
             self.original_indices = set(range(self.initial_train_ds_size))
 
-        self.num_workers = self.datamodule.num_workers
+        self.num_workers = get_num_workers() // 2
 
         if self.save_class_distribution:
             self.save_class_dist(0)
