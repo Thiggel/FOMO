@@ -50,7 +50,7 @@ class OOD:
             shuffle=False,  # Important: keep order for index tracking
             num_workers=self.num_workers,
             pin_memory=True,
-            persistent_workers=True,
+            persistent_workers=False,
         )
 
         # Extract and normalize features using GPU
