@@ -406,6 +406,16 @@ class ImbalancedTraining:
 
     def _cleanup_cycle_resources(self, trainer: L.Trainer) -> None:
         """Clean up resources after each training cycle"""
+        if hasattr(self.datamodule, "_train_dataloader"):
+            if hasattr(self.datamodule._train_dataloader, "_iterator"):
+                self.datamodule._train_dataloader._iterator = None
+        if hasattr(self.datamodule, "_val_dataloader"):
+            if hasattr(self.datamodule._val_dataloader, "_iterator"):
+                self.datamodule._val_dataloader._iterator = None
+        if hasattr(self.datamodule, "_test_dataloader"):
+            if hasattr(self.datamodule._test_dataloader, "_iterator"):
+                self.datamodule._test_dataloader._iterator = None
+
         self.datamodule.set_dataloaders_none()
 
         if hasattr(trainer, "strategy") and hasattr(trainer.strategy, "cleanup"):
