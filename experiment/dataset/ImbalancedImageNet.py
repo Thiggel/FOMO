@@ -104,6 +104,8 @@ class ImbalancedImageNet(Dataset):
             labels: List of labels for the generated images
         """
 
+        print(f"\nDEBUG:")
+        print(f"Original indices length: {len(self.indices)}")
         print(f"Adding {num_images} generated images for cycle {cycle_idx}")
         print(f"Current additional_image_counts: {self.additional_image_counts}")
 
@@ -113,7 +115,11 @@ class ImbalancedImageNet(Dataset):
         }
         self._save_image_counts()
 
-        print(f"New total length: {len(self)}")
+        print(f"Updated additional_image_counts: {self.additional_image_counts}")
+        total = len(self.indices) + sum(
+            data["count"] for data in self.additional_image_counts.values()
+        )
+        print(f"Calculated new total length: {total}")
 
     def __len__(self):
         """

@@ -44,6 +44,9 @@ import os
 import shutil
 import torch.multiprocessing as mp
 from pathlib import Path
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
