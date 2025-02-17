@@ -115,9 +115,6 @@ class ImbalancedTraining:
             cycle_trainer_args = self.trainer_args.copy()
 
             if torch.cuda.is_available():
-                if torch.distributed.is_initialized():
-                    torch.distributed.destroy_process_group()
-                    torch.distributed.init_process_group(backend="nccl")
 
                 strategy = DeepSpeedStrategy(
                     config={
