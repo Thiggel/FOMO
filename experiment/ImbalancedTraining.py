@@ -103,6 +103,11 @@ class ImbalancedTraining:
 
     def pretrain_cycle(self, cycle_idx) -> None:
         try:
+            import gc
+
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             # Log initial dataset size
             initial_size = len(self.datamodule.train_dataset)
             print(f"\nCycle {cycle_idx} - Initial dataset size: {initial_size}")
@@ -110,6 +115,10 @@ class ImbalancedTraining:
             cycle_trainer_args = self.trainer_args.copy()
 
             if torch.cuda.is_available():
+                if torch.distributed.is_initialized():
+                    torch.distributed.destroy_process_group()
+                    torch.distributed.init_process_group(backend="nccl")
+
                 strategy = DeepSpeedStrategy(
                     config={
                         "train_batch_size": self.args.train_batch_size
@@ -219,6 +228,8 @@ class ImbalancedTraining:
 
         finally:
             self._cleanup_cycle_resources(trainer)
+            gc.collect()
+            torch.cuda.empty_cache()
 
     def run(self) -> dict:
         if self.args.pretrain:
