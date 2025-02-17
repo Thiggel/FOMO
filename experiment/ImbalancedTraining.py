@@ -227,7 +227,7 @@ class ImbalancedTraining:
             self.datamodule.train_dataset.dataset.transform = ssl_transform
 
         finally:
-            self._cleanup_cycle_resources(trainer)
+            self._cleanup_cycle_resources()
             gc.collect()
             torch.cuda.empty_cache()
 
@@ -415,7 +415,7 @@ class ImbalancedTraining:
             )
         return pipe.to(device)
 
-    def _cleanup_cycle_resources(self, trainer: L.Trainer) -> None:
+    def _cleanup_cycle_resources(self) -> None:
         """Clean up resources after each training cycle"""
         if hasattr(self.datamodule, "_train_dataloader"):
             if hasattr(self.datamodule._train_dataloader, "_iterator"):
@@ -428,9 +428,6 @@ class ImbalancedTraining:
                 self.datamodule._test_dataloader._iterator = None
 
         self.datamodule.set_dataloaders_none()
-
-        if hasattr(trainer, "strategy") and hasattr(trainer.strategy, "cleanup"):
-            trainer.strategy.cleanup()
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
