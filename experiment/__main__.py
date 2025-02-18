@@ -189,6 +189,8 @@ def run(
         )
         # wandb_logger.watch(model, log="all")
 
+        print("CHECKPOINT FILENAME: ", checkpoint_filename)
+
     stats_monitor = DeviceStatsMonitor()
 
     callbacks = [last_epoch_checkpoint, every_20_epoch_checkpoint, stats_monitor]
