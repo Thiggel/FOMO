@@ -373,9 +373,7 @@ class ImbalancedTraining:
             if torch.cuda.is_available():
                 strategy = DeepSpeedStrategy(
                     config={
-                        "train_batch_size": 64
-                        * self.args.grad_acc_steps
-                        * torch.cuda.device_count(),
+                        "train_batch_size": 64 * torch.cuda.device_count(),
                         "bf16": {"enabled": True},
                         "zero_optimization": {
                             "stage": 2,
