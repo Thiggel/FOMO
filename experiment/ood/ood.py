@@ -28,7 +28,7 @@ class OOD:
         dtype=torch.float32,
     ):
         self.dataset = dataset
-        self.num_workers = min(24, get_num_workers())
+        self.num_workers = min(6, get_num_workers())
         self.feature_extractor = feature_extractor
         self.batch_size = args.val_batch_size
         self.K = args.k

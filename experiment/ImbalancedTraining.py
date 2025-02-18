@@ -61,7 +61,7 @@ class ImbalancedTraining:
             self.added_indices = set()
             self.original_indices = set(range(self.initial_train_ds_size))
 
-        self.num_workers = min(12, get_num_workers() // 2)
+        self.num_workers = min(6, get_num_workers() // 2)
 
         if self.save_class_distribution:
             self.save_class_dist(0)
