@@ -42,7 +42,7 @@ class TransferLearningBenchmark(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return get_num_workers()
+        return min(6, get_num_workers())
 
     def configure_optimizers(self):
         adam_params = {

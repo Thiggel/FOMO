@@ -28,7 +28,7 @@ class AircraftKNNClassifier(BaseKNNClassifier):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=False,
             multiprocessing_context="spawn",
         )
 
@@ -38,6 +38,6 @@ class AircraftKNNClassifier(BaseKNNClassifier):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=False,
             multiprocessing_context="spawn",
         )
