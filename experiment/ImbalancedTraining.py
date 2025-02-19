@@ -153,7 +153,7 @@ class ImbalancedTraining:
             ood_indices = (
                 self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
                 if self.args.use_ood
-                else self.get_random_indices(train_dataset)
+                else self.get_random_indices(self.datamodule.train_dataset)
             )
 
             ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
