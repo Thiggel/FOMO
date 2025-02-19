@@ -337,6 +337,11 @@ class ImbalancedTraining:
         for benchmark in benchmarks:
             print(f"\n -- Finetuning benchmark: {benchmark.__name__} --\n")
 
+            import gc
+
+            gc.collect()
+            torch.cuda.empty_cache()
+
             transform = transforms.Compose(
                 [
                     transforms.Resize((self.args.crop_size, self.args.crop_size)),
