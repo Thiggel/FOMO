@@ -175,6 +175,7 @@ def run(
         filename=checkpoint_filename + "-epoch-{epoch}-{val_loss:.4f}",
         every_n_epochs=100,  # Save every 20 epochs
         save_top_k=-1,  # This allows saving all checkpoints matching every_n_epochs
+        save_last=True,
     )
 
     if args.logger and not args.test_mode:
