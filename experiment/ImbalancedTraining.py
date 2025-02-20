@@ -166,14 +166,6 @@ class ImbalancedTraining:
                     label for _, label in tqdm(ood_samples, desc="Getting labels")
                 ]
 
-                # Log class distribution
-                unique_labels, counts = torch.unique(batch_labels, return_counts=True)
-                print("\nOOD samples class distribution:")
-                for label, count in zip(
-                    unique_labels.cpu().tolist(), counts.cpu().tolist()
-                ):
-                    print(f"Class {label}: {count} samples")
-
                 # Add samples back to dataset
                 self.added_indices.update(ood_indices)
                 self.datamodule.add_samples_by_index(ood_indices)
