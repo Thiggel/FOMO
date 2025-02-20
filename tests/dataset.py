@@ -46,7 +46,7 @@ class MockImbalancedImageNet(ImbalancedImageNet):
 
         # Initialize with dummy values
         super().__init__(
-            dataset_path="dummy",
+            dataset_path="sxdave/emotion_detection",
             additional_data_path=str(test_dir / "additional_data"),
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
