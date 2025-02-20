@@ -82,7 +82,7 @@ class TestImbalancedImageNet(unittest.TestCase):
                 image, label = dataset[idx]
                 orig_image_transformed = transform(orig_image)
                 self.assertIsNotNone(image)
-                self.assertEqual(image, orig_image_transformed)
+                torch.testing.assert_close(image, orig_image_transformed)
                 print(f"Successfully accessed image at index {idx}")
             except Exception as e:
                 print(f"Error accessing image at index {idx}: {str(e)}")
@@ -95,6 +95,12 @@ class TestImbalancedImageNet(unittest.TestCase):
             additional_data_path="test_additional_data",
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
+            transform=transforms.Compose(
+                [
+                    transforms.Resize((24, 24)),
+                    transforms.ToTensor(),
+                ]
+            ),
         )
 
         # Add some generated images
