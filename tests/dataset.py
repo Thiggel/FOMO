@@ -17,7 +17,7 @@ class MockImbalancedImageNet(ImbalancedImageNet):
     def __init__(self, *args, **kwargs):
         # Override dataset loading with a simple dummy dataset
         super().__init__(
-            dataset_path="imagenet-1k",  # This won't actually be loaded
+            dataset_path="sxdave/emotion_detection",  # This won't actually be loaded
             additional_data_path="test_additional_data",
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
