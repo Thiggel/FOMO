@@ -4,16 +4,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 from torchvision.utils import save_image
-
-from experiment.utils.get_num_workers import get_num_workers
-
-
-import torch
-import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-import os
-from torchvision.utils import save_image
+import faiss
 from experiment.utils.get_num_workers import get_num_workers
 
 
