@@ -42,13 +42,11 @@ class TestImbalancedImageNet(unittest.TestCase):
 
     def test_adding_generated_images(self):
         """Test adding and accessing generated images"""
-        transform = (
-            transforms.Compose(
-                [
-                    transforms.Resize((24, 24)),
-                    transforms.ToTensor(),
-                ]
-            ),
+        transform = transforms.Compose(
+            [
+                transforms.Resize((24, 24)),
+                transforms.ToTensor(),
+            ]
         )
 
         dataset = ImbalancedImageNet(
