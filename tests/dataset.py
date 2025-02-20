@@ -6,31 +6,8 @@ import os
 import shutil
 from pathlib import Path
 import numpy as np
-from unittest.mock import patch
 from experiment.dataset.ImbalancedImageNet import ImbalancedImageNet
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
-
-
-class DummyDataset:
-    """Minimal dataset that mimics HuggingFace dataset structure"""
-
-    def __init__(self):
-        self.features = {
-            "label": type("DummyFeature", (), {"names": ["0", "1", "2"]})()
-        }
-
-    def __len__(self):
-        return 100
-
-    def __getitem__(self, idx):
-        # Handle both single index and list of indices
-        if isinstance(idx, list):
-            return [self[i] for i in idx]
-        return {"image": Image.new("RGB", (24, 24), color="red"), "label": 0}
-
-
-def mock_load_dataset(*args, **kwargs):
-    return DummyDataset()
 
 
 class TestImbalancedImageNet(unittest.TestCase):
@@ -43,7 +20,6 @@ class TestImbalancedImageNet(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_basic_functionality(self):
         """Test basic dataset initialization and access"""
         dataset = ImbalancedImageNet(
@@ -63,7 +39,6 @@ class TestImbalancedImageNet(unittest.TestCase):
         self.assertIsNotNone(image)
         self.assertIsNotNone(label)
 
-    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_adding_generated_images(self):
         """Test adding and accessing generated images"""
         dataset = ImbalancedImageNet(
@@ -99,7 +74,6 @@ class TestImbalancedImageNet(unittest.TestCase):
                 print(f"Error accessing image at index {idx}: {str(e)}")
                 raise
 
-    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_persistence(self):
         """Test if generated images persist between dataset instances"""
         # First dataset instance
@@ -140,7 +114,6 @@ class TestImbalancedImageNet(unittest.TestCase):
             length1, length2, f"Dataset lengths don't match: {length1} != {length2}"
         )
 
-    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_dataloader_compatibility(self):
         """Test if the dataset works with DataLoader"""
         dataset = ImbalancedImageNet(
