@@ -286,7 +286,6 @@ class ImbalancedTraining:
             self.datamodule.train_dataset,
             batch_size=self.args.val_batch_size,
             num_workers=4,
-            pin_memory=True,
         )
 
         # Count labels in batches
