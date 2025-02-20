@@ -89,7 +89,8 @@ class ImbalancedImageNet(Dataset):
     def _save_image_counts(self):
         """Save the current image counts to disk."""
         counts_file = os.path.join(
-            os.environ["BASE_CACHE_DIR"], f"{self.checkpoint_filename}_image_counts.pkl"
+            os.environ["BASE_CACHE_DIR"],
+            f"{self.additional_data_path}_image_counts.pkl",
         )
         with open(counts_file, "wb") as f:
             pickle.dump(self.additional_image_counts, f)
