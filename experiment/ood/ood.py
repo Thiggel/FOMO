@@ -5,6 +5,7 @@ from tqdm import tqdm
 import os
 from torchvision.utils import save_image
 import faiss
+import numpy as np
 from experiment.utils.get_num_workers import get_num_workers
 
 
@@ -39,12 +40,16 @@ class OOD:
         )
 
         features = []
-        indices = torch.arange(len(self.dataset))
+        indices = []
 
         with torch.no_grad():
             for batch_idx, (batch, _) in enumerate(
                 tqdm(loader, desc="Extracting features")
             ):
+                # Keep track of original indices
+                start_idx = batch_idx * self.batch_size
+                end_idx = start_idx + len(batch)
+                indices.extend(range(start_idx, end_idx))
 
                 # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
@@ -61,7 +66,7 @@ class OOD:
                 features.append(batch_features.cpu())
 
         # Concatenate all features
-        features = torch.cat(features, dim=0).numpy().astype("float32")
+        features = torch.cat(features, dim=0).numpy().astype(np.float32)
         return features, indices
 
     def compute_knn_distances(self, features):

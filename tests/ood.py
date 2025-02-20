@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import faiss
 import gc
+import os
 
 
 class DummyDataset(Dataset):
@@ -31,7 +32,7 @@ class DummyModel(nn.Module):
 
 class Args:
     def __init__(self):
-        self.val_batch_size = 16
+        self.val_batch_size = 32
         self.k = 3
         self.num_ood_samples = 2
 
@@ -59,6 +60,10 @@ class TestOOD(unittest.TestCase):
 
     def setUp(self):
         cleanup_memory()
+        # Import OOD here to ensure experiment module is in path
+        import sys
+
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         from experiment.ood.ood import OOD
 
         self.OOD = OOD
