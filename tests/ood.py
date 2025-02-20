@@ -34,7 +34,7 @@ class Args:
     def __init__(self):
         self.val_batch_size = 32
         self.k = 3
-        self.num_ood_samples = 2
+        self.num_ood_samples = 10
 
 
 def cleanup_memory():
