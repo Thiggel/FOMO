@@ -4,16 +4,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 from torchvision.utils import save_image
-
-from experiment.utils.get_num_workers import get_num_workers
-
-
-import torch
-import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-import os
-from torchvision.utils import save_image
+import faiss
+import numpy as np
 from experiment.utils.get_num_workers import get_num_workers
 
 
@@ -73,43 +65,28 @@ class OOD:
         self.indices = torch.tensor(self.indices, device=self.device)
 
     def compute_knn_distances(self):
-        """Compute average distance to k nearest neighbors efficiently on GPU"""
-        num_samples = self.features.size(0)
-        k = min(self.K, num_samples - 1)
+        """Compute k-NN distances using FAISS GPU"""
+        features_np = self.features.cpu().numpy().astype("float32")
 
-        all_knn_scores = []
-        all_indices = []
-        batch_size = 512
+        # Create FAISS index
+        d = features_np.shape[1]  # dimension
+        res = faiss.StandardGpuResources()  # GPU resource object
+        index = faiss.GpuIndexFlatL2(res, d)  # GPU index
 
-        for i in tqdm(
-            range(0, num_samples, batch_size), desc="Computing k-NN distances"
-        ):
-            end_idx = min(i + batch_size, num_samples)
-            query_features = self.features[i:end_idx]
+        # Add vectors to index
+        index.add(features_np)
 
-            # Compute pairwise distances
-            distances = 2 - 2 * torch.matmul(query_features, self.features.t())
+        # Search for k+1 nearest neighbors (including self)
+        k = min(self.K + 1, len(features_np))
+        distances, _ = index.search(features_np, k)
 
-            # Mask out self-distances
-            mask = torch.arange(i, end_idx, device=self.device).unsqueeze(
-                1
-            ) == torch.arange(num_samples, device=self.device)
-            distances.masked_fill_(mask, float("inf"))
+        # Remove self-distances (first column) and compute mean of remaining distances
+        knn_distances = distances[:, 1:].mean(axis=1)
 
-            # Get k-nearest neighbors
-            knn_distances, _ = torch.topk(distances, k=k, dim=1, largest=False)
-
-            # Compute average distance to k nearest neighbors
-            knn_scores = knn_distances.mean(dim=1)
-
-            # Store scores and indices
-            all_knn_scores.append(knn_scores)
-            all_indices.append(self.indices[i:end_idx])
-
-        return torch.cat(all_knn_scores), torch.cat(all_indices)
+        return torch.from_numpy(knn_distances).to(self.device), self.indices
 
     def ood(self):
-        """Perform OOD detection and return N most OOD samples based on average k-NN distance"""
+        """Perform OOD detection and return N most OOD samples based on k-NN distances"""
         self.extract_features()
         knn_scores, original_indices = self.compute_knn_distances()
 
@@ -120,7 +97,7 @@ class OOD:
             else self.num_ood_samples
         )
 
-        # Get indices of N samples with largest average k-NN distances
+        # Get indices of N samples with largest k-NN distances
         top_scores, top_idx = torch.topk(knn_scores, k=num_samples, largest=True)
         ood_indices = original_indices[top_idx].cpu()
 
