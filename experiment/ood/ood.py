@@ -34,7 +34,7 @@ class OOD:
         loader = DataLoader(
             self.dataset,
             batch_size=self.batch_size,
-            shuffle=False,
+            shuffle=False,  # Important: keep order for index mapping
             num_workers=self.num_workers,
             pin_memory=True,
         )
@@ -48,7 +48,7 @@ class OOD:
             ):
                 # Keep track of original indices
                 start_idx = batch_idx * self.batch_size
-                end_idx = start_idx + len(batch)
+                end_idx = start_idx + len(batch)  # Handle last batch correctly
                 indices.extend(range(start_idx, end_idx))
 
                 # Extract features
@@ -73,14 +73,21 @@ class OOD:
         """Compute k-NN distances using CPU FAISS"""
         print("\nBuilding FAISS index...")
         dimension = features.shape[1]
+
+        # Create FAISS index
         index = faiss.IndexFlatL2(dimension)
         index.add(features)
 
         # Calculate k (number of neighbors to find)
         k = min(self.K + 1, len(features))  # +1 because we'll remove self-distance
 
-        print("\nSearching for nearest neighbors...")
-        distances, _ = index.search(features, k)
+        print(f"\nSearching for {k} nearest neighbors...")
+        distances, neighbors = index.search(features, k)
+
+        # Print some debug info
+        print(f"\nDistance matrix shape: {distances.shape}")
+        print(f"Sample distances (first point): {distances[0]}")
+        print(f"Sample neighbors (first point): {neighbors[0]}")
 
         # Remove self-distances (first column) and compute mean
         knn_distances = distances[:, 1:].mean(axis=1)
@@ -91,6 +98,7 @@ class OOD:
         """Perform OOD detection and return indices of most OOD samples"""
         # Extract features
         features, indices = self.extract_features()
+        print(f"\nFeature matrix shape: {features.shape}")
 
         # Compute KNN distances
         knn_distances = self.compute_knn_distances(features)
@@ -102,11 +110,22 @@ class OOD:
             else self.num_ood_samples
         )
 
-        # Get top-K most distant samples
-        top_indices = np.argsort(knn_distances)[-num_samples:]
+        print(f"\nSelecting {num_samples} most OOD samples")
 
-        # Map back to original dataset indices
+        # Get indices of samples with largest distances
+        top_indices = np.argsort(knn_distances)[-num_samples:][
+            ::-1
+        ]  # Reverse to get descending order
+
+        # Print debug info
+        print("\nTop distances:")
+        for idx in top_indices:
+            print(f"Index {idx}: distance {knn_distances[idx]:.4f}")
+
+        # Map to original dataset indices
         ood_indices = [indices[i] for i in top_indices]
+
+        print("\nSelected OOD indices:", ood_indices)
 
         # Save logs and visualizations
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
@@ -120,7 +139,7 @@ class OOD:
         for i in range(num_vis):
             image, _ = self.dataset[ood_indices[i]]
             if isinstance(image, torch.Tensor) and len(image.shape) in [3, 4]:
-                score = knn_distances[top_indices[-(i + 1)]]
+                score = knn_distances[top_indices[i]]
                 image_path = (
                     f"./ood_logs/{self.cycle_idx}/images/ood_{i}_score_{score:.3f}.jpg"
                 )
