@@ -100,7 +100,7 @@ class TestOOD(unittest.TestCase):
             model = DummyModel()
 
             # Request 1 OOD sample
-            self.args.num_ood_samples = 1
+            self.args.num_ood_samples = 10
             self.args.k = 2  # Use k=2 for tiny dataset
 
             ood = self.OOD(
@@ -151,7 +151,7 @@ class TestOOD(unittest.TestCase):
             dataset = DummyDataset(features, labels)
             model = DummyModel()
 
-            self.args.num_ood_samples = 1
+            self.args.num_ood_samples = 10
             self.args.k = 3
 
             ood = self.OOD(
@@ -203,7 +203,7 @@ class TestOOD(unittest.TestCase):
             dataset = DummyDataset(features, labels)
             model = DummyModel()
 
-            self.args.num_ood_samples = 1
+            self.args.num_ood_samples = 10
             self.args.k = 3
 
             ood = self.OOD(
@@ -257,7 +257,7 @@ class TestOOD(unittest.TestCase):
             for k in k_values:
                 print(f"\nTesting with k={k}")
                 self.args.k = k
-                self.args.num_ood_samples = 1
+                self.args.num_ood_samples = 10
 
                 ood = self.OOD(
                     args=self.args,
