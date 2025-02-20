@@ -113,9 +113,12 @@ class OOD:
         print(f"\nSelecting {num_samples} most OOD samples")
 
         # Get indices of samples with largest distances
-        top_indices = np.argsort(knn_distances)[-num_samples:][
-            ::-1
-        ]  # Reverse to get descending order
+        top_indices = np.argsort(knn_distances)[-num_samples:]
+
+        print(knn_distances[top_indices[:10]], knn_distances[top_indices[-10:]])
+        exit()
+
+        top_indices = top_indices[::-1]  # Reverse to get descending order
 
         # Print debug info
         print("\nTop distances:")
