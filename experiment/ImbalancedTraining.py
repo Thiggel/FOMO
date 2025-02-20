@@ -44,6 +44,7 @@ class ImbalancedTraining:
         self.datamodule = datamodule
         self.checkpoint_callback = checkpoint_callback
         self.checkpoint_filename = checkpoint_filename
+        self.save_class_distribution = self.args.save_class_distribution
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.transform = transforms.Compose(
@@ -62,7 +63,8 @@ class ImbalancedTraining:
 
         self.num_workers = min(6, get_num_workers() // 2)
 
-        self.save_class_dist(0)
+        if self.save_class_distribution:
+            self.save_class_dist(0)
 
     def get_class_indices_map(self, dataset):
         """Efficiently create a mapping of class labels to their indices"""
@@ -98,6 +100,22 @@ class ImbalancedTraining:
                 )
 
         return class_to_indices
+
+    def get_sorted_classes_distribution(self, dataset):
+        dataloader = DataLoader(
+            dataset,
+            batch_size=self.args.val_batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+
+        class_counts = torch.zeros(dataset.num_classes)
+
+        for _, labels in tqdm(dataloader, desc="Counting class distribution"):
+            counts = torch.bincount(labels, minlength=dataset.num_classes)
+            class_counts += counts
+
+        return class_counts
 
     def pretrain_cycle(self, cycle_idx) -> None:
         try:
@@ -158,16 +176,6 @@ class ImbalancedTraining:
             ood_labels = torch.tensor(
                 [label for _, label in tqdm(ood_samples, desc="Getting labels")]
             )
-
-            ood_labels = []
-            for _, label in ood_samples:
-                ood_labels.append(label)
-
-                print(
-                    f"OOD sample from {self.class_counts.indices[label]}th largest class"
-                )
-
-            ood_labels = torch.tensor(ood_labels)
 
             print(f"Selected {len(ood_indices)} samples for augmentation")
 
@@ -289,7 +297,7 @@ class ImbalancedTraining:
             counts = torch.bincount(labels, minlength=num_classes)
             class_counts += counts
 
-        self.class_counts = class_counts.sort(descending=True)
+        self.class_counts = class_counts
 
         # Save distribution
         save_path = f"{os.environ['BASE_CACHE_DIR']}/class_distributions/{self.checkpoint_filename}"
@@ -318,7 +326,8 @@ class ImbalancedTraining:
             self.pretrain_cycle(cycle_idx)
 
             # Save and visualize class distribution
-            self.save_class_dist(cycle_idx + 1)
+            if self.save_class_distribution:
+                self.save_class_dist(cycle_idx + 1)
 
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
