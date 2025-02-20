@@ -444,7 +444,6 @@ class ImbalancedTraining:
         multiple times if num_generations_per_ood_sample is greater than sd_batch_size.
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
-        image_storage = ImageStorage(self.args.additional_data_path)
         denorm = transforms.Compose(
             [
                 transforms.Normalize(
@@ -493,7 +492,9 @@ class ImbalancedTraining:
                 remaining_generations -= current_generations
 
             # Save all generated images for this batch
-            image_storage.save_batch(batch_images, cycle_idx, total_images_saved)
+            self.datamodule.train_dataset.image_storage.save_batch(
+                batch_images, cycle_idx, total_images_saved
+            )
             total_images_saved += len(batch_images)
 
         print(f"Total images generated and saved: {total_images_saved}")

@@ -1,6 +1,7 @@
 import unittest
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
 from PIL import Image
 import os
 import shutil
@@ -41,11 +42,21 @@ class TestImbalancedImageNet(unittest.TestCase):
 
     def test_adding_generated_images(self):
         """Test adding and accessing generated images"""
+        transform = (
+            transforms.Compose(
+                [
+                    transforms.Resize((24, 24)),
+                    transforms.ToTensor(),
+                ]
+            ),
+        )
+
         dataset = ImbalancedImageNet(
             dataset_path="sxdave/emotion_detection",
             additional_data_path="test_additional_data",
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
+            transform=transform,
         )
 
         # Record initial state
@@ -54,7 +65,7 @@ class TestImbalancedImageNet(unittest.TestCase):
 
         # Add some generated images
         cycle_idx = 0
-        num_images = 3
+        num_images = 23
         new_images = [Image.new("RGB", (24, 24)) for _ in range(num_images)]
 
         # Save the images
@@ -67,10 +78,13 @@ class TestImbalancedImageNet(unittest.TestCase):
         self.assertEqual(len(dataset), initial_len + num_images)
 
         # Try accessing the new images
-        for i in range(num_images):
+        for i, orig_image in enumerate(num_images):
             idx = initial_len + i
             try:
                 image, label = dataset[idx]
+                orig_image_transformed = transform(orig_image)
+                self.assertIsNotNone(image)
+                self.assertEqual(image, orig_image_transformed)
                 print(f"Successfully accessed image at index {idx}")
             except Exception as e:
                 print(f"Error accessing image at index {idx}: {str(e)}")
@@ -88,7 +102,7 @@ class TestImbalancedImageNet(unittest.TestCase):
         # Add some generated images
         cycle_idx = 0
         num_images = 3
-        new_images = [torch.ones(3, 24, 24) for _ in range(num_images)]
+        new_images = [Image.new("RGB", (24, 24)) for _ in range(num_images)]
         dataset.image_storage.save_batch(new_images, cycle_idx=cycle_idx, start_idx=0)
         dataset.add_generated_images(cycle_idx, num_images, [0] * num_images)
 
