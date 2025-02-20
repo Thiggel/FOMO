@@ -6,6 +6,7 @@ import os
 import shutil
 from pathlib import Path
 import numpy as np
+from unittest.mock import patch
 from experiment.dataset.ImbalancedImageNet import ImbalancedImageNet
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 
@@ -28,22 +29,21 @@ class DummyDataset:
         return {"image": Image.new("RGB", (24, 24), color="red"), "label": 0}
 
 
+def mock_load_dataset(*args, **kwargs):
+    return DummyDataset()
+
+
 class TestImbalancedImageNet(unittest.TestCase):
     def setUp(self):
         self.test_dir = Path("./test_storage")
         self.test_dir.mkdir(parents=True, exist_ok=True)
         os.environ["BASE_CACHE_DIR"] = str(self.test_dir)
 
-        # Patch the dataset loading in ImbalancedImageNet
-        self._orig_load_dataset = ImbalancedImageNet.dataset
-        ImbalancedImageNet.dataset = property(lambda _: DummyDataset())
-
     def tearDown(self):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
-        # Restore original dataset property
-        ImbalancedImageNet.dataset = self._orig_load_dataset
 
+    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_basic_functionality(self):
         """Test basic dataset initialization and access"""
         dataset = ImbalancedImageNet(
@@ -63,10 +63,11 @@ class TestImbalancedImageNet(unittest.TestCase):
         self.assertIsNotNone(image)
         self.assertIsNotNone(label)
 
+    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_adding_generated_images(self):
         """Test adding and accessing generated images"""
         dataset = ImbalancedImageNet(
-            dataset_path="dummy",
+            dataset_path="sxdave/emotion_detection",
             additional_data_path="test_additional_data",
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
@@ -98,11 +99,12 @@ class TestImbalancedImageNet(unittest.TestCase):
                 print(f"Error accessing image at index {idx}: {str(e)}")
                 raise
 
+    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_persistence(self):
         """Test if generated images persist between dataset instances"""
         # First dataset instance
         dataset1 = ImbalancedImageNet(
-            dataset_path="dummy",
+            dataset_path="sxdave/emotion_detection",
             additional_data_path="test_additional_data",
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
@@ -117,13 +119,14 @@ class TestImbalancedImageNet(unittest.TestCase):
 
         length1 = len(dataset1)
         print(f"\nFirst dataset length: {length1}")
+        print(f"First dataset image counts: {dataset1.additional_image_counts}")
         print(
-            f"First dataset additional_image_counts: {dataset1.additional_image_counts}"
+            f"Counts file location: {os.path.join(os.environ['BASE_CACHE_DIR'], 'test_additional_data_image_counts.pkl')}"
         )
 
         # Create second dataset instance
         dataset2 = ImbalancedImageNet(
-            dataset_path="dummy",
+            dataset_path="sxdave/emotion_detection",
             additional_data_path="test_additional_data",
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
@@ -131,18 +134,17 @@ class TestImbalancedImageNet(unittest.TestCase):
 
         length2 = len(dataset2)
         print(f"Second dataset length: {length2}")
-        print(
-            f"Second dataset additional_image_counts: {dataset2.additional_image_counts}"
-        )
+        print(f"Second dataset image counts: {dataset2.additional_image_counts}")
 
         self.assertEqual(
             length1, length2, f"Dataset lengths don't match: {length1} != {length2}"
         )
 
+    @patch("experiment.dataset.ImbalancedImageNet.load_dataset", mock_load_dataset)
     def test_dataloader_compatibility(self):
         """Test if the dataset works with DataLoader"""
         dataset = ImbalancedImageNet(
-            dataset_path="dummy",
+            dataset_path="sxdave/emotion_detection",
             additional_data_path="test_additional_data",
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
