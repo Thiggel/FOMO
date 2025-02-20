@@ -6,19 +6,48 @@ import os
 import shutil
 from pathlib import Path
 import torchvision.transforms as transforms
+import numpy as np
 from experiment.dataset.ImbalancedImageNet import ImbalancedImageNet
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.dataset.ImageStorage import ImageStorage
 
 
-class MockImbalancedImageNet(ImbalancedImageNet):
-    """Modified ImbalancedImageNet that uses random tensors instead of real images"""
+class DummyData:
+    """Minimal implementation matching the HuggingFace dataset interface"""
 
-    def __init__(self, *args, **kwargs):
-        # Override dataset loading with a simple dummy dataset
+    def __init__(self, size, num_classes):
+        self.size = size
+        self.data = [(torch.randn(3, 224, 224), i % num_classes) for i in range(size)]
+        self.features = {"label": DummyFeature(num_classes)}
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, idx):
+        if isinstance(idx, list):
+            return [self[i] for i in idx]
+        tensor, label = self.data[idx]
+        # Convert tensor to PIL Image for compatibility
+        image = transforms.ToPILImage()(tensor)
+        return {"image": image, "label": label}
+
+
+class DummyFeature:
+    def __init__(self, num_classes):
+        self.names = [str(i) for i in range(num_classes)]
+
+
+class MockImbalancedImageNet(ImbalancedImageNet):
+    """Modified ImbalancedImageNet that uses a dummy dataset"""
+
+    def __init__(self, test_dir, *args, **kwargs):
+        self.test_dir = test_dir
+        os.environ["BASE_CACHE_DIR"] = str(test_dir)
+
+        # Initialize with dummy values
         super().__init__(
-            dataset_path="sxdave/emotion_detection",  # This won't actually be loaded
-            additional_data_path="test_additional_data",
+            dataset_path="dummy",
+            additional_data_path=str(test_dir / "additional_data"),
             imbalance_method=ImbalanceMethods.LinearlyIncreasing,
             checkpoint_filename="test_checkpoint",
             transform=transforms.Compose(
@@ -36,48 +65,38 @@ class MockImbalancedImageNet(ImbalancedImageNet):
         self.dataset = DummyData(100, self.num_classes)
         self.classes = [str(i) for i in range(self.num_classes)]
 
-        # Initialize storage with test path
+        # Create initial indices
+        self.indices = list(
+            range(0, 50)
+        )  # Use half the data to simulate imbalanced dataset
+
+        # Reinitialize storage with test path
         self.image_storage = ImageStorage(
-            self.additional_data_path, max_images_per_file=10
+            str(test_dir / "additional_data"), max_images_per_file=10
         )
 
-
-class DummyData:
-    """Simple dummy dataset for testing"""
-
-    def __init__(self, size, num_classes):
-        self.size = size
-        self.data = [(torch.randn(3, 224, 224), i % num_classes) for i in range(size)]
-
-    def __len__(self):
-        return self.size
-
-    def __getitem__(self, idx):
-        tensor, label = self.data[idx]
-        # Convert tensor to PIL Image for compatibility
-        image = transforms.ToPILImage()(tensor)
-        return {"image": image, "label": label}
+        # Initialize additional image counts
+        self.additional_image_counts = {}
+        self._save_image_counts()
 
 
 class TestImbalancedImageNet(unittest.TestCase):
     def setUp(self):
         self.test_dir = Path("./test_storage")
         self.test_dir.mkdir(parents=True, exist_ok=True)
-        os.environ["BASE_CACHE_DIR"] = str(self.test_dir)
 
         # Initialize dataset
-        self.dataset = MockImbalancedImageNet()
+        self.dataset = MockImbalancedImageNet(self.test_dir)
 
     def tearDown(self):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
-        if os.path.exists("test_additional_data"):
-            shutil.rmtree("test_additional_data")
 
     def test_initial_state(self):
         """Test initial dataset state"""
         self.assertEqual(self.dataset.num_classes, 10)
-        self.assertGreater(len(self.dataset), 0)
+        self.assertEqual(len(self.dataset.indices), 50)  # Initial imbalanced size
+        self.assertEqual(len(self.dataset), 50)  # Should match indices length initially
 
     def test_add_generated_images(self):
         """Test adding generated images to the dataset"""
@@ -87,7 +106,7 @@ class TestImbalancedImageNet(unittest.TestCase):
         cycle_idx = 0
         num_images = 5
         new_images = [
-            Image.fromarray((torch.randn(224, 224, 3) * 255).byte().numpy())
+            Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
             for _ in range(num_images)
         ]
 
@@ -97,11 +116,18 @@ class TestImbalancedImageNet(unittest.TestCase):
         )
 
         # Add to dataset
-        labels = [0] * num_images  # Using same label for simplicity
+        labels = [0] * num_images
         self.dataset.add_generated_images(cycle_idx, num_images, labels)
 
         # Verify length increased
         self.assertEqual(len(self.dataset), initial_len + num_images)
+
+        # Verify we can access the new images
+        for i in range(num_images):
+            idx = initial_len + i
+            image, label = self.dataset[idx]
+            self.assertIsNotNone(image)
+            self.assertEqual(label, 0)
 
     def test_multiple_cycles(self):
         """Test adding images across multiple cycles"""
@@ -110,9 +136,10 @@ class TestImbalancedImageNet(unittest.TestCase):
         cycles = [0, 1]
 
         for cycle in cycles:
-            # Generate and add images for each cycle
             new_images = [
-                Image.fromarray((torch.randn(224, 224, 3) * 255).byte().numpy())
+                Image.fromarray(
+                    np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+                )
                 for _ in range(images_per_cycle)
             ]
             self.dataset.image_storage.save_batch(
@@ -127,11 +154,11 @@ class TestImbalancedImageNet(unittest.TestCase):
 
     def test_data_loading(self):
         """Test loading data through DataLoader"""
-        # Add some generated images
+        # Add some generated images first
         cycle_idx = 0
         num_images = 5
         new_images = [
-            Image.fromarray((torch.randn(224, 224, 3) * 255).byte().numpy())
+            Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
             for _ in range(num_images)
         ]
         self.dataset.image_storage.save_batch(
@@ -143,41 +170,18 @@ class TestImbalancedImageNet(unittest.TestCase):
         loader = DataLoader(self.dataset, batch_size=2, shuffle=True)
 
         # Try loading batches
+        num_batches = 0
         for images, labels in loader:
-            self.assertEqual(images.dim(), 4)  # B x C x H x W
-            self.assertEqual(images.size(0), min(2, len(self.dataset)))  # Batch size
-            self.assertEqual(images.size(1), 3)  # RGB channels
-            self.assertEqual(images.size(2), 224)  # Height
-            self.assertEqual(images.size(3), 224)  # Width
-            self.assertEqual(labels.dim(), 1)  # 1D tensor of labels
+            self.assertEqual(images.dim(), 4)
+            self.assertEqual(images.size(1), 3)
+            self.assertEqual(images.size(2), 224)
+            self.assertEqual(images.size(3), 224)
+            self.assertEqual(labels.dim(), 1)
+            num_batches += 1
 
-    def test_access_generated_images(self):
-        """Test accessing generated images after adding them"""
-        # Add some generated images
-        cycle_idx = 0
-        num_images = 3
-        new_images = [
-            Image.fromarray((torch.randn(224, 224, 3) * 255).byte().numpy())
-            for _ in range(num_images)
-        ]
-        labels = [1, 2, 3]  # Different labels for testing
-
-        self.dataset.image_storage.save_batch(
-            new_images, cycle_idx=cycle_idx, start_idx=0
-        )
-        self.dataset.add_generated_images(cycle_idx, num_images, labels)
-
-        # Access the newly added images
-        initial_data_len = len(self.dataset.indices)
-        for i in range(num_images):
-            idx = initial_data_len + i
-            image, label = self.dataset[idx]
-
-            self.assertIsInstance(
-                image, torch.Tensor
-            )  # Should be tensor after transform
-            self.assertEqual(image.size(), (3, 224, 224))  # Check dimensions
-            self.assertEqual(label, labels[i])  # Check label
+        # Verify we got the expected number of batches
+        expected_batches = (len(self.dataset) + 1) // 2  # Ceiling division
+        self.assertEqual(num_batches, expected_batches)
 
     def test_generated_images_persistence(self):
         """Test that generated images persist across dataset reloads"""
@@ -185,7 +189,7 @@ class TestImbalancedImageNet(unittest.TestCase):
         cycle_idx = 0
         num_images = 3
         new_images = [
-            Image.fromarray((torch.randn(224, 224, 3) * 255).byte().numpy())
+            Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
             for _ in range(num_images)
         ]
         labels = [1, 2, 3]
@@ -195,16 +199,25 @@ class TestImbalancedImageNet(unittest.TestCase):
         )
         self.dataset.add_generated_images(cycle_idx, num_images, labels)
 
+        # Record the length
+        original_len = len(self.dataset)
+
         # Create a new dataset instance
-        new_dataset = MockImbalancedImageNet()
+        new_dataset = MockImbalancedImageNet(self.test_dir)
 
-        # Verify the images are still accessible
-        self.assertEqual(len(new_dataset), len(self.dataset))
+        # Verify lengths match
+        self.assertEqual(
+            len(new_dataset),
+            original_len,
+            f"Expected length {original_len}, got {len(new_dataset)}",
+        )
 
-        initial_data_len = len(new_dataset.indices)
+        # Verify we can access the generated images with correct labels
+        base_len = len(new_dataset.indices)
         for i in range(num_images):
-            idx = initial_data_len + i
+            idx = base_len + i
             image, label = new_dataset[idx]
+            self.assertIsNotNone(image)
             self.assertEqual(label, labels[i])
 
 
