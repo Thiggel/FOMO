@@ -78,7 +78,7 @@ class TestImbalancedImageNet(unittest.TestCase):
         self.assertEqual(len(dataset), initial_len + num_images)
 
         # Try accessing the new images
-        for i, orig_image in enumerate(num_images):
+        for i, orig_image in enumerate(new_images):
             idx = initial_len + i
             try:
                 image, label = dataset[idx]
