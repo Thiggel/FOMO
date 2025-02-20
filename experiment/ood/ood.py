@@ -4,8 +4,16 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 from torchvision.utils import save_image
-import faiss
-import numpy as np
+
+from experiment.utils.get_num_workers import get_num_workers
+
+
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import os
+from torchvision.utils import save_image
 from experiment.utils.get_num_workers import get_num_workers
 
 
@@ -29,10 +37,6 @@ class OOD:
         self.device = device
         self.dtype = dtype
 
-        self.features = []
-        self.indices = []
-
-    @torch.cuda.amp.autocast()
     def extract_features(self):
         """Extract and normalize features from the entire dataset"""
         loader = DataLoader(
@@ -41,54 +45,59 @@ class OOD:
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=True,
-            persistent_workers=False,
         )
+
+        features = []
+        indices = torch.arange(len(self.dataset))
 
         with torch.no_grad():
             for batch_idx, (batch, _) in enumerate(
                 tqdm(loader, desc="Extracting features")
             ):
-                start_idx = batch_idx * self.batch_size
-                end_idx = start_idx + len(batch)
-                self.indices.extend(range(start_idx, end_idx))
 
+                # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
-                features = self.feature_extractor(batch)
+                batch_features = self.feature_extractor(batch)
 
-                if features.dim() == 1:
-                    features = features.unsqueeze(0)
+                # Handle single-dimension case
+                if batch_features.dim() == 1:
+                    batch_features = batch_features.unsqueeze(0)
 
-                features = F.normalize(features, p=2, dim=-1)
-                self.features.append(features)
+                # Normalize features
+                batch_features = F.normalize(batch_features, p=2, dim=-1)
 
-        self.features = torch.cat(self.features)
-        self.indices = torch.tensor(self.indices, device=self.device)
+                # Move to CPU immediately to free GPU memory
+                features.append(batch_features.cpu())
 
-    def compute_knn_distances(self):
-        """Compute k-NN distances using FAISS GPU"""
-        features_np = self.features.cpu().numpy().astype("float32")
+        # Concatenate all features
+        features = torch.cat(features, dim=0).numpy().astype("float32")
+        return features, indices
 
-        # Create FAISS index
-        d = features_np.shape[1]  # dimension
-        res = faiss.StandardGpuResources()  # GPU resource object
-        index = faiss.GpuIndexFlatL2(res, d)  # GPU index
+    def compute_knn_distances(self, features):
+        """Compute k-NN distances using CPU FAISS"""
+        print("\nBuilding FAISS index...")
+        dimension = features.shape[1]
+        index = faiss.IndexFlatL2(dimension)
+        index.add(features)
 
-        # Add vectors to index
-        index.add(features_np)
+        # Calculate k (number of neighbors to find)
+        k = min(self.K + 1, len(features))  # +1 because we'll remove self-distance
 
-        # Search for k+1 nearest neighbors (including self)
-        k = min(self.K + 1, len(features_np))
-        distances, _ = index.search(features_np, k)
+        print("\nSearching for nearest neighbors...")
+        distances, _ = index.search(features, k)
 
-        # Remove self-distances (first column) and compute mean of remaining distances
+        # Remove self-distances (first column) and compute mean
         knn_distances = distances[:, 1:].mean(axis=1)
 
-        return torch.from_numpy(knn_distances).to(self.device), self.indices
+        return knn_distances
 
     def ood(self):
-        """Perform OOD detection and return N most OOD samples based on k-NN distances"""
-        self.extract_features()
-        knn_scores, original_indices = self.compute_knn_distances()
+        """Perform OOD detection and return indices of most OOD samples"""
+        # Extract features
+        features, indices = self.extract_features()
+
+        # Compute KNN distances
+        knn_distances = self.compute_knn_distances(features)
 
         # Calculate number of samples if percentage given
         num_samples = (
@@ -97,25 +106,28 @@ class OOD:
             else self.num_ood_samples
         )
 
-        # Get indices of N samples with largest k-NN distances
-        top_scores, top_idx = torch.topk(knn_scores, k=num_samples, largest=True)
-        ood_indices = original_indices[top_idx].cpu()
+        # Get top-K most distant samples
+        top_indices = np.argsort(knn_distances)[-num_samples:]
 
-        # Save visualizations and logs
+        # Map back to original dataset indices
+        ood_indices = [indices[i] for i in top_indices]
+
+        # Save logs and visualizations
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
             os.makedirs(f"./ood_logs/{self.cycle_idx}/images", exist_ok=True)
 
-        torch.save(knn_scores, f"./ood_logs/{self.cycle_idx}/knn_scores.pt")
+        # Save distances for analysis
+        np.save(f"./ood_logs/{self.cycle_idx}/knn_distances.npy", knn_distances)
 
         # Save example OOD images
         num_vis = min(10, len(ood_indices))
         for i in range(num_vis):
-            image, _ = self.dataset[int(ood_indices[i])]
+            image, _ = self.dataset[ood_indices[i]]
             if isinstance(image, torch.Tensor) and len(image.shape) in [3, 4]:
-                score = top_scores[i]
+                score = knn_distances[top_indices[-(i + 1)]]
                 image_path = (
                     f"./ood_logs/{self.cycle_idx}/images/ood_{i}_score_{score:.3f}.jpg"
                 )
                 save_image(image, image_path)
 
-        return ood_indices.tolist()
+        return ood_indices
