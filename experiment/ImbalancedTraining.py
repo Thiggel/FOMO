@@ -491,7 +491,7 @@ class ImbalancedTraining:
                 remaining_generations -= current_generations
 
             # Save all generated images for this batch
-            self.datamodule.train_dataset.image_storage.save_batch(
+            self.datamodule.train_dataset.dataset.image_storage.save_batch(
                 batch_images, cycle_idx, total_images_saved
             )
             total_images_saved += len(batch_images)
