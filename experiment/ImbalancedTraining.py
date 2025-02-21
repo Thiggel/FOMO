@@ -298,7 +298,8 @@ class ImbalancedTraining:
         loader = DataLoader(
             self.datamodule.train_dataset,
             batch_size=self.args.val_batch_size,
-            num_workers=4,
+            num_workers=0,
+            pin_memory=False,
         )
 
         # Count labels in batches
