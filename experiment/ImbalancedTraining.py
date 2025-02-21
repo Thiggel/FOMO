@@ -211,10 +211,23 @@ class ImbalancedTraining:
                     ).tolist(),
                 )
 
-                # Update dataset with new images
+                # Get current subset indices
+                current_indices = set(self.datamodule.train_dataset.indices)
+
+                # Calculate new indices for added data
+                base_length = len(self.datamodule.train_dataset.dataset) - (
+                    len(ood_samples) * self.args.num_generations_per_ood_sample
+                )
+                new_indices = range(
+                    base_length, len(self.datamodule.train_dataset.dataset)
+                )
+
+                # Combine old and new indices
+                combined_indices = list(current_indices) + list(new_indices)
+
+                # Update the subset with combined indices
                 self.datamodule.train_dataset = Subset(
-                    self.datamodule.train_dataset.dataset,
-                    list(range(len(self.datamodule.train_dataset.dataset))),
+                    self.datamodule.train_dataset.dataset, combined_indices
                 )
 
                 # Clean up GPU memory after diffusion
