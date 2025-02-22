@@ -1,8 +1,10 @@
 . jobs/environment.sh
 
-python -m experiment \
-	--model_name ViTBase \
-	--max_cycles 1 \
-	--n_epochs_per_cycle 100 \
-  --crop_size 224 \
-  --experiment_name "Baseline_ViTBase_SimCLR_Imbalanced"
+srun python -m experiment \
+	--model-name ViTBase \
+	--imbalance-method power_law_imbalance \
+	--max-cycles 1 \
+	--n-epochs-per-cycle 100 \
+  --train-batch-size 1024 \
+  --val-batch-size 1024 \
+  --experiment-name "Baseline_ViTBase_SimCLR_Imbalanced"

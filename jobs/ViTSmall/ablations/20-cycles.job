@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#SBATCH --partition=performance
+#SBATCH --gres=gpu:rtx_6000_ada:5
+#SBATCH --nodelist=hipster-cn001
+#SBATCH --ntasks-per-node=5
+#SBATCH --ntasks=5
+#SBATCH --time=6-23
+#SBATCH --mem=96G
+#SBATCH --cpus-per-task=24
+#SBATCH --job-name=20Cycles
+#SBATCH --output=job_logs/20-cycles-%A.out
+
+cd $HOME/FOMO
+
+. jobs/environment.sh
+
+srun python -m experiment \
+  --model-name ViTSmall \
+  --num-runs 1 \
+  --imagenet-variant 100 \
+  --imbalance-method power_law_imbalance \
+  --max-cycles 20 \
+  --ood-augmentation \
+  --n-epochs-per-cycle 5 \
+  --pct-ood 0.25 \
+  --batch-size 512 \
+  --experiment-name "ResNet50_SimCLR_NewMethod_ImageNet100_20Cycles-5EpochsPerCycle"

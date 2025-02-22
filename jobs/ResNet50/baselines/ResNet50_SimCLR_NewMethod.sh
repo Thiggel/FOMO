@@ -7,4 +7,9 @@ srun python -m experiment \
 	--n-epochs-per-cycle 100 \
   --train-batch-size 1024 \
   --val-batch-size 1024 \
-  --experiment-name "Baseline_ResNet50_SimCLR_Imbalanced"
+	--ood-augmentation \
+	--max-cycles 5 \
+	--n-epochs-per-cycle 20 \
+  --num-ood-samples 500 \
+  --num-generations-per-sample 5 \
+  --experiment-name "Baseline_ResNet50_SimCLR_NewMethod"
