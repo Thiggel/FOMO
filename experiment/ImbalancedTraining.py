@@ -500,7 +500,16 @@ class ImbalancedTraining:
             tqdm(dataloader, desc="Generating New Data...")
         ):
             # Denormalize the batch
-            batch = [denorm(img) for img in images]
+            batch = denorm(images)
+            prompts = [
+                f"A photo of a {self.datamodule.train_dataset.dataset.get_class_name(label)}"
+                for label in labels
+            ]
+
+            print(batch)
+            print(images)
+            print(prompts)
+            exit()
 
             # Calculate how many passes we need for this batch
             remaining_generations = self.args.num_generations_per_ood_sample
