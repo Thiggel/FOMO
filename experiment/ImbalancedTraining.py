@@ -481,7 +481,9 @@ class ImbalancedTraining:
             shuffle=False,
         )
 
-        for batch_idx, (images, _) in enumerate(
+        already_saved_sample_classes = set()
+
+        for batch_idx, (images, labels) in enumerate(
             tqdm(dataloader, desc="Generating New Data...")
         ):
             # Denormalize the batch
@@ -503,6 +505,27 @@ class ImbalancedTraining:
 
                 batch_images.extend(generated_images)
                 remaining_generations -= current_generations
+
+            if (
+                self.args.save_class_distribution
+                and labels[0] not in already_saved_sample_classes
+            ):
+                already_saved_sample_classes.add(labels[0])
+
+                # Save generated image
+                save_dir = (
+                    f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
+                )
+                os.makedirs(save_dir, exist_ok=True)
+                filename_generated = (
+                    self.datamodule.train_dataset.dataset.get_class_name(labels[0])
+                )
+                save_path_generated = f"{save_dir}/{filename_generated}_generated.png"
+                batch_images[0].save(save_path_generated, "PNG")
+
+                filename_original = f"{filename_generated}_original.png"
+                save_path_original = f"{save_dir}/{filename_original}"
+                images[0].save(save_path_original, "PNG")
 
             # Save all generated images for this batch
             self.datamodule.train_dataset.dataset.image_storage.save_batch(
