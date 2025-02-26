@@ -57,6 +57,7 @@ class ImbalancedImageNet(Dataset):
 
         print("Loading dataset", dataset_path)
         self.dataset = load_dataset(dataset_path, split=split, trust_remote_code=True)
+        self.labels = self.dataset.features["label"].names
 
         self.classes = self.dataset.features["label"].names
         self.num_classes = len(self.classes)
@@ -73,6 +74,9 @@ class ImbalancedImageNet(Dataset):
 
         print("original length:", len(self.dataset))
         print("imbalanced length:", len(self))
+
+    def get_class_name(self, label: int) -> str:
+        return self.labels[label]
 
     def _load_or_create_image_counts(self) -> dict:
         """Load or create a dictionary tracking number of images per cycle."""
