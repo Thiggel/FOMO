@@ -6,7 +6,7 @@
 #SBATCH --ntasks-per-node=8
 #SBATCH --ntasks=8
 #SBATCH --time=6-23
-#SBATCH --mem=128G
+#SBATCH --mem=96G
 #SBATCH --cpus-per-task=32
 #SBATCH --job-name=NewMethod-R50-ImageNet100-Balanced
 #SBATCH --output=job_logs/NewMethod-R50-ImageNet100-Balanced-%A.out
@@ -17,12 +17,12 @@ cd $HOME/FOMO
 
 python -m experiment \
 	--model-name ResNet50 \
-  --num-runs 3 \
+  --num-runs 1 \
   --imagenet-variant 100 \
 	--imbalance-method power_law_imbalance \
-	--max-cycles 5 \
+	--max-cycles 25 \
 	--ood-augmentation \
 	--n-epochs-per-cycle 20 \
 	--pct-ood 0.15 \
   --batch-size 512 \
-  --experiment_name "ResNet50_SimCLR_NewMethod_ImageNet100"
+  --experiment-name "ResNet50_SimCLR_NewMethod_ImageNet100"

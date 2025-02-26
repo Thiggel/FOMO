@@ -1,16 +1,17 @@
 . jobs/environment.sh
 
 python -m experiment \
-	--model_name ViTBase \
-	--imbalance_method no_imbalance \
-  --ssl_method Dino \
-	--max_cycles 1 \
-  --num_runs 2 \
-  --seeds 1, 2 \
-  --imagenet_variant 1k \
-	--n_epochs_per_cycle 300 \
-  --batch_size 32 \
-  --grad_acc_steps 32 \
-  --crop_size 224 \
-  --experiment_name "Baseline_ViTBase_Dino_ImageNet1k_Balanced"
+	--model-name ViTBase \
+	--imbalance-method no_imbalance \
+  --ssl-method Dino \
+	--max-cycles 1 \
+  --num-runs 3 \
+  --imagenet-variant 1k \
+	--n-epochs-per-cycle 300 \
+  --batch-size 1024 \
+  --grad-acc-steps 1 \
+  --crop-size 224 \
+  --experiment-name "Baseline_ViTBase_Dino_ImageNet1k_Balanced"
+
+. jobs/environment.sh
 

@@ -1,12 +1,14 @@
 #!/bin/bash
 
-#SBATCH --partition=gpu
-#SBATCH --gpus=1
-#SBATCH --job-name=SimCLR-Baselines
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=18
+#SBATCH --partition=capacity
+#SBATCH --gres=gpu:8
+#SBATCH --job-name=SimCLR-Baselines-Balanced
+#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks=8
+#SBATCH --mem=180G
+#SBATCH --cpus-per-task=16
 #SBATCH --time=80:00:00
-#SBATCH --output=job_logs/ViTBase_SimCLR_Imbalanced-%A.out
+#SBATCH --output=job_logs/ViTBase_SimCLR_Balanced-%A.out
 
 cd $HOME/FOMO
 

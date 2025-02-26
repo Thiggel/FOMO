@@ -1,16 +1,19 @@
 #!/bin/bash
 
 #SBATCH --partition=performance
-#SBATCH --gres=gpu:rtx_6000_ada:8
-#SBATCH --nodelist=hipster-cn001
-#SBATCH --ntasks-per-node=8
-#SBATCH --ntasks=8
+#SBATCH --gres=gpu:rtx_6000_ada:4
+#SBATCH --nodelist=hipster-cn003
+#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks=4
 #SBATCH --time=6-23
-#SBATCH --mem=128G
-#SBATCH --cpus-per-task=32
-#SBATCH --time=4:00:00
+#SBATCH --mem=50G
+#SBATCH --cpus-per-task=24
 #SBATCH --job-name=BRADD-ViTSmall-SimCLR-Imb
 #SBATCH --output=job_logs/BRADD-ViTS-SimCLR_Imb-%A.out
+
+cd $HOME/FOMO
+
+. jobs/environment.sh
 
 python -m experiment \
   --model-name ViTSmall \

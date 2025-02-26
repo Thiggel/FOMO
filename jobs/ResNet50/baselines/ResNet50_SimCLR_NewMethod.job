@@ -8,8 +8,8 @@
 #SBATCH --mem=180G
 #SBATCH --cpus-per-task=16
 #SBATCH --time=80:00:00
-#SBATCH --output=job_logs/ViTBase_SimCLR_Balanced-%A.out
+#SBATCH --output=job_logs/ResNet50_SimCLR_NewMethod-%A.out
 
 cd $HOME/FOMO
 
-. jobs/ViTBase/baselines/ViTBase_SimCLR_Balanced.sh
+. jobs/ResNet50/baselines/ResNet50_SimCLR_NewMethod.sh

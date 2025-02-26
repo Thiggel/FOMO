@@ -1,9 +1,14 @@
-module purge
-module load cuda12.3/toolkit/12.3
+
+conda init
+
+source ~/.bashrc
+
+conda activate fomo
+
 
 ulimit -n 4096
 
-export SCRATCH_LOCAL="/var/scratch/ssalehid/"
+export SCRATCH_LOCAL="/scratch/ssalehi/"
 
 cd $SCRATCH_LOCAL
 mkdir FOMO
@@ -12,6 +17,8 @@ cd $HOME/FOMO
 
 # Base directory
 export BASE_CACHE_DIR="$SCRATCH_LOCAL/FOMO"
+
+export TMPDIR="$BASE_CACHE_DIR/tmp"
 
 # Hugging Face
 export HF_HOME="$BASE_CACHE_DIR"
