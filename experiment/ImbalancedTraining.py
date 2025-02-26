@@ -1,4 +1,5 @@
 import sys
+from torchvision.utils import save_image
 import io
 from tqdm import tqdm
 import torch
@@ -533,11 +534,11 @@ class ImbalancedTraining:
                     self.datamodule.train_dataset.dataset.get_class_name(labels[0])
                 )
                 save_path_generated = f"{save_dir}/{filename_generated}_generated.png"
-                batch_images[0].save(save_path_generated, "PNG")
+                save_image(batch_images[0], save_path_generated)
 
                 filename_original = f"{filename_generated}_original.png"
                 save_path_original = f"{save_dir}/{filename_original}"
-                images[0].save(save_path_original, "PNG")
+                save_image(images[0], save_path_original)
 
             # Save all generated images for this batch
             self.datamodule.train_dataset.dataset.image_storage.save_batch(
