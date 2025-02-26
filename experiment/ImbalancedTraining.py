@@ -534,7 +534,7 @@ class ImbalancedTraining:
                     self.datamodule.train_dataset.dataset.get_class_name(labels[0])
                 )
                 save_path_generated = f"{save_dir}/{filename_generated}_generated.png"
-                save_image(batch_images[0], save_path_generated)
+                batch_images[0].save(save_path_generated, "PNG")
 
                 filename_original = f"{filename_generated}_original.png"
                 save_path_original = f"{save_dir}/{filename_original}"
