@@ -506,11 +506,6 @@ class ImbalancedTraining:
                 for label in labels
             ]
 
-            print(batch)
-            print(images)
-            print(prompts)
-            exit()
-
             # Calculate how many passes we need for this batch
             remaining_generations = self.args.num_generations_per_ood_sample
             batch_images = []
@@ -522,6 +517,7 @@ class ImbalancedTraining:
                 # Generate images
                 generated_images = pipe(
                     batch,
+                    prompts,
                     num_images_per_prompt=current_generations,
                 ).images
 
