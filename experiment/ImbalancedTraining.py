@@ -312,10 +312,22 @@ class ImbalancedTraining:
 
         self.class_counts = class_counts
 
-        # Save distribution
+        # Create dictionary mapping class indices to class names
+        class_names_dict = {}
+        for idx in range(num_classes):
+            class_names_dict[idx] = (
+                self.datamodule.train_dataset.dataset.get_class_name(idx)
+            )
+
+        # Save distribution and class names
         save_path = f"{os.environ['BASE_CACHE_DIR']}/class_distributions/{self.checkpoint_filename}"
         os.makedirs(save_path, exist_ok=True)
+
+        # Save counts as tensor
         torch.save(class_counts.cpu(), f"{save_path}/dist_cycle_{cycle_idx}.pt")
+
+        # Save class names dictionary
+        torch.save(class_names_dict, f"{save_path}/class_names_cycle_{cycle_idx}.pt")
 
         # Log distribution info
         print(f"\nCycle {cycle_idx} distribution:")
