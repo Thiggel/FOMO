@@ -536,7 +536,7 @@ class ImbalancedTraining:
                 current_generations = min(generations_per_batch, remaining_generations)
 
                 # Generate images
-                generated_images = pipe(
+                generated_images = pipe.augment(
                     batch,
                     num_generations_per_image=current_generations,
                 )
