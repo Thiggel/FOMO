@@ -181,6 +181,12 @@ def get_training_args(get_defaults: bool = False) -> dict:
         help="Aspect ratio range for masking",
     )
     parser.add_argument(
+        "--generation-model",
+        type=str,
+        options=["stable_diffusion", "flux"],
+        default="stable_diffusion",
+    )
+    parser.add_argument(
         "--enc-mask-scale",
         type=float,
         nargs=2,
