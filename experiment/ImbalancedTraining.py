@@ -48,6 +48,7 @@ class FluxAugmentor:
 
         return self.pipe(
             num_images_per_prompt=num_generations_per_image,
+            num_inference_steps=20,
             **pipe_prior_output,
         ).images
 
@@ -60,7 +61,11 @@ class StableDiffusionAugmentor:
         ).to("cuda")
 
     def augment(self, images, num_generations_per_image=1):
-        return self.pipe(images, num_images_per_prompt=num_generations_per_image).images
+        return self.pipe(
+            images,
+            num_inference_steps=20,
+            num_images_per_prompt=num_generations_per_image,
+        ).images
 
 
 class ImbalancedTraining:
