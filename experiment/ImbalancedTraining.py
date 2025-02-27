@@ -15,7 +15,11 @@ from pytorch_lightning.utilities.deepspeed import (
     convert_zero_checkpoint_to_fp32_state_dict,
 )
 from experiment.ood.ood import OOD
-from diffusers import StableUnCLIPImg2ImgPipeline
+from diffusers import (
+    StableDiffusionImageVariationPipeline,
+    FluxPriorReduxPipeline,
+    FluxPipeline,
+)
 from torchvision import transforms
 import copy
 import matplotlib.pyplot as plt
@@ -25,6 +29,38 @@ import pickle
 
 from experiment.dataset.ImageStorage import ImageStorage
 from experiment.utils.get_num_workers import get_num_workers
+
+
+class FluxAugmentor:
+    def __init__(self):
+        self.pipe_prior_redux = FluxPriorReduxPipeline.from_pretrained(
+            "black-forest-labs/FLUX.1-Redux-dev", torch_dtype=torch.bfloat16
+        ).to("cuda")
+        self.pipe = FluxPipeline.from_pretrained(
+            "black-forest-labs/FLUX.1-dev",
+            text_encoder=None,
+            text_encoder_2=None,
+            torch_dtype=torch.bfloat16,
+        ).to("cuda")
+
+    def augment(self, images, num_generations_per_image=1):
+        pipe_prior_output = self.pipe_prior_redux(images)
+
+        return self.pipe(
+            num_images_per_prompt=num_generations_per_image,
+            **pipe_prior_output,
+        ).images
+
+
+class StableDiffusionAugmentor:
+    def __init__(self):
+        self.pipe = StableDiffusionImageVariationPipeline.from_pretrained(
+            "lambdalabs/sd-image-variations-diffusers",
+            revision="v2.0",
+        ).to("cuda")
+
+    def augment(self, images, num_generations_per_image=1):
+        return self.pipe(images, num_images_per_prompt=num_generations_per_image).images
 
 
 class ImbalancedTraining:
@@ -194,9 +230,12 @@ class ImbalancedTraining:
                 )
                 print(f"Expected total new images: {expected_new_images}")
 
-                diffusion_pipe = self.initialize_model(
-                    "cuda" if torch.cuda.is_available() else "cpu"
+                diffusion_pipe = (
+                    StableDiffusionAugmentor()
+                    if self.args.diffusion_pipe == "stable_diffusion"
+                    else FluxAugmentor()
                 )
+
                 self.generate_new_data(
                     ood_samples,
                     pipe=diffusion_pipe,
@@ -432,20 +471,6 @@ class ImbalancedTraining:
 
         return results
 
-    def initialize_model(self, device: str) -> StableUnCLIPImg2ImgPipeline:
-        """Initialize the diffusion model"""
-        if device == "cpu":
-            pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-2-1-unclip"
-            )
-        else:
-            pipe = StableUnCLIPImg2ImgPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-2-1-unclip",
-                torch_dtype=torch.float16,
-                variation="bf16",
-            )
-        return pipe.to(device)
-
     def _cleanup_cycle_resources(self) -> None:
         """Clean up resources after each training cycle"""
         if hasattr(self.datamodule, "_train_dataloader"):
@@ -501,7 +526,6 @@ class ImbalancedTraining:
         ):
             # Denormalize the batch
             batch = denorm(images)
-            prompts = [f"A photo" for image in images]
 
             # Calculate how many passes we need for this batch
             remaining_generations = self.args.num_generations_per_ood_sample
@@ -514,9 +538,8 @@ class ImbalancedTraining:
                 # Generate images
                 generated_images = pipe(
                     batch,
-                    prompts,
-                    num_images_per_prompt=current_generations,
-                ).images
+                    num_generations_per_image=current_generations,
+                )
 
                 batch_images.extend(generated_images)
                 remaining_generations -= current_generations
