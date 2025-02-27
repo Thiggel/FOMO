@@ -232,7 +232,7 @@ class ImbalancedTraining:
 
                 diffusion_pipe = (
                     StableDiffusionAugmentor()
-                    if self.args.diffusion_model == "stable_diffusion"
+                    if self.args.generation_model == "stable_diffusion"
                     else FluxAugmentor()
                 )
 
