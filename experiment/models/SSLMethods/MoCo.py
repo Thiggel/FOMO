@@ -9,6 +9,14 @@ from torch.optim.lr_scheduler import LambdaLR
 import random
 from PIL import ImageFilter
 from torchvision import transforms
+import lightning.pytorch as L
+import torch
+from torch import nn
+from torch.optim import AdamW
+import torch.nn.functional as F
+import copy
+import math
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class TwoCropsTransform:
@@ -68,15 +76,12 @@ class MoCo(L.LightningModule):
         max_epochs: int = 500,
         momentum: float = 0.999,
         dim: int = 128,
-        K: int = 65536,
         mlp: bool = True,
         *args,
         **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
-
-        self.model = model
 
         # Create encoder Q (online network)
         self.encoder_q = model
@@ -90,17 +95,48 @@ class MoCo(L.LightningModule):
             out = model(dummy_input)
             dim_mlp = out.shape[1]
 
-        # Add MLP projection head if specified (as in MoCo v2)
+        # Add projection head (as in MoCo v2)
         if mlp:
+            # 3-layer MLP projection head for both networks
             self.encoder_q.fc = nn.Sequential(
-                nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), nn.Linear(dim_mlp, dim)
+                nn.Linear(dim_mlp, dim_mlp),
+                nn.BatchNorm1d(dim_mlp),
+                nn.ReLU(inplace=True),
+                nn.Linear(dim_mlp, dim_mlp),
+                nn.BatchNorm1d(dim_mlp),
+                nn.ReLU(inplace=True),
+                nn.Linear(dim_mlp, dim),
+                nn.BatchNorm1d(dim),
             )
+
             self.encoder_k.fc = nn.Sequential(
-                nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), nn.Linear(dim_mlp, dim)
+                nn.Linear(dim_mlp, dim_mlp),
+                nn.BatchNorm1d(dim_mlp),
+                nn.ReLU(inplace=True),
+                nn.Linear(dim_mlp, dim_mlp),
+                nn.BatchNorm1d(dim_mlp),
+                nn.ReLU(inplace=True),
+                nn.Linear(dim_mlp, dim),
+                nn.BatchNorm1d(dim),
             )
         else:
-            self.encoder_q.fc = nn.Linear(dim_mlp, dim)
-            self.encoder_k.fc = nn.Linear(dim_mlp, dim)
+            self.encoder_q.fc = nn.Sequential(
+                nn.Linear(dim_mlp, dim),
+                nn.BatchNorm1d(dim),
+            )
+            self.encoder_k.fc = nn.Sequential(
+                nn.Linear(dim_mlp, dim),
+                nn.BatchNorm1d(dim),
+            )
+
+        # Add prediction head (new in MoCo v3)
+        self.predictor = nn.Sequential(
+            nn.Linear(dim, dim_mlp),
+            nn.BatchNorm1d(dim_mlp),
+            nn.ReLU(inplace=True),
+            nn.Linear(dim_mlp, dim),
+            nn.BatchNorm1d(dim),
+        )
 
         # Initialize momentum encoder
         for param_q, param_k in zip(
@@ -108,11 +144,6 @@ class MoCo(L.LightningModule):
         ):
             param_k.data.copy_(param_q.data)
             param_k.requires_grad = False
-
-        # Create the queue
-        self.register_buffer("queue", torch.randn(dim, K))
-        self.queue = F.normalize(self.queue, dim=0)
-        self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
 
     @torch.no_grad()
     def _momentum_update_key_encoder(self):
@@ -124,74 +155,61 @@ class MoCo(L.LightningModule):
                 1.0 - self.hparams.momentum
             )
 
-    @torch.no_grad()
-    def _dequeue_and_enqueue(self, keys):
-        batch_size = keys.shape[0]
-        feat_dim = keys.shape[1]
-        ptr = int(self.queue_ptr)
+    def contrastive_loss(self, q, k):
+        """
+        Contrastive loss function
 
-        # Handle wrap-around case
-        if ptr + batch_size > self.hparams.K:
-            # Split the batch
-            first_part_size = self.hparams.K - ptr
-            second_part_size = batch_size - first_part_size
+        Args:
+            q: queries (batch)
+            k: keys (batch)
+        """
+        # Normalize features
+        q = F.normalize(q, dim=1)
+        k = F.normalize(k, dim=1)
 
-            # Write first part at the end
-            self.queue[:, ptr:] = keys.T[:, :first_part_size]
-            # Write second part at the beginning
-            self.queue[:, :second_part_size] = keys.T[:, first_part_size:]
-        else:
-            # Normal case - no wrap around needed
-            self.queue[:, ptr : ptr + batch_size] = keys.T
+        # Compute logits
+        # positive logits are the diagonal
+        logits = torch.mm(q, k.T) / self.hparams.temperature
 
-        # Update pointer
-        ptr = (ptr + batch_size) % self.hparams.K
-        self.queue_ptr[0] = ptr
+        # Targets: positive pairs are the diagonal elements
+        labels = torch.arange(logits.shape[0], device=logits.device)
+
+        return F.cross_entropy(logits, labels) * (2 * self.hparams.temperature)
 
     def forward(self, im_q, im_k):
         """Forward computation during training"""
         # Compute query features
         q = self.encoder_q(im_q)  # queries: NxC
-        q = F.normalize(q, dim=1)
+        q = self.predictor(q)  # apply predictor to queries (MoCo v3)
 
         # Compute key features
         with torch.no_grad():  # no gradient to keys
             self._momentum_update_key_encoder()  # update the key encoder
             k = self.encoder_k(im_k)  # keys: NxC
-            k = F.normalize(k, dim=1)
 
-        # Calculate logits
-        l_pos = torch.einsum("nc,nc->n", [q, k]).unsqueeze(-1)
-        l_neg = torch.einsum("nc,ck->nk", [q, self.queue.clone().detach()])
-
-        # logits: Nx(1+K)
-        logits = torch.cat([l_pos, l_neg], dim=1)
-
-        # apply temperature
-        logits /= self.hparams.temperature
-
-        # labels: positive key indicators
-        labels = torch.zeros(logits.shape[0], dtype=torch.long, device=logits.device)
-
-        # dequeue and enqueue
-        self._dequeue_and_enqueue(k)
-
-        return logits, labels
+        return q, k
 
     def training_step(self, batch, batch_idx):
         imgs, _ = batch  # imgs is a list containing im_q and im_k
         im_q, im_k = imgs
-        # Forward pass
-        output, target = self(im_q, im_k)
 
-        # InfoNCE loss
-        loss = F.cross_entropy(output, target)
+        # Forward pass for both directions (symmetrized loss - MoCo v3)
+        q1, k2 = self(
+            im_q, im_k
+        )  # q1: queries from first view, k2: keys from second view
+        q2, k1 = self(
+            im_k, im_q
+        )  # q2: queries from second view, k1: keys from first view
+
+        # Compute loss for both directions
+        loss_1 = self.contrastive_loss(q1, k2)
+        loss_2 = self.contrastive_loss(q2, k1)
+
+        # Total loss (symmetrized)
+        loss = loss_1 + loss_2
 
         # Log metrics
         self.log("train_loss", loss, sync_dist=True)
-        acc1, acc5 = self._accuracy(output, target, topk=(1, 5))
-        self.log("train_acc1", acc1, sync_dist=True)
-        self.log("train_acc5", acc5, sync_dist=True)
 
         return loss
 
@@ -235,19 +253,3 @@ class MoCo(L.LightningModule):
         scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
         return [optimizer], [scheduler]
-
-    def _accuracy(self, output, target, topk=(1,)):
-        """Computes the accuracy over the k top predictions"""
-        with torch.no_grad():
-            maxk = max(topk)
-            batch_size = target.size(0)
-
-            _, pred = output.topk(maxk, 1, True, True)
-            pred = pred.t()
-            correct = pred.eq(target.view(1, -1).expand_as(pred))
-
-            res = []
-            for k in topk:
-                correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-                res.append(correct_k.mul_(100.0 / batch_size))
-            return res
