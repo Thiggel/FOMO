@@ -529,7 +529,7 @@ class ImbalancedTraining:
 
         already_saved_sample_classes = set()
 
-        for batch_idx, (images, _) in enumerate(
+        for batch_idx, (images, labels) in enumerate(
             tqdm(dataloader, desc="Generating New Data...")
         ):
             # Denormalize the batch
