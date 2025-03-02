@@ -194,6 +194,9 @@ class ImbalancedTraining:
             trainer = L.Trainer(**cycle_trainer_args)
             trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
 
+            if cycle_idx >= self.max_cycles - 1:
+                return
+
             if not self.args.ood_augmentation:
                 print("OOD augmentation disabled, skipping generation")
                 return
