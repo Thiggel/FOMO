@@ -52,7 +52,7 @@ class ImbalancedImageNet(Dataset):
 
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
-        split = "train+validation"
+        split = "train"
         self.additional_data_path = additional_data_path
 
         print("Loading dataset", dataset_path)

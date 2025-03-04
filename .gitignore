@@ -177,3 +177,13 @@ FOMO/*
 *.out
 FOMO2/*
 .null-ls*
+
+class_dists
+class_dists/*
+ood_samples
+ood_samples/*
+ood_samples
+ood_samples/*
+.DS_Store
+class_dists.pdf
+class_dists.png
