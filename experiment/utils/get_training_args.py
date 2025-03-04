@@ -140,6 +140,11 @@ def get_training_args(get_defaults: bool = False) -> dict:
         default=[0.8, 0.1, 0.1],
         help="Dataset splits",
     )
+    parser.add_argument(
+        "--streaming",
+        action="store_true",
+        help="Use streaming dataset",
+    )
 
     # OOD and augmentation settings
     parser.add_argument(
@@ -335,6 +340,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
         classification_head=False,
         calc_novelty_score=False,
         save_class_distribution=False,
+        streaming=False,
     )
 
     if get_defaults:

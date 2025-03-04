@@ -47,6 +47,7 @@ class ImbalancedImageNet(Dataset):
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
         transform=None,
+        streaming: bool = False,
     ):
         super().__init__()
 
@@ -54,17 +55,29 @@ class ImbalancedImageNet(Dataset):
         self.transform = transform
         split = "train"
         self.additional_data_path = additional_data_path
+        self.streaming = streaming
 
         print("Loading dataset", dataset_path)
+        # Load the dataset, use streaming if specified
         self.dataset = load_dataset(
-            dataset_path, split=split, trust_remote_code=True, streaming=True
+            dataset_path, split=split, trust_remote_code=True, streaming=streaming
         )
-        self.labels = self.dataset.features["label"].names
 
+        # Get label information (works for both streaming and non-streaming datasets)
+        self.labels = self.dataset.features["label"].names
         self.classes = self.dataset.features["label"].names
         self.num_classes = len(self.classes)
         self.imbalancedness = imbalance_method.value.impl(self.num_classes)
-        self.indices = self._load_or_create_indices()
+
+        # In streaming mode, we don't create indices for imbalance filtering
+        # Instead, we use all samples from the dataset
+        if not streaming:
+            self.indices = self._load_or_create_indices()
+        else:
+            # For streaming datasets, we'll set a large value for dataset length
+            # Actual length will be determined by the iterator in __getitem__
+            self.dataset_length = 1000000  # Large number to represent "all samples"
+            self.indices = list(range(self.dataset_length))  # Just for compatibility
 
         # Initialize image storage
         self.image_storage = ImageStorage(
@@ -74,8 +87,11 @@ class ImbalancedImageNet(Dataset):
         # Keep track of additional images per cycle
         self.additional_image_counts = self._load_or_create_image_counts()
 
-        print("original length:", len(self.dataset))
-        print("imbalanced length:", len(self))
+        if not streaming:
+            print("original length:", len(self.dataset))
+            print("imbalanced length:", len(self))
+        else:
+            print("Using streaming dataset (no imbalance filtering)")
 
     def get_class_name(self, label: int) -> str:
         return self.labels[label]
@@ -112,7 +128,8 @@ class ImbalancedImageNet(Dataset):
         """
 
         print(f"\nDEBUG:")
-        print(f"Original indices length: {len(self.indices)}")
+        if not self.streaming:
+            print(f"Original indices length: {len(self.indices)}")
         print(f"Adding {num_images} generated images for cycle {cycle_idx}")
         print(f"Current additional_image_counts: {self.additional_image_counts}")
 
@@ -123,10 +140,14 @@ class ImbalancedImageNet(Dataset):
         self._save_image_counts()
 
         print(f"Updated additional_image_counts: {self.additional_image_counts}")
-        total = len(self.indices) + sum(
+        total_additional = sum(
             data["count"] for data in self.additional_image_counts.values()
         )
-        print(f"Calculated new total length: {total}")
+        if not self.streaming:
+            total = len(self.indices) + total_additional
+            print(f"Calculated new total length: {total}")
+        else:
+            print(f"Added {total_additional} generated images")
 
     def __len__(self):
         """
@@ -135,7 +156,41 @@ class ImbalancedImageNet(Dataset):
         total_additional = sum(
             cycle_data["count"] for cycle_data in self.additional_image_counts.values()
         )
-        return len(self.indices) + total_additional
+
+        if self.streaming:
+            # For streaming datasets, use a placeholder value plus additional images
+            return self.dataset_length + total_additional
+        else:
+            return len(self.indices) + total_additional
+
+    def _get_dataset_item_streaming(self, idx):
+        """
+        Get an item from the streaming dataset.
+        For streaming datasets, we iterate through the dataset until we reach the desired index.
+        """
+        # Create an iterator if not already created
+        if not hasattr(self, "_dataset_iter"):
+            self._dataset_iter = iter(self.dataset)
+            self._current_idx = 0
+
+        # If the index is less than our current position, reset the iterator
+        if idx < self._current_idx:
+            self._dataset_iter = iter(self.dataset)
+            self._current_idx = 0
+
+        # Iterate until we reach the desired index
+        try:
+            while self._current_idx < idx:
+                next(self._dataset_iter)
+                self._current_idx += 1
+
+            # Get the item at the desired index
+            item = next(self._dataset_iter)
+            self._current_idx += 1
+            return item
+        except StopIteration:
+            # If we reach the end of the dataset, return None
+            return None
 
     def _get_additional_image_info(self, idx: int) -> tuple[int, int, int]:
         """
@@ -147,7 +202,10 @@ class ImbalancedImageNet(Dataset):
         Returns:
             tuple of (cycle_idx, image_idx, label)
         """
-        current_pos = len(self.indices)
+        if self.streaming:
+            current_pos = self.dataset_length
+        else:
+            current_pos = len(self.indices)
 
         for cycle_idx, cycle_data in sorted(self.additional_image_counts.items()):
             if idx < current_pos + cycle_data["count"]:
@@ -162,9 +220,24 @@ class ImbalancedImageNet(Dataset):
         """
         Get an item from either the original dataset or generated images.
         """
-        if idx < len(self.indices):
+        # Check if the index corresponds to the original dataset
+        original_dataset_length = (
+            self.dataset_length if self.streaming else len(self.indices)
+        )
+
+        if idx < original_dataset_length:
             # Get item from original dataset
-            datapoint = self.dataset[self.indices[idx]]
+            if self.streaming:
+                # For streaming datasets, fetch by iterating through the dataset
+                datapoint = self._get_dataset_item_streaming(idx)
+                if datapoint is None:
+                    # If we reached the end of the dataset, get an item from additional data
+                    return self.__getitem__(original_dataset_length)
+            else:
+                # For non-streaming datasets, use the indices list
+                dataset_idx = self.indices[idx]
+                datapoint = self.dataset[dataset_idx]
+
             image = datapoint["image"]
             label = datapoint["label"]
         else:
@@ -177,8 +250,11 @@ class ImbalancedImageNet(Dataset):
                 f"index {image_idx}"
             )
 
-        image = image.convert("RGB")
+        # Ensure the image is in RGB format
+        if hasattr(image, "convert"):
+            image = image.convert("RGB")
 
+        # Apply transformations if provided
         if self.transform:
             image = self.transform(image)
 
@@ -190,8 +266,17 @@ class ImbalancedImageNet(Dataset):
         """
         print("Creating dataset indices on GPU...")
 
-        # Load labels to a GPU tensor
-        labels = torch.tensor(self.dataset["label"], device="cuda")
+        if not self.streaming:
+            labels = torch.tensor(self.dataset["label"], device="cuda")
+        else:
+            # Use the loop approach for streaming datasets
+            labels_list = []
+            for i, item in enumerate(tqdm(self.dataset, desc="Extracting labels")):
+                labels_list.append(item["label"])
+            labels = torch.tensor(labels_list, device="cuda")
+
+        # Convert to tensor and move to GPU
+        labels = torch.tensor(labels_list, device="cuda")
 
         # Get imbalance probabilities for all labels
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
@@ -226,8 +311,20 @@ class ImbalancedImageNet(Dataset):
             pickle.dump(indices, f)
 
     def _load_indices_from_pickle(self):
-        with open(self._indices_filename, "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(self._indices_filename, "rb") as f:
+                return pickle.load(f)
+        except (FileNotFoundError, EOFError):
+            print(
+                f"No valid indices file found at {self._indices_filename}. Creating new indices."
+            )
+            return None
 
     def _load_or_create_indices(self):
+        # Try loading existing indices first
+        indices = self._load_indices_from_pickle()
+        if indices is not None:
+            return indices
+
+        # If not available, create new indices
         return self._create_indices()

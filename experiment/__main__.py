@@ -63,6 +63,7 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
         transform=ssl_method.transforms(args),
         test_mode=args.test_mode,
         additional_data_path=args.additional_data_path,
+        streaming=args.streaming,
     )
 
 
