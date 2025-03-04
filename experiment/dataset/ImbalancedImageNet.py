@@ -56,7 +56,9 @@ class ImbalancedImageNet(Dataset):
         self.additional_data_path = additional_data_path
 
         print("Loading dataset", dataset_path)
-        self.dataset = load_dataset(dataset_path, split=split, trust_remote_code=True)
+        self.dataset = load_dataset(
+            dataset_path, split=split, trust_remote_code=True, streaming=True
+        )
         self.labels = self.dataset.features["label"].names
 
         self.classes = self.dataset.features["label"].names
