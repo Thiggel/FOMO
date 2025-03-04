@@ -69,6 +69,8 @@ class OOD:
         print(f"Min: {features.min():.4f}")
         print(f"Max: {features.max():.4f}")
 
+        torch.cuda.empty_cache()
+
         return features.numpy().astype(np.float32), indices
 
     def compute_knn_distances(self, features):

@@ -493,6 +493,10 @@ class ImbalancedTraining:
 
         self.datamodule.set_dataloaders_none()
 
+        import gc
+
+        gc.collect()
+
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
