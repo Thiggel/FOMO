@@ -553,6 +553,16 @@ class ImbalancedTraining:
                     num_generations_per_image=current_generations,
                 )
 
+                # Filter out black images
+                valid_images = []
+                for img in generated_images:
+                    if not is_black_image(img):
+                        valid_images.append(img)
+                    else:
+                        print(
+                            f"Skipping black image (likely filtered by safety system)"
+                        )
+
                 batch_images.extend(generated_images)
                 remaining_generations -= current_generations
 
@@ -584,3 +594,24 @@ class ImbalancedTraining:
             total_images_saved += len(batch_images)
 
         print(f"Total images generated and saved: {total_images_saved}")
+
+    def is_black_image(image, threshold=10):
+        """
+        Simple function to detect black images returned by safety filters.
+
+        Args:
+            image: PIL Image
+            threshold: Brightness threshold (0-255)
+
+        Returns:
+            bool: True if the image is mostly black
+        """
+        # Convert to grayscale
+        gray = image.convert("L")
+
+        # Calculate average brightness
+        pixels = list(gray.getdata())
+        avg_brightness = sum(pixels) / len(pixels)
+
+        # Image is considered black if average brightness is below threshold
+        return avg_brightness < threshold
