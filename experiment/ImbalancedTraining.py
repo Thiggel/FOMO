@@ -556,7 +556,7 @@ class ImbalancedTraining:
                 # Filter out black images
                 valid_images = []
                 for img in generated_images:
-                    if not is_black_image(img):
+                    if not self.is_black_image(img):
                         valid_images.append(img)
                     else:
                         print(
