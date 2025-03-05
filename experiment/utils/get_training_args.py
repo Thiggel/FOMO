@@ -140,11 +140,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
         default=[0.8, 0.1, 0.1],
         help="Dataset splits",
     )
-    parser.add_argument(
-        "--streaming",
-        action="store_true",
-        help="Use streaming dataset",
-    )
 
     # OOD and augmentation settings
     parser.add_argument(
@@ -169,6 +164,30 @@ def get_training_args(get_defaults: bool = False) -> dict:
         "--save-class-distribution",
         action="store_true",
         help="Save class distribution of dataset",
+    )
+
+    # New OOD clustering settings
+    parser.add_argument(
+        "--use-clustering",
+        action="store_true",
+        help="Use clustering-based OOD sample selection",
+    )
+    parser.add_argument(
+        "--n-clusters",
+        type=int,
+        default=100,
+        help="Number of clusters for OOD selection",
+    )
+    parser.add_argument(
+        "--class-balanced",
+        action="store_true",
+        help="Try to balance classes within clusters for OOD selection",
+    )
+    parser.add_argument(
+        "--pca-dim",
+        type=int,
+        default=50,
+        help="Dimensionality for PCA before clustering (0 to disable)",
     )
 
     # Masking settings for SSL
@@ -328,12 +347,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
         help="Enable OOD augmentation",
     )
 
-    parser.add_argument(
-        "--randomly-sample-from-ood-samples",
-        action="store_true",
-        help="Randomly sample from OOD samples",
-    )
-
     # Set defaults for flags
     parser.set_defaults(
         test_mode=False,
@@ -346,7 +359,8 @@ def get_training_args(get_defaults: bool = False) -> dict:
         classification_head=False,
         calc_novelty_score=False,
         save_class_distribution=False,
-        randomly_sample_from_ood_samples=False,
+        use_clustering=False,
+        class_balanced=False,
     )
 
     if get_defaults:
