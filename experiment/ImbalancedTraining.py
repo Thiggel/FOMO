@@ -217,6 +217,9 @@ class ImbalancedTraining:
                 else self.get_random_indices(self.datamodule.train_dataset)
             )
 
+            if self.args.uniformly_sample_from_ood_samples:
+                ood_indices = np.random.permutation(ood_indices)
+
             ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
             ood_labels = torch.tensor(
                 [label for _, label in tqdm(ood_samples, desc="Getting labels")]

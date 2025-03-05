@@ -328,6 +328,12 @@ def get_training_args(get_defaults: bool = False) -> dict:
         help="Enable OOD augmentation",
     )
 
+    parser.add_argument(
+        "--randomly-sample-from-ood-samples",
+        action="store_true",
+        help="Randomly sample from OOD samples",
+    )
+
     # Set defaults for flags
     parser.set_defaults(
         test_mode=False,
@@ -340,6 +346,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
         classification_head=False,
         calc_novelty_score=False,
         save_class_distribution=False,
+        randomly_sample_from_ood_samples=False,
     )
 
     if get_defaults:
