@@ -595,7 +595,7 @@ class ImbalancedTraining:
 
         print(f"Total images generated and saved: {total_images_saved}")
 
-    def is_black_image(image, threshold=10):
+    def is_black_image(self, image, threshold=10):
         """
         Simple function to detect black images returned by safety filters.
 
