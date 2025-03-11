@@ -339,10 +339,7 @@ class ImbalancedTraining:
         return ood_indices
 
     def save_class_dist(self, cycle_idx: int) -> None:
-        """
-        Save class distribution for current cycle using GPU acceleration
-        and upload to Wandb for visualization.
-        """
+        """Save class distribution for current cycle using GPU acceleration and log to Wandb"""
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dataset = self.datamodule.train_dataset.dataset
         num_classes = dataset.num_classes
@@ -390,144 +387,98 @@ class ImbalancedTraining:
         print(f"Mean samples per class: {class_counts.mean().item():.2f}")
         print(f"Std samples per class: {class_counts.std().item():.2f}")
 
-        # Log to Wandb if enabled
-        if self.args.logger and not self.args.test_mode:
+        # Create visualization and log to Wandb
+        if (
+            self.args.logger
+            and not self.args.test_mode
+            and hasattr(self.trainer_args.get("logger", None), "experiment")
+        ):
             try:
-                import wandb
+                # Create plot using matplotlib
+                import matplotlib
+
+                matplotlib.use("Agg")  # Use non-interactive backend
                 import matplotlib.pyplot as plt
-                import numpy as np
 
-                # Create and save visualization
-                viz_dir = f"{os.environ.get('BASE_CACHE_DIR', '.')}/visualizations/class_distributions"
-                os.makedirs(viz_dir, exist_ok=True)
+                # Convert to numpy for plotting
+                counts_np = class_counts.cpu().numpy()
 
-                # Convert to numpy for matplotlib
-                counts = class_counts.cpu().numpy()
-
-                # Only show classes with counts > 0 to avoid cluttered plots
-                non_zero_mask = counts > 0
-                filtered_counts = counts[non_zero_mask]
-
-                # Get class names for non-zero classes
-                filtered_names = [
-                    class_names_dict[i]
-                    for i, is_non_zero in enumerate(non_zero_mask)
-                    if is_non_zero
-                ]
-
-                # Sort by count for better visualization
-                sort_indices = np.argsort(filtered_counts)[::-1]  # Descending order
-                sorted_counts = filtered_counts[sort_indices]
-                sorted_names = [filtered_names[i] for i in sort_indices]
-
-                # Create the figure
-                plt.figure(figsize=(20, 10))
-
-                # Create bar chart
-                bars = plt.bar(
-                    range(len(sorted_counts)), sorted_counts, color="skyblue"
-                )
-
-                # Add counts on top of each bar
-                for i, (bar, count) in enumerate(zip(bars, sorted_counts)):
-                    plt.text(
-                        bar.get_x() + bar.get_width() / 2,
-                        bar.get_height() + 5,
-                        f"{int(count)}",
-                        ha="center",
-                        va="bottom",
-                        rotation=45 if len(sorted_counts) > 50 else 0,
-                        fontsize=8 if len(sorted_counts) > 50 else 10,
-                    )
-
-                # Add labels and title
-                plt.xlabel("Class Name")
+                # Create distribution plot
+                plt.figure(figsize=(12, 6))
+                plt.bar(range(num_classes), counts_np)
+                plt.xlabel("Class Index")
                 plt.ylabel("Number of Samples")
-                plt.title(
-                    f"Class Distribution (Cycle {cycle_idx}) - {len(sorted_counts)} Non-Empty Classes"
+                plt.title(f"Class Distribution - Cycle {cycle_idx}")
+
+                # Save as PNG instead of PDF
+                vis_dir = (
+                    f"visualizations/class_distributions/{self.checkpoint_filename}"
                 )
-
-                # Set x-ticks to class names (may need rotation if many classes)
-                plt.xticks(
-                    range(len(sorted_counts)),
-                    sorted_names,
-                    rotation=90 if len(sorted_counts) > 20 else 45,
-                    fontsize=8 if len(sorted_counts) > 50 else 10,
-                )
-
-                plt.tight_layout()
-
-                # Save the figure
-                viz_path = f"{viz_dir}/class_dist_cycle_{cycle_idx}.pdf"
-                plt.savefig(viz_path, format="pdf", dpi=300, bbox_inches="tight")
-
-                # Log to wandb as image
-                wandb.log(
-                    {
-                        f"class_distribution_chart/cycle_{cycle_idx}": wandb.Image(
-                            viz_path
-                        ),
-                        "cycle": cycle_idx,
-                    }
-                )
-
+                os.makedirs(vis_dir, exist_ok=True)
+                png_path = f"{vis_dir}/class_dist_cycle_{cycle_idx}.png"
+                plt.savefig(png_path, dpi=100, bbox_inches="tight")
                 plt.close()
 
-                # Create data for interactive Wandb chart
-                data = []
-                for class_idx in range(num_classes):
-                    if class_counts[class_idx] > 0:  # Only include non-zero classes
-                        data.append(
-                            [
-                                class_names_dict[class_idx],  # class name as string
-                                class_counts[class_idx].item(),  # count
-                                cycle_idx,  # cycle number for grouping
-                            ]
-                        )
-
-                # Create a table with class names, counts, and cycle information
-                table = wandb.Table(columns=["class", "samples", "cycle"], data=data)
-
-                # Log the table with a bar chart visualization
-                wandb.log(
+                # Log PNG to Wandb
+                wandb_logger = self.trainer_args["logger"]
+                wandb_logger.experiment.log(
                     {
-                        "class_distribution": wandb.plot.bar(
-                            table,
-                            "class",
-                            "samples",
-                            title=f"Class Distribution (Cycle {cycle_idx})",
-                        ),
+                        f"class_distribution/cycle_{cycle_idx}": wandb.Image(png_path),
                         "cycle": cycle_idx,
+                        "class_distribution_stats": {
+                            "total_samples": class_counts.sum().item(),
+                            "non_zero_classes": (class_counts > 0).sum().item(),
+                            "mean_samples_per_class": class_counts.mean().item(),
+                            "std_samples_per_class": class_counts.std().item(),
+                        },
                     }
                 )
 
-                # Also log as custom histogram for interactive exploration
-                wandb.log(
-                    {
-                        f"class_distribution_histogram/cycle_{cycle_idx}": wandb.Histogram(
-                            np_histogram=(
-                                counts[counts > 0].tolist(),
-                                [i for i, c in enumerate(counts) if c > 0],
+                # Optionally, create a more detailed visualization for classes with samples
+                if (
+                    class_counts > 0
+                ).sum().item() < 50:  # Only if there are fewer than 50 classes with samples
+                    # Get indices of classes with samples
+                    non_zero_indices = (
+                        torch.nonzero(class_counts).squeeze().cpu().numpy()
+                    )
+
+                    # Create bar plot with class names
+                    plt.figure(figsize=(14, 8))
+                    bars = plt.bar(non_zero_indices, counts_np[non_zero_indices])
+
+                    # Add class names as labels
+                    class_names = [
+                        class_names_dict.get(idx, f"Class {idx}")
+                        for idx in non_zero_indices
+                    ]
+                    plt.xticks(non_zero_indices, class_names, rotation=90)
+                    plt.xlabel("Class Name")
+                    plt.ylabel("Number of Samples")
+                    plt.title(
+                        f"Class Distribution (Non-zero Classes) - Cycle {cycle_idx}"
+                    )
+                    plt.tight_layout()
+
+                    # Save detailed plot
+                    detailed_png_path = (
+                        f"{vis_dir}/class_dist_detailed_cycle_{cycle_idx}.png"
+                    )
+                    plt.savefig(detailed_png_path, dpi=100, bbox_inches="tight")
+                    plt.close()
+
+                    # Log detailed PNG to Wandb
+                    wandb_logger.experiment.log(
+                        {
+                            f"class_distribution_detailed/cycle_{cycle_idx}": wandb.Image(
+                                detailed_png_path
                             ),
-                            num_bins=len(counts[counts > 0]),
-                        ),
-                        "cycle": cycle_idx,
-                    }
-                )
-
-                # Log overall statistics
-                wandb.log(
-                    {
-                        "stats/total_samples": class_counts.sum().item(),
-                        "stats/non_zero_classes": (class_counts > 0).sum().item(),
-                        "stats/mean_samples_per_class": class_counts.mean().item(),
-                        "stats/std_samples_per_class": class_counts.std().item(),
-                        "cycle": cycle_idx,
-                    }
-                )
+                            "cycle": cycle_idx,
+                        }
+                    )
 
             except Exception as e:
-                print(f"Warning: Failed to log class distribution to wandb: {e}")
+                print(f"Warning: Failed to log class distribution to wandb: {str(e)}")
 
     def pretrain_imbalanced(self) -> None:
         """Run the main training loop with OOD detection and augmentation"""
