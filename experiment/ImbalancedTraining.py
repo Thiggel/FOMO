@@ -592,8 +592,7 @@ class ImbalancedTraining:
                 # For Wandb logging - prepare image pairs (original and generated)
                 if has_wandb:
                     # Convert to tensor, resize, and convert back to PIL for wandb
-                    orig_tensor = transforms.ToTensor()(images[0].cpu())
-                    orig_small = transforms.ToPILImage()(image_resize(orig_tensor))
+                    orig_small = transforms.ToPILImage()(image_resize(images[0].cpu()))
 
                     gen_tensor = transforms.ToTensor()(batch_images[0])
                     gen_small = transforms.ToPILImage()(image_resize(gen_tensor))
