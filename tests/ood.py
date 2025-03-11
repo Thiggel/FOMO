@@ -36,7 +36,6 @@ class OOD:
         self.use_clustering = args.use_clustering
         self.n_clusters = args.n_clusters
         self.class_balanced = args.class_balanced
-        self.pca_dim = args.pca_dim
 
     def extract_features(self):
         """Extract features from the dataset without normalization"""
@@ -108,34 +107,15 @@ class OOD:
 
         return knn_distances
 
-    def reduce_dimensions(self, features):
-        """Reduce dimensionality using PCA for visualization/clustering"""
-        if features.shape[1] <= self.pca_dim:
-            return features
-
-        # Use FAISS for fast PCA
-        pca = faiss.PCAMatrix(features.shape[1], self.pca_dim)
-        pca.train(features)
-        reduced_features = np.zeros((features.shape[0], self.pca_dim), dtype=np.float32)
-        pca.apply_py(features, reduced_features)
-
-        return reduced_features
-
     def select_ood_samples_by_cluster(self, features, distances, labels, indices):
         """
         Select OOD samples by first clustering the feature space and then
         choosing the most OOD samples from each cluster
         """
-        # Apply dimensionality reduction if needed
-        if self.pca_dim > 0 and features.shape[1] > self.pca_dim:
-            clustering_features = self.reduce_dimensions(features)
-        else:
-            clustering_features = features
-
         # Perform K-means clustering
         print(f"\nPerforming K-means clustering with {self.n_clusters} clusters...")
         kmeans = KMeans(n_clusters=self.n_clusters, random_state=42, n_init=10)
-        cluster_labels = kmeans.fit_predict(clustering_features)
+        cluster_labels = kmeans.fit_predict(features)
 
         # Create visualization directory
         vis_dir = f"./ood_logs/{self.cycle_idx}/clustering"
@@ -309,19 +289,19 @@ class OOD:
             )
 
         # Visualize clustering results if possible
-        if clustering_features.shape[1] >= 2:
+        if features.shape[1] >= 2:
             plt.figure(figsize=(12, 10))
             plt.scatter(
-                clustering_features[:, 0],
-                clustering_features[:, 1],
+                features[:, 0],
+                features[:, 1],
                 c=cluster_labels,
                 cmap="viridis",
                 alpha=0.5,
                 s=20,
             )
             plt.scatter(
-                clustering_features[selected_indices, 0],
-                clustering_features[selected_indices, 1],
+                features[selected_indices, 0],
+                features[selected_indices, 1],
                 c="red",
                 s=50,
                 marker="x",
@@ -348,8 +328,8 @@ class OOD:
                         else f"Class {class_id}"
                     )
                     plt.scatter(
-                        clustering_features[mask, 0],
-                        clustering_features[mask, 1],
+                        features[mask, 0],
+                        features[mask, 1],
                         alpha=0.5,
                         s=20,
                         label=(
@@ -359,8 +339,8 @@ class OOD:
 
             # Highlight selected samples
             plt.scatter(
-                clustering_features[selected_indices, 0],
-                clustering_features[selected_indices, 1],
+                features[selected_indices, 0],
+                features[selected_indices, 1],
                 c="red",
                 s=50,
                 marker="x",

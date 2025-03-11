@@ -1,4 +1,6 @@
 import sys
+import wandb
+from torchvision.transforms import ToPILImage
 from torchvision.utils import save_image
 import io
 from tqdm import tqdm
@@ -58,6 +60,7 @@ class StableDiffusionAugmentor:
         self.pipe = StableDiffusionImageVariationPipeline.from_pretrained(
             "lambdalabs/sd-image-variations-diffusers",
             revision="v2.0",
+            safety_checker=None,
         ).to("cuda")
 
     def augment(self, images, num_generations_per_image=1):
@@ -502,9 +505,8 @@ class ImbalancedTraining:
 
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
-        Generate new data using the diffusion model.
-        Processes images in batches according to sd_batch_size, potentially feeding the same image
-        multiple times if num_generations_per_ood_sample is greater than sd_batch_size.
+        Generate new data using the diffusion model and log examples to Wandb.
+        Processes images in batches according to sd_batch_size.
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
         denorm = transforms.Compose(
@@ -515,6 +517,11 @@ class ImbalancedTraining:
                 ),
             ]
         )
+
+        # For Wandb logging
+        has_wandb = self.args.logger and not self.args.test_mode
+        image_resize = transforms.Resize((64, 64))  # Resize to 64x64 for Wandb
+        wandb_examples = []
 
         total_images_saved = 0
         generations_per_batch = min(
@@ -553,16 +560,6 @@ class ImbalancedTraining:
                     num_generations_per_image=current_generations,
                 )
 
-                # Filter out black images
-                valid_images = []
-                for img in generated_images:
-                    if not self.is_black_image(img):
-                        valid_images.append(img)
-                    else:
-                        print(
-                            f"Skipping black image (likely filtered by safety system)"
-                        )
-
                 batch_images.extend(generated_images)
                 remaining_generations -= current_generations
 
@@ -572,20 +569,43 @@ class ImbalancedTraining:
             ):
                 already_saved_sample_classes.add(labels[0])
 
-                # Save generated image
+                # Save generated image locally
                 save_dir = (
                     f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
                 )
                 os.makedirs(save_dir, exist_ok=True)
-                filename_generated = (
-                    self.datamodule.train_dataset.dataset.get_class_name(labels[0])
+
+                # Get class name for the current label
+                class_name = self.datamodule.train_dataset.dataset.get_class_name(
+                    labels[0]
                 )
-                save_path_generated = f"{save_dir}/{filename_generated}_generated.png"
+
+                # Save original and generated images
+                filename_generated = f"{class_name}_generated.png"
+                save_path_generated = f"{save_dir}/{filename_generated}"
                 batch_images[0].save(save_path_generated, "PNG")
 
-                filename_original = f"{filename_generated}_original.png"
+                filename_original = f"{class_name}_original.png"
                 save_path_original = f"{save_dir}/{filename_original}"
                 save_image(images[0], save_path_original)
+
+                # For Wandb logging - prepare image pairs (original and generated)
+                if has_wandb:
+                    # Convert to tensor, resize, and convert back to PIL for wandb
+                    orig_tensor = transforms.ToTensor()(images[0].cpu())
+                    orig_small = transforms.ToPILImage()(image_resize(orig_tensor))
+
+                    gen_tensor = transforms.ToTensor()(batch_images[0])
+                    gen_small = transforms.ToPILImage()(image_resize(gen_tensor))
+
+                    # Add to the collection of examples to log
+                    wandb_examples.append(
+                        {
+                            "class": class_name,
+                            "original": wandb.Image(orig_small),
+                            "generated": wandb.Image(gen_small),
+                        }
+                    )
 
             # Save all generated images for this batch
             self.datamodule.train_dataset.dataset.image_storage.save_batch(
@@ -595,23 +615,13 @@ class ImbalancedTraining:
 
         print(f"Total images generated and saved: {total_images_saved}")
 
-    def is_black_image(self, image, threshold=0.01):
-        """
-        Simple function to detect black images returned by safety filters.
-
-        Args:
-            image: PIL Image
-            threshold: Brightness threshold (0-255)
-
-        Returns:
-            bool: True if the image is mostly black
-        """
-        # Convert to grayscale
-        gray = image.convert("L")
-
-        # Calculate average brightness
-        pixels = list(gray.getdata())
-        avg_brightness = sum(pixels) / len(pixels)
-
-        # Image is considered black if average brightness is below threshold
-        return avg_brightness < threshold
+        # Log image examples to Wandb
+        if (
+            has_wandb
+            and wandb_examples
+            and hasattr(self.trainer_args.get("logger", None), "experiment")
+        ):
+            wandb_logger = self.trainer_args["logger"]
+            wandb_logger.experiment.log(
+                {f"ood_examples_cycle_{cycle_idx}": wandb_examples, "cycle": cycle_idx}
+            )
