@@ -599,7 +599,7 @@ class ImbalancedTraining:
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
         Generate new data using the diffusion model and log examples to Wandb.
-        Processes images in batches according to sd_batch_size.
+        For Flux model, process each image individually since it doesn't accept batches.
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
         denorm = transforms.Compose(
@@ -621,69 +621,63 @@ class ImbalancedTraining:
         wandb_class_names = {}
 
         total_images_saved = 0
-
         already_saved_sample_classes = set()
 
         if self.args.generation_model == "flux":
-            print(ood_samples)
-            exit()
-            for batch_idx, (images, labels) in enumerate(
-                tqdm(dataloader, desc="Generating New Data...")
+            # Flux doesn't support batching, so process one image at a time
+            for idx, (image, label) in enumerate(
+                tqdm(ood_samples, desc="Generating New Data with Flux...")
             ):
-                # Denormalize the batch
-                batch = denorm(images)
+                # Apply denormalization if the image is a tensor
+                if torch.is_tensor(image):
+                    image_pil = transforms.ToPILImage()(denorm(image))
+                else:
+                    image_pil = image  # If already PIL
 
-                # Calculate how many passes we need for this batch
-                remaining_generations = self.args.num_generations_per_ood_sample
-                batch_images = []
+                # Generate multiple augmentations for this image
+                batch_images = pipe.augment(
+                    [image_pil],  # Flux expects a list of PIL images
+                    num_generations_per_image=self.args.num_generations_per_ood_sample,
+                )
 
-                while remaining_generations > 0:
-                    # Calculate number of images to generate this pass
-                    current_generations = min(
-                        generations_per_batch, remaining_generations
-                    )
-
-                    # Generate images
-                    generated_images = pipe.augment(
-                        batch,
-                        num_generations_per_image=current_generations,
-                    )
-
-                    batch_images.extend(generated_images)
-                    remaining_generations -= current_generations
-
+                # Check if this class should be saved as an example (first time seeing this class)
                 if (
                     self.args.save_class_distribution
-                    and labels[0].item() not in already_saved_sample_classes
+                    and label not in already_saved_sample_classes
                 ):
-                    already_saved_sample_classes.add(labels[0].item())
+                    already_saved_sample_classes.add(label)
 
-                    # Save generated image locally
+                    # Save generated image
                     save_dir = (
                         f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
                     )
                     os.makedirs(save_dir, exist_ok=True)
 
-                    # Get class name for the current label
+                    # Get class name
                     class_name = self.datamodule.train_dataset.dataset.get_class_name(
-                        labels[0].item()
+                        label
                     )
 
-                    # Save original and generated images
+                    # Save original and first generated image as examples
                     filename_generated = f"{class_name}_generated.png"
                     save_path_generated = f"{save_dir}/{filename_generated}"
                     batch_images[0].save(save_path_generated, "PNG")
 
                     filename_original = f"{class_name}_original.png"
                     save_path_original = f"{save_dir}/{filename_original}"
-                    save_image(images[0].cpu(), save_path_original)
 
-                    # For Wandb logging - prepare image pairs (original and generated)
+                    # Save original image
+                    if torch.is_tensor(image):
+                        save_image(image.cpu(), save_path_original)
+                    else:
+                        image.save(save_path_original, "PNG")
+
+                    # For Wandb logging
                     if has_wandb:
-                        # Convert tensor to PIL for wandb
-                        if torch.is_tensor(images[0]):
+                        # Prepare original image for wandb
+                        if torch.is_tensor(image):
                             # Make sure tensor is in CPU first
-                            img_tensor = images[0].cpu()
+                            img_tensor = image.cpu()
                             # Check if we need to denormalize
                             if img_tensor.min() < 0:
                                 img_tensor = denorm(img_tensor)
@@ -693,26 +687,30 @@ class ImbalancedTraining:
                             orig_small = transforms.ToPILImage()(img_tensor)
                         else:
                             # If already PIL
-                            orig_small = image_resize(images[0])
+                            orig_small = image_resize(image)
 
-                        # For generated image (PIL format)
+                        # For generated image (already PIL format)
                         gen_small = image_resize(batch_images[0])
 
                         # Store for logging (using class index as key)
-                        class_idx = labels[0].item()
+                        class_idx = label
                         wandb_originals[class_idx] = orig_small
                         wandb_generated[class_idx] = gen_small
                         wandb_class_names[class_idx] = class_name
 
-                # Save all generated images for this batch
-                print("SAVE BATCH", len(batch_images))
+                # Save all generated images
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
                     batch_images, cycle_idx, total_images_saved
                 )
-                print("BATCH SAVED")
                 total_images_saved += len(batch_images)
 
+                # Log progress
+                if idx % 10 == 0:
+                    print(
+                        f"Processed {idx}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
+                    )
         else:
+            # Original code for Stable Diffusion (supports batching)
             generations_per_batch = min(
                 self.args.sd_batch_size, self.args.num_generations_per_ood_sample
             )
@@ -728,8 +726,9 @@ class ImbalancedTraining:
                 pin_memory=True,
                 shuffle=False,
             )
+
             for batch_idx, (images, labels) in enumerate(
-                tqdm(dataloader, desc="Generating New Data...")
+                tqdm(dataloader, desc="Generating New Data with Stable Diffusion...")
             ):
                 # Denormalize the batch
                 batch = denorm(images)
@@ -806,11 +805,9 @@ class ImbalancedTraining:
                         wandb_class_names[class_idx] = class_name
 
                 # Save all generated images for this batch
-                print("SAVE BATCH", len(batch_images))
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
                     batch_images, cycle_idx, total_images_saved
                 )
-                print("BATCH SAVED")
                 total_images_saved += len(batch_images)
 
         print(f"Total images generated and saved: {total_images_saved}")
