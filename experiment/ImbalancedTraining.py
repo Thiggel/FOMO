@@ -46,11 +46,7 @@ class FluxAugmentor:
         ).to("cuda")
 
     def augment(self, images, num_generations_per_image=1):
-        print("INIT", images.shape)
         pipe_prior_output = self.pipe_prior_redux(images)
-        print("PRI", pipe_prior_output)
-        print("PRIOR", pipe_prior_output["images"].shape)
-        exit()
 
         return self.pipe(
             num_images_per_prompt=num_generations_per_image,
