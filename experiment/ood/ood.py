@@ -116,13 +116,6 @@ class OOD:
         # Get indices of points with largest mean k-NN distances
         top_indices = np.argsort(distances)[-num_samples:][::-1]
 
-        # Print the top distances for analysis
-        print("\nTop OOD samples:")
-        for idx in top_indices:
-            print(f"Index {indices[idx]}: mean kNN distance = {distances[idx]:.4f}")
-            if isinstance(self.dataset[indices[idx]][0], torch.Tensor):
-                print(f"Point coordinates: {self.dataset[indices[idx]][0]}")
-
         # Map to original dataset indices
         ood_indices = [indices[i] for i in top_indices]
 
