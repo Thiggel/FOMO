@@ -46,7 +46,11 @@ class FluxAugmentor:
         ).to("cuda")
 
     def augment(self, images, num_generations_per_image=1):
+        print("INIT", images.shape)
         pipe_prior_output = self.pipe_prior_redux(images)
+        print("PRI", pipe_prior_output)
+        print("PRIOR", pipe_prior_output["images"].shape)
+        exit()
 
         return self.pipe(
             num_images_per_prompt=num_generations_per_image,
@@ -650,9 +654,6 @@ class ImbalancedTraining:
             while remaining_generations > 0:
                 # Calculate number of images to generate this pass
                 current_generations = min(generations_per_batch, remaining_generations)
-
-                # create list from first first dimension of batch
-                batch = [ToPILImage(img) for img in batch]
 
                 # Generate images
                 generated_images = pipe.augment(
