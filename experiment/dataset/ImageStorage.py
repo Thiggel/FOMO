@@ -107,9 +107,7 @@ class ImageStorage:
 
         with h5py.File(h5_path, "r") as f:
             if "images" not in f or local_idx >= len(f["images"]):
-                print("Image not found")
-                print(f)
-                print(f["images"])
+                print("Image not found", f, f["images"], local_idx, "\n\n")
                 exit()
                 return None
 
