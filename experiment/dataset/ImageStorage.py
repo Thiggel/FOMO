@@ -129,6 +129,7 @@ class ImageStorage:
             cycle_idx: Current training cycle index
             start_idx: Starting global index for the batch
         """
+        print("NUM IMAGes:", len(images), cycle_idx, start_idx)
         for i, image in enumerate(images):
             self.save_image(image, cycle_idx, start_idx + i)
 
