@@ -74,6 +74,8 @@ class ImageStorage:
             images = f["images"]
             indices = f["indices"]
 
+            print(f'Saving image to {h5_path} at index {local_idx}')
+
             # Resize if needed
             if local_idx >= len(images):
                 new_size = local_idx + 1
@@ -107,7 +109,7 @@ class ImageStorage:
 
         with h5py.File(h5_path, "r") as f:
             if "images" not in f or local_idx >= len(f["images"]):
-                print("Image not found", f, f["images"], local_idx, "\n\n")
+                print("Image not found", f, f["images"], f['indices'] local_idx, "\n\n")
                 exit()
                 return None
 
