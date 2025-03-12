@@ -657,6 +657,8 @@ class ImbalancedTraining:
                     num_generations_per_image=current_generations,
                 )
 
+                print("GENERATED", generated_images.shape)
+
                 batch_images.extend(generated_images)
                 remaining_generations -= current_generations
 
@@ -713,9 +715,11 @@ class ImbalancedTraining:
                     wandb_class_names[class_idx] = class_name
 
             # Save all generated images for this batch
+            print("SAVE BATCH", len(batch_images))
             self.datamodule.train_dataset.dataset.image_storage.save_batch(
                 batch_images, cycle_idx, total_images_saved
             )
+            print("BATCH SAVED")
             total_images_saved += len(batch_images)
 
         print(f"Total images generated and saved: {total_images_saved}")
