@@ -652,7 +652,7 @@ class ImbalancedTraining:
                 current_generations = min(generations_per_batch, remaining_generations)
 
                 # create list from first first dimension of batch
-                batch = list(batch)
+                batch = [ToPILImage(img) for img in batch]
 
                 # Generate images
                 generated_images = pipe.augment(
