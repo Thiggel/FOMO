@@ -624,7 +624,7 @@ class ImbalancedTraining:
 
         already_saved_sample_classes = set()
 
-        if self.args.diffusion_model == "flux":
+        if self.args.generation_model == "flux":
             print(ood_samples)
             exit()
             for batch_idx, (images, labels) in enumerate(
