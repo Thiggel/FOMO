@@ -39,7 +39,7 @@ class FluxAugmentor:
             "black-forest-labs/FLUX.1-Redux-dev", torch_dtype=torch.bfloat16
         ).to("cuda")
         self.pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-dev",
+            "black-forest-labs/FLUX.1-schnell",
             text_encoder=None,
             text_encoder_2=None,
             torch_dtype=torch.bfloat16,
