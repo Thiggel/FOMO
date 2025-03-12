@@ -98,11 +98,19 @@ class ImageStorage:
         file_idx, local_idx = self._get_file_and_index(global_idx)
         h5_path = self._get_hdf5_path(cycle_idx, file_idx)
 
+        print(h5_path)
+
         if not os.path.exists(h5_path):
+            print("File does not exist")
+            exit()
             return None
 
         with h5py.File(h5_path, "r") as f:
             if "images" not in f or local_idx >= len(f["images"]):
+                print("Image not found")
+                print(f)
+                print(f["images"])
+                exit()
                 return None
 
             img_bytes = f["images"][local_idx]
