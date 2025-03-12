@@ -657,7 +657,7 @@ class ImbalancedTraining:
                     num_generations_per_image=current_generations,
                 )
 
-                print(" GENERATED ", len(generated_images), generated_images[0].shape)
+                print(" GENERATED ", batch.shape, len(generated_images))
 
                 batch_images.extend(generated_images)
                 remaining_generations -= current_generations
