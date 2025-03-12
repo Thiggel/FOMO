@@ -63,12 +63,6 @@ class OOD:
         # Concatenate all features
         features = torch.cat(features, dim=0)
 
-        print(f"\nFeature statistics:")
-        print(f"Mean: {features.mean():.4f}")
-        print(f"Std: {features.std():.4f}")
-        print(f"Min: {features.min():.4f}")
-        print(f"Max: {features.max():.4f}")
-
         torch.cuda.empty_cache()
 
         return features.numpy().astype(np.float32), indices
@@ -89,12 +83,6 @@ class OOD:
 
         # Remove self-distance (first column) and compute mean
         knn_distances = distances[:, 1:].mean(axis=1)
-
-        print(f"\nDistance statistics:")
-        print(f"Mean distance: {np.mean(knn_distances):.4f}")
-        print(f"Std distance: {np.std(knn_distances):.4f}")
-        print(f"Min distance: {np.min(knn_distances):.4f}")
-        print(f"Max distance: {np.max(knn_distances):.4f}")
 
         return knn_distances
 
