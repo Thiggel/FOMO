@@ -651,13 +651,16 @@ class ImbalancedTraining:
                 # Calculate number of images to generate this pass
                 current_generations = min(generations_per_batch, remaining_generations)
 
+                # create list from first first dimension of batch
+                batch = list(batch)
+
                 # Generate images
                 generated_images = pipe.augment(
                     batch,
                     num_generations_per_image=current_generations,
                 )
 
-                print(" GENERATED ", batch.shape, len(generated_images))
+                print(" GENERATED ", len(batch), len(generated_images))
 
                 batch_images.extend(generated_images)
                 remaining_generations -= current_generations
