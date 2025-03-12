@@ -621,106 +621,197 @@ class ImbalancedTraining:
         wandb_class_names = {}
 
         total_images_saved = 0
-        generations_per_batch = min(
-            self.args.sd_batch_size, self.args.num_generations_per_ood_sample
-        )
-
-        # Create DataLoader with a batch size that accounts for multiple generations
-        effective_batch_size = max(1, self.args.sd_batch_size // generations_per_batch)
-        dataloader = DataLoader(
-            ood_samples,
-            batch_size=effective_batch_size,
-            num_workers=0,
-            pin_memory=True,
-            shuffle=False,
-        )
 
         already_saved_sample_classes = set()
 
-        for batch_idx, (images, labels) in enumerate(
-            tqdm(dataloader, desc="Generating New Data...")
-        ):
-            # Denormalize the batch
-            batch = denorm(images)
-
-            # Calculate how many passes we need for this batch
-            remaining_generations = self.args.num_generations_per_ood_sample
-            batch_images = []
-
-            while remaining_generations > 0:
-                # Calculate number of images to generate this pass
-                current_generations = min(generations_per_batch, remaining_generations)
-
-                # Generate images
-                generated_images = pipe.augment(
-                    batch,
-                    num_generations_per_image=current_generations,
-                )
-
-                print(" GENERATED ", len(batch), len(generated_images))
-
-                batch_images.extend(generated_images)
-                remaining_generations -= current_generations
-
-            if (
-                self.args.save_class_distribution
-                and labels[0].item() not in already_saved_sample_classes
+        if self.args.diffusion_model == "flux":
+            print(ood_samples)
+            exit()
+            for batch_idx, (images, labels) in enumerate(
+                tqdm(dataloader, desc="Generating New Data...")
             ):
-                already_saved_sample_classes.add(labels[0].item())
+                # Denormalize the batch
+                batch = denorm(images)
 
-                # Save generated image locally
-                save_dir = (
-                    f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
+                # Calculate how many passes we need for this batch
+                remaining_generations = self.args.num_generations_per_ood_sample
+                batch_images = []
+
+                while remaining_generations > 0:
+                    # Calculate number of images to generate this pass
+                    current_generations = min(
+                        generations_per_batch, remaining_generations
+                    )
+
+                    # Generate images
+                    generated_images = pipe.augment(
+                        batch,
+                        num_generations_per_image=current_generations,
+                    )
+
+                    batch_images.extend(generated_images)
+                    remaining_generations -= current_generations
+
+                if (
+                    self.args.save_class_distribution
+                    and labels[0].item() not in already_saved_sample_classes
+                ):
+                    already_saved_sample_classes.add(labels[0].item())
+
+                    # Save generated image locally
+                    save_dir = (
+                        f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
+                    )
+                    os.makedirs(save_dir, exist_ok=True)
+
+                    # Get class name for the current label
+                    class_name = self.datamodule.train_dataset.dataset.get_class_name(
+                        labels[0].item()
+                    )
+
+                    # Save original and generated images
+                    filename_generated = f"{class_name}_generated.png"
+                    save_path_generated = f"{save_dir}/{filename_generated}"
+                    batch_images[0].save(save_path_generated, "PNG")
+
+                    filename_original = f"{class_name}_original.png"
+                    save_path_original = f"{save_dir}/{filename_original}"
+                    save_image(images[0].cpu(), save_path_original)
+
+                    # For Wandb logging - prepare image pairs (original and generated)
+                    if has_wandb:
+                        # Convert tensor to PIL for wandb
+                        if torch.is_tensor(images[0]):
+                            # Make sure tensor is in CPU first
+                            img_tensor = images[0].cpu()
+                            # Check if we need to denormalize
+                            if img_tensor.min() < 0:
+                                img_tensor = denorm(img_tensor)
+                            # Resize the tensor for wandb
+                            img_tensor = image_resize(img_tensor)
+                            # Convert to PIL
+                            orig_small = transforms.ToPILImage()(img_tensor)
+                        else:
+                            # If already PIL
+                            orig_small = image_resize(images[0])
+
+                        # For generated image (PIL format)
+                        gen_small = image_resize(batch_images[0])
+
+                        # Store for logging (using class index as key)
+                        class_idx = labels[0].item()
+                        wandb_originals[class_idx] = orig_small
+                        wandb_generated[class_idx] = gen_small
+                        wandb_class_names[class_idx] = class_name
+
+                # Save all generated images for this batch
+                print("SAVE BATCH", len(batch_images))
+                self.datamodule.train_dataset.dataset.image_storage.save_batch(
+                    batch_images, cycle_idx, total_images_saved
                 )
-                os.makedirs(save_dir, exist_ok=True)
+                print("BATCH SAVED")
+                total_images_saved += len(batch_images)
 
-                # Get class name for the current label
-                class_name = self.datamodule.train_dataset.dataset.get_class_name(
-                    labels[0].item()
-                )
-
-                # Save original and generated images
-                filename_generated = f"{class_name}_generated.png"
-                save_path_generated = f"{save_dir}/{filename_generated}"
-                batch_images[0].save(save_path_generated, "PNG")
-
-                filename_original = f"{class_name}_original.png"
-                save_path_original = f"{save_dir}/{filename_original}"
-                save_image(images[0].cpu(), save_path_original)
-
-                # For Wandb logging - prepare image pairs (original and generated)
-                if has_wandb:
-                    # Convert tensor to PIL for wandb
-                    if torch.is_tensor(images[0]):
-                        # Make sure tensor is in CPU first
-                        img_tensor = images[0].cpu()
-                        # Check if we need to denormalize
-                        if img_tensor.min() < 0:
-                            img_tensor = denorm(img_tensor)
-                        # Resize the tensor for wandb
-                        img_tensor = image_resize(img_tensor)
-                        # Convert to PIL
-                        orig_small = transforms.ToPILImage()(img_tensor)
-                    else:
-                        # If already PIL
-                        orig_small = image_resize(images[0])
-
-                    # For generated image (PIL format)
-                    gen_small = image_resize(batch_images[0])
-
-                    # Store for logging (using class index as key)
-                    class_idx = labels[0].item()
-                    wandb_originals[class_idx] = orig_small
-                    wandb_generated[class_idx] = gen_small
-                    wandb_class_names[class_idx] = class_name
-
-            # Save all generated images for this batch
-            print("SAVE BATCH", len(batch_images))
-            self.datamodule.train_dataset.dataset.image_storage.save_batch(
-                batch_images, cycle_idx, total_images_saved
+        else:
+            generations_per_batch = min(
+                self.args.sd_batch_size, self.args.num_generations_per_ood_sample
             )
-            print("BATCH SAVED")
-            total_images_saved += len(batch_images)
+
+            # Create DataLoader with a batch size that accounts for multiple generations
+            effective_batch_size = max(
+                1, self.args.sd_batch_size // generations_per_batch
+            )
+            dataloader = DataLoader(
+                ood_samples,
+                batch_size=effective_batch_size,
+                num_workers=0,
+                pin_memory=True,
+                shuffle=False,
+            )
+            for batch_idx, (images, labels) in enumerate(
+                tqdm(dataloader, desc="Generating New Data...")
+            ):
+                # Denormalize the batch
+                batch = denorm(images)
+
+                # Calculate how many passes we need for this batch
+                remaining_generations = self.args.num_generations_per_ood_sample
+                batch_images = []
+
+                while remaining_generations > 0:
+                    # Calculate number of images to generate this pass
+                    current_generations = min(
+                        generations_per_batch, remaining_generations
+                    )
+
+                    # Generate images
+                    generated_images = pipe.augment(
+                        batch,
+                        num_generations_per_image=current_generations,
+                    )
+
+                    batch_images.extend(generated_images)
+                    remaining_generations -= current_generations
+
+                if (
+                    self.args.save_class_distribution
+                    and labels[0].item() not in already_saved_sample_classes
+                ):
+                    already_saved_sample_classes.add(labels[0].item())
+
+                    # Save generated image locally
+                    save_dir = (
+                        f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
+                    )
+                    os.makedirs(save_dir, exist_ok=True)
+
+                    # Get class name for the current label
+                    class_name = self.datamodule.train_dataset.dataset.get_class_name(
+                        labels[0].item()
+                    )
+
+                    # Save original and generated images
+                    filename_generated = f"{class_name}_generated.png"
+                    save_path_generated = f"{save_dir}/{filename_generated}"
+                    batch_images[0].save(save_path_generated, "PNG")
+
+                    filename_original = f"{class_name}_original.png"
+                    save_path_original = f"{save_dir}/{filename_original}"
+                    save_image(images[0].cpu(), save_path_original)
+
+                    # For Wandb logging - prepare image pairs (original and generated)
+                    if has_wandb:
+                        # Convert tensor to PIL for wandb
+                        if torch.is_tensor(images[0]):
+                            # Make sure tensor is in CPU first
+                            img_tensor = images[0].cpu()
+                            # Check if we need to denormalize
+                            if img_tensor.min() < 0:
+                                img_tensor = denorm(img_tensor)
+                            # Resize the tensor for wandb
+                            img_tensor = image_resize(img_tensor)
+                            # Convert to PIL
+                            orig_small = transforms.ToPILImage()(img_tensor)
+                        else:
+                            # If already PIL
+                            orig_small = image_resize(images[0])
+
+                        # For generated image (PIL format)
+                        gen_small = image_resize(batch_images[0])
+
+                        # Store for logging (using class index as key)
+                        class_idx = labels[0].item()
+                        wandb_originals[class_idx] = orig_small
+                        wandb_generated[class_idx] = gen_small
+                        wandb_class_names[class_idx] = class_name
+
+                # Save all generated images for this batch
+                print("SAVE BATCH", len(batch_images))
+                self.datamodule.train_dataset.dataset.image_storage.save_batch(
+                    batch_images, cycle_idx, total_images_saved
+                )
+                print("BATCH SAVED")
+                total_images_saved += len(batch_images)
 
         print(f"Total images generated and saved: {total_images_saved}")
 
