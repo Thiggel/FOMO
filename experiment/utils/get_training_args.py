@@ -154,6 +154,12 @@ def get_training_args(get_defaults: bool = False) -> dict:
         default=1000,
         help="Select the N most OOD samples in the dataset for augmentation after each cycle",
     )
+    parser.add_arguments(
+        "--every-nth-ood-sample",
+        type=int,
+        default=1,
+        help="Select every Nth OOD sample for augmentation",
+    )
     parser.add_argument(
         "--num-generations-per-ood-sample",
         type=int,
@@ -174,6 +180,12 @@ def get_training_args(get_defaults: bool = False) -> dict:
     )
     parser.add_argument(
         "--n-clusters",
+        type=int,
+        default=100,
+        help="Number of clusters for OOD selection",
+    )
+    parser.add_argument(
+        "--top-ood-clusters",
         type=int,
         default=100,
         help="Number of clusters for OOD selection",

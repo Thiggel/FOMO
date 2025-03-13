@@ -24,7 +24,8 @@ class OOD:
         self.feature_extractor = feature_extractor
         self.batch_size = args.val_batch_size
         self.K = args.k
-        self.num_ood_samples = args.num_ood_samples
+        self.num_ood_samples = args.num_ood_samples * args.every_nth_ood_sample
+        self.every_nth_ood_sample = args.every_nth_ood_sample
         self.cycle_idx = cycle_idx
         self.device = device
         self.dtype = dtype
@@ -132,5 +133,8 @@ class OOD:
                 distance = distances[top_indices[i]]
                 image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
                 save_image(image, image_path)
+
+        # select only every nth ood sample
+        ood_indices = ood_indices[:: self.every_nth_ood_sample]
 
         return ood_indices
