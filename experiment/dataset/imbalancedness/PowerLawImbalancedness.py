@@ -38,7 +38,11 @@ class PowerLawImbalancedness(Imbalancedness):
         # Convert to ratios
         ratios = scaled_vals / self.max_samples
 
-        return torch.from_numpy(ratios)
+        ratios = torch.from_numpy(ratios)
+
+        ratios = ratios[torch.randperm(self.num_classes)]
+
+        return ratios
 
     def get_imbalance(self, class_indices: torch.Tensor) -> torch.Tensor:
         """
