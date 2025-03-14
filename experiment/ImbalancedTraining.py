@@ -1,4 +1,6 @@
 import sys
+from sklearn.manifold import TSNE
+import numpy as np
 import wandb
 from torchvision.transforms import ToPILImage
 from torchvision.utils import save_image
@@ -343,6 +345,126 @@ class ImbalancedTraining:
         ood_indices = ood.ood()
 
         return ood_indices
+
+    def collect_embeddings(
+        self, max_samples=10000
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        dataloader = DataLoader(
+            self.datamodule.train_dataset,
+            batch_size=self.args.val_batch_size,
+            num_workers=self.num_workers,
+        )
+
+        embeddings = []
+        labels = []
+        sample_count = 0
+
+        with torch.no_grad():
+            for batch_idx, (images, labels) in enumerate(
+                tqdm(dataloader, desc="Collecting embeddings")
+            ):
+                images = images.to(
+                    device=self.ssl_method.device, dtype=self.ssl_method.dtype
+                )
+                labels = labels.to(device=self.ssl_method.device)
+
+                batch_embeddings = self.ssl_method.model.extract_features(images).cpu()
+                embeddings.append(batch_embeddings)
+                labels.append(labels)
+
+                sample_count += len(images)
+                if sample_count >= max_samples:
+                    break
+
+        return torch.cat(embeddings, dim=0), torch.cat(labels, dim=0)
+
+    def apply_tsne(self, embeddings, labels) -> np.ndarray:
+        tsne = TSNE(
+            n_components=2,
+            random_state=0,
+            perplexity=40,
+            learning_rate="auto",
+            init="pca",
+        )
+        tsne_embeddings = tsne.fit_transform(embeddings.numpy())
+
+        return tsne_embeddings
+
+    def generate_colors(n):
+        """Generate n visually distinct colors using HSV color space"""
+        import colorsys
+        import numpy as np
+
+        colors = []
+        # Use golden ratio to space hues around the color wheel
+        golden_ratio_conjugate = 0.618033988749895
+        h = 0.1  # Starting hue
+
+        # Generate colors with varying hue, saturation, and value
+        for i in range(n):
+            # Primary variation is hue
+            h = (h + golden_ratio_conjugate) % 1.0
+            # Secondary variations in saturation and value
+            s = 0.5 + 0.5 * ((i % 7) / 6.0)  # 7 saturation levels
+            v = 0.9 - 0.4 * ((i % 5) / 4.0)  # 5 value levels
+
+            rgb = colorsys.hsv_to_rgb(h, s, v)
+            colors.append(rgb)
+
+        return colors
+
+    def plot_tse(self, tsne_embeddings, labels, class_names=None, fig_size=(12, 10)):
+        plt.figure(figsize=fig_size)
+
+        labels_np = labels.numpy()
+
+        unique_classes = np.unique(labels_np)
+        colors = generate_colors(len(unique_classes))
+
+        for cls in unique_classes:
+            mask = labels_np == cls
+            plt.scatter(
+                tsne_embeddings[mask, 0],
+                tsne_embeddings[mask, 1],
+                s=3,
+                color=colors[cls],
+                label=class_names[cls] if class_names else cls,
+            )
+
+        plt.legend(loc="bottom center")
+        plt.xlabel("t-SNE Dimension 1")
+        plt.ylabel("t-SNE Dimension 2")
+
+        return plt.gcf()
+
+    def visualize_embedding_space(self, cycle_idx) -> None:
+        embeddings, labels = self.collect_embeddings()
+
+        tsne_embeddings = self.apply_tsne(embeddings, labels)
+
+        class_names = {
+            idx: self.datamodule.train_dataset.dataset.get_class_name(idx)
+            for idx in range(self.datamodule.train_dataset.dataset.num_classes)
+        }
+
+        fig = self.plot_tsne(embeddings_tsne, labels, class_names)
+
+        vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
+        os.makedirs(vis_dir, exist_ok=True)
+        png_path = f"{vis_dir}/tsne_cycle_{cycle_idx}.png"
+        fig.savefig(png_path, dpi=100, bbox_inches="tight")
+        plt.close(fig)
+
+        # 5. Log to Wandb
+        if (
+            self.args.logger
+            and not self.args.test_mode
+            and hasattr(self.trainer_args.get("logger", None), "experiment")
+        ):
+            wandb_logger = self.trainer_args["logger"]
+            wandb_logger.experiment.log(
+                {f"tsne/cycle_{cycle_idx}": wandb.Image(png_path), "cycle": cycle_idx}
+            )
 
     def save_class_dist(self, cycle_idx: int) -> None:
         """Save class distribution for current cycle using GPU acceleration and log to Wandb"""
