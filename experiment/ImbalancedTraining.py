@@ -370,7 +370,7 @@ class ImbalancedTraining:
         )
 
         embeddings = []
-        labels = []
+        all_labels = []
         sample_count = 0
 
         with torch.no_grad():
@@ -384,7 +384,7 @@ class ImbalancedTraining:
 
                 batch_embeddings = self.ssl_method.model.extract_features(images).cpu()
                 embeddings.append(batch_embeddings)
-                labels.append(labels)
+                all_labels.append(labels)
 
                 sample_count += len(images)
                 if sample_count >= max_samples:
@@ -392,7 +392,7 @@ class ImbalancedTraining:
 
         self.datamodule.train_dataset.dataset.transform = old_transform
 
-        return torch.cat(embeddings, dim=0), torch.cat(labels, dim=0)
+        return torch.cat(embeddings, dim=0), torch.cat(all_labels, dim=0)
 
     def apply_tsne(self, embeddings, labels) -> np.ndarray:
         tsne = TSNE(
