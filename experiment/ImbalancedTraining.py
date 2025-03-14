@@ -464,7 +464,7 @@ class ImbalancedTraining:
             for idx in range(self.datamodule.train_dataset.dataset.num_classes)
         }
 
-        fig = self.plot_tsne(embeddings_tsne, labels, class_names)
+        fig = self.plot_tsne(tsne_embeddings, labels, class_names)
 
         vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
