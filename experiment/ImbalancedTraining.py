@@ -365,6 +365,7 @@ class ImbalancedTraining:
                 tqdm(dataloader, desc="Collecting embeddings")
             ):
                 print(images, labels)
+                exit()
                 images = images.to(
                     device=self.ssl_method.device, dtype=self.ssl_method.dtype
                 )
