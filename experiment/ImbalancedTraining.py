@@ -209,16 +209,17 @@ class ImbalancedTraining:
             )
             self.datamodule.train_dataset.dataset.transform = self.transform
 
-            # Log OOD selection method
-            print(
-                f"\nSelecting OOD samples using {'OOD detection' if self.args.use_ood else 'random selection'}"
-            )
-
-            ood_indices = (
-                self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
-                if self.args.use_ood
-                else self.get_random_indices(self.datamodule.train_dataset)
-            )
+            if self.args.sample_selection == "ood":
+                print("Using OOD detection for sample selection")
+                ood_indices = self.get_ood_indices(
+                    self.datamodule.train_dataset, cycle_idx
+                )
+            elif self.args.sample_selection == "oracle":
+                print("Using oracle indices for sample selection")
+                ood_indices = self.get_oracle_indices()
+            else:
+                print("Using random selection for sample selection")
+                ood_indices = self.get_random_indices(self.datamodule.train_dataset)
 
             ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
             ood_labels = torch.tensor(
@@ -318,6 +319,11 @@ class ImbalancedTraining:
     def get_random_indices(self, dataset) -> list:
         """Get random indices for augmentation"""
         return torch.randperm(len(dataset))[: self.args.num_ood_samples].tolist()
+
+    def get_oracle_indices(self) -> list:
+        inverse_distribution = (
+            self.datamodule.train_dataset.dataset._get_inverse_distribution()
+        )
 
     def get_ood_indices(self, dataset, cycle_idx) -> list:
         """Get indices of OOD samples using feature-based detection"""

@@ -186,6 +186,14 @@ class ImbalancedImageNet(Dataset):
 
         return image, label
 
+    def _get_inverse_distribution(self):
+        labels = torch.tensor(self.dataset["label"], device="cuda")
+        imbalance_probs = self.imbalancedness.get_imbalance(labels)
+
+        inverse = 1 - imbalance_probs
+
+        return inverse
+
     def _create_indices(self) -> list[int]:
         """
         Create imbalanced dataset indices using GPU acceleration.

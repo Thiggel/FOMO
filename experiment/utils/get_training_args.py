@@ -346,7 +346,11 @@ def get_training_args(get_defaults: bool = False) -> dict:
         help="Skip finetuning",
     )
     parser.add_argument(
-        "--no-use-ood", action="store_false", dest="use_ood", help="Use OOD detection"
+        "--sample-selection",
+        type=str,
+        choices=["ood", "random", "oracle"]
+        default="ood",
+        help="Sample selection method",
     )
     parser.add_argument(
         "--remove-diffusion",
@@ -365,7 +369,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
         logger=True,
         pretrain=True,
         finetune=True,
-        use_ood=True,
         remove_diffusion=False,
         ood_augmentation=False,
         classification_head=False,
