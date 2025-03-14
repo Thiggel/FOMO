@@ -440,6 +440,7 @@ class ImbalancedTraining:
     def visualize_embedding_space(self, cycle_idx) -> None:
         embeddings, labels = self.collect_embeddings()
 
+        print("Computing t-SNE embeddings...")
         tsne_embeddings = self.apply_tsne(embeddings, labels)
 
         class_names = {
@@ -625,7 +626,7 @@ class ImbalancedTraining:
             # Save and visualize class distribution
             if self.save_class_distribution:
                 self.visualize_embedding_space(cycle_idx + 1)
-                self.save_class_dist(cycle_idx + 1)
+                # self.save_class_dist(cycle_idx + 1)
 
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
