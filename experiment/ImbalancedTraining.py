@@ -447,7 +447,20 @@ class ImbalancedTraining:
                 label=class_names[cls] if class_names else cls,
             )
 
-        plt.legend(loc="best")
+        legend = plt.legend(
+            bbox_to_anchor=(1.05, 1),  # Position right of the plot
+            loc="upper left",
+            fontsize="xx-small",  # Very small font
+            markerscale=0.5,  # Smaller markers
+            ncol=2,  # Use 2 columns to save vertical space
+            frameon=True,  # Add a frame
+            title="Classes",  # Add a title
+            title_fontsize="small",
+        )
+
+        for handle in legend.legendHandles:
+            handle.set_sizes([10])
+
         plt.xlabel("t-SNE Dimension 1")
         plt.ylabel("t-SNE Dimension 2")
 
