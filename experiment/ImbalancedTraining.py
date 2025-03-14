@@ -429,7 +429,7 @@ class ImbalancedTraining:
 
         return colors
 
-    def plot_tse(self, tsne_embeddings, labels, class_names=None, fig_size=(12, 10)):
+    def plot_tsne(self, tsne_embeddings, labels, class_names=None, fig_size=(12, 10)):
         plt.figure(figsize=fig_size)
 
         labels_np = labels.numpy()
