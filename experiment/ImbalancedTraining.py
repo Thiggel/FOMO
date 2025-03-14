@@ -458,7 +458,7 @@ class ImbalancedTraining:
             title_fontsize="small",
         )
 
-        for handle in legend.legendHandles:
+        for handle in legend.legend_handles:
             handle.set_sizes([10])
 
         plt.xlabel("t-SNE Dimension 1")
