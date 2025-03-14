@@ -192,7 +192,7 @@ class ImbalancedImageNet(Dataset):
 
         inverse = 1 - imbalance_probs
 
-        return inverse
+        return inverse, labels
 
     def _create_indices(self) -> list[int]:
         """

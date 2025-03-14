@@ -325,9 +325,16 @@ class ImbalancedTraining:
         return torch.randperm(len(dataset))[: self.args.num_ood_samples].tolist()
 
     def get_oracle_indices(self) -> list:
-        inverse_distribution = (
+        inverse_distribution, labels = (
             self.datamodule.train_dataset.dataset._get_inverse_distribution()
         )
+
+        dist_sorted_by_imbalance = torch.argsort(inverse_distribution, descending=False)
+        labels_sorted_by_imbalance = labels[dist_sorted_by_imbalance]
+
+        oracle_ood_indices = labels_sorted_by_imbalance[: self.args.num_ood_samples]
+
+        return oracle_ood_indices.tolist()
 
     def get_ood_indices(self, dataset, cycle_idx) -> list:
         """Get indices of OOD samples using feature-based detection"""
