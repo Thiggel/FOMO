@@ -348,7 +348,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument(
         "--sample-selection",
         type=str,
-        choices=["ood", "random", "oracle"]
+        choices=["ood", "random", "oracle"],
         default="ood",
         help="Sample selection method",
     )
