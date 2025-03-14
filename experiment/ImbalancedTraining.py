@@ -624,8 +624,8 @@ class ImbalancedTraining:
 
             # Save and visualize class distribution
             if self.save_class_distribution:
-                self.save_class_dist(cycle_idx + 1)
                 self.visualize_embedding_space(cycle_idx + 1)
+                self.save_class_dist(cycle_idx + 1)
 
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
