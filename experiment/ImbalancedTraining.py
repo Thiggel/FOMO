@@ -364,7 +364,7 @@ class ImbalancedTraining:
             for batch_idx, (images, labels) in enumerate(
                 tqdm(dataloader, desc="Collecting embeddings")
             ):
-                print(len(images), len(images[0]), len(images[0][0]))
+                print(images[1])
                 exit()
                 images = images.to(
                     device=self.ssl_method.device, dtype=self.ssl_method.dtype
