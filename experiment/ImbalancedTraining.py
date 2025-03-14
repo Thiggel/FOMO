@@ -111,6 +111,7 @@ class ImbalancedTraining:
         self.num_workers = min(6, get_num_workers() // 2)
 
         if self.save_class_distribution:
+            self.visualize_embedding_space(0)
             self.save_class_dist(0)
 
     def get_class_indices_map(self, dataset):
@@ -626,7 +627,7 @@ class ImbalancedTraining:
             # Save and visualize class distribution
             if self.save_class_distribution:
                 self.visualize_embedding_space(cycle_idx + 1)
-                # self.save_class_dist(cycle_idx + 1)
+                self.save_class_dist(cycle_idx + 1)
 
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
