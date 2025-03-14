@@ -2,6 +2,7 @@ import sys
 from sklearn.manifold import TSNE
 import numpy as np
 import wandb
+from torchvision import transforms
 from torchvision.transforms import ToPILImage
 from torchvision.utils import save_image
 import io
@@ -350,6 +351,18 @@ class ImbalancedTraining:
     def collect_embeddings(
         self, max_samples=10000
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        old_transform = self.datamodule.train_dataset.dataset.transform
+
+        self.datamodule.train_dataset.dataset.transform = transforms.Compose(
+            [
+                transforms.Resize((self.args.crop_size, self.args.crop_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
         dataloader = DataLoader(
             self.datamodule.train_dataset,
             batch_size=self.args.val_batch_size,
@@ -364,9 +377,6 @@ class ImbalancedTraining:
             for batch_idx, (images, labels) in enumerate(
                 tqdm(dataloader, desc="Collecting embeddings")
             ):
-                for item in images:
-                    print(item.shape)
-                exit()
                 images = images.to(
                     device=self.ssl_method.device, dtype=self.ssl_method.dtype
                 )
@@ -379,6 +389,8 @@ class ImbalancedTraining:
                 sample_count += len(images)
                 if sample_count >= max_samples:
                     break
+
+        self.datamodule.train_dataset.dataset.transform = old_transform
 
         return torch.cat(embeddings, dim=0), torch.cat(labels, dim=0)
 
