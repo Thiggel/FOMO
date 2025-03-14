@@ -447,7 +447,7 @@ class ImbalancedTraining:
                 label=class_names[cls] if class_names else cls,
             )
 
-        plt.legend(loc="bottom center")
+        plt.legend(loc="best")
         plt.xlabel("t-SNE Dimension 1")
         plt.ylabel("t-SNE Dimension 2")
 
