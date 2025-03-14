@@ -406,7 +406,7 @@ class ImbalancedTraining:
 
         return tsne_embeddings
 
-    def generate_colors(n):
+    def generate_colors(self, n):
         """Generate n visually distinct colors using HSV color space"""
         import colorsys
         import numpy as np
@@ -435,7 +435,7 @@ class ImbalancedTraining:
         labels_np = labels.numpy()
 
         unique_classes = np.unique(labels_np)
-        colors = generate_colors(len(unique_classes))
+        colors = self.generate_colors(len(unique_classes))
 
         for cls in unique_classes:
             mask = labels_np == cls
