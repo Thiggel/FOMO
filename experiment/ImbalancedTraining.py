@@ -439,7 +439,7 @@ class ImbalancedTraining:
     def plot_tsne(self, tsne_embeddings, labels, class_names=None, fig_size=(12, 10)):
         plt.figure(figsize=fig_size)
 
-        labels_np = labels.numpy()
+        labels_np = labels.cpu().numpy()
 
         unique_classes = np.unique(labels_np)
         colors = self.generate_colors(len(unique_classes))

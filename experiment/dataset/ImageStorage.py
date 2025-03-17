@@ -100,8 +100,6 @@ class ImageStorage:
         file_idx, local_idx = self._get_file_and_index(global_idx)
         h5_path = self._get_hdf5_path(cycle_idx, file_idx)
 
-        print(h5_path)
-
         if not os.path.exists(h5_path):
             print("File does not exist")
             exit()
