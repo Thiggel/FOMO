@@ -1,6 +1,7 @@
 import sys
 from sklearn.manifold import TSNE
 from sklearn.mixture import GaussianMixture
+from matplotlib.patches import Ellipse
 import numpy as np
 import wandb
 from torchvision import transforms
