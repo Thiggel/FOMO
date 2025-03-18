@@ -536,7 +536,7 @@ class ImbalancedTraining:
                 continue
 
             # Draw ellipses at 1, 2, and 3 standard deviations
-            draw_ellipse(
+            self.draw_ellipse(
                 mean,
                 covar,
                 ax=ax,
