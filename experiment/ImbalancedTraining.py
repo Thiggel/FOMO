@@ -438,22 +438,36 @@ class ImbalancedTraining:
 
         return colors
 
-    def plot_tsne(self, tsne_embeddings, labels, class_names=None, fig_size=(12, 10)):
+    def plot_tsne(self, tsne_embeddings, labels, class_names=None, fig_size=(12, 10)ood_mask=None):
         plt.figure(figsize=fig_size)
 
         labels_np = labels.cpu().numpy()
+        ood_mask_np = ood_mask.cpu().numpy() if ood_mask is not None else None
 
         unique_classes = np.unique(labels_np)
         colors = self.generate_colors(len(unique_classes))
 
         for cls in unique_classes:
-            mask = labels_np == cls
+            mask = (labels_np == cls) & (~ood_mask_np if ood_mask_np is not None else True) 
             plt.scatter(
                 tsne_embeddings[mask, 0],
                 tsne_embeddings[mask, 1],
                 s=3,
                 color=colors[cls],
                 label=class_names[cls] if class_names else cls,
+                alpha=0.5,
+            )
+
+        for cls in unique_classes:
+            mask = (labels_np == cls) & (ood_mask_np if ood_mask_np is not None else True) 
+            plt.scatter(
+                tsne_embeddings[mask, 0],
+                tsne_embeddings[mask, 1],
+                s=10,
+                color=colors[cls],
+                label=class_names[cls] if class_names else cls,
+                edgecolors="black",
+                alpha=1.0,
             )
 
         legend = plt.legend(
@@ -477,6 +491,7 @@ class ImbalancedTraining:
 
     def visualize_embedding_space(self, cycle_idx) -> None:
         embeddings, labels = self.collect_embeddings()
+        ood_indices = self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
 
         print("Computing t-SNE embeddings...")
         tsne_embeddings = self.apply_tsne(embeddings, labels)
@@ -486,7 +501,10 @@ class ImbalancedTraining:
             for idx in range(self.datamodule.train_dataset.dataset.num_classes)
         }
 
-        fig = self.plot_tsne(tsne_embeddings, labels, class_names)
+        ood_mask = torch.zeros(len(labels), dtype=torch.bool)
+        ood_mask[ood_indices] = True
+
+        fig = self.plot_tsne(tsne_embeddings, labels, class_names, ood_mask=ood_mask)
 
         vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
