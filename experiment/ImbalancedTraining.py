@@ -334,6 +334,7 @@ class ImbalancedTraining:
 
         oracle_ood_indices = labels_sorted_by_imbalance[: self.args.num_ood_samples]
 
+        print(oracle_ood_indices.shape)
         print(f"Oracle indices: {oracle_ood_indices.tolist()}")
         return oracle_ood_indices.tolist()
 
