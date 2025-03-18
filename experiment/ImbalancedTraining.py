@@ -385,6 +385,7 @@ class ImbalancedTraining:
         sample_count = 0
 
         with torch.no_grad():
+            print("Daraloader length: ", len(dataloader))
             for batch_idx, (images, labels) in enumerate(
                 tqdm(dataloader, desc="Collecting embeddings")
             ):
