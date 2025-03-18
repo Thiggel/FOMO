@@ -566,8 +566,8 @@ class ImbalancedTraining:
         return plt.gcf()
 
     def visualize_embedding_space(self, cycle_idx) -> None:
-        embeddings, labels = self.collect_embeddings()
         ood_indices = self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
+        embeddings, labels = self.collect_embeddings()
 
         print("Computing t-SNE embeddings...")
         tsne_embeddings = self.apply_tsne(embeddings, labels)
