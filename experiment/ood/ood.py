@@ -51,7 +51,6 @@ class OOD:
                 end_idx = start_idx + len(batch)
                 indices.extend(range(start_idx, end_idx))
 
-                print(batch)
                 # Extract features
                 batch = batch.to(device=self.device, dtype=self.dtype)
                 batch_features = self.feature_extractor(batch)

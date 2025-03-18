@@ -591,6 +591,7 @@ class ImbalancedTraining:
         }
 
         ood_mask = torch.zeros(len(labels), dtype=torch.bool)
+        ood_indices = map(lambda x: x <= labels.max(), ood_indices)
         ood_mask[ood_indices] = True
 
         gmm = self.fit_gmm(tsne_embeddings)
