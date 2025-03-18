@@ -456,7 +456,7 @@ class ImbalancedTraining:
     def draw_ellipse(self, position, covariance, ax=None, **kwargs):
         """Draw an ellipse based on a covariance matrix."""
         ax = ax or plt.gca()
-        
+
         # Convert covariance to principal axes
         if covariance.shape == (2, 2):
             U, s, Vt = np.linalg.svd(covariance)
@@ -465,19 +465,29 @@ class ImbalancedTraining:
         else:
             angle = 0
             width, height = 2 * np.sqrt(covariance)
-        
+
         # Draw the ellipse (scaled for 95% confidence interval)
         for nsig in [1, 2, 3]:
-            ax.add_patch(Ellipse(
-                position, 
-                width=nsig * width, 
-                height=nsig * height,
-                angle=angle, 
-                fill=False,
-                **kwargs
-            ))
+            ax.add_patch(
+                Ellipse(
+                    position,
+                    width=nsig * width,
+                    height=nsig * height,
+                    angle=angle,
+                    fill=False,
+                    **kwargs,
+                )
+            )
 
-    def plot_tsne(self, tsne_embeddings, labels, class_names=None, fig_size=(12, 10)ood_mask=None, gmm=None):
+    def plot_tsne(
+        self,
+        tsne_embeddings,
+        labels,
+        class_names=None,
+        fig_size=(12, 10),
+        ood_mask=None,
+        gmm=None,
+    ):
         plt.figure(figsize=fig_size)
 
         labels_np = labels.cpu().numpy()
@@ -487,7 +497,9 @@ class ImbalancedTraining:
         colors = self.generate_colors(len(unique_classes))
 
         for cls in unique_classes:
-            mask = (labels_np == cls) & (~ood_mask_np if ood_mask_np is not None else True) 
+            mask = (labels_np == cls) & (
+                ~ood_mask_np if ood_mask_np is not None else True
+            )
             plt.scatter(
                 tsne_embeddings[mask, 0],
                 tsne_embeddings[mask, 1],
@@ -498,7 +510,9 @@ class ImbalancedTraining:
             )
 
         for cls in unique_classes:
-            mask = (labels_np == cls) & (ood_mask_np if ood_mask_np is not None else True) 
+            mask = (labels_np == cls) & (
+                ood_mask_np if ood_mask_np is not None else True
+            )
             plt.scatter(
                 tsne_embeddings[mask, 0],
                 tsne_embeddings[mask, 1],
@@ -511,22 +525,25 @@ class ImbalancedTraining:
 
         # Plot GMM cluster contours
         cluster_colors = plt.cm.tab10(np.linspace(0, 1, gmm.n_components))
-        
+
         # Draw ellipses for each cluster
-        for i, (weight, mean, covar) in enumerate(zip(
-                gmm.weights_, gmm.means_, gmm.covariances_)):
+        for i, (weight, mean, covar) in enumerate(
+            zip(gmm.weights_, gmm.means_, gmm.covariances_)
+        ):
             # Skip clusters with very low weight (these might be noise)
             if weight < 0.01:
                 continue
-                
+
             # Draw ellipses at 1, 2, and 3 standard deviations
             draw_ellipse(
-                mean, covar, ax=ax,
+                mean,
+                covar,
+                ax=ax,
                 edgecolor=cluster_colors[i],
                 linewidth=2,
-                linestyle='-',
+                linestyle="-",
                 alpha=0.7,
-                label=f'Cluster {i+1}' if i == 0 else ""
+                label=f"Cluster {i+1}" if i == 0 else "",
             )
 
         legend = plt.legend(
@@ -565,7 +582,9 @@ class ImbalancedTraining:
 
         gmm = self.fit_gmm(tsne_embeddings)
 
-        fig = self.plot_tsne(tsne_embeddings, labels, class_names, ood_mask=ood_mask, gmm=gmm)
+        fig = self.plot_tsne(
+            tsne_embeddings, labels, class_names, ood_mask=ood_mask, gmm=gmm
+        )
 
         vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
