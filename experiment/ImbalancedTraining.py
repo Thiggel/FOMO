@@ -1,5 +1,6 @@
 import sys
 from sklearn.manifold import TSNE
+from sklearn.mixture import GaussianMixture
 import numpy as np
 import wandb
 from torchvision import transforms
