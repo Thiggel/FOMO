@@ -539,7 +539,6 @@ class ImbalancedTraining:
             self.draw_ellipse(
                 mean,
                 covar,
-                ax=ax,
                 edgecolor=cluster_colors[i],
                 linewidth=2,
                 linestyle="-",
