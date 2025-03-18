@@ -469,7 +469,7 @@ class ImbalancedTraining:
             width, height = 2 * np.sqrt(covariance)
 
         # Draw the ellipse (scaled for 95% confidence interval)
-        for nsig in [1, 2, 3]:
+        for nsig in [1]:
             ax.add_patch(
                 Ellipse(
                     position,
