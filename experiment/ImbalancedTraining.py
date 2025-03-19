@@ -560,7 +560,8 @@ class ImbalancedTraining:
         )
 
         for handle in legend.legend_handles:
-            handle.set_sizes([10])
+            if hasattr(handle, "set_sizes"):
+                handle.set_sizes([10])
 
         plt.xlabel("t-SNE Dimension 1")
         plt.ylabel("t-SNE Dimension 2")
