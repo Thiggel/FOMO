@@ -168,6 +168,19 @@ class ImbalancedTraining:
 
         return class_counts
 
+    def get_outliers(self):
+        if self.args.sample_selection == "ood":
+            print("Using OOD detection for sample selection")
+            ood_indices = self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
+        elif self.args.sample_selection == "oracle":
+            print("Using oracle indices for sample selection")
+            ood_indices = self.get_oracle_indices()
+        else:
+            print("Using random selection for sample selection")
+            ood_indices = self.get_random_indices(self.datamodule.train_dataset)
+
+        return ood_indices
+
     def pretrain_cycle(self, cycle_idx) -> None:
         try:
             import gc
@@ -215,17 +228,7 @@ class ImbalancedTraining:
             )
             self.datamodule.train_dataset.dataset.transform = self.transform
 
-            if self.args.sample_selection == "ood":
-                print("Using OOD detection for sample selection")
-                ood_indices = self.get_ood_indices(
-                    self.datamodule.train_dataset, cycle_idx
-                )
-            elif self.args.sample_selection == "oracle":
-                print("Using oracle indices for sample selection")
-                ood_indices = self.get_oracle_indices()
-            else:
-                print("Using random selection for sample selection")
-                ood_indices = self.get_random_indices(self.datamodule.train_dataset)
+            ood_indices = self.get_outliers()
 
             ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
             ood_labels = torch.tensor(
@@ -581,7 +584,7 @@ class ImbalancedTraining:
             ]
         )
 
-        ood_indices = self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
+        ood_indices = self.get_outliers(self.datamodule.train_dataset, cycle_idx)
         self.datamodule.train_dataset.dataset.transform = old_transform
         embeddings, labels = self.collect_embeddings()
 
