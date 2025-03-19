@@ -191,6 +191,7 @@ class ImbalancedImageNet(Dataset):
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
 
         inverse = 1 - imbalance_probs
+        print("Inverse distribution:", inverse)
 
         return inverse, labels
 
