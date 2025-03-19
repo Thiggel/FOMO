@@ -585,8 +585,7 @@ class ImbalancedTraining:
         )
 
         ood_indices = self.get_outliers(cycle_idx)
-        print(ood_indices.shape)
-        exit()
+
         self.datamodule.train_dataset.dataset.transform = old_transform
         embeddings, labels = self.collect_embeddings()
 
