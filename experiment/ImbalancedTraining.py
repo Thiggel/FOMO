@@ -168,7 +168,7 @@ class ImbalancedTraining:
 
         return class_counts
 
-    def get_outliers(self):
+    def get_outliers(self, cycle_idx):
         if self.args.sample_selection == "ood":
             print("Using OOD detection for sample selection")
             ood_indices = self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
@@ -228,7 +228,7 @@ class ImbalancedTraining:
             )
             self.datamodule.train_dataset.dataset.transform = self.transform
 
-            ood_indices = self.get_outliers()
+            ood_indices = self.get_outliers(cycle_idx)
 
             ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
             ood_labels = torch.tensor(
@@ -584,7 +584,7 @@ class ImbalancedTraining:
             ]
         )
 
-        ood_indices = self.get_outliers(self.datamodule.train_dataset, cycle_idx)
+        ood_indices = self.get_outliers(cycle_idx)
         self.datamodule.train_dataset.dataset.transform = old_transform
         embeddings, labels = self.collect_embeddings()
 
