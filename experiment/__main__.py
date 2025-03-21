@@ -221,7 +221,6 @@ def run(
         trainer_args.update(
             {
                 "strategy": strategy,
-                "precision": "bf16",
                 "devices": "auto",  # Let PyTorch Lightning handle device selection
                 "default_root_dir": os.environ["PYTORCH_LIGHTNING_HOME"],
             }

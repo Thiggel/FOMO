@@ -201,7 +201,7 @@ class ImbalancedTraining:
                         "train_batch_size": self.args.train_batch_size
                         * self.args.grad_acc_steps
                         * torch.cuda.device_count(),
-                        "bf16": {"enabled": True},
+                        "bf16": {"enabled": False},
                         "zero_optimization": {
                             "stage": 2,
                             "offload_optimizer": {"device": "cpu", "pin_memory": True},
@@ -841,7 +841,6 @@ class ImbalancedTraining:
                 strategy = DeepSpeedStrategy(
                     config={
                         "train_batch_size": 64 * torch.cuda.device_count(),
-                        "bf16": {"enabled": True},
                         "zero_optimization": {
                             "stage": 2,
                             "offload_optimizer": {"device": "cpu", "pin_memory": True},
