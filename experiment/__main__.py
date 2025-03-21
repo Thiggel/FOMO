@@ -209,7 +209,6 @@ def run(
                 "train_batch_size": args.train_batch_size
                 * args.grad_acc_steps
                 * torch.cuda.device_count(),
-                "bf16": {"enabled": True},
                 "zero_optimization": {
                     "stage": 2,
                     "offload_optimizer": {"device": "cpu", "pin_memory": True},
