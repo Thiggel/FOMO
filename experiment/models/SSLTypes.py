@@ -30,12 +30,13 @@ class SSLTypes(Enum):
     def ssl_types():
         return {
             "SimCLR": SSLType(
-                module=lambda model, lr, temperature, weight_decay, max_epochs, *args, **kwargs: SimCLR(
+                module=lambda model, lr, temperature, weight_decay, max_epochs, use_temperature_schedule, *args, **kwargs: SimCLR(
                     model=model,
                     lr=lr,
                     temperature=temperature,
                     weight_decay=weight_decay,
                     max_epochs=max_epochs,
+                    use_temperature_schedule=use_temperature_schedule,
                     *args,
                     **kwargs
                 ),

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetimemain
 import torch
 from lightning.pytorch.strategies import DeepSpeedStrategy
 import os
@@ -94,6 +94,7 @@ def init_ssl_type(
         "weight_decay": args.weight_decay,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
         "parserargs": args,
+        "use_temperature_schedule": args.use_temperature_schedule,
     }
 
     return ssl_type.initialize(**ssl_args)

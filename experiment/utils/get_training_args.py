@@ -74,6 +74,12 @@ def get_training_args(get_defaults: bool = False) -> dict:
         help="Temperature for contrastive learning",
     )
     parser.add_argument(
+        "--use-temperature-schedule",
+        type=bool,
+        default=False,
+        help="Use temperature schedule",
+    )
+    parser.add_argument(
         "--weight-decay",
         type=float,
         default=1e-6,
@@ -376,6 +382,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
         save_class_distribution=False,
         use_clustering=False,
         class_balanced=False,
+        use_temperature_schedule=False,
     )
 
     if get_defaults:

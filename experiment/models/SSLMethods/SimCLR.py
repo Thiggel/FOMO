@@ -16,6 +16,7 @@ class SimCLR(L.LightningModule):
         weight_decay: float,
         max_epochs: int = 500,
         hidden_dim=128,
+        use_temperature_schedule: bool = False,
         *args,
         **kwargs,
     ):
@@ -38,6 +39,26 @@ class SimCLR(L.LightningModule):
                 )
         except:
             pass
+
+    @property
+    def temperature(self) -> float:
+        if not self.hparams.use_temperature_schedule:
+            return self.hparams.temperature
+
+        t_max = 1.0
+        t_min = 0.1
+
+        temperature = (t_max - t_min) * (
+            1 + math.cos(2 * math.pi * self.current_epoch / self.hparams.max_epochs)
+        ) / 2 + t_min
+
+        print(
+            f"Current epoch: {self.current_epoch}, current temperature: {temperature:.4f}"
+        )
+
+        return temperature
+
+    return temperature
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         adam_params = {
@@ -95,7 +116,7 @@ class SimCLR(L.LightningModule):
         pos_mask = self_mask.roll(shifts=cos_sim.shape[0] // 2, dims=0)
 
         # InfoNCE loss
-        cos_sim = cos_sim / self.hparams.temperature
+        cos_sim = cos_sim / self.temperature
         nll = -cos_sim[pos_mask] + torch.logsumexp(cos_sim, dim=-1)
         nll = nll.mean()
 
