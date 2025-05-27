@@ -52,10 +52,6 @@ class SimCLR(L.LightningModule):
             1 + math.cos(2 * math.pi * self.current_epoch / self.hparams.max_epochs)
         ) / 2 + t_min
 
-        print(
-            f"Current epoch: {self.current_epoch}, current temperature: {temperature:.4f}"
-        )
-
         return temperature
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
