@@ -76,7 +76,6 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument(
         "--use-temperature-schedule",
         type=bool,
-        default=False,
         help="Use temperature schedule",
     )
     parser.add_argument(
