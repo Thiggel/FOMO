@@ -110,7 +110,10 @@ class SimCLR(L.LightningModule):
         pos_mask = self_mask.roll(shifts=cos_sim.shape[0] // 2, dims=0)
 
         # InfoNCE loss
-        cos_sim = cos_sim / self.temperature
+        temperature = self.temperature
+        self.log(mode + "_temperature", temperature, sync_dist=True)
+
+        cos_sim = cos_sim / temperature
         nll = -cos_sim[pos_mask] + torch.logsumexp(cos_sim, dim=-1)
         nll = nll.mean()
 
