@@ -58,8 +58,6 @@ class SimCLR(L.LightningModule):
 
         return temperature
 
-    return temperature
-
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         adam_params = {
             "lr": self.hparams.lr,
