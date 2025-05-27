@@ -75,8 +75,8 @@ def get_training_args(get_defaults: bool = False) -> dict:
     )
     parser.add_argument(
         "--use-temperature-schedule",
-        type=bool,
-        help="Use temperature schedule",
+        action="store_true",
+        help="Use temperature schedule during training",
     )
     parser.add_argument(
         "--weight-decay",
