@@ -8,6 +8,6 @@ python -m experiment \
 	--max-cycles 5 \
 	--ood-augmentation \
 	--n-epochs-per-cycle 20 \
-	--pct-ood 0.15 \
+       --pct-ood 0.15 \
   --batch-size 1024 \
   --experiment_name "Baseline_ResNet50_SimCLR_NewMethod_ImageNet1k"
