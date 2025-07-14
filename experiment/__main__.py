@@ -92,6 +92,8 @@ def init_ssl_type(
         "lr": args.lr,
         "temperature": args.temperature,
         "weight_decay": args.weight_decay,
+        "optimizer": args.optimizer,
+        "momentum": args.momentum,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
         "parserargs": args,
         "use_temperature_schedule": args.use_temperature_schedule,
