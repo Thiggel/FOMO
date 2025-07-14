@@ -99,8 +99,21 @@ def get_training_args(get_defaults: bool = False) -> dict:
     parser.add_argument(
         "--weight-decay",
         type=float,
-        default=1e-6,
+        default=1e-4,
         help="Weight decay",
+    )
+    parser.add_argument(
+        "--optimizer",
+        type=str,
+        choices=["sgd", "lars", "cpuadam"],
+        default="sgd",
+        help="Optimizer to use (sgd, lars, or deepspeedcpuadam)",
+    )
+    parser.add_argument(
+        "--momentum",
+        type=float,
+        default=0.9,
+        help="Momentum for SGD/LARS",
     )
     parser.add_argument(
         "--max-cycles",

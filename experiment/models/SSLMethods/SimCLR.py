@@ -29,6 +29,8 @@ class SimCLR(L.LightningModule):
         lr: float,
         temperature: float,
         weight_decay: float,
+        optimizer: str = "sgd",
+        momentum: float = 0.9,
         max_epochs: int = 500,
         hidden_dim=128,
         use_temperature_schedule: bool = False,
@@ -74,19 +76,31 @@ class SimCLR(L.LightningModule):
         return temperature
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        adam_params = {
-            "lr": self.hparams.lr,
-            "betas": (0.9, 0.95),
-        }
+        opt_name = getattr(self.hparams, "optimizer", "sgd").lower()
+        momentum = getattr(self.hparams, "momentum", 0.9)
+        lr = self.hparams.lr
+        weight_decay = self.hparams.weight_decay
 
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(
-                self.parameters(), **adam_params, adamw_mode=True
+        if opt_name == "lars":
+            optimizer = LARS(
+                self.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum
             )
+        elif opt_name == "cpuadam":
+            adam_params = {"lr": lr, "betas": (0.9, 0.95)}
+            if torch.cuda.is_available():
+                from deepspeed.ops.adam import DeepSpeedCPUAdam
+
+                optimizer = DeepSpeedCPUAdam(
+                    self.parameters(), **adam_params, adamw_mode=True
+                )
+            else:
+                optimizer = AdamW(
+                    self.parameters(), **adam_params, weight_decay=weight_decay
+                )
         else:
-            optimizer = SGD(self.parameters(), lr=0.5, weight_decay=1e-4, momentum=0.9)
+            optimizer = SGD(
+                self.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum
+            )
 
         # Define warmup in epochs and compute step counts
         warmup_epochs = 10
