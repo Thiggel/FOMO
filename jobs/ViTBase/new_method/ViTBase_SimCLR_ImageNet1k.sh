@@ -6,12 +6,8 @@ python -m experiment \
 	--max_cycles 5 \
 	--ood_augmentation \
 	--n_epochs_per_cycle 20 \
-        --pct_ood 0.15 \
-        --crop_size 224 \
-        --num_runs 1 \
-        --imagenet_variant 1k \
-        --use-temperature-schedule \
-        --temperature-min 0.1 \
-        --temperature-max 1.0 \
-        --t-max 400 \
+       --pct_ood 0.15 \
+       --crop_size 224 \
+       --num_runs 1 \
+       --imagenet_variant 1k \
   --experiment_name "NewMethod_ViTBase_SimCLR_Imbalanced_ImageNet1k"

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH --partition=performance
+#SBATCH --gres=gpu:rtx_6000_ada:8
+#SBATCH --nodelist=hipster-cn002
+#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks=8
+#SBATCH --time=6-23
+#SBATCH --mem=96G
+#SBATCH --cpus-per-task=32
+#SBATCH --job-name=BridgeTemp-R50
+#SBATCH --output=job_logs/BridgeTemp-R50-%A.out
+
+cd $HOME/FOMO
+
+. jobs/ResNet50/new_method/ResNet50_SimCLR_Bridge_Temperature.sh

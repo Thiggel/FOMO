@@ -8,10 +8,6 @@ python -m experiment \
 	--max-cycles 5 \
 	--ood-augmentation \
         --n-epochs-per-cycle 20 \
-        --pct-ood 0.15 \
+       --pct-ood 0.15 \
   --batch-size 1024 \
-        --use-temperature-schedule \
-        --temperature-min 0.1 \
-        --temperature-max 1.0 \
-        --t-max 400 \
   --experiment_name "Baseline_ResNet50_SimCLR_NewMethod_ImageNet1k"
