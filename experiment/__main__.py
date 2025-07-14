@@ -97,6 +97,9 @@ def init_ssl_type(
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
         "parserargs": args,
         "use_temperature_schedule": args.use_temperature_schedule,
+        "temperature_min": args.temperature_min,
+        "temperature_max": args.temperature_max,
+        "t_max": args.t_max,
     }
 
     return ssl_type.initialize(**ssl_args)

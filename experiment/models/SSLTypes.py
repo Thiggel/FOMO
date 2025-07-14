@@ -30,13 +30,16 @@ class SSLTypes(Enum):
     def ssl_types():
         return {
             "SimCLR": SSLType(
-                module=lambda model, lr, temperature, weight_decay, max_epochs, use_temperature_schedule, *args, **kwargs: SimCLR(
+                module=lambda model, lr, temperature, weight_decay, max_epochs, use_temperature_schedule, temperature_min, temperature_max, t_max, *args, **kwargs: SimCLR(
                     model=model,
                     lr=lr,
                     temperature=temperature,
                     weight_decay=weight_decay,
                     max_epochs=max_epochs,
                     use_temperature_schedule=use_temperature_schedule,
+                    temperature_min=temperature_min,
+                    temperature_max=temperature_max,
+                    t_max=t_max,
                     *args,
                     **kwargs
                 ),
@@ -61,8 +64,7 @@ class SSLTypes(Enum):
                             transforms.RandomApply(
                                 [
                                     transforms.GaussianBlur(
-                                        kernel_size=23,
-                                        sigma=(0.1, 2.0)
+                                        kernel_size=23, sigma=(0.1, 2.0)
                                     )
                                 ],
                                 p=0.5,
