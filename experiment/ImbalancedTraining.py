@@ -196,17 +196,20 @@ class ImbalancedTraining:
 
             if torch.cuda.is_available():
 
+                zero_opt = {
+                    "stage": 2,
+                    "offload_param": {"device": "cpu", "pin_memory": True},
+                }
+                if self.args.optimizer == "cpuadam":
+                    zero_opt["offload_optimizer"] = {"device": "cpu", "pin_memory": True}
+
                 strategy = DeepSpeedStrategy(
                     config={
                         "train_batch_size": self.args.train_batch_size
                         * self.args.grad_acc_steps
                         * torch.cuda.device_count(),
                         "bf16": {"enabled": False},
-                        "zero_optimization": {
-                            "stage": 2,
-                            "offload_optimizer": {"device": "cpu", "pin_memory": True},
-                            "offload_param": {"device": "cpu", "pin_memory": True},
-                        },
+                        "zero_optimization": zero_opt,
                     },
                 )
                 cycle_trainer_args["strategy"] = strategy
@@ -838,15 +841,18 @@ class ImbalancedTraining:
             self.trainer_args["accumulate_grad_batches"] = 1
 
             if torch.cuda.is_available():
+                zero_opt = {
+                    "stage": 2,
+                    "offload_param": {"device": "cpu", "pin_memory": True},
+                }
+                if self.args.optimizer == "cpuadam":
+                    zero_opt["offload_optimizer"] = {"device": "cpu", "pin_memory": True}
+
                 strategy = DeepSpeedStrategy(
                     config={
                         "train_batch_size": 64 * torch.cuda.device_count(),
                         "train_micro_batch_size_per_gpu": 64,
-                        "zero_optimization": {
-                            "stage": 2,
-                            "offload_optimizer": {"device": "cpu", "pin_memory": True},
-                            "offload_param": {"device": "cpu", "pin_memory": True},
-                        },
+                        "zero_optimization": zero_opt,
                     },
                 )
                 self.trainer_args["strategy"] = strategy
