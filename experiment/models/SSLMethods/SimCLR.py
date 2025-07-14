@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from flash.core.optimizers import LARS
 import math
 
+
 class SimCLRProjectionHead(nn.Module):
     def __init__(self, in_dim: int = 2048, hidden_dim: int = 2048, out_dim: int = 128):
         super().__init__()
@@ -15,7 +16,7 @@ class SimCLRProjectionHead(nn.Module):
             nn.Linear(in_dim, hidden_dim, bias=False),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, out_dim, bias=False)
+            nn.Linear(hidden_dim, out_dim, bias=False),
         )
 
     def forward(self, x):
@@ -61,7 +62,7 @@ class SimCLR(L.LightningModule):
             pass
 
     @property
-    def temperature(self) -> float:
+    def current_temperature(self) -> float:
         if not self.hparams.use_temperature_schedule:
             return self.hparams.temperature
 
@@ -89,6 +90,7 @@ class SimCLR(L.LightningModule):
             adam_params = {"lr": lr, "betas": (0.9, 0.95)}
             if torch.cuda.is_available():
                 from deepspeed.ops.adam import DeepSpeedCPUAdam
+
                 optimizer = DeepSpeedCPUAdam(
                     self.parameters(), **adam_params, adamw_mode=True
                 )
@@ -135,7 +137,7 @@ class SimCLR(L.LightningModule):
         if dist.is_available() and dist.is_initialized():
             # 1) collect detached copies from *every* rank
             tensors = [torch.zeros_like(t) for _ in range(dist.get_world_size())]
-            dist.all_gather(tensors, t.detach())          # no grad on remote parts
+            dist.all_gather(tensors, t.detach())  # no grad on remote parts
             # 2) replace *this* rank's slice with the *live* tensor (keeps grad)
             tensors[dist.get_rank()] = t
             t = torch.cat(tensors, dim=0)
@@ -152,7 +154,7 @@ class SimCLR(L.LightningModule):
         z_i = self.concat_all_gather(z_i)
         z_j = self.concat_all_gather(z_j)
 
-        feats = torch.cat([z_i, z_j], dim=0)          # 2 × B × world_size
+        feats = torch.cat([z_i, z_j], dim=0)  # 2 × B × world_size
         # -----------------------------------------------------------------------
 
         cos_sim = F.cosine_similarity(feats[:, None, :], feats[None, :, :], dim=-1)
@@ -162,7 +164,7 @@ class SimCLR(L.LightningModule):
         # positive pairs lie exactly half-way across the concatenated tensor
         pos_mask = self_mask.roll(shifts=feats.shape[0] // 2, dims=0)
 
-        temperature = self.temperature
+        temperature = self.current_temperature
         self.log(f"{mode}_temperature", temperature, sync_dist=True)
 
         cos_sim = cos_sim / temperature
@@ -171,8 +173,9 @@ class SimCLR(L.LightningModule):
         self.log(f"{mode}_loss", loss, sync_dist=True)
 
         # accuracy metrics (unchanged)
-        comb_sim = torch.cat([cos_sim[pos_mask][:, None],
-                              cos_sim.masked_fill(pos_mask, -9e15)], dim=-1)
+        comb_sim = torch.cat(
+            [cos_sim[pos_mask][:, None], cos_sim.masked_fill(pos_mask, -9e15)], dim=-1
+        )
         sim_argsort = comb_sim.argsort(dim=-1, descending=True).argmin(dim=-1)
         self.log(f"{mode}_acc_top1", (sim_argsort == 0).float().mean(), sync_dist=True)
         self.log(f"{mode}_acc_top5", (sim_argsort < 5).float().mean(), sync_dist=True)
