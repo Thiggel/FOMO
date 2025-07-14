@@ -201,7 +201,10 @@ class ImbalancedTraining:
                     "offload_param": {"device": "cpu", "pin_memory": True},
                 }
                 if self.args.optimizer == "cpuadam":
-                    zero_opt["offload_optimizer"] = {"device": "cpu", "pin_memory": True}
+                    zero_opt["offload_optimizer"] = {
+                        "device": "cpu",
+                        "pin_memory": True,
+                    }
 
                 strategy = DeepSpeedStrategy(
                     config={
@@ -210,6 +213,7 @@ class ImbalancedTraining:
                         * torch.cuda.device_count(),
                         "bf16": {"enabled": False},
                         "zero_optimization": zero_opt,
+                        "zero_allow_untested_optimizer": True,
                     },
                 )
                 cycle_trainer_args["strategy"] = strategy
@@ -846,13 +850,17 @@ class ImbalancedTraining:
                     "offload_param": {"device": "cpu", "pin_memory": True},
                 }
                 if self.args.optimizer == "cpuadam":
-                    zero_opt["offload_optimizer"] = {"device": "cpu", "pin_memory": True}
+                    zero_opt["offload_optimizer"] = {
+                        "device": "cpu",
+                        "pin_memory": True,
+                    }
 
                 strategy = DeepSpeedStrategy(
                     config={
                         "train_batch_size": 64 * torch.cuda.device_count(),
                         "train_micro_batch_size_per_gpu": 64,
                         "zero_optimization": zero_opt,
+                        "zero_allow_untested_optimizer": True,
                     },
                 )
                 self.trainer_args["strategy"] = strategy

@@ -220,6 +220,7 @@ def run(
                 * args.grad_acc_steps
                 * torch.cuda.device_count(),
                 "zero_optimization": zero_opt,
+                "zero_allow_untested_optimizer": True,
             },
         )
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
