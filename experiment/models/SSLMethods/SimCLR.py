@@ -1,10 +1,25 @@
 import lightning.pytorch as L
+import torch.distributed as dist
 import torch
 from torch import nn
-from torch.optim import AdamW, Optimizer
+from torch.optim import AdamW, Optimizer, SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler, LambdaLR
 import torch.nn.functional as F
+from flash.core.optimizers import LARS
 import math
+
+class SimCLRProjectionHead(nn.Module):
+    def __init__(self, in_dim: int = 2048, hidden_dim: int = 2048, out_dim: int = 128):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim, bias=False),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, out_dim, bias=False)
+        )
+
+    def forward(self, x):
+        return self.net(x)
 
 
 class SimCLR(L.LightningModule):
@@ -24,6 +39,9 @@ class SimCLR(L.LightningModule):
 
         self.save_hyperparameters(ignore=["model"])
 
+        if torch.cuda.device_count() > 1:
+            model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+
         assert (
             self.hparams.temperature > 0.0
         ), "The temperature must be a positive float!"
@@ -32,10 +50,10 @@ class SimCLR(L.LightningModule):
         self.model = model
         try:
             if self.model.fc is not None:
-                self.model.fc = nn.Sequential(
-                    self.model.fc,  # Linear(ResNet output, 4*hidden_dim)
-                    nn.ReLU(inplace=True),
-                    nn.Linear(4 * hidden_dim, hidden_dim),
+                self.model.fc = SimCLRProjectionHead(
+                    in_dim=self.model.fc.in_features,
+                    hidden_dim=2048,
+                    out_dim=hidden_dim,
                 )
         except:
             pass
@@ -47,9 +65,10 @@ class SimCLR(L.LightningModule):
 
         t_max = 1.0
         t_min = 0.1
+        T = 400
 
         temperature = (t_max - t_min) * (
-            1 + math.cos(2 * math.pi * self.current_epoch / self.hparams.max_epochs)
+            1 + math.cos(math.pi * self.current_epoch / T)
         ) / 2 + t_min
 
         return temperature
@@ -67,7 +86,7 @@ class SimCLR(L.LightningModule):
                 self.parameters(), **adam_params, adamw_mode=True
             )
         else:
-            optimizer = AdamW(self.parameters(), **adam_params)
+            optimizer = SGD(self.parameters(), lr=0.5, weight_decay=1e-4, momentum=0.9)
 
         # Define the number of warmup epochs
         warmup_epochs = 10
@@ -77,8 +96,8 @@ class SimCLR(L.LightningModule):
         # Combined linear warmup and cosine annealing function
         def lr_lambda(epoch):
             warmup_epochs = 10
-            total_epochs = 500
-            min_lr_ratio = 0.01  # e.g., final LR is 1% of base_lr
+            total_epochs = 800
+            min_lr_ratio = 2 * 1e-6  # get 1e-6 at the end of training
             if epoch < warmup_epochs:
                 return (epoch + 1) / warmup_epochs
             else:
@@ -92,62 +111,58 @@ class SimCLR(L.LightningModule):
 
         return [optimizer], [scheduler]
 
+    def concat_all_gather(self, t: torch.Tensor) -> torch.Tensor:
+        """
+        Gather tensors from all ranks so every process gets the full batch.
+        Gradient flows only through the local slice.
+        """
+        if dist.is_available() and dist.is_initialized():
+            # 1) collect detached copies from *every* rank
+            tensors = [torch.zeros_like(t) for _ in range(dist.get_world_size())]
+            dist.all_gather(tensors, t.detach())          # no grad on remote parts
+            # 2) replace *this* rank's slice with the *live* tensor (keeps grad)
+            tensors[dist.get_rank()] = t
+            t = torch.cat(tensors, dim=0)
+        return t
+
     def info_nce_loss(self, batch, mode="train"):
-        imgs, _ = batch
-        imgs = torch.cat(imgs, dim=0)
+        # --- split the two views -----------------------------------------------
+        (x_i, x_j), _ = batch
 
-        feats = self.model(imgs)
+        z_i = F.normalize(self.model(x_i), dim=-1)
+        z_j = F.normalize(self.model(x_j), dim=-1)
 
-        feats = F.normalize(feats, dim=-1)
+        # --- NEW: enlarge batch with features from every GPU -------------------
+        z_i = self.concat_all_gather(z_i)
+        z_j = self.concat_all_gather(z_j)
+
+        feats = torch.cat([z_i, z_j], dim=0)          # 2 × B × world_size
+        # -----------------------------------------------------------------------
 
         cos_sim = F.cosine_similarity(feats[:, None, :], feats[None, :, :], dim=-1)
-
-        # Mask out cosine similarity to itself
         self_mask = torch.eye(cos_sim.shape[0], dtype=torch.bool, device=cos_sim.device)
         cos_sim.masked_fill_(self_mask, -9e15)
 
-        # Find positive example -> batch_size//2 away from the original example
-        pos_mask = self_mask.roll(shifts=cos_sim.shape[0] // 2, dims=0)
+        # positive pairs lie exactly half-way across the concatenated tensor
+        pos_mask = self_mask.roll(shifts=feats.shape[0] // 2, dims=0)
 
-        # InfoNCE loss
         temperature = self.temperature
-        self.log(mode + "_temperature", temperature, sync_dist=True)
+        self.log(f"{mode}_temperature", temperature, sync_dist=True)
 
         cos_sim = cos_sim / temperature
         nll = -cos_sim[pos_mask] + torch.logsumexp(cos_sim, dim=-1)
-        nll = nll.mean()
+        loss = nll.mean()
+        self.log(f"{mode}_loss", loss, sync_dist=True)
 
-        # Logging loss
-        self.log(mode + "_loss", nll, sync_dist=True)
-
-        # Get ranking position of positive example
-        comb_sim = torch.cat(
-            [
-                cos_sim[pos_mask][:, None],
-                cos_sim.masked_fill(pos_mask, -9e15),
-            ],  # First position positive example
-            dim=-1,
-        )
-
+        # accuracy metrics (unchanged)
+        comb_sim = torch.cat([cos_sim[pos_mask][:, None],
+                              cos_sim.masked_fill(pos_mask, -9e15)], dim=-1)
         sim_argsort = comb_sim.argsort(dim=-1, descending=True).argmin(dim=-1)
+        self.log(f"{mode}_acc_top1", (sim_argsort == 0).float().mean(), sync_dist=True)
+        self.log(f"{mode}_acc_top5", (sim_argsort < 5).float().mean(), sync_dist=True)
+        self.log(f"{mode}_acc_mean_pos", 1 + sim_argsort.float().mean(), sync_dist=True)
 
-        self.log(
-            mode + "_acc_top1",
-            (sim_argsort == 0).float().mean(),
-            sync_dist=True,
-        )
-        self.log(
-            mode + "_acc_top5",
-            (sim_argsort < 5).float().mean(),
-            sync_dist=True,
-        )
-        self.log(
-            mode + "_acc_mean_pos",
-            1 + sim_argsort.float().mean(),
-            sync_dist=True,
-        )
-
-        return nll
+        return loss
 
     def training_step(self, batch, batch_idx):
         return self.info_nce_loss(batch, mode="train")

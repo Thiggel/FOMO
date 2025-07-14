@@ -825,7 +825,7 @@ class ImbalancedTraining:
 
             early_stop_callback = EarlyStopping(
                 monitor="val_loss",
-                patience=3,
+                patience=20,
                 mode="min",
                 verbose=True,
                 min_delta=0.0001,
@@ -841,6 +841,7 @@ class ImbalancedTraining:
                 strategy = DeepSpeedStrategy(
                     config={
                         "train_batch_size": 64 * torch.cuda.device_count(),
+                        "train_micro_batch_size_per_gpu": 64,
                         "zero_optimization": {
                             "stage": 2,
                             "offload_optimizer": {"device": "cpu", "pin_memory": True},

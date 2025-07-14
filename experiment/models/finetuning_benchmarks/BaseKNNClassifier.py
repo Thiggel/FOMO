@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 import lightning.pytorch as L
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
@@ -43,6 +44,7 @@ class BaseKNNClassifier(L.LightningModule):
                 dtype = next(self.model.parameters()).dtype
                 inputs = inputs.to(device=self.device, dtype=dtype)
                 outputs = self.model.extract_features(inputs)
+                outputs = F.normalize(outputs, dim=-1)
                 features.append(outputs.cpu())
                 labels.append(label)
         return torch.cat(features), torch.cat(labels)
@@ -80,4 +82,5 @@ class BaseKNNClassifier(L.LightningModule):
             from torch.optim import AdamW
 
             optimizer = AdamW(self.parameters(), lr=0)
+
         return optimizer

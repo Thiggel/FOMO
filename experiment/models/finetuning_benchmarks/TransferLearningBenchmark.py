@@ -1,5 +1,6 @@
 import lightning.pytorch as L
 from torch import nn, optim
+import torch.nn.functional as F
 from torchvision import transforms
 import torch
 import os
@@ -36,6 +37,7 @@ class TransferLearningBenchmark(L.LightningModule):
         self.loss = nn.CrossEntropyLoss()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = F.normalize(x, dim=-1)
         with torch.no_grad():
             features = self.model.extract_features(x)
         return features

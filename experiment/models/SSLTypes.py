@@ -46,20 +46,28 @@ class SSLTypes(Enum):
                             transforms.RandomResizedCrop(
                                 (parserargs.crop_size, parserargs.crop_size)
                             ),
-                            transforms.RandomHorizontalFlip(),
+                            transforms.RandomHorizontalFlip(p=0.5),
                             transforms.RandomApply(
                                 [
                                     transforms.ColorJitter(
-                                        brightness=0.5,
-                                        contrast=0.5,
-                                        saturation=0.5,
-                                        hue=0.1,
+                                        brightness=0.8,
+                                        contrast=0.8,
+                                        saturation=0.8,
+                                        hue=0.2,
                                     )
                                 ],
                                 p=0.8,
                             ),
+                            transforms.RandomApply(
+                                [
+                                    transforms.GaussianBlur(
+                                        kernel_size=23,
+                                        sigma=(0.1, 2.0)
+                                    )
+                                ],
+                                p=0.5,
+                            ),
                             transforms.RandomGrayscale(p=0.2),
-                            transforms.GaussianBlur(kernel_size=9),
                             transforms.ToTensor(),
                             transforms.Normalize(
                                 mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
