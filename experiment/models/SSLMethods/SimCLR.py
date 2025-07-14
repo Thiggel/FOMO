@@ -61,7 +61,6 @@ class SimCLR(L.LightningModule):
         except:
             pass
 
-    @property
     def current_temperature(self) -> float:
         if not self.hparams.use_temperature_schedule:
             return self.hparams.temperature
@@ -164,7 +163,7 @@ class SimCLR(L.LightningModule):
         # positive pairs lie exactly half-way across the concatenated tensor
         pos_mask = self_mask.roll(shifts=feats.shape[0] // 2, dims=0)
 
-        temperature = self.current_temperature
+        temperature = self.current_temperature()
         self.log(f"{mode}_temperature", temperature, sync_dist=True)
 
         cos_sim = cos_sim / temperature
