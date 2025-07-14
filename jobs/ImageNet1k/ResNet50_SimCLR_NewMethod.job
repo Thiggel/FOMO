@@ -7,7 +7,7 @@ python -m experiment \
 	--imbalance-method power_law_imbalance \
 	--max-cycles 5 \
 	--ood-augmentation \
-	--n-epochs-per-cycle 20 \
-	--pct-ood 0.15 \
+        --n-epochs-per-cycle 20 \
+       --pct-ood 0.15 \
   --batch-size 1024 \
   --experiment_name "Baseline_ResNet50_SimCLR_NewMethod_ImageNet1k"

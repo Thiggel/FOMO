@@ -6,6 +6,6 @@ python -m experiment \
 	--max_cycles 5 \
 	--ood_augmentation \
 	--n_epochs_per_cycle 20 \
-	--pct_ood 0.15 \
-	--crop_size 96 \
+       --pct_ood 0.15 \
+       --crop_size 96 \
   --experiment_name "NewMethod_ResNet18_SimCLR_Imbalanced"

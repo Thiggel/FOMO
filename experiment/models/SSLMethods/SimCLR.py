@@ -65,9 +65,9 @@ class SimCLR(L.LightningModule):
         if not self.hparams.use_temperature_schedule:
             return self.hparams.temperature
 
-        t_max = 1.0
-        t_min = 0.1
-        T = 400
+        t_min = self.hparams.temperature_min
+        t_max = self.hparams.temperature_max
+        T = self.hparams.t_max
 
         temperature = (t_max - t_min) * (
             1 + math.cos(math.pi * self.current_epoch / T)
@@ -89,7 +89,6 @@ class SimCLR(L.LightningModule):
             adam_params = {"lr": lr, "betas": (0.9, 0.95)}
             if torch.cuda.is_available():
                 from deepspeed.ops.adam import DeepSpeedCPUAdam
-
                 optimizer = DeepSpeedCPUAdam(
                     self.parameters(), **adam_params, adamw_mode=True
                 )
@@ -102,28 +101,31 @@ class SimCLR(L.LightningModule):
                 self.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum
             )
 
-        # Define the number of warmup epochs
+        # Define warmup in epochs and compute step counts
         warmup_epochs = 10
-        max_epochs = self.hparams.max_epochs
-        base_lr = self.hparams.lr
 
-        # Combined linear warmup and cosine annealing function
-        def lr_lambda(epoch):
-            warmup_epochs = 10
-            total_epochs = 800
-            min_lr_ratio = 2 * 1e-6  # get 1e-6 at the end of training
-            if epoch < warmup_epochs:
-                return (epoch + 1) / warmup_epochs
-            else:
-                progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-                return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
-                    1 + math.cos(math.pi * progress)
-                )
+        steps_per_epoch = self.trainer.num_training_batches
+        total_steps = self.trainer.max_epochs * steps_per_epoch
+        warmup_steps = warmup_epochs * steps_per_epoch
 
-        # Single scheduler with combined behavior
+        min_lr_ratio = 2 * 1e-6  # results in lr ~1e-6 at the end of training
+
+        def lr_lambda(step: int):
+            if step < warmup_steps:
+                return float(step + 1) / float(warmup_steps)
+            progress = (step - warmup_steps) / float(total_steps - warmup_steps)
+            return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
+                1 + math.cos(math.pi * progress)
+            )
+
         scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
-        return [optimizer], [scheduler]
+        return [optimizer], [
+            {
+                "scheduler": scheduler,
+                "interval": "step",
+            }
+        ]
 
     def concat_all_gather(self, t: torch.Tensor) -> torch.Tensor:
         """

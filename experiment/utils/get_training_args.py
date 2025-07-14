@@ -79,6 +79,24 @@ def get_training_args(get_defaults: bool = False) -> dict:
         help="Use temperature schedule during training",
     )
     parser.add_argument(
+        "--temperature-min",
+        type=float,
+        default=0.1,
+        help="Minimum temperature when using a schedule",
+    )
+    parser.add_argument(
+        "--temperature-max",
+        type=float,
+        default=1.0,
+        help="Maximum temperature when using a schedule",
+    )
+    parser.add_argument(
+        "--t-max",
+        type=int,
+        default=400,
+        help="Half-period for the temperature schedule",
+    )
+    parser.add_argument(
         "--weight-decay",
         type=float,
         default=1e-4,

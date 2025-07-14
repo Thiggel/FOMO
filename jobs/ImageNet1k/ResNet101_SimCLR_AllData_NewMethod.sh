@@ -8,6 +8,6 @@ python -m experiment \
 	--max_cycles 5 \
 	--ood_augmentation \
 	--n_epochs_per_cycle 20 \
-	--pct_ood 0.075 \
-	--crop_size 96 \
+       --pct_ood 0.075 \
+       --crop_size 96 \
   --experiment_name "NewMethod_ResNet101_SimCLR_Imbalanced_ImagNet1k_AllData"
