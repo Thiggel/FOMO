@@ -63,9 +63,9 @@ class SimCLR(L.LightningModule):
         if not self.hparams.use_temperature_schedule:
             return self.hparams.temperature
 
-        t_max = 1.0
-        t_min = 0.1
-        T = 400
+        t_min = self.hparams.temperature_min
+        t_max = self.hparams.temperature_max
+        T = self.hparams.t_max
 
         temperature = (t_max - t_min) * (
             1 + math.cos(math.pi * self.current_epoch / T)

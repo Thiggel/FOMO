@@ -19,6 +19,9 @@ python experiment [... arguments]
 
 --lr
 --temperature
+--temperature-min
+--temperature-max
+--t-max
 --weight_decay
 --max_epochs
 
