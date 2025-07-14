@@ -19,6 +19,7 @@ python experiment [... arguments]
 
 --lr
 --temperature
+--use-temperature-schedule
 --temperature-min
 --temperature-max
 --t-max
