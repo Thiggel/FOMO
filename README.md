@@ -23,6 +23,8 @@ python experiment [... arguments]
 --temperature-min
 --temperature-max
 --t-max
+ 
+Use `--use-temperature-schedule` to enable a cosine schedule for the temperature. When enabled, adjust it with `--temperature-min`, `--temperature-max`, and `--t-max`.
 --weight_decay
 --max_epochs
 
