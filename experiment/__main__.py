@@ -207,16 +207,19 @@ def run(
     }
 
     if torch.cuda.is_available():
+        zero_opt = {
+            "stage": 2,
+            "offload_param": {"device": "cpu", "pin_memory": True},
+        }
+        if args.optimizer == "cpuadam":
+            zero_opt["offload_optimizer"] = {"device": "cpu", "pin_memory": True}
+
         strategy = DeepSpeedStrategy(
             config={
                 "train_batch_size": args.train_batch_size
                 * args.grad_acc_steps
                 * torch.cuda.device_count(),
-                "zero_optimization": {
-                    "stage": 2,
-                    "offload_optimizer": {"device": "cpu", "pin_memory": True},
-                    "offload_param": {"device": "cpu", "pin_memory": True},
-                },
+                "zero_optimization": zero_opt,
             },
         )
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"

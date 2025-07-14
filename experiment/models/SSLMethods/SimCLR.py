@@ -89,7 +89,6 @@ class SimCLR(L.LightningModule):
             adam_params = {"lr": lr, "betas": (0.9, 0.95)}
             if torch.cuda.is_available():
                 from deepspeed.ops.adam import DeepSpeedCPUAdam
-
                 optimizer = DeepSpeedCPUAdam(
                     self.parameters(), **adam_params, adamw_mode=True
                 )
