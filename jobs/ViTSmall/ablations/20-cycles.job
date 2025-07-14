@@ -24,5 +24,9 @@ srun python -m experiment \
   --ood-augmentation \
   --n-epochs-per-cycle 5 \
   --pct-ood 0.25 \
+        --use-temperature-schedule \
+        --temperature-min 0.1 \
+        --temperature-max 1.0 \
+        --t-max 400 \
   --batch-size 512 \
   --experiment-name "ResNet50_SimCLR_NewMethod_ImageNet100_20Cycles-5EpochsPerCycle"
