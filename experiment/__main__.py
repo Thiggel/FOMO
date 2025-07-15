@@ -212,7 +212,6 @@ def run(
     if torch.cuda.is_available():
         zero_opt = {
             "stage": 2,
-            "offload_param": {"device": "cpu", "pin_memory": True},
         }
         if args.optimizer == "cpuadam":
             zero_opt["offload_optimizer"] = {"device": "cpu", "pin_memory": True}

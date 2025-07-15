@@ -198,7 +198,6 @@ class ImbalancedTraining:
 
                 zero_opt = {
                     "stage": 2,
-                    "offload_param": {"device": "cpu", "pin_memory": True},
                 }
                 if self.args.optimizer == "cpuadam":
                     zero_opt["offload_optimizer"] = {
@@ -847,7 +846,6 @@ class ImbalancedTraining:
             if torch.cuda.is_available():
                 zero_opt = {
                     "stage": 2,
-                    "offload_param": {"device": "cpu", "pin_memory": True},
                 }
                 if self.args.optimizer == "cpuadam":
                     zero_opt["offload_optimizer"] = {
