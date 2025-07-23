@@ -194,7 +194,7 @@ class ImbalancedTraining:
 
             cycle_trainer_args = self.trainer_args.copy()
 
-            if torch.cuda.is_available():
+            if torch.cuda.is_available() and self.args.deepspeed:
 
                 zero_opt = {
                     "stage": 2,
@@ -218,6 +218,9 @@ class ImbalancedTraining:
                 cycle_trainer_args["strategy"] = strategy
                 cycle_trainer_args["accelerator"] = "cuda"
                 cycle_trainer_args["devices"] = "auto"
+            elif torch.cuda.is_available() and not self.args.deepspeed:
+                cycle_trainer_args["accelerator"] = "cuda"
+                cycle_trainer_args["devices"] = 1
 
             trainer = L.Trainer(**cycle_trainer_args)
             trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
@@ -825,6 +828,7 @@ class ImbalancedTraining:
                 lr=self.args.lr,
                 transform=transform,
                 crop_size=self.args.crop_size,
+                use_deepspeed=self.args.deepspeed,
             )
 
             self.trainer_args["max_epochs"] = finetuner.max_epochs
@@ -843,7 +847,7 @@ class ImbalancedTraining:
             self.trainer_args["max_time"] = {"minutes": 25}
             self.trainer_args["accumulate_grad_batches"] = 1
 
-            if torch.cuda.is_available():
+            if torch.cuda.is_available() and self.args.deepspeed:
                 zero_opt = {
                     "stage": 2,
                 }
@@ -863,6 +867,9 @@ class ImbalancedTraining:
                 )
                 self.trainer_args["strategy"] = strategy
                 self.trainer_args.pop("accelerator", None)
+            elif torch.cuda.is_available() and not self.args.deepspeed:
+                self.trainer_args["accelerator"] = "cuda"
+                self.trainer_args["devices"] = 1
 
             trainer = L.Trainer(**self.trainer_args)
             trainer.fit(model=finetuner)

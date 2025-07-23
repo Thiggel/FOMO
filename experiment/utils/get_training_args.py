@@ -398,6 +398,12 @@ def get_training_args(get_defaults: bool = False) -> dict:
         action="store_true",
         help="Enable OOD augmentation",
     )
+    parser.add_argument(
+        "--no-deepspeed",
+        action="store_false",
+        dest="deepspeed",
+        help="Disable Deepspeed and run on a single GPU",
+    )
 
     # Set defaults for flags
     parser.set_defaults(
@@ -413,6 +419,7 @@ def get_training_args(get_defaults: bool = False) -> dict:
         use_clustering=False,
         class_balanced=False,
         use_temperature_schedule=False,
+        deepspeed=True,
     )
 
     if get_defaults:

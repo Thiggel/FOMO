@@ -100,6 +100,7 @@ def init_ssl_type(
         "temperature_min": args.temperature_min,
         "temperature_max": args.temperature_max,
         "t_max": args.t_max,
+        "use_deepspeed": args.deepspeed,
     }
 
     return ssl_type.initialize(**ssl_args)
@@ -112,7 +113,8 @@ def run(
 ) -> dict:
     set_seed(seed)
 
-    args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
+    if args.deepspeed:
+        args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
 
     checkpoint_filename = (
         args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
@@ -209,7 +211,7 @@ def run(
         "logger": wandb_logger if args.logger and not args.test_mode else None,
     }
 
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and args.deepspeed:
         zero_opt = {
             "stage": 2,
         }
@@ -236,6 +238,14 @@ def run(
         trainer_args.pop("accelerator", None)
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
         print("GPUs Available: ", torch.cuda.device_count())
+    elif torch.cuda.is_available() and not args.deepspeed:
+        trainer_args.update(
+            {
+                "accelerator": "cuda",
+                "devices": 1,
+                "default_root_dir": os.environ["PYTORCH_LIGHTNING_HOME"],
+            }
+        )
 
     imbalanced_training = ImbalancedTraining(
         args,
@@ -300,7 +310,8 @@ def main():
 
     # make train batch size not depend on number of gpus
     # but instead let effective batch size be selectable by the user
-    args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
+    if args.deepspeed:
+        args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
 
     # add a timestamp to the additional data path
     args.additional_data_path = (
