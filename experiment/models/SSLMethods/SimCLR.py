@@ -35,11 +35,12 @@ class SimCLR(L.LightningModule):
         max_epochs: int = 500,
         hidden_dim=128,
         use_temperature_schedule: bool = False,
+        use_deepspeed: bool = True,
         *args,
         **kwargs,
     ):
         super().__init__()
-
+        self.use_deepspeed = use_deepspeed
         self.save_hyperparameters(ignore=["model"])
 
         if torch.cuda.device_count() > 1:
@@ -87,7 +88,7 @@ class SimCLR(L.LightningModule):
             )
         elif opt_name == "cpuadam":
             adam_params = {"lr": lr, "betas": (0.9, 0.95)}
-            if torch.cuda.is_available():
+            if torch.cuda.is_available() and self.use_deepspeed:
                 from deepspeed.ops.adam import DeepSpeedCPUAdam
 
                 optimizer = DeepSpeedCPUAdam(

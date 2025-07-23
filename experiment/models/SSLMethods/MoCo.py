@@ -77,10 +77,12 @@ class MoCo(L.LightningModule):
         momentum: float = 0.999,
         dim: int = 128,
         mlp: bool = True,
+        use_deepspeed: bool = True,
         *args,
         **kwargs,
     ):
         super().__init__()
+        self.use_deepspeed = use_deepspeed
         self.save_hyperparameters(ignore=["model"])
 
         # Create encoder Q (online network)
@@ -220,7 +222,7 @@ class MoCo(L.LightningModule):
             "betas": (0.9, 0.95),
         }
 
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and self.use_deepspeed:
             from deepspeed.ops.adam import DeepSpeedCPUAdam
 
             optimizer = DeepSpeedCPUAdam(

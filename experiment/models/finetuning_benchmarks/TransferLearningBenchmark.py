@@ -17,11 +17,12 @@ class TransferLearningBenchmark(L.LightningModule):
         weight_decay: float = 1e-3,
         max_epochs: int = 500,
         num_classes: int = None,
+        use_deepspeed: bool = True,
         *args,
         **kwargs,
     ):
         super().__init__()
-        self.use_deepspeed = True
+        self.use_deepspeed = use_deepspeed
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.base_transform = transform  # Store original transform
@@ -54,7 +55,7 @@ class TransferLearningBenchmark(L.LightningModule):
 
         param_groups = [p for p in self.parameters() if p.requires_grad]
 
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and self.use_deepspeed:
             from deepspeed.ops.adam import DeepSpeedCPUAdam
 
             optimizer = DeepSpeedCPUAdam(param_groups, **adam_params, adamw_mode=True)

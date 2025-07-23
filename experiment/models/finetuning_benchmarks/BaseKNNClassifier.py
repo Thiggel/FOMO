@@ -17,11 +17,12 @@ class BaseKNNClassifier(L.LightningModule):
         batch_size: int = 64,
         k: int = 5,
         transform: transforms.Compose = None,
+        use_deepspeed: bool = False,
         *args,
         **kwargs,
     ):
         super().__init__()
-        self.use_deepspeed = False
+        self.use_deepspeed = use_deepspeed
         self.max_epochs = 1
         self.save_hyperparameters(ignore=["model"])
         self.transform = transform
@@ -74,7 +75,7 @@ class BaseKNNClassifier(L.LightningModule):
         return torch.tensor(accuracy)
 
     def configure_optimizers(self):
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and self.use_deepspeed:
             from deepspeed.ops.adam import DeepSpeedCPUAdam
 
             optimizer = DeepSpeedCPUAdam(self.parameters(), lr=0)
