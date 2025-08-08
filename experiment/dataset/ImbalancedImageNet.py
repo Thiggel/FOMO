@@ -240,4 +240,9 @@ class ImbalancedImageNet(Dataset):
             return pickle.load(f)
 
     def _load_or_create_indices(self):
-        return self._create_indices()
+        """Load previously generated indices or create them if necessary."""
+        if self.checkpoint_filename and os.path.exists(self._indices_filename):
+            return self._load_indices_from_pickle()
+
+        indices = self._create_indices()
+        return indices
