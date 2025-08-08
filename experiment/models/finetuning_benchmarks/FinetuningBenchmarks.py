@@ -18,22 +18,38 @@ from experiment.models.finetuning_benchmarks.CarsKNNClassifier import CarsKNNCla
 from experiment.models.finetuning_benchmarks.FlowersKNNClassifier import (
     FlowersKNNClassifier,
 )
+from experiment.models.finetuning_benchmarks.ImageNet100FineTune import (
+    ImageNet100FineTune,
+)
+from experiment.models.finetuning_benchmarks.ImageNet100LTFineTune import (
+    ImageNet100LTFineTune,
+)
+from experiment.models.finetuning_benchmarks.ImageNet100KNNClassifier import (
+    ImageNet100KNNClassifier,
+)
+from experiment.models.finetuning_benchmarks.ImageNet100LTKNNClassifier import (
+    ImageNet100LTKNNClassifier,
+)
 
 
 class FinetuningBenchmarks:
     benchmarks = [
-        AircraftFineTune,
-        CarsFineTune,
-        CarsKNNClassifier,
-        AircraftKNNClassifier,
-        FlowersKNNClassifier,
-        PetsKNNClassifier,
-        CIFAR100KNNClassifier,
-        CIFAR10FineTuner,
-        FlowersFineTune,
-        PetsFineTune,
-        CIFAR10KNNClassifier,
-        CIFAR100FineTuner,
+        ImageNet100LTKNNClassifier,
+        ImageNet100LTFineTune,
+        #AircraftFineTune,
+        #CarsFineTune,
+        #CarsKNNClassifier,
+        #AircraftKNNClassifier,
+        #FlowersKNNClassifier,
+        #PetsKNNClassifier,
+        #CIFAR100KNNClassifier,
+        #ImageNet100KNNClassifier,
+        #CIFAR10FineTuner,
+        #FlowersFineTune,
+        #PetsFineTune,
+        #ImageNet100FineTune,
+        #CIFAR10KNNClassifier,
+        #CIFAR100FineTuner,
     ]
 
     test_benchmarks = []

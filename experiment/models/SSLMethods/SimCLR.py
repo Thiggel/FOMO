@@ -5,7 +5,6 @@ from torch import nn
 from torch.optim import AdamW, Optimizer, SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler, LambdaLR
 import torch.nn.functional as F
-from flash.core.optimizers import LARS
 import math
 
 class SimCLRProjectionHead(nn.Module):
@@ -78,14 +77,14 @@ class SimCLR(L.LightningModule):
             "betas": (0.9, 0.95),
         }
 
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
+        #if torch.cuda.is_available():
+        #    from deepspeed.ops.adam import DeepSpeedCPUAdam
 
-            optimizer = DeepSpeedCPUAdam(
-                self.parameters(), **adam_params, adamw_mode=True
-            )
-        else:
-            optimizer = SGD(self.parameters(), lr=0.5, weight_decay=1e-4, momentum=0.9)
+        #    optimizer = DeepSpeedCPUAdam(
+        #        self.parameters(), **adam_params, adamw_mode=True
+        #    )
+        #else:
+        optimizer = SGD(self.parameters(), lr=0.5, weight_decay=1e-6, momentum=0.9)
 
         # Define the number of warmup epochs
         warmup_epochs = 10
