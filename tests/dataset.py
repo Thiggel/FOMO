@@ -121,6 +121,26 @@ class TestImbalancedImageNet(unittest.TestCase):
             print(f"Error in DataLoader: {str(e)}")
             raise
 
+    def test_indices_reproducibility(self):
+        """Ensure indices are reloaded when checkpoint exists"""
+        dataset1 = ImbalancedImageNet(
+            dataset_path="sxdave/emotion_detection",
+            additional_data_path="test_additional_data",
+            imbalance_method=ImbalanceMethods.LinearlyIncreasing,
+            checkpoint_filename="repro_checkpoint",
+        )
+
+        indices1 = dataset1.indices.copy()
+
+        dataset2 = ImbalancedImageNet(
+            dataset_path="sxdave/emotion_detection",
+            additional_data_path="test_additional_data",
+            imbalance_method=ImbalanceMethods.LinearlyIncreasing,
+            checkpoint_filename="repro_checkpoint",
+        )
+
+        self.assertEqual(indices1, dataset2.indices)
+
 
 if __name__ == "__main__":
     unittest.main()
