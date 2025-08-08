@@ -18,6 +18,18 @@ from experiment.models.finetuning_benchmarks.CarsKNNClassifier import CarsKNNCla
 from experiment.models.finetuning_benchmarks.FlowersKNNClassifier import (
     FlowersKNNClassifier,
 )
+from experiment.models.finetuning_benchmarks.ImageNet100FineTune import (
+    ImageNet100FineTune,
+)
+from experiment.models.finetuning_benchmarks.ImageNet100LTFineTune import (
+    ImageNet100LTFineTune,
+)
+from experiment.models.finetuning_benchmarks.ImageNet100KNNClassifier import (
+    ImageNet100KNNClassifier,
+)
+from experiment.models.finetuning_benchmarks.ImageNet100LTKNNClassifier import (
+    ImageNet100LTKNNClassifier,
+)
 
 
 class FinetuningBenchmarks:
@@ -29,9 +41,13 @@ class FinetuningBenchmarks:
         FlowersKNNClassifier,
         PetsKNNClassifier,
         CIFAR100KNNClassifier,
+        ImageNet100KNNClassifier,
+        ImageNet100LTKNNClassifier,
         CIFAR10FineTuner,
         FlowersFineTune,
         PetsFineTune,
+        ImageNet100FineTune,
+        ImageNet100LTFineTune,
         CIFAR10KNNClassifier,
         CIFAR100FineTuner,
     ]
