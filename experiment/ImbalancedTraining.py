@@ -202,10 +202,11 @@ class ImbalancedTraining:
                         * self.args.grad_acc_steps
                         * torch.cuda.device_count(),
                         "bf16": {"enabled": False},
+                        "zero_allow_untested_optimizer": True,
                         "zero_optimization": {
                             "stage": 2,
-                            "offload_optimizer": {"device": "cpu", "pin_memory": True},
-                            "offload_param": {"device": "cpu", "pin_memory": True},
+                            #"offload_optimizer": {"device": "cpu", "pin_memory": True},
+                            #"offload_param": {"device": "cpu", "pin_memory": True},
                         },
                     },
                 )
@@ -842,10 +843,11 @@ class ImbalancedTraining:
                     config={
                         "train_batch_size": 64 * torch.cuda.device_count(),
                         "train_micro_batch_size_per_gpu": 64,
+                        "zero_allow_untested_optimizer": True,
                         "zero_optimization": {
                             "stage": 2,
-                            "offload_optimizer": {"device": "cpu", "pin_memory": True},
-                            "offload_param": {"device": "cpu", "pin_memory": True},
+                            #"offload_optimizer": {"device": "cpu", "pin_memory": True},
+                            #"offload_param": {"device": "cpu", "pin_memory": True},
                         },
                     },
                 )

@@ -8,7 +8,7 @@ conda activate fomo
 
 ulimit -n 4096
 
-export SCRATCH_LOCAL="/scratch/ssalehi/"
+export SCRATCH_LOCAL="/var/scratch/ssalehid/"
 
 cd $SCRATCH_LOCAL
 mkdir FOMO

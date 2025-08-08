@@ -34,22 +34,22 @@ from experiment.models.finetuning_benchmarks.ImageNet100LTKNNClassifier import (
 
 class FinetuningBenchmarks:
     benchmarks = [
-        AircraftFineTune,
-        CarsFineTune,
-        CarsKNNClassifier,
-        AircraftKNNClassifier,
-        FlowersKNNClassifier,
-        PetsKNNClassifier,
-        CIFAR100KNNClassifier,
-        ImageNet100KNNClassifier,
         ImageNet100LTKNNClassifier,
-        CIFAR10FineTuner,
-        FlowersFineTune,
-        PetsFineTune,
-        ImageNet100FineTune,
         ImageNet100LTFineTune,
-        CIFAR10KNNClassifier,
-        CIFAR100FineTuner,
+        #AircraftFineTune,
+        #CarsFineTune,
+        #CarsKNNClassifier,
+        #AircraftKNNClassifier,
+        #FlowersKNNClassifier,
+        #PetsKNNClassifier,
+        #CIFAR100KNNClassifier,
+        #ImageNet100KNNClassifier,
+        #CIFAR10FineTuner,
+        #FlowersFineTune,
+        #PetsFineTune,
+        #ImageNet100FineTune,
+        #CIFAR10KNNClassifier,
+        #CIFAR100FineTuner,
     ]
 
     test_benchmarks = []
