@@ -26,3 +26,4 @@ accelerate
 huggingface_hub
 h5py
 filelock
+hydra-core

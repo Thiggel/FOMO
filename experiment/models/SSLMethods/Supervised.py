@@ -1,7 +1,7 @@
 import lightning.pytorch as L
 import torch
 from torch import nn
-from torch.optim import AdamW, Optimizer
+from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler
 import torch.nn.functional as F
 
@@ -34,7 +34,12 @@ class Supervised(L.LightningModule):
             pass
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer = AdamW(self.parameters(), lr=1e-3, betas=(0.9, 0.95))
+        optimizer = SGD(
+            self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+            momentum=0.9,
+        )
 
         lr_scheduler = CosineAnnealingLR(
             optimizer, T_max=self.hparams.max_epochs, eta_min=self.hparams.lr / 50

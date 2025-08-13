@@ -74,13 +74,5 @@ class BaseKNNClassifier(L.LightningModule):
         return torch.tensor(accuracy)
 
     def configure_optimizers(self):
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(self.parameters(), lr=0)
-        else:
-            from torch.optim import AdamW
-
-            optimizer = AdamW(self.parameters(), lr=0)
-
+        optimizer = torch.optim.SGD(self.parameters(), lr=0, momentum=0.9)
         return optimizer

@@ -1,7 +1,10 @@
 import lightning.pytorch as L
 import torch
 from torch import nn
-from torch.optim import AdamW
+import lightning.pytorch as L
+import torch
+from torch import nn
+from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
 import copy
 import math
@@ -9,14 +12,6 @@ from torch.optim.lr_scheduler import LambdaLR
 import random
 from PIL import ImageFilter
 from torchvision import transforms
-import lightning.pytorch as L
-import torch
-from torch import nn
-from torch.optim import AdamW
-import torch.nn.functional as F
-import copy
-import math
-from torch.optim.lr_scheduler import LambdaLR
 
 
 class TwoCropsTransform:
@@ -215,26 +210,12 @@ class MoCo(L.LightningModule):
 
     def configure_optimizers(self):
         # Define optimizer
-        adam_params = {
-            "lr": self.hparams.lr,
-            "betas": (0.9, 0.95),
-        }
-
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(
-                self.encoder_q.parameters(),
-                **adam_params,
-                weight_decay=self.hparams.weight_decay,
-                adamw_mode=True,
-            )
-        else:
-            optimizer = AdamW(
-                self.encoder_q.parameters(),
-                **adam_params,
-                weight_decay=self.hparams.weight_decay,
-            )
+        optimizer = SGD(
+            self.encoder_q.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+            momentum=0.9,
+        )
 
         # Warmup + cosine decay scheduler
         warmup_epochs = 10
