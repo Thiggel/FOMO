@@ -1,0 +1,3 @@
+model_name: ViTTiny
+classification_head: false
+patch_size: 16

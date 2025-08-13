@@ -1,0 +1,2 @@
+model_name: ResNet101
+classification_head: false

@@ -2,7 +2,7 @@ import lightning.pytorch as L
 
 import torch
 from torch import nn
-from torch.optim import AdamW
+from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import torch.nn.functional as F
 from typing import Tuple, List
@@ -201,17 +201,11 @@ class Dino(L.LightningModule):
             },
         ]
 
-        adam_params = {
-            "lr": self.hparams.lr,
-            "betas": (0.9, 0.95),
-        }
-
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(param_groups, **adam_params, adamw_mode=True)
-        else:
-            optimizer = AdamW(param_groups, **adam_params)
+        optimizer = SGD(
+            param_groups,
+            lr=self.hparams.lr,
+            momentum=0.9,
+        )
 
         # Set up learning rate scheduler
         warmup_scheduler = torch.optim.lr_scheduler.LinearLR(

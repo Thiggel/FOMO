@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --partition=capacity
+#SBATCH --gres=gpu:8
+#SBATCH --job-name=vitb_simclr_newmethod
+#SBATCH --ntasks=8
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=180G
+#SBATCH --time=80:00:00
+#SBATCH --output=job_logs/vitb_simclr_newmethod-%A.out
+
+cd $HOME/FOMO
+
+python -m experiment model=vit_base ssl=simclr dataset=imagenet1k_imbalanced max_cycles=5 n_epochs_per_cycle=20 ood_augmentation=true

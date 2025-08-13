@@ -1,0 +1,2 @@
+imagenet_variant: '1k'
+imbalance_method: no_imbalance

@@ -2,10 +2,9 @@ import lightning.pytorch as L
 import torch.distributed as dist
 import torch
 from torch import nn
-from torch.optim import AdamW, Optimizer, SGD
-from torch.optim.lr_scheduler import CosineAnnealingLR, LRScheduler, LambdaLR
+from torch.optim import Optimizer, SGD
+from torch.optim.lr_scheduler import LRScheduler, LambdaLR
 import torch.nn.functional as F
-from flash.core.optimizers import LARS
 import math
 
 class SimCLRProjectionHead(nn.Module):
@@ -73,19 +72,12 @@ class SimCLR(L.LightningModule):
         return temperature
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        adam_params = {
-            "lr": self.hparams.lr,
-            "betas": (0.9, 0.95),
-        }
-
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(
-                self.parameters(), **adam_params, adamw_mode=True
-            )
-        else:
-            optimizer = SGD(self.parameters(), lr=0.5, weight_decay=1e-4, momentum=0.9)
+        optimizer = SGD(
+            self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+            momentum=0.9,
+        )
 
         # Define the number of warmup epochs
         warmup_epochs = 10

@@ -47,21 +47,11 @@ class TransferLearningBenchmark(L.LightningModule):
         return min(6, get_num_workers())
 
     def configure_optimizers(self):
-        adam_params = {
-            "lr": 1e-3,
-            "betas": (0.9, 0.95),
-        }
-
         param_groups = [p for p in self.parameters() if p.requires_grad]
 
-        if torch.cuda.is_available():
-            from deepspeed.ops.adam import DeepSpeedCPUAdam
-
-            optimizer = DeepSpeedCPUAdam(param_groups, **adam_params, adamw_mode=True)
-        else:
-            from torch.optim import AdamW
-
-            optimizer = AdamW(param_groups, **adam_params)
+        optimizer = torch.optim.SGD(
+            param_groups, lr=1e-3, momentum=0.9, weight_decay=0
+        )
 
         lr_scheduler = optim.lr_scheduler.MultiStepLR(
             optimizer,

@@ -5,8 +5,6 @@ import os
 
 from dotenv import load_dotenv
 import time
-import argparse
-from argparse import Namespace
 import lightning.pytorch as L
 from lightning.pytorch.callbacks import (
     ModelCheckpoint,
@@ -20,10 +18,11 @@ from torch import nn
 import torch.multiprocessing as mp
 from torchvision import transforms
 from huggingface_hub import login
+import hydra
+from omegaconf import DictConfig
 
 from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
-from experiment.utils.get_training_args import get_training_args
 from experiment.utils.get_model_name import get_model_name
 from experiment.utils.generate_random_string import generate_random_string
 from experiment.utils.calc_novelty_score import calc_novelty_score
@@ -49,7 +48,7 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModule:
+def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDataModule:
     ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
     return ImbalancedImageNetDataModule(
@@ -66,7 +65,7 @@ def init_datamodule(args: dict, checkpoint_filename: str) -> L.LightningDataModu
     )
 
 
-def init_model(args: Namespace) -> nn.Module:
+def init_model(args: DictConfig) -> nn.Module:
     model_type = ModelTypes.get_model_type(args.model_name)
 
     model_args = {
@@ -83,7 +82,7 @@ def init_model(args: Namespace) -> nn.Module:
 
 
 def init_ssl_type(
-    args: Namespace,
+    args: DictConfig,
     model: nn.Module,
 ) -> L.LightningModule:
     ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
@@ -104,7 +103,7 @@ def init_ssl_type(
 
 
 def run(
-    args: Namespace,
+    args: DictConfig,
     seed: int = 42,
     run_idx: int = 0,
 ) -> dict:
@@ -213,11 +212,8 @@ def run(
                 "train_batch_size": args.train_batch_size
                 * args.grad_acc_steps
                 * torch.cuda.device_count(),
-                "zero_optimization": {
-                    "stage": 2,
-                    "offload_optimizer": {"device": "cpu", "pin_memory": True},
-                    "offload_param": {"device": "cpu", "pin_memory": True},
-                },
+                "zero_optimization": {"stage": 2},
+                "zero_allow_untested_optimizer": True,
             },
         )
         os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
@@ -250,7 +246,7 @@ def run(
     return results
 
 
-def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
+def set_checkpoint_for_run(args: DictConfig, run_idx: int) -> str:
     if not hasattr(args, "checkpoint_list") or args.checkpoint_list is None:
         args.checkpoint_list = args.checkpoint
 
@@ -260,7 +256,7 @@ def set_checkpoint_for_run(args: Namespace, run_idx: int) -> str:
     return args
 
 
-def run_different_seeds(args: Namespace) -> dict:
+def run_different_seeds(args: DictConfig) -> dict:
     all_results = []
 
     for run_idx in range(args.num_runs):
@@ -286,18 +282,10 @@ def run_different_seeds(args: Namespace) -> dict:
     return all_results
 
 
-def main():
-
+def run_app(args: DictConfig) -> None:
     load_dotenv()
     login(token=os.getenv("HUGGINGFACE_TOKEN"))
 
-    args = get_training_args()
-
-    # make train batch size not depend on number of gpus
-    # but instead let effective batch size be selectable by the user
-    args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
-
-    # add a timestamp to the additional data path
     args.additional_data_path = (
         os.environ["BASE_CACHE_DIR"]
         + "/"
@@ -313,6 +301,11 @@ def main():
     all_results = run_different_seeds(args)
 
     print_mean_std(all_results)
+
+
+@hydra.main(config_path="conf", config_name="config", version_base=None)
+def main(cfg: DictConfig) -> None:
+    run_app(cfg)
 
 
 if __name__ == "__main__":
