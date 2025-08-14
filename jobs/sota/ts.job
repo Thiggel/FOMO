@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --partition=capacity
+#SBATCH --gres=gpu:8
+#SBATCH --job-name=sota_ts
+#SBATCH --ntasks=8
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=180G
+#SBATCH --time=80:00:00
+#SBATCH --output=job_logs/sota_ts-%A.out
+
+cd $HOME/FOMO
+
+python -m experiment model=resnet50 ssl=simclr dataset=imagenet1k_imbalanced max_cycles=8 n_epochs_per_cycle=100 use_temperature_schedule=true
