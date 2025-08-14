@@ -1,7 +1,7 @@
 defaults:
   - model: resnet50
   - ssl: simclr
-  - dataset: imagenet1k_balanced
+  - dataset: imagenet100_balanced
   - _self_
 
 # Experiment settings
@@ -11,8 +11,8 @@ classification_head: false
 patch_size: 16
 
 # Training hyperparameters
-lr: 0.03
-temperature: 0.07
+lr: 0.5
+temperature: 0.1
 use_temperature_schedule: false
 temperature_min: 0.1
 temperature_max: 1.0
@@ -23,9 +23,9 @@ n_epochs_per_cycle: 20
 warmup: 10
 
 # Batch sizes and processing
-train_batch_size: 1024
+train_batch_size: 1
 grad_acc_steps: 1
-val_batch_size: 512
+val_batch_size: 1
 sd_batch_size: 4
 crop_size: 224
 splits: [0.8, 0.1, 0.1]
@@ -59,6 +59,7 @@ num_runs: 1
 max_hours_per_run: 12
 seeds: [0, 1, 2, 3, 4]
 checkpoint: null
+checkpoint_list: null
 calc_novelty_score: false
 
 # Flags

@@ -49,12 +49,12 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDataModule:
-    ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
+    ssl_method = SSLTypes.get_ssl_type(args.ssl.ssl_method)
 
     return ImbalancedImageNetDataModule(
         collate_fn=ssl_method.collate_fn(args),
-        dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
-        imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
+        dataset_variant=ImageNetVariants.init_variant(args.dataset.imagenet_variant),
+        imbalance_method=ImbalanceMethods.init_method(args.dataset.imbalance_method),
         splits=args.splits,
         train_batch_size=args.train_batch_size,
         val_batch_size=args.val_batch_size,
@@ -66,14 +66,14 @@ def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDa
 
 
 def init_model(args: DictConfig) -> nn.Module:
-    model_type = ModelTypes.get_model_type(args.model_name)
+    model_type = ModelTypes.get_model_type(args.model.model_name)
 
     model_args = {
-        "model_name": args.model_name,
+        "model_name": args.model.model_name,
         "batch_size": args.train_batch_size,
         "output_size": 128,  # simclear uses this hidden dim, vit doesnt use this parameter
         "image_size": args.crop_size,
-        "classification_head": args.classification_head,
+        "classification_head": args.model.classification_head,
     }
 
     model = model_type.initialize(**model_args)
@@ -85,12 +85,12 @@ def init_ssl_type(
     args: DictConfig,
     model: nn.Module,
 ) -> L.LightningModule:
-    ssl_type = SSLTypes.get_ssl_type(args.ssl_method)
+    ssl_type = SSLTypes.get_ssl_type(args.ssl.ssl_method)
     ssl_args = {
         "model": model,
-        "lr": args.lr,
-        "temperature": args.temperature,
-        "weight_decay": args.weight_decay,
+        "lr": args.ssl.lr,
+        "temperature": args.ssl.temperature,
+        "weight_decay": args.ssl.weight_decay,
         "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
         "parserargs": args,
         "use_temperature_schedule": args.use_temperature_schedule,
@@ -109,13 +109,11 @@ def run(
 ) -> dict:
     set_seed(seed)
 
-    args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
-
     checkpoint_filename = (
-        args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
+        args.experiment_name + "_" + args.dataset.imagenet_variant + "_" + str(datetime.now())
     )
 
-    dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
+    dataset_pickle_filename = args.dataset.imagenet_variant + "_" + args.dataset.imbalance_method
 
     if not args.calc_novelty_score and args.pretrain:
         datamodule = init_datamodule(
@@ -209,9 +207,7 @@ def run(
     if torch.cuda.is_available():
         strategy = DeepSpeedStrategy(
             config={
-                "train_batch_size": args.train_batch_size
-                * args.grad_acc_steps
-                * torch.cuda.device_count(),
+                "train_batch_size": args.train_batch_size,
                 "zero_optimization": {"stage": 2},
                 "zero_allow_untested_optimizer": True,
             },

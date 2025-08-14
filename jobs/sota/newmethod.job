@@ -9,4 +9,4 @@
 
 cd $HOME/FOMO
 
-srun python -m experiment model=resnet50 ssl=simclr dataset=imagenet1k_imbalanced max_cycles=8 n_epochs_per_cycle=100 ood_augmentation=true
+srun python -m experiment model=resnet50 ssl=simclr dataset=imagenet100_imbalanced max_cycles=8 n_epochs_per_cycle=100 ood_augmentation=true experiment_name=sota_newmethod

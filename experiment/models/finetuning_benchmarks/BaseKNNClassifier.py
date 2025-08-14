@@ -14,7 +14,7 @@ class BaseKNNClassifier(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        batch_size: int = 64,
+        batch_size: int = 32,
         k: int = 5,
         transform: transforms.Compose = None,
         *args,
