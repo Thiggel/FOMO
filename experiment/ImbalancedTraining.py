@@ -360,7 +360,7 @@ class ImbalancedTraining:
         return ood_indices
 
     def collect_embeddings(
-        self, max_samples=10000
+        self, tsne_max_samples: int = 10000
     ) -> tuple[torch.Tensor, torch.Tensor]:
         old_transform = self.datamodule.train_dataset.dataset.transform
 
@@ -374,22 +374,22 @@ class ImbalancedTraining:
             ]
         )
 
+        dataset = self.datamodule.train_dataset
+        if tsne_max_samples is not None and tsne_max_samples < len(dataset):
+            subset_indices = torch.randperm(len(dataset))[:tsne_max_samples].tolist()
+            dataset = Subset(dataset, subset_indices)
+
         dataloader = DataLoader(
-            self.datamodule.train_dataset,
+            dataset,
             batch_size=self.args.val_batch_size,
             num_workers=self.num_workers,
         )
 
         embeddings = []
         all_labels = []
-        sample_count = 0
 
         with torch.no_grad():
-            print("Daraloader length: ", len(dataloader))
-            for batch_idx, (images, labels) in enumerate(
-                tqdm(dataloader, desc="Collecting embeddings")
-            ):
-                print("Device: ", self.ssl_method.device)
+            for images, labels in tqdm(dataloader, desc="Collecting embeddings"):
                 images = images.to(
                     device=self.ssl_method.device, dtype=self.ssl_method.dtype
                 )
@@ -398,10 +398,6 @@ class ImbalancedTraining:
                 batch_embeddings = self.ssl_method.model.extract_features(images).cpu()
                 embeddings.append(batch_embeddings)
                 all_labels.append(labels)
-
-                sample_count += len(images)
-                if sample_count >= max_samples:
-                    break
 
         self.datamodule.train_dataset.dataset.transform = old_transform
 
@@ -521,7 +517,7 @@ class ImbalancedTraining:
         ood_indices = self.get_outliers(cycle_idx)
 
         self.datamodule.train_dataset.dataset.transform = old_transform
-        embeddings, labels = self.collect_embeddings()
+        embeddings, labels = self.collect_embeddings(self.args.tsne_max_samples)
 
         print("Computing t-SNE embeddings...")
         tsne_embeddings = self.apply_tsne(embeddings, labels)
@@ -554,6 +550,10 @@ class ImbalancedTraining:
             wandb_logger.experiment.log(
                 {f"tsne/cycle_{cycle_idx}": wandb.Image(png_path), "cycle": cycle_idx}
             )
+
+        del embeddings, tsne_embeddings
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def save_class_dist(self, cycle_idx: int) -> None:
         """Save class distribution for current cycle using GPU acceleration and log to Wandb"""
