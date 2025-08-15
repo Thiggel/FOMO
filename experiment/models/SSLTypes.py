@@ -7,6 +7,7 @@ from torchvision import models, transforms
 from experiment.dataset.ContrastiveTransformations import ContrastiveTransformations
 from experiment.dataset.MultiCropTransformation import MultiCropTransformation
 from experiment.models.SSLMethods.SimCLR import SimCLR
+from experiment.models.SSLMethods.SDCLR import SDCLR
 from experiment.models.SSLMethods.Dino import Dino
 from experiment.models.SSLMethods.MoCo import MoCo, moco_transform
 from experiment.models.SSLMethods.Supervised import Supervised
@@ -37,6 +38,56 @@ class SSLTypes(Enum):
                     weight_decay=weight_decay,
                     max_epochs=max_epochs,
                     use_temperature_schedule=use_temperature_schedule,
+                    *args,
+                    **kwargs
+                ),
+                transforms=lambda parserargs: ContrastiveTransformations(
+                    transforms.Compose(
+                        [
+                            transforms.RandomResizedCrop(
+                                (parserargs.crop_size, parserargs.crop_size)
+                            ),
+                            transforms.RandomHorizontalFlip(p=0.5),
+                            transforms.RandomApply(
+                                [
+                                    transforms.ColorJitter(
+                                        brightness=0.8,
+                                        contrast=0.8,
+                                        saturation=0.8,
+                                        hue=0.2,
+                                    )
+                                ],
+                                p=0.8,
+                            ),
+                            transforms.RandomApply(
+                                [
+                                    transforms.GaussianBlur(
+                                        kernel_size=23,
+                                        sigma=(0.1, 2.0)
+                                    )
+                                ],
+                                p=0.5,
+                            ),
+                            transforms.RandomGrayscale(p=0.2),
+                            transforms.ToTensor(),
+                            transforms.Normalize(
+                                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                            ),
+                        ]
+                    ),
+                    n_views=2,
+                ),
+                collate_fn=lambda parserargs: simclr_collate,
+            ),
+            "SDCLR": SSLType(
+                module=lambda model, lr, temperature, weight_decay, max_epochs, use_temperature_schedule, sdclr_prune_rate, *args, **kwargs: SDCLR(
+                    model=model,
+                    lr=lr,
+                    temperature=temperature,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    use_temperature_schedule=use_temperature_schedule,
+                    sdclr_prune_rate=sdclr_prune_rate,
                     *args,
                     **kwargs
                 ),
