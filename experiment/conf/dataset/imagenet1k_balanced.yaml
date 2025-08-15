@@ -1,2 +1,2 @@
-imagenet_variant: '1k'
+dataset_path: ILSVRC/imagenet-1k
 imbalance_method: no_imbalance

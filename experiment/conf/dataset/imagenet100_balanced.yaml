@@ -1,2 +1,2 @@
-imagenet_variant: '100'
+dataset_path: clane9/imagenet-100
 imbalance_method: no_imbalance

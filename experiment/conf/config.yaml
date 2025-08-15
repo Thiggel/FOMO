@@ -63,7 +63,7 @@ checkpoint_list: null
 calc_novelty_score: false
 
 # Flags
-test_mode: false
+
 logger: false
 pretrain: true
 finetune: true
