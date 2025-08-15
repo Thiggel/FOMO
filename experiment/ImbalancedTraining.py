@@ -92,7 +92,6 @@ class ImbalancedTraining:
         self.datamodule = datamodule
         self.checkpoint_callback = checkpoint_callback
         self.checkpoint_filename = checkpoint_filename
-        self.save_class_distribution = self.args.save_class_distribution
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
         self.transform = transforms.Compose(
@@ -111,8 +110,9 @@ class ImbalancedTraining:
 
         self.num_workers = min(6, get_num_workers() // 2)
 
-        if self.save_class_distribution:
+        if self.args.logger and self.args.log_tsne:
             self.visualize_embedding_space(0)
+        if self.args.logger and self.args.log_class_dist:
             self.save_class_dist(0)
 
     def get_class_indices_map(self, dataset):
@@ -538,8 +538,10 @@ class ImbalancedTraining:
         plt.close(fig)
 
         # 5. Log to Wandb
-        if self.args.logger and hasattr(
-            self.trainer_args.get("logger", None), "experiment"
+        if (
+            self.args.logger
+            and self.args.log_tsne
+            and hasattr(self.trainer_args.get("logger", None), "experiment")
         ):
             wandb_logger = self.trainer_args["logger"]
             wandb_logger.experiment.log(
@@ -600,8 +602,10 @@ class ImbalancedTraining:
         print(f"Std samples per class: {class_counts.std().item():.2f}")
 
         # Create visualization and log to Wandb
-        if self.args.logger and hasattr(
-            self.trainer_args.get("logger", None), "experiment"
+        if (
+            self.args.logger
+            and self.args.log_class_dist
+            and hasattr(self.trainer_args.get("logger", None), "experiment")
         ):
             try:
                 # Create plot using matplotlib
@@ -705,8 +709,9 @@ class ImbalancedTraining:
             self.pretrain_cycle(cycle_idx)
 
             # Save and visualize class distribution
-            if self.save_class_distribution:
+            if self.args.logger and self.args.log_tsne:
                 self.visualize_embedding_space(cycle_idx + 1)
+            if self.args.logger and self.args.log_class_dist:
                 self.save_class_dist(cycle_idx + 1)
 
     def finetune(self) -> dict:
@@ -819,7 +824,7 @@ class ImbalancedTraining:
         )
 
         # For Wandb logging
-        has_wandb = self.args.logger
+        has_wandb = self.args.logger and self.args.log_generated_samples
         image_resize = transforms.Resize((64, 64))  # Resize to 64x64 for Wandb
         wandb_logger = self.trainer_args.get("logger", None)
         log_every_n_classes = getattr(self.args, "log_every_n_classes", 1)

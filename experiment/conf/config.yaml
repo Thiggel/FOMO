@@ -73,6 +73,9 @@ finetune: true
 sample_selection: ood
 remove_diffusion: false
 ood_augmentation: false
+log_tsne: false
+log_class_dist: false
+log_generated_samples: false
 
 # Optional paths
 additional_data_path: null
