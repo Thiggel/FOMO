@@ -91,6 +91,7 @@ def init_ssl_type(
         "temperature_min": args.temperature_min,
         "temperature_max": args.temperature_max,
         "t_max": args.t_max,
+        "sdclr_prune_rate": args.get("sdclr_prune_rate", 0.0),
     }
 
     return ssl_type.initialize(**ssl_args)

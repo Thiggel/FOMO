@@ -15,7 +15,7 @@ python experiment [... arguments]
 --root_dir
 
 --model_name {ResNet18,ResNet50,ViTSmall,ViTBase}
---ssl_method {SimCLR}
+--ssl_method {SimCLR,SDCLR}
 
 --lr
 --temperature
@@ -59,7 +59,7 @@ Use `--use-temperature-schedule` to enable a cosine schedule for the temperature
 │   │   │                                       # (e.g. resnet-18, resnet-50, ViT)
 │   │   │
 │   │   ├── SSLMethods                          # Self-supervised training methods
-│   │   │                                       # (e.g. SimCLR)
+│   │   │                                       # (e.g. SimCLR, SDCLR)
 │   │   │
 │   │   ├── SSLTypes.py                         # This file defines all SSL methods
 │   │   │                                       # that can be selected in the main script
