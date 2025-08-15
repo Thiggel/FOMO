@@ -55,8 +55,8 @@ use_bfloat16: false
 ema: [0.996, 1.0]
 
 # Run configuration
-num_runs: 1
-max_hours_per_run: 12
+num_runs: 3
+max_hours_per_run: 18
 seeds: [0, 1, 2, 3, 4]
 checkpoint: null
 checkpoint_list: null
