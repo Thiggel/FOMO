@@ -62,6 +62,9 @@ checkpoint: null
 checkpoint_list: null
 calc_novelty_score: false
 
+# Visualization
+tsne_max_samples: 10000
+
 # Flags
 
 logger: false
