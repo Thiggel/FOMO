@@ -200,7 +200,9 @@ class ImbalancedTraining:
                         * self.args.grad_acc_steps
                         * torch.cuda.device_count(),
                         "bf16": {"enabled": False},
-                        "zero_optimization": {"stage": 2},
+                        "zero_optimization": {
+                            "stage": 2,
+                        },
                         "zero_allow_untested_optimizer": True,
                     },
                 )
@@ -743,7 +745,7 @@ class ImbalancedTraining:
 
             finetuner = benchmark(
                 model=self.ssl_method.model,
-                lr=self.args.lr,
+                lr=self.args.ssl.lr,
                 transform=transform,
                 crop_size=self.args.crop_size,
             )
@@ -767,9 +769,8 @@ class ImbalancedTraining:
             if torch.cuda.is_available():
                 strategy = DeepSpeedStrategy(
                     config={
-                        "train_batch_size": 64 * torch.cuda.device_count(),
-                        "train_micro_batch_size_per_gpu": 64,
-                        "zero_optimization": {"stage": 2},
+                        "train_batch_size": 33 * torch.cuda.device_count(),
+                        "zero_optimization": {"stage": 1},
                         "zero_allow_untested_optimizer": True,
                     },
                 )
