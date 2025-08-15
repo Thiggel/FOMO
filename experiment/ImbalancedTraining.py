@@ -305,9 +305,7 @@ class ImbalancedTraining:
         if self.args.pretrain:
             self.pretrain_imbalanced()
 
-            if os.path.exists(
-                self.checkpoint_callback.best_model_path
-            ):
+            if os.path.exists(self.checkpoint_callback.best_model_path):
                 output_path = (
                     self.checkpoint_callback.best_model_path
                     + "_fp32.pt".replace(":", "_").replace(" ", "_")
@@ -531,9 +529,7 @@ class ImbalancedTraining:
         ood_indices = [idx for idx in ood_indices if 0 <= idx < len(labels)]
         ood_mask[ood_indices] = True
 
-        fig = self.plot_tsne(
-            tsne_embeddings, labels, class_names, ood_mask=ood_mask
-        )
+        fig = self.plot_tsne(tsne_embeddings, labels, class_names, ood_mask=ood_mask)
 
         vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
@@ -542,9 +538,8 @@ class ImbalancedTraining:
         plt.close(fig)
 
         # 5. Log to Wandb
-        if (
-            self.args.logger
-            and hasattr(self.trainer_args.get("logger", None), "experiment")
+        if self.args.logger and hasattr(
+            self.trainer_args.get("logger", None), "experiment"
         ):
             wandb_logger = self.trainer_args["logger"]
             wandb_logger.experiment.log(
@@ -605,9 +600,8 @@ class ImbalancedTraining:
         print(f"Std samples per class: {class_counts.std().item():.2f}")
 
         # Create visualization and log to Wandb
-        if (
-            self.args.logger
-            and hasattr(self.trainer_args.get("logger", None), "experiment")
+        if self.args.logger and hasattr(
+            self.trainer_args.get("logger", None), "experiment"
         ):
             try:
                 # Create plot using matplotlib
@@ -827,11 +821,9 @@ class ImbalancedTraining:
         # For Wandb logging
         has_wandb = self.args.logger
         image_resize = transforms.Resize((64, 64))  # Resize to 64x64 for Wandb
-
-        # Store class-wise examples for Wandb
-        wandb_originals = {}
-        wandb_generated = {}
-        wandb_class_names = {}
+        wandb_logger = self.trainer_args.get("logger", None)
+        log_every_n_classes = getattr(self.args, "log_every_n_classes", 1)
+        logged_classes = 0
 
         total_images_saved = 0
         already_saved_sample_classes = set()
@@ -886,30 +878,39 @@ class ImbalancedTraining:
                         image.save(save_path_original, "PNG")
 
                     # For Wandb logging
-                    if has_wandb:
+                    if (
+                        has_wandb
+                        and wandb_logger
+                        and hasattr(wandb_logger, "experiment")
+                    ):
                         # Prepare original image for wandb
                         if torch.is_tensor(image):
-                            # Make sure tensor is in CPU first
                             img_tensor = image.cpu()
-                            # Check if we need to denormalize
                             if img_tensor.min() < 0:
                                 img_tensor = denorm(img_tensor)
-                            # Resize the tensor for wandb
                             img_tensor = image_resize(img_tensor)
-                            # Convert to PIL
                             orig_small = transforms.ToPILImage()(img_tensor)
+                            img_tensor = None
                         else:
-                            # If already PIL
                             orig_small = image_resize(image)
 
-                        # For generated image (already PIL format)
                         gen_small = image_resize(batch_images[0])
 
-                        # Store for logging (using class index as key)
-                        class_idx = label
-                        wandb_originals[class_idx] = orig_small
-                        wandb_generated[class_idx] = gen_small
-                        wandb_class_names[class_idx] = class_name
+                        logged_classes += 1
+                        if logged_classes % log_every_n_classes == 0:
+                            wandb_logger.experiment.log(
+                                {
+                                    f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
+                                        orig_small
+                                    ),
+                                    f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
+                                        gen_small
+                                    ),
+                                    "cycle": cycle_idx,
+                                }
+                            )
+                        orig_small = None
+                        gen_small = None
 
                 # Save all generated images
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
@@ -992,30 +993,38 @@ class ImbalancedTraining:
                     save_image(images[0].cpu(), save_path_original)
 
                     # For Wandb logging - prepare image pairs (original and generated)
-                    if has_wandb:
-                        # Convert tensor to PIL for wandb
+                    if (
+                        has_wandb
+                        and wandb_logger
+                        and hasattr(wandb_logger, "experiment")
+                    ):
                         if torch.is_tensor(images[0]):
-                            # Make sure tensor is in CPU first
                             img_tensor = images[0].cpu()
-                            # Check if we need to denormalize
                             if img_tensor.min() < 0:
                                 img_tensor = denorm(img_tensor)
-                            # Resize the tensor for wandb
                             img_tensor = image_resize(img_tensor)
-                            # Convert to PIL
                             orig_small = transforms.ToPILImage()(img_tensor)
+                            img_tensor = None
                         else:
-                            # If already PIL
                             orig_small = image_resize(images[0])
 
-                        # For generated image (PIL format)
                         gen_small = image_resize(batch_images[0])
 
-                        # Store for logging (using class index as key)
-                        class_idx = labels[0].item()
-                        wandb_originals[class_idx] = orig_small
-                        wandb_generated[class_idx] = gen_small
-                        wandb_class_names[class_idx] = class_name
+                        logged_classes += 1
+                        if logged_classes % log_every_n_classes == 0:
+                            wandb_logger.experiment.log(
+                                {
+                                    f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
+                                        orig_small
+                                    ),
+                                    f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
+                                        gen_small
+                                    ),
+                                    "cycle": cycle_idx,
+                                }
+                            )
+                        orig_small = None
+                        gen_small = None
 
                 # Save all generated images for this batch
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
@@ -1025,34 +1034,13 @@ class ImbalancedTraining:
 
         print(f"Total images generated and saved: {total_images_saved}")
 
-        # Log image examples to Wandb
-        if (
-            has_wandb
-            and wandb_originals
-            and hasattr(self.trainer_args.get("logger", None), "experiment")
-        ):
-            wandb_logger = self.trainer_args["logger"]
-
-            # Log each class separately to avoid JSON serialization issues
-            for class_idx in wandb_originals.keys():
-                class_name = wandb_class_names[class_idx]
-
-                wandb_logger.experiment.log(
-                    {
-                        f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
-                            wandb_originals[class_idx]
-                        ),
-                        f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
-                            wandb_generated[class_idx]
-                        ),
-                        "cycle": cycle_idx,
-                    }
-                )
-
-            # Log a summary of how many classes were augmented
+        # Log a summary of how many classes were augmented
+        if has_wandb and wandb_logger and hasattr(wandb_logger, "experiment"):
             wandb_logger.experiment.log(
                 {
-                    f"cycle_{cycle_idx}/augmented_classes": len(wandb_originals),
+                    f"cycle_{cycle_idx}/augmented_classes": len(
+                        already_saved_sample_classes
+                    ),
                     "cycle": cycle_idx,
                 }
             )
