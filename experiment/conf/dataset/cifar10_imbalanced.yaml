@@ -1,2 +1,2 @@
-dataset_path: ILSVRC/imagenet-1k
+dataset_path: uoft-cs/cifar10
 imbalance_method: power_law_imbalance

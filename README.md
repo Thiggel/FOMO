@@ -46,9 +46,9 @@ Use `--use-temperature-schedule` to enable a cosine schedule for the temperature
 ```
 ├── experiment
 │   ├── __main__.py                             # Main file that runs SSL and finetuning
-│   ├── dataset                                 # SSL datasets (ImageNet)
+│   ├── dataset                                 # SSL datasets
 │   │   ├── ContrastiveTransformations.py       # Helper for SimCLR transformations
-│   │   ├── ImbalancedImageNetDataModule.py     # Imbalanced ImageNet (-100, -1k, ...)
+│   │   ├── ImbalancedDataModule.py             # Imbalanced datasets (ImageNet, CIFAR, ...)
 │   ├── loggers                                 # Tensorboard loggers (e.g. image loggers)
 │   ├── models
 │   │   ├── FinetuningBenchmarks                # Contains all finetuning benchmarks

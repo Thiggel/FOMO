@@ -1,0 +1,2 @@
+dataset_path: uoft-cs/cifar100
+imbalance_method: no_imbalance

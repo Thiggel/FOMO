@@ -1,7 +1,5 @@
 import os
-from tqdm import tqdm
 import torch
-from typing import TypedDict
 from PIL import Image
 from torch.utils.data import Dataset
 import pickle
@@ -15,31 +13,7 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import (
 from experiment.dataset.ImageStorage import ImageStorage
 
 
-class DataPoint(TypedDict):
-    image: Image.Image
-    label: int
-
-
-class DummyImageNet(Dataset):
-    def __init__(self, num_classes: int, transform=None):
-        super().__init__()
-
-        self.num_classes = num_classes
-        self.transform = transform
-
-    def __len__(self):
-        return 100
-
-    def __getitem__(self, _) -> tuple[Image.Image, int]:
-        datapoint: DataPoint = {"image": Image.new("RGB", (224, 224)), "label": 0}
-
-        if self.transform:
-            datapoint["image"] = self.transform(datapoint["image"])
-
-        return datapoint["image"], datapoint["label"]
-
-
-class ImbalancedImageNet(Dataset):
+class ImbalancedDataset(Dataset):
     def __init__(
         self,
         dataset_path: str,

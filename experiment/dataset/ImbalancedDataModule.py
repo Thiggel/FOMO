@@ -3,23 +3,21 @@ import torch
 from torch import Tensor
 from torch.utils.data import random_split, DataLoader, Dataset, Subset
 from typing import Callable
-from experiment.dataset.ImageNetVariants import ImageNetVariants
-from experiment.dataset.ImbalancedImageNet import DummyImageNet, ImbalancedImageNet
+from experiment.dataset.ImbalancedDataset import ImbalancedDataset
 from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethods,
     ImbalanceMethod,
 )
 from torchvision import transforms
-import random
 
 from experiment.utils.get_num_workers import get_num_workers
 
 
-class ImbalancedImageNetDataModule(L.LightningDataModule):
+class ImbalancedDataModule(L.LightningDataModule):
     def __init__(
         self,
         collate_fn: Callable = torch.utils.data._utils.collate.default_collate,
-        dataset_variant: ImageNetVariants = ImageNetVariants.ImageNet100,
+        dataset_path: str = "clane9/imagenet-100",
         transform: Callable = transforms.Compose(
             [
                 transforms.Resize((224, 224)),
@@ -34,7 +32,6 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         val_batch_size: int = 64,
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         checkpoint_filename: str = None,
-        test_mode: bool = False,
         additional_data_path: str = "additional_data",
     ):
         super().__init__()
@@ -44,16 +41,13 @@ class ImbalancedImageNetDataModule(L.LightningDataModule):
         self.train_batch_size = train_batch_size
         self.val_batch_size = val_batch_size
 
-        if test_mode:
-            self.dataset = DummyImageNet(100, transform=self.transform)
-        else:
-            self.dataset = ImbalancedImageNet(
-                dataset_variant.value.path,
-                transform=self.transform,
-                imbalance_method=imbalance_method,
-                checkpoint_filename=checkpoint_filename,
-                additional_data_path=additional_data_path,
-            )
+        self.dataset = ImbalancedDataset(
+            dataset_path,
+            transform=self.transform,
+            imbalance_method=imbalance_method,
+            checkpoint_filename=checkpoint_filename,
+            additional_data_path=additional_data_path,
+        )
 
         self.num_classes = self.dataset.num_classes
 

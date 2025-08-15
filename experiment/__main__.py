@@ -13,10 +13,8 @@ from lightning.pytorch.callbacks import (
 )
 from lightning.pytorch.loggers import WandbLogger
 import wandb
-import torch
 from torch import nn
 import torch.multiprocessing as mp
-from torchvision import transforms
 from huggingface_hub import login
 import hydra
 from omegaconf import DictConfig
@@ -27,21 +25,18 @@ from experiment.utils.get_model_name import get_model_name
 from experiment.utils.generate_random_string import generate_random_string
 from experiment.utils.calc_novelty_score import calc_novelty_score
 
-from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
+from experiment.dataset.ImbalancedDataModule import ImbalancedDataModule
 from experiment.models.ModelTypes import ModelTypes
 from experiment.models.SSLTypes import SSLTypes
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
-from experiment.dataset.ImageNetVariants import ImageNetVariants
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.ImbalancedTraining import ImbalancedTraining
 
 mp.set_start_method("spawn")
 torch.multiprocessing.set_sharing_strategy("file_system")
-import os
 import shutil
-import torch.multiprocessing as mp
 from pathlib import Path
 import warnings
 
@@ -51,16 +46,15 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDataModule:
     ssl_method = SSLTypes.get_ssl_type(args.ssl_method)
 
-    return ImbalancedImageNetDataModule(
+    return ImbalancedDataModule(
         collate_fn=ssl_method.collate_fn(args),
-        dataset_variant=ImageNetVariants.init_variant(args.imagenet_variant),
+        dataset_path=args.dataset_path,
         imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
         splits=args.splits,
         train_batch_size=args.train_batch_size,
         val_batch_size=args.val_batch_size,
         checkpoint_filename=checkpoint_filename,
         transform=ssl_method.transforms(args),
-        test_mode=args.test_mode,
         additional_data_path=args.additional_data_path,
     )
 
@@ -111,11 +105,12 @@ def run(
 
     args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
 
+    dataset_id = args.dataset_path.replace("/", "_")
     checkpoint_filename = (
-        args.experiment_name + "_" + args.imagenet_variant + "_" + str(datetime.now())
+        args.experiment_name + "_" + dataset_id + "_" + str(datetime.now())
     )
 
-    dataset_pickle_filename = args.imagenet_variant + "_" + args.imbalance_method
+    dataset_pickle_filename = dataset_id + "_" + args.imbalance_method
 
     if not args.calc_novelty_score and args.pretrain:
         datamodule = init_datamodule(
@@ -180,7 +175,7 @@ def run(
         save_top_k=-1,  # This allows saving all checkpoints matching every_n_epochs
     )
 
-    if args.logger and not args.test_mode:
+    if args.logger:
         log_name = args.experiment_name if args.experiment_name else checkpoint_filename
         os.environ["WANDB_DIR"] = os.environ["BASE_CACHE_DIR"]
         wandb_logger = WandbLogger(
@@ -203,7 +198,7 @@ def run(
         "accumulate_grad_batches": args.grad_acc_steps,
         "callbacks": callbacks,
         "enable_checkpointing": True,
-        "logger": wandb_logger if args.logger and not args.test_mode else None,
+        "logger": wandb_logger if args.logger else None,
     }
 
     if torch.cuda.is_available():
@@ -240,7 +235,7 @@ def run(
 
     results = imbalanced_training.run()
 
-    if args.logger and not args.test_mode:
+    if args.logger:
         wandb_logger.experiment.unwatch()
 
     return results
@@ -294,7 +289,7 @@ def run_app(args: DictConfig) -> None:
         + generate_random_string()
     )
 
-    if not args.test_mode:
+    if args.logger:
         api_key = os.getenv("WANDB_API_KEY")
         wandb.login(key=api_key)
 

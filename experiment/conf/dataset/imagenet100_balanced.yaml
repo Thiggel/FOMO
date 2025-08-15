@@ -1,0 +1,2 @@
+dataset_path: clane9/imagenet-100
+imbalance_method: no_imbalance

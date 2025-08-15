@@ -303,7 +303,7 @@ class ImbalancedTraining:
         if self.args.pretrain:
             self.pretrain_imbalanced()
 
-            if not self.args.test_mode and os.path.exists(
+            if os.path.exists(
                 self.checkpoint_callback.best_model_path
             ):
                 output_path = (
@@ -546,7 +546,6 @@ class ImbalancedTraining:
         # 5. Log to Wandb
         if (
             self.args.logger
-            and not self.args.test_mode
             and hasattr(self.trainer_args.get("logger", None), "experiment")
         ):
             wandb_logger = self.trainer_args["logger"]
@@ -606,7 +605,6 @@ class ImbalancedTraining:
         # Create visualization and log to Wandb
         if (
             self.args.logger
-            and not self.args.test_mode
             and hasattr(self.trainer_args.get("logger", None), "experiment")
         ):
             try:
@@ -826,7 +824,7 @@ class ImbalancedTraining:
         )
 
         # For Wandb logging
-        has_wandb = self.args.logger and not self.args.test_mode
+        has_wandb = self.args.logger
         image_resize = transforms.Resize((64, 64))  # Resize to 64x64 for Wandb
 
         # Store class-wise examples for Wandb
