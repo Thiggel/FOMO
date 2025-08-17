@@ -1,6 +1,5 @@
 from torch.utils.data import DataLoader
-from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
-from experiment.dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.ImbalancedDataModule import ImbalancedDataModule
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.models.finetuning_benchmarks.BaseKNNClassifier import BaseKNNClassifier
 from experiment.utils.set_seed import set_seed
@@ -16,8 +15,8 @@ class ImageNet100LTKNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
         # Recreate the exact long-tailed dataset used during training
         set_seed(self.seed)
-        dm = ImbalancedImageNetDataModule(
-            dataset_variant=ImageNetVariants.ImageNet100,
+        dm = ImbalancedDataModule(
+            dataset_path="clane9/imagenet-100",
             imbalance_method=ImbalanceMethods.PowerLawImbalance,
             transform=self.transform,
         )

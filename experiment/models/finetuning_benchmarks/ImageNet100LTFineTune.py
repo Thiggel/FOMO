@@ -1,6 +1,5 @@
 from torch.utils.data import DataLoader
-from experiment.dataset.ImbalancedImageNetDataModule import ImbalancedImageNetDataModule
-from experiment.dataset.ImageNetVariants import ImageNetVariants
+from experiment.dataset.ImbalancedDataModule import ImbalancedDataModule
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.models.finetuning_benchmarks.TransferLearningBenchmark import (
     TransferLearningBenchmark,
@@ -36,8 +35,8 @@ class ImageNet100LTFineTune(TransferLearningBenchmark):
     def get_datasets(self):
         # Ensure the same long-tailed dataset split as used during training
         set_seed(self.seed)
-        dm = ImbalancedImageNetDataModule(
-            dataset_variant=ImageNetVariants.ImageNet100,
+        dm = ImbalancedDataModule(
+            dataset_path="clane9/imagenet-100",
             imbalance_method=ImbalanceMethods.PowerLawImbalance,
             transform=self.transform,
         )
