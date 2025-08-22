@@ -19,6 +19,9 @@ class ImbalancedDataset(Dataset):
         dataset_path: str,
         additional_data_path: str = "additional_data",
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
+        split: str = "train+validation",
+        x_key: str = "image",
+        y_key: str = "label",
         checkpoint_filename: str = None,
         transform=None,
     ):
@@ -26,7 +29,6 @@ class ImbalancedDataset(Dataset):
 
         self.checkpoint_filename = checkpoint_filename
         self.transform = transform
-        split = "train+validation"
         self.additional_data_path = additional_data_path
 
         print("Loading dataset", dataset_path)
@@ -35,9 +37,12 @@ class ImbalancedDataset(Dataset):
             split=split,
             trust_remote_code=True,
         )
-        self.labels = self.dataset.features["label"].names
+        self.x_key = x_key
+        self.y_key = y_key
 
-        self.classes = self.dataset.features["label"].names
+        self.labels = self.dataset.features[y_key].names
+
+        self.classes = self.dataset.features[y_key].names
         self.num_classes = len(self.classes)
         self.imbalancedness = imbalance_method.value.impl(self.num_classes)
         self.indices = self._load_or_create_indices()
@@ -141,8 +146,8 @@ class ImbalancedDataset(Dataset):
         if idx < len(self.indices):
             # Get item from original dataset
             datapoint = self.dataset[self.indices[idx]]
-            image = datapoint["image"]
-            label = datapoint["label"]
+            image = datapoint[self.x_key]
+            label = datapoint[self.y_key]
         else:
             # Get generated image
             cycle_idx, image_idx, label = self._get_additional_image_info(idx)

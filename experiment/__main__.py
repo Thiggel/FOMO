@@ -48,8 +48,11 @@ def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDa
 
     return ImbalancedDataModule(
         collate_fn=ssl_method.collate_fn(args),
-        dataset_path=args.dataset_path,
-        imbalance_method=ImbalanceMethods.init_method(args.imbalance_method),
+        dataset_path=args.dataset.dataset_path,
+        split=args.dataset.split,
+        x_key=args.dataset.x_key,
+        y_key=args.dataset.y_key,
+        imbalance_method=ImbalanceMethods.init_method(args.dataset.imbalance_method),
         splits=args.splits,
         train_batch_size=args.train_batch_size,
         val_batch_size=args.val_batch_size,
@@ -106,12 +109,12 @@ def run(
 
     args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
 
-    dataset_id = args.dataset_path.replace("/", "_")
+    dataset_id = args.dataset.dataset_path.replace("/", "_")
     checkpoint_filename = (
         args.experiment_name + "_" + dataset_id + "_" + str(datetime.now())
     )
 
-    dataset_pickle_filename = dataset_id + "_" + args.imbalance_method
+    dataset_pickle_filename = dataset_id + "_" + args.dataset.imbalance_method
 
     if not args.calc_novelty_score and args.pretrain:
         datamodule = init_datamodule(
@@ -172,7 +175,7 @@ def run(
     every_20_epoch_checkpoint = ModelCheckpoint(
         dirpath=checkpoints_dir,
         filename=checkpoint_filename + "-epoch-{epoch}-{val_loss:.4f}",
-        every_n_epochs=20,  # Save every 20 epochs
+        every_n_epochs=200,  # Save every 20 epochs
         save_top_k=-1,  # This allows saving all checkpoints matching every_n_epochs
     )
 

@@ -1,2 +1,5 @@
 dataset_path: ILSVRC/imagenet-1k
 imbalance_method: no_imbalance
+split: train+validation
+x_key: image
+y_key: label

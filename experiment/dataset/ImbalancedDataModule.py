@@ -18,6 +18,9 @@ class ImbalancedDataModule(L.LightningDataModule):
         self,
         collate_fn: Callable = torch.utils.data._utils.collate.default_collate,
         dataset_path: str = "clane9/imagenet-100",
+        split: str = "train+validation",
+        x_key: str = "image",
+        y_key: str = "label",
         transform: Callable = transforms.Compose(
             [
                 transforms.Resize((224, 224)),
@@ -47,6 +50,9 @@ class ImbalancedDataModule(L.LightningDataModule):
             imbalance_method=imbalance_method,
             checkpoint_filename=checkpoint_filename,
             additional_data_path=additional_data_path,
+            split=split,
+            x_key=x_key,
+            y_key=y_key,
         )
 
         self.num_classes = self.dataset.num_classes

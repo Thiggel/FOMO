@@ -54,14 +54,6 @@ class FinetuningBenchmarks:
     test_benchmarks = []
 
     @staticmethod
-    def get_benchmarks(benchmark_names: list[str]):
-        return [
-            benchmark
-            for benchmark in FinetuningBenchmarks.benchmarks
-            if benchmark.__name__ in benchmark_names
-        ]
-
-    @staticmethod
     def get_all_benchmark_names():
         return [benchmark.__name__ for benchmark in FinetuningBenchmarks.benchmarks]
 

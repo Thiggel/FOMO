@@ -1,2 +1,5 @@
 dataset_path: clane9/imagenet-100
 imbalance_method: power_law_imbalance
+split: train+validation
+x_key: image
+y_key: label

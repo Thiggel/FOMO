@@ -1,9 +1,0 @@
-- model=resnet50
-- ssl=simclr
-- dataset=imagenet100_imbalanced
-- max_cycles=8
-- n_epochs_per_cycle=100
-- ood_augmentation=true
-- experiment_name=sota_newmethod
-- train_batch_size=3
-- val_batch_size=32

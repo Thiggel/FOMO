@@ -716,9 +716,7 @@ class ImbalancedTraining:
 
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
-        benchmarks = FinetuningBenchmarks.get_benchmarks(
-            self.args.finetuning_benchmarks
-        )
+        benchmarks = FinetuningBenchmarks.benchmarks
         results = {}
 
         self.trainer_args.pop("callbacks")
@@ -768,7 +766,8 @@ class ImbalancedTraining:
             if torch.cuda.is_available():
                 strategy = DeepSpeedStrategy(
                     config={
-                        "train_batch_size": 33 * torch.cuda.device_count(),
+                        "train_batch_size": 64 * torch.cuda.device_count(),
+                        "train_micro_batch_size_per_gpu": 64,
                         "zero_optimization": {"stage": 1},
                         "zero_allow_untested_optimizer": True,
                     },

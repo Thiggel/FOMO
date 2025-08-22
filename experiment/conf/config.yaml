@@ -6,7 +6,6 @@ defaults:
 
 # Experiment settings
 experiment_name: null
-finetuning_benchmarks: []
 classification_head: false
 patch_size: 16
 

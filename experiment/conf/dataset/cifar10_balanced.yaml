@@ -1,2 +1,5 @@
 dataset_path: uoft-cs/cifar10
 imbalance_method: no_imbalance
+split: train
+x_key: img
+y_key: label

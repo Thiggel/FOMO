@@ -17,7 +17,7 @@ export HF_HOME="$BASE_CACHE_DIR"
 export HF_DATASETS_CACHE="$BASE_CACHE_DIR/datasets"
 export TRANSFORMERS_CACHE="$BASE_CACHE_DIR/transformers"
 export HF_MODULES_CACHE="$BASE_CACHE_DIR/modules"
-export TMPDIR="$BASE_CACHE_DIR/tmp"
+export TMPDIR="/tmp"
 
 # DeepSpeed
 export DEEPSPEED_CACHE_DIR="$BASE_CACHE_DIR/deepspeed"

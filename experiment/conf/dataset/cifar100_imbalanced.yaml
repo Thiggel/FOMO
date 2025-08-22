@@ -1,2 +1,5 @@
 dataset_path: uoft-cs/cifar100
 imbalance_method: power_law_imbalance
+split: train
+x_key: img
+y_key: label
