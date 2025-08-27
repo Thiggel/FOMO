@@ -187,3 +187,4 @@ ood_samples/*
 .DS_Store
 class_dists.pdf
 class_dists.png
+outputs
