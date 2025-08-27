@@ -1,4 +1,9 @@
+import logging
 import torch
+import torch.distributed as dist
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_mean_std(results: list[dict]) -> dict:
@@ -14,7 +19,11 @@ def get_mean_std(results: list[dict]) -> dict:
 
 
 def print_mean_std(results: list[dict]) -> None:
+    """Log mean and standard deviation of results only from rank zero."""
+    if dist.is_available() and dist.is_initialized() and dist.get_rank() != 0:
+        return
+
     mean_std = get_mean_std(results)
 
     for key, values in mean_std.items():
-        print(f"{key} - Mean: {values['mean']}, Std: {values['std']}")
+        logger.info(f"{key} - Mean: {values['mean']}, Std: {values['std']}")
