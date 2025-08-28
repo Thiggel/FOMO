@@ -32,4 +32,6 @@ export PYTORCH_LIGHTNING_HOME="$BASE_CACHE_DIR/lightning_logs"
 
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 
-pyenv activate fomo
+source .venv/bin/activate
+
+python -m pip install -r requirements.txt
