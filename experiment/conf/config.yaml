@@ -75,6 +75,7 @@ ood_augmentation: false
 log_tsne: false
 log_class_dist: false
 log_generated_samples: false
+use_deepspeed: true
 
 # Optional paths
 additional_data_path: null

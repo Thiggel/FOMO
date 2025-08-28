@@ -10,9 +10,13 @@ from tqdm import tqdm
 import torch
 import numpy as np
 from torch.utils.data import Subset, random_split, Dataset, DataLoader
-from lightning.pytorch.strategies import DeepSpeedStrategy
 import lightning.pytorch as L
 from lightning.pytorch.callbacks import EarlyStopping
+
+try:
+    from lightning.pytorch.strategies import DeepSpeedStrategy
+except Exception:  # pragma: no cover - deepspeed optional
+    DeepSpeedStrategy = None
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
@@ -193,20 +197,23 @@ class ImbalancedTraining:
             cycle_trainer_args = self.trainer_args.copy()
 
             if torch.cuda.is_available():
-
-                strategy = DeepSpeedStrategy(
-                    config={
-                        "train_batch_size": self.args.train_batch_size
-                        * self.args.grad_acc_steps
-                        * torch.cuda.device_count(),
-                        "bf16": {"enabled": False},
-                        "zero_optimization": {
-                            "stage": 2,
+                if self.args.use_deepspeed and DeepSpeedStrategy is not None:
+                    strategy = DeepSpeedStrategy(
+                        config={
+                            "train_batch_size": self.args.train_batch_size
+                            * self.args.grad_acc_steps
+                            * torch.cuda.device_count(),
+                            "bf16": {"enabled": False},
+                            "zero_optimization": {
+                                "stage": 2,
+                            },
+                            "zero_allow_untested_optimizer": True,
                         },
-                        "zero_allow_untested_optimizer": True,
-                    },
-                )
-                cycle_trainer_args["strategy"] = strategy
+                    )
+                    cycle_trainer_args["strategy"] = strategy
+                else:
+                    cycle_trainer_args.pop("strategy", None)
+
                 cycle_trainer_args["accelerator"] = "cuda"
                 cycle_trainer_args["devices"] = "auto"
 
@@ -306,17 +313,26 @@ class ImbalancedTraining:
             self.pretrain_imbalanced()
 
             if os.path.exists(self.checkpoint_callback.best_model_path):
-                output_path = (
-                    self.checkpoint_callback.best_model_path
-                    + "_fp32.pt".replace(":", "_").replace(" ", "_")
-                )
+                if self.args.use_deepspeed:
+                    output_path = (
+                        self.checkpoint_callback.best_model_path
+                        + "_fp32.pt".replace(":", "_").replace(" ", "_")
+                    )
 
-                convert_zero_checkpoint_to_fp32_state_dict(
-                    self.checkpoint_callback.best_model_path,
-                    output_path,
-                )
+                    convert_zero_checkpoint_to_fp32_state_dict(
+                        self.checkpoint_callback.best_model_path,
+                        output_path,
+                    )
 
-                self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
+                    self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
+                else:
+                    checkpoint = torch.load(self.checkpoint_callback.best_model_path)
+                    state_dict = (
+                        checkpoint["state_dict"]
+                        if "state_dict" in checkpoint
+                        else checkpoint
+                    )
+                    self.ssl_method.load_state_dict(state_dict)
 
         return self.finetune() if self.args.finetune else {}
 
@@ -764,16 +780,25 @@ class ImbalancedTraining:
             self.trainer_args["accumulate_grad_batches"] = 1
 
             if torch.cuda.is_available():
-                strategy = DeepSpeedStrategy(
-                    config={
-                        "train_batch_size": 64 * torch.cuda.device_count(),
-                        "train_micro_batch_size_per_gpu": 64,
-                        "zero_optimization": {"stage": 1},
-                        "zero_allow_untested_optimizer": True,
-                    },
-                )
-                self.trainer_args["strategy"] = strategy
-                self.trainer_args.pop("accelerator", None)
+                if (
+                    self.args.use_deepspeed
+                    and DeepSpeedStrategy is not None
+                    and getattr(finetuner, "use_deepspeed", True)
+                ):
+                    strategy = DeepSpeedStrategy(
+                        config={
+                            "train_batch_size": 64 * torch.cuda.device_count(),
+                            "train_micro_batch_size_per_gpu": 64,
+                            "zero_optimization": {"stage": 1},
+                            "zero_allow_untested_optimizer": True,
+                        },
+                    )
+                    self.trainer_args["strategy"] = strategy
+                    self.trainer_args.pop("accelerator", None)
+                else:
+                    self.trainer_args.pop("strategy", None)
+                    self.trainer_args["accelerator"] = "cuda"
+                    self.trainer_args["devices"] = "auto"
 
             trainer = L.Trainer(**self.trainer_args)
             trainer.fit(model=finetuner)
