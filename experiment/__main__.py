@@ -1,7 +1,11 @@
 from datetime import datetime
 import torch
-from lightning.pytorch.strategies import DeepSpeedStrategy
 import os
+
+try:
+    from lightning.pytorch.strategies import DeepSpeedStrategy
+except Exception:  # pragma: no cover - deepspeed optional
+    DeepSpeedStrategy = None
 
 from dotenv import load_dotenv
 import time
@@ -206,22 +210,32 @@ def run(
     }
 
     if torch.cuda.is_available():
-        strategy = DeepSpeedStrategy(
-            config={
-                "train_batch_size": args.train_batch_size,
-                "zero_optimization": {"stage": 2},
-                "zero_allow_untested_optimizer": True,
-            },
-        )
-        os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
-        trainer_args.update(
-            {
-                "strategy": strategy,
-                "devices": "auto",  # Let PyTorch Lightning handle device selection
-                "default_root_dir": os.environ["PYTORCH_LIGHTNING_HOME"],
-            }
-        )
-        trainer_args.pop("accelerator", None)
+        if args.use_deepspeed and DeepSpeedStrategy is not None:
+            strategy = DeepSpeedStrategy(
+                config={
+                    "train_batch_size": args.train_batch_size,
+                    "zero_optimization": {"stage": 2},
+                    "zero_allow_untested_optimizer": True,
+                },
+            )
+            os.environ["DEEPSPEED_COMMUNICATION_CLIENT_WAIT_TIMEOUT"] = "7200"
+            trainer_args.update(
+                {
+                    "strategy": strategy,
+                    "devices": "auto",  # Let PyTorch Lightning handle device selection
+                    "default_root_dir": os.environ["PYTORCH_LIGHTNING_HOME"],
+                }
+            )
+            trainer_args.pop("accelerator", None)
+        else:
+            trainer_args.update(
+                {
+                    "accelerator": "cuda",
+                    "devices": "auto",
+                    "default_root_dir": os.environ["PYTORCH_LIGHTNING_HOME"],
+                }
+            )
+
         print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
         print("GPUs Available: ", torch.cuda.device_count())
 
