@@ -1,0 +1,6 @@
+cd $HOME/FOMO
+
+. jobs/environment.sh
+
+python -m experiment model=resnet50 ssl=simclr dataset=imagenet1k_imbalanced max_cycles=5 n_epochs_per_cycle=20 ood_augmentation=true experiment_name=ablations_backbone_resnet50
+
