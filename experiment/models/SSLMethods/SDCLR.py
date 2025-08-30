@@ -33,18 +33,18 @@ class SDCLR(L.LightningModule):
 
         assert self.hparams.temperature > 0.0, "The temperature must be a positive float!"
 
-        self.model_dense = model
+        self.model = model
         try:
-            if self.model_dense.fc is not None:
-                self.model_dense.fc = SimCLRProjectionHead(
-                    in_dim=self.model_dense.fc.in_features,
+            if self.model.fc is not None:
+                self.model.fc = SimCLRProjectionHead(
+                    in_dim=self.model.fc.in_features,
                     hidden_dim=2048,
                     out_dim=hidden_dim,
                 )
         except Exception:
             pass
 
-        self.model_sparse = copy.deepcopy(self.model_dense)
+        self.model_sparse = copy.deepcopy(self.model)
         for p in self.model_sparse.parameters():
             p.requires_grad = False
 
@@ -63,14 +63,14 @@ class SDCLR(L.LightningModule):
         return threshold
 
     def _apply_pruning(self, prune_rate: float) -> None:
-        threshold = self._compute_threshold(self.model_dense, prune_rate)
+        threshold = self._compute_threshold(self.model, prune_rate)
         for p in self.model_sparse.parameters():
             if p.dim() > 1:
                 mask = p.data.abs() >= threshold
                 p.data.mul_(mask)
 
     def on_train_epoch_start(self) -> None:
-        self.model_sparse.load_state_dict(self.model_dense.state_dict())
+        self.model_sparse.load_state_dict(self.model.state_dict())
         self._apply_pruning(self.hparams.sdclr_prune_rate)
 
     # ------------------------------------------------------------------
@@ -115,7 +115,7 @@ class SDCLR(L.LightningModule):
 
     def info_nce_loss(self, batch, mode: str = "train"):
         (x_i, x_j), _ = batch
-        z_i = F.normalize(self.model_dense(x_i), dim=-1)
+        z_i = F.normalize(self.model(x_i), dim=-1)
         z_j = F.normalize(self.model_sparse(x_j), dim=-1)
 
         z_i = self.concat_all_gather(z_i)
