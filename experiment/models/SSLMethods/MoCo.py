@@ -4,11 +4,11 @@ from torch import nn
 from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
 import copy
-import math
-from torch.optim.lr_scheduler import LambdaLR
 import random
 from PIL import ImageFilter
 from torchvision import transforms
+
+from ._scheduling import ContinuousScheduleMixin
 
 
 class TwoCropsTransform:
@@ -58,7 +58,7 @@ def moco_transform(crop_size=224):
     return TwoCropsTransform(augmentation)
 
 
-class MoCo(L.LightningModule):
+class MoCo(ContinuousScheduleMixin, L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -137,8 +137,6 @@ class MoCo(L.LightningModule):
             param_k.data.copy_(param_q.data)
             param_k.requires_grad = False
 
-        # Maintain global epoch count across cycles
-        self.total_epochs_completed = 0
 
     @torch.no_grad()
     def _momentum_update_key_encoder(self):
@@ -217,25 +215,10 @@ class MoCo(L.LightningModule):
             momentum=0.9,
         )
 
-        warmup_epochs = 10
-        max_epochs = self.hparams.max_epochs
-        start_epoch = self.total_epochs_completed
-
-        def lr_lambda(epoch):
-            global_epoch = start_epoch + epoch
-            if global_epoch < warmup_epochs:
-                return (global_epoch + 1) / warmup_epochs
-            progress = (global_epoch - warmup_epochs) / (max_epochs - warmup_epochs)
-            return 0.5 * (1 + math.cos(math.pi * progress))
-
-        for pg in optimizer.param_groups:
-            pg.setdefault("initial_lr", pg["lr"])
-            pg["lr"] = pg["initial_lr"] * lr_lambda(0)
-
-        scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
+        scheduler = self.cosine_warmup_scheduler(
+            optimizer,
+            warmup_epochs=10,
+            max_epochs=self.hparams.max_epochs,
+        )
 
         return [optimizer], [scheduler]
-
-    def on_train_epoch_end(self):
-        # Increment global epoch counter after each epoch
-        self.total_epochs_completed += 1

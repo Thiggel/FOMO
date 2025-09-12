@@ -3,9 +3,10 @@ import torch.distributed as dist
 import torch
 from torch import nn
 from torch.optim import Optimizer, SGD
-from torch.optim.lr_scheduler import LRScheduler, LambdaLR
+from torch.optim.lr_scheduler import LRScheduler
 import torch.nn.functional as F
-import math
+
+from ._scheduling import ContinuousScheduleMixin
 
 class SimCLRProjectionHead(nn.Module):
     def __init__(self, in_dim: int = 2048, hidden_dim: int = 2048, out_dim: int = 128):
@@ -21,7 +22,7 @@ class SimCLRProjectionHead(nn.Module):
         return self.net(x)
 
 
-class SimCLR(L.LightningModule):
+class SimCLR(ContinuousScheduleMixin, L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -57,23 +58,15 @@ class SimCLR(L.LightningModule):
         except:
             pass
 
-        # Track training progress across multiple cycles
-        self.total_epochs_completed = 0
-
     def temperature(self) -> float:
         if not self.hparams.use_temperature_schedule:
             return self.hparams.temperature
 
-        t_min = self.hparams.temperature_min
-        t_max = self.hparams.temperature_max
-        T = self.hparams.t_max
-
-        # Use global epoch that persists across training cycles
-        temperature = (t_max - t_min) * (
-            1 + math.cos(math.pi * self.total_epochs_completed / T)
-        ) / 2 + t_min
-
-        return temperature
+        return self.cosine_anneal(
+            self.hparams.temperature_min,
+            self.hparams.temperature_max,
+            self.hparams.t_max,
+        )
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer = SGD(
@@ -83,32 +76,14 @@ class SimCLR(L.LightningModule):
             momentum=0.9,
         )
 
-        warmup_epochs = 10
-        total_epochs = self.hparams.max_epochs
-        min_lr_ratio = 2 * 1e-6  # get 1e-6 at the end of training
-        start_epoch = self.total_epochs_completed
-
-        def lr_lambda(epoch):
-            global_epoch = start_epoch + epoch
-            if global_epoch < warmup_epochs:
-                return (global_epoch + 1) / warmup_epochs
-            progress = (global_epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-            return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
-                1 + math.cos(math.pi * progress)
-            )
-
-        # Ensure optimizer starts with the correct learning rate for this cycle
-        for pg in optimizer.param_groups:
-            pg.setdefault("initial_lr", pg["lr"])
-            pg["lr"] = pg["initial_lr"] * lr_lambda(0)
-
-        scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
+        scheduler = self.cosine_warmup_scheduler(
+            optimizer,
+            warmup_epochs=10,
+            max_epochs=self.hparams.max_epochs,
+            min_lr_ratio=2e-6,
+        )
 
         return [optimizer], [scheduler]
-
-    def on_train_epoch_end(self):
-        # Maintain a global epoch counter across cycles
-        self.total_epochs_completed += 1
 
     def concat_all_gather(self, t: torch.Tensor) -> torch.Tensor:
         """

@@ -2,14 +2,14 @@ import lightning.pytorch as L
 import torch
 from torch import nn
 from torch.optim import Optimizer, SGD
-from torch.optim.lr_scheduler import LambdaLR
 import torch.nn.functional as F
 from typing import Tuple, List
 import copy
-import math
+
+from ._scheduling import ContinuousScheduleMixin
 
 
-class Dino(L.LightningModule):
+class Dino(ContinuousScheduleMixin, L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -60,8 +60,6 @@ class Dino(L.LightningModule):
         self.n_global_crops = 2
         self.n_local_crops = n_local_crops
 
-        # Track epochs across cycles for scheduling
-        self.total_epochs_completed = 0
 
     def _build_projection_head(
         self, in_dim: int, hidden_dim: int, out_dim: int
@@ -210,32 +208,13 @@ class Dino(L.LightningModule):
             momentum=0.9,
         )
 
-        warmup_epochs = self.hparams.warmup_epochs
-        max_epochs = self.hparams.max_epochs
-        base_lr = self.hparams.lr
-        eta_min = 1e-6
-        start_factor = 1e-4
-        start_epoch = self.total_epochs_completed
-
-        def lr_lambda(epoch):
-            global_epoch = start_epoch + epoch
-            if global_epoch < warmup_epochs:
-                return start_factor + (1 - start_factor) * (
-                    (global_epoch + 1) / warmup_epochs
-                )
-            progress = (global_epoch - warmup_epochs) / (max_epochs - warmup_epochs)
-            return eta_min / base_lr + (1 - eta_min / base_lr) * 0.5 * (
-                1 + math.cos(math.pi * progress)
-            )
-
-        for pg in optimizer.param_groups:
-            pg.setdefault("initial_lr", pg["lr"])
-            pg["lr"] = pg["initial_lr"] * lr_lambda(0)
-
-        scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
+        scheduler = self.cosine_warmup_scheduler(
+            optimizer,
+            warmup_epochs=self.hparams.warmup_epochs,
+            max_epochs=self.hparams.max_epochs,
+            start_factor=1e-4,
+            base_lr=self.hparams.lr,
+            eta_min=1e-6,
+        )
 
         return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
-
-    def on_train_epoch_end(self):
-        # Maintain global epoch counter across cycles
-        self.total_epochs_completed += 1
