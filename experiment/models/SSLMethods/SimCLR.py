@@ -57,6 +57,9 @@ class SimCLR(L.LightningModule):
         except:
             pass
 
+        # Track training progress across multiple cycles
+        self.total_epochs_completed = 0
+
     def temperature(self) -> float:
         if not self.hparams.use_temperature_schedule:
             return self.hparams.temperature
@@ -65,8 +68,9 @@ class SimCLR(L.LightningModule):
         t_max = self.hparams.temperature_max
         T = self.hparams.t_max
 
+        # Use global epoch that persists across training cycles
         temperature = (t_max - t_min) * (
-            1 + math.cos(math.pi * self.current_epoch / T)
+            1 + math.cos(math.pi * self.total_epochs_completed / T)
         ) / 2 + t_min
 
         return temperature
@@ -79,28 +83,32 @@ class SimCLR(L.LightningModule):
             momentum=0.9,
         )
 
-        # Define the number of warmup epochs
         warmup_epochs = 10
-        max_epochs = self.hparams.max_epochs
-        base_lr = self.hparams.lr
+        total_epochs = self.hparams.max_epochs
+        min_lr_ratio = 2 * 1e-6  # get 1e-6 at the end of training
+        start_epoch = self.total_epochs_completed
 
-        # Combined linear warmup and cosine annealing function
         def lr_lambda(epoch):
-            warmup_epochs = 10
-            total_epochs = 800
-            min_lr_ratio = 2 * 1e-6  # get 1e-6 at the end of training
-            if epoch < warmup_epochs:
-                return (epoch + 1) / warmup_epochs
-            else:
-                progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-                return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
-                    1 + math.cos(math.pi * progress)
-                )
+            global_epoch = start_epoch + epoch
+            if global_epoch < warmup_epochs:
+                return (global_epoch + 1) / warmup_epochs
+            progress = (global_epoch - warmup_epochs) / (total_epochs - warmup_epochs)
+            return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
+                1 + math.cos(math.pi * progress)
+            )
 
-        # Single scheduler with combined behavior
+        # Ensure optimizer starts with the correct learning rate for this cycle
+        for pg in optimizer.param_groups:
+            pg.setdefault("initial_lr", pg["lr"])
+            pg["lr"] = pg["initial_lr"] * lr_lambda(0)
+
         scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
         return [optimizer], [scheduler]
+
+    def on_train_epoch_end(self):
+        # Maintain a global epoch counter across cycles
+        self.total_epochs_completed += 1
 
     def concat_all_gather(self, t: torch.Tensor) -> torch.Tensor:
         """

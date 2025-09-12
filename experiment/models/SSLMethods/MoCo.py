@@ -1,9 +1,6 @@
 import lightning.pytorch as L
 import torch
 from torch import nn
-import lightning.pytorch as L
-import torch
-from torch import nn
 from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
 import copy
@@ -140,6 +137,9 @@ class MoCo(L.LightningModule):
             param_k.data.copy_(param_q.data)
             param_k.requires_grad = False
 
+        # Maintain global epoch count across cycles
+        self.total_epochs_completed = 0
+
     @torch.no_grad()
     def _momentum_update_key_encoder(self):
         """Momentum update of the key encoder"""
@@ -217,20 +217,25 @@ class MoCo(L.LightningModule):
             momentum=0.9,
         )
 
-        # Warmup + cosine decay scheduler
         warmup_epochs = 10
         max_epochs = self.hparams.max_epochs
-        base_lr = self.hparams.lr
+        start_epoch = self.total_epochs_completed
 
         def lr_lambda(epoch):
-            if epoch < warmup_epochs:
-                # Linear warmup
-                return (epoch + 1) / warmup_epochs
-            else:
-                # Cosine decay
-                progress = (epoch - warmup_epochs) / (max_epochs - warmup_epochs)
-                return 0.5 * (1 + math.cos(math.pi * progress))
+            global_epoch = start_epoch + epoch
+            if global_epoch < warmup_epochs:
+                return (global_epoch + 1) / warmup_epochs
+            progress = (global_epoch - warmup_epochs) / (max_epochs - warmup_epochs)
+            return 0.5 * (1 + math.cos(math.pi * progress))
+
+        for pg in optimizer.param_groups:
+            pg.setdefault("initial_lr", pg["lr"])
+            pg["lr"] = pg["initial_lr"] * lr_lambda(0)
 
         scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
         return [optimizer], [scheduler]
+
+    def on_train_epoch_end(self):
+        # Increment global epoch counter after each epoch
+        self.total_epochs_completed += 1

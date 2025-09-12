@@ -50,6 +50,9 @@ class SDCLR(L.LightningModule):
 
         self._apply_pruning(self.hparams.sdclr_prune_rate)
 
+        # Track epochs across cycles to maintain scheduling continuity
+        self.total_epochs_completed = 0
+
     # ------------------------------------------------------------------
     def _compute_threshold(self, model: nn.Module, prune_rate: float) -> float:
         weights = [p.data.abs().flatten() for p in model.parameters() if p.dim() > 1]
@@ -81,7 +84,9 @@ class SDCLR(L.LightningModule):
         t_min = self.hparams.temperature_min
         t_max = self.hparams.temperature_max
         T = self.hparams.t_max
-        temperature = (t_max - t_min) * (1 + math.cos(math.pi * self.current_epoch / T)) / 2 + t_min
+        temperature = (t_max - t_min) * (
+            1 + math.cos(math.pi * self.total_epochs_completed / T)
+        ) / 2 + t_min
         return temperature
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
@@ -92,17 +97,30 @@ class SDCLR(L.LightningModule):
             momentum=0.9,
         )
 
+        warmup_epochs = 10
+        total_epochs = self.hparams.max_epochs
+        min_lr_ratio = 2 * 1e-6
+        start_epoch = self.total_epochs_completed
+
         def lr_lambda(epoch):
-            warmup_epochs = 10
-            total_epochs = 800
-            min_lr_ratio = 2 * 1e-6
-            if epoch < warmup_epochs:
-                return (epoch + 1) / warmup_epochs
-            progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-            return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (1 + math.cos(math.pi * progress))
+            global_epoch = start_epoch + epoch
+            if global_epoch < warmup_epochs:
+                return (global_epoch + 1) / warmup_epochs
+            progress = (global_epoch - warmup_epochs) / (total_epochs - warmup_epochs)
+            return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
+                1 + math.cos(math.pi * progress)
+            )
+
+        for pg in optimizer.param_groups:
+            pg.setdefault("initial_lr", pg["lr"])
+            pg["lr"] = pg["initial_lr"] * lr_lambda(0)
 
         scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
         return [optimizer], [scheduler]
+
+    def on_train_epoch_end(self):
+        # Update global epoch counter after each epoch
+        self.total_epochs_completed += 1
 
     # ------------------------------------------------------------------
     def concat_all_gather(self, t: torch.Tensor) -> torch.Tensor:
