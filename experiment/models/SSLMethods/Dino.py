@@ -1,15 +1,15 @@
 import lightning.pytorch as L
-
 import torch
 from torch import nn
 from torch.optim import Optimizer, SGD
-from torch.optim.lr_scheduler import CosineAnnealingLR
 import torch.nn.functional as F
 from typing import Tuple, List
 import copy
 
+from ._scheduling import ContinuousScheduleMixin
 
-class Dino(L.LightningModule):
+
+class Dino(ContinuousScheduleMixin, L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -59,6 +59,7 @@ class Dino(L.LightningModule):
         # Number of crops
         self.n_global_crops = 2
         self.n_local_crops = n_local_crops
+
 
     def _build_projection_head(
         self, in_dim: int, hidden_dim: int, out_dim: int
@@ -207,20 +208,13 @@ class Dino(L.LightningModule):
             momentum=0.9,
         )
 
-        # Set up learning rate scheduler
-        warmup_scheduler = torch.optim.lr_scheduler.LinearLR(
-            optimizer, start_factor=1e-4, total_iters=self.hparams.warmup_epochs
-        )
-        cosine_scheduler = CosineAnnealingLR(
+        scheduler = self.cosine_warmup_scheduler(
             optimizer,
-            T_max=self.hparams.max_epochs - self.hparams.warmup_epochs,
+            warmup_epochs=self.hparams.warmup_epochs,
+            max_epochs=self.hparams.max_epochs,
+            start_factor=1e-4,
+            base_lr=self.hparams.lr,
             eta_min=1e-6,
-        )
-
-        scheduler = torch.optim.lr_scheduler.SequentialLR(
-            optimizer,
-            schedulers=[warmup_scheduler, cosine_scheduler],
-            milestones=[self.hparams.warmup_epochs],
         )
 
         return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]

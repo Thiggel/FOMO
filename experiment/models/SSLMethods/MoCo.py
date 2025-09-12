@@ -1,17 +1,14 @@
 import lightning.pytorch as L
 import torch
 from torch import nn
-import lightning.pytorch as L
-import torch
-from torch import nn
 from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
 import copy
-import math
-from torch.optim.lr_scheduler import LambdaLR
 import random
 from PIL import ImageFilter
 from torchvision import transforms
+
+from ._scheduling import ContinuousScheduleMixin
 
 
 class TwoCropsTransform:
@@ -61,7 +58,7 @@ def moco_transform(crop_size=224):
     return TwoCropsTransform(augmentation)
 
 
-class MoCo(L.LightningModule):
+class MoCo(ContinuousScheduleMixin, L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -140,6 +137,7 @@ class MoCo(L.LightningModule):
             param_k.data.copy_(param_q.data)
             param_k.requires_grad = False
 
+
     @torch.no_grad()
     def _momentum_update_key_encoder(self):
         """Momentum update of the key encoder"""
@@ -217,20 +215,10 @@ class MoCo(L.LightningModule):
             momentum=0.9,
         )
 
-        # Warmup + cosine decay scheduler
-        warmup_epochs = 10
-        max_epochs = self.hparams.max_epochs
-        base_lr = self.hparams.lr
-
-        def lr_lambda(epoch):
-            if epoch < warmup_epochs:
-                # Linear warmup
-                return (epoch + 1) / warmup_epochs
-            else:
-                # Cosine decay
-                progress = (epoch - warmup_epochs) / (max_epochs - warmup_epochs)
-                return 0.5 * (1 + math.cos(math.pi * progress))
-
-        scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
+        scheduler = self.cosine_warmup_scheduler(
+            optimizer,
+            warmup_epochs=10,
+            max_epochs=self.hparams.max_epochs,
+        )
 
         return [optimizer], [scheduler]
