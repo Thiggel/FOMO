@@ -47,7 +47,7 @@ class ImageNet100FineTune(TransferLearningBenchmark):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=True,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -56,7 +56,7 @@ class ImageNet100FineTune(TransferLearningBenchmark):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=True,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -65,5 +65,5 @@ class ImageNet100FineTune(TransferLearningBenchmark):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=True,
         )

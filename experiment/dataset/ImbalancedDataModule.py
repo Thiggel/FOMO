@@ -102,7 +102,7 @@ class ImbalancedDataModule(L.LightningDataModule):
             batch_size=self.train_batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=True,
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -114,7 +114,7 @@ class ImbalancedDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=True,
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -125,7 +125,7 @@ class ImbalancedDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=True,
             collate_fn=self.collate_fn,
             drop_last=True,
         )

@@ -2,7 +2,7 @@ import lightning.pytorch as L
 import torch.distributed as dist
 import torch
 from torch import nn
-from torch.optim import Optimizer, SGD
+from torch.optim import Optimizer, SGD, Adam
 from torch.optim.lr_scheduler import LRScheduler, LambdaLR
 import torch.nn.functional as F
 import math
@@ -72,11 +72,10 @@ class SimCLR(L.LightningModule):
         return temperature
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
-        optimizer = SGD(
+        optimizer = Adam(
             self.parameters(),
             lr=self.hparams.lr,
             weight_decay=self.hparams.weight_decay,
-            momentum=0.9,
         )
 
         # Define the number of warmup epochs

@@ -49,8 +49,8 @@ class TransferLearningBenchmark(L.LightningModule):
     def configure_optimizers(self):
         param_groups = [p for p in self.parameters() if p.requires_grad]
 
-        optimizer = torch.optim.SGD(
-            param_groups, lr=1e-3, momentum=0.9, weight_decay=0
+        optimizer = torch.optim.AdamW(
+            param_groups, lr=1e-3
         )
 
         lr_scheduler = optim.lr_scheduler.MultiStepLR(

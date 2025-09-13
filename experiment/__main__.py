@@ -138,7 +138,7 @@ def run(
 
     if args.checkpoint is not None:
         print("Loading checkpoint:", args.checkpoint)
-        checkpoint = torch.load(args.checkpoint)
+        checkpoint = torch.load(args.checkpoint, weights_only=False)
         state_dict = (
             checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
         )

@@ -2,15 +2,15 @@ module purge
 module load gcc/default
 module load cuda/12.1/12.1.1
 
-export SCRATCH_LOCAL="~/.FOMO"
+export SCRATCH_LOCAL="/groups/gag51492/users"
 
 cd $SCRATCH_LOCAL
-mkdir FOMO
+mkdir FOMO2
 
 cd $HOME/FOMO
 
 # Base directory
-export BASE_CACHE_DIR="$SCRATCH_LOCAL/FOMO"
+export BASE_CACHE_DIR="$SCRATCH_LOCAL/FOMO2"
 
 # Hugging Face
 export HF_HOME="$BASE_CACHE_DIR"

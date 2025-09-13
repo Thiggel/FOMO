@@ -7,16 +7,16 @@ from torchvision import transforms
 
 class StanfordCarsDataset(Dataset):
     def __init__(self, root_dir, annotations_file=None, transform=None, test=False):
-        self.root_dir = root_dir
+        self.root_dir = os.path.expanduser(root_dir)
         self.transform = transform
         self.image_paths = [
-            os.path.join(root_dir, filename)
-            for filename in os.listdir(root_dir)
+            os.path.join(self.root_dir, filename)
+            for filename in os.listdir(self.root_dir)
             if filename.endswith(".jpg")
         ]
 
         if annotations_file:
-            self.annotations_file = sio.loadmat(annotations_file)
+            self.annotations_file = sio.loadmat(os.path.expanduser(annotations_file))
             self.annotations = self.annotations_file["annotations"][
                 0
             ]  # Load annotations
