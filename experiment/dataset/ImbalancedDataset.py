@@ -166,7 +166,7 @@ class ImbalancedDataset(Dataset):
         return image, label
 
     def _get_inverse_distribution(self):
-        labels = torch.tensor(self.dataset["label"], device="cuda")
+        labels = torch.tensor(self.dataset[self.y_key], device="cuda")
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
 
         inverse = 1 - imbalance_probs
@@ -180,7 +180,7 @@ class ImbalancedDataset(Dataset):
         print("Creating dataset indices on GPU...")
 
         # Load labels to a GPU tensor
-        labels = torch.tensor(self.dataset["label"], device="cuda")
+        labels = torch.tensor(self.dataset[self.y_key], device="cuda")
 
         # Get imbalance probabilities for all labels
         imbalance_probs = self.imbalancedness.get_imbalance(labels)

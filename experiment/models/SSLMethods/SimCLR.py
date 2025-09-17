@@ -2,10 +2,11 @@ import lightning.pytorch as L
 import torch.distributed as dist
 import torch
 from torch import nn
-from torch.optim import Optimizer, SGD, Adam
-from torch.optim.lr_scheduler import LRScheduler, LambdaLR
+from torch.optim import Optimizer, Adam
+from torch.optim.lr_scheduler import LRScheduler
 import torch.nn.functional as F
-import math
+
+from ._scheduling import ContinuousScheduleMixin
 
 class SimCLRProjectionHead(nn.Module):
     def __init__(self, in_dim: int = 2048, hidden_dim: int = 2048, out_dim: int = 128):
@@ -21,7 +22,7 @@ class SimCLRProjectionHead(nn.Module):
         return self.net(x)
 
 
-class SimCLR(L.LightningModule):
+class SimCLR(ContinuousScheduleMixin, L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -61,15 +62,11 @@ class SimCLR(L.LightningModule):
         if not self.hparams.use_temperature_schedule:
             return self.hparams.temperature
 
-        t_min = self.hparams.temperature_min
-        t_max = self.hparams.temperature_max
-        T = self.hparams.t_max
-
-        temperature = (t_max - t_min) * (
-            1 + math.cos(math.pi * self.current_epoch / T)
-        ) / 2 + t_min
-
-        return temperature
+        return self.cosine_anneal(
+            self.hparams.temperature_min,
+            self.hparams.temperature_max,
+            self.hparams.t_max,
+        )
 
     def configure_optimizers(self) -> tuple[list[Optimizer], list[LRScheduler]]:
         optimizer = Adam(
@@ -78,26 +75,12 @@ class SimCLR(L.LightningModule):
             weight_decay=self.hparams.weight_decay,
         )
 
-        # Define the number of warmup epochs
-        warmup_epochs = 10
-        max_epochs = self.hparams.max_epochs
-        base_lr = self.hparams.lr
-
-        # Combined linear warmup and cosine annealing function
-        def lr_lambda(epoch):
-            warmup_epochs = 10
-            total_epochs = 800
-            min_lr_ratio = 2 * 1e-6  # get 1e-6 at the end of training
-            if epoch < warmup_epochs:
-                return (epoch + 1) / warmup_epochs
-            else:
-                progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-                return min_lr_ratio + (1 - min_lr_ratio) * 0.5 * (
-                    1 + math.cos(math.pi * progress)
-                )
-
-        # Single scheduler with combined behavior
-        scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
+        scheduler = self.cosine_warmup_scheduler(
+            optimizer,
+            warmup_epochs=10,
+            max_epochs=self.hparams.max_epochs,
+            min_lr_ratio=2e-6,
+        )
 
         return [optimizer], [scheduler]
 
