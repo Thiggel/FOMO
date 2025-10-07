@@ -1,4 +1,5 @@
 import sys
+from typing import Optional
 from sklearn.manifold import TSNE
 import numpy as np
 import wandb
@@ -41,24 +42,35 @@ from experiment.utils.get_num_workers import get_num_workers
 
 
 class FluxAugmentor:
-    def __init__(self):
+    def __init__(self, device: Optional[str] = None, dtype: torch.dtype = torch.bfloat16):
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.dtype = dtype
         self.pipe_prior_redux = FluxPriorReduxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-Redux-dev", torch_dtype=torch.bfloat16
-        ).to("cuda")
+            "black-forest-labs/FLUX.1-Redux-dev",
+            torch_dtype=self.dtype,
+        ).to(self.device)
         self.pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-dev",
+            "black-forest-labs/FLUX.1-schnell",
             text_encoder=None,
             text_encoder_2=None,
-            torch_dtype=torch.bfloat16,
-        ).to("cuda")
+            torch_dtype=self.dtype,
+        ).to(self.device)
 
-    def augment(self, images, num_generations_per_image=1):
-        pipe_prior_output = self.pipe_prior_redux(images)
+    def augment(
+        self,
+        images,
+        num_generations_per_image: int = 1,
+        prompt: Optional[str] = None,
+        num_steps: int = 20,
+        guidance: float = 2.5,
+    ):
+        pipe_prior_output = self.pipe_prior_redux(image=images, prompt=prompt)
 
         return self.pipe(
-            num_images_per_prompt=num_generations_per_image,
-            num_inference_steps=20,
             **pipe_prior_output,
+            num_inference_steps=num_steps,
+            guidance_scale=guidance,
+            num_images_per_prompt=num_generations_per_image,
         ).images
 
 
