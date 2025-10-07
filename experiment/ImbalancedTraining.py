@@ -844,6 +844,26 @@ class ImbalancedTraining:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
+    def _prepare_wandb_image_pair(self, original, generated, denorm, image_resize):
+        """Convert original and generated images to small PIL images for Wandb logging."""
+        if torch.is_tensor(original):
+            original_tensor = original.detach().cpu()
+            if original_tensor.min() < 0:
+                original_tensor = denorm(original_tensor)
+            original_tensor = image_resize(original_tensor)
+            original_img = transforms.ToPILImage()(original_tensor)
+        else:
+            original_img = image_resize(original)
+
+        if torch.is_tensor(generated):
+            generated_tensor = generated.detach().cpu()
+            generated_tensor = image_resize(generated_tensor)
+            generated_img = transforms.ToPILImage()(generated_tensor)
+        else:
+            generated_img = image_resize(generated)
+
+        return original_img, generated_img
+
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
         Generate new data using the diffusion model and log examples to Wandb.
@@ -864,7 +884,9 @@ class ImbalancedTraining:
         image_resize = transforms.Resize((64, 64))  # Resize to 64x64 for Wandb
         wandb_logger = self.trainer_args.get("logger", None)
         log_every_n_classes = getattr(self.args, "log_every_n_classes", 1)
+        max_wandb_pairs = getattr(self.args, "max_wandb_augmentation_pairs", 8)
         logged_classes = 0
+        wandb_pairs = []
 
         total_images_saved = 0
         already_saved_sample_classes = set()
@@ -924,18 +946,22 @@ class ImbalancedTraining:
                         and wandb_logger
                         and hasattr(wandb_logger, "experiment")
                     ):
-                        # Prepare original image for wandb
-                        if torch.is_tensor(image):
-                            img_tensor = image.cpu()
-                            if img_tensor.min() < 0:
-                                img_tensor = denorm(img_tensor)
-                            img_tensor = image_resize(img_tensor)
-                            orig_small = transforms.ToPILImage()(img_tensor)
-                            img_tensor = None
-                        else:
-                            orig_small = image_resize(image)
+                        orig_small, gen_small = self._prepare_wandb_image_pair(
+                            image, batch_images[0], denorm, image_resize
+                        )
 
-                        gen_small = image_resize(batch_images[0])
+                        if len(wandb_pairs) < max_wandb_pairs:
+                            wandb_pairs.append(
+                                (
+                                    class_name,
+                                    orig_small.copy()
+                                    if hasattr(orig_small, "copy")
+                                    else orig_small,
+                                    gen_small.copy()
+                                    if hasattr(gen_small, "copy")
+                                    else gen_small,
+                                )
+                            )
 
                         logged_classes += 1
                         if logged_classes % log_every_n_classes == 0:
@@ -950,8 +976,6 @@ class ImbalancedTraining:
                                     "cycle": cycle_idx,
                                 }
                             )
-                        orig_small = None
-                        gen_small = None
 
                 # Save all generated images
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
@@ -1039,17 +1063,22 @@ class ImbalancedTraining:
                         and wandb_logger
                         and hasattr(wandb_logger, "experiment")
                     ):
-                        if torch.is_tensor(images[0]):
-                            img_tensor = images[0].cpu()
-                            if img_tensor.min() < 0:
-                                img_tensor = denorm(img_tensor)
-                            img_tensor = image_resize(img_tensor)
-                            orig_small = transforms.ToPILImage()(img_tensor)
-                            img_tensor = None
-                        else:
-                            orig_small = image_resize(images[0])
+                        orig_small, gen_small = self._prepare_wandb_image_pair(
+                            images[0], batch_images[0], denorm, image_resize
+                        )
 
-                        gen_small = image_resize(batch_images[0])
+                        if len(wandb_pairs) < max_wandb_pairs:
+                            wandb_pairs.append(
+                                (
+                                    class_name,
+                                    orig_small.copy()
+                                    if hasattr(orig_small, "copy")
+                                    else orig_small,
+                                    gen_small.copy()
+                                    if hasattr(gen_small, "copy")
+                                    else gen_small,
+                                )
+                            )
 
                         logged_classes += 1
                         if logged_classes % log_every_n_classes == 0:
@@ -1064,8 +1093,6 @@ class ImbalancedTraining:
                                     "cycle": cycle_idx,
                                 }
                             )
-                        orig_small = None
-                        gen_small = None
 
                 # Save all generated images for this batch
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
@@ -1077,6 +1104,28 @@ class ImbalancedTraining:
 
         # Log a summary of how many classes were augmented
         if has_wandb and wandb_logger and hasattr(wandb_logger, "experiment"):
+            if wandb_pairs:
+                table = wandb.Table(columns=["class", "original", "generated"])
+                for class_name, original_img, generated_img in wandb_pairs:
+                    table.add_data(
+                        class_name,
+                        wandb.Image(
+                            original_img,
+                            caption=f"{class_name} - original",
+                        ),
+                        wandb.Image(
+                            generated_img,
+                            caption=f"{class_name} - augmented",
+                        ),
+                    )
+
+                wandb_logger.experiment.log(
+                    {
+                        f"cycle_{cycle_idx}/augmentation_examples": table,
+                        "cycle": cycle_idx,
+                    }
+                )
+
             wandb_logger.experiment.log(
                 {
                     f"cycle_{cycle_idx}/augmented_classes": len(
