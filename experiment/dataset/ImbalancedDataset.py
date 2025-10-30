@@ -1,7 +1,7 @@
 import hashlib
 import io
 import os
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import torch
 import requests
@@ -42,7 +42,6 @@ class ImbalancedDataset(Dataset):
         self.dataset = load_dataset(
             dataset_path,
             split=split,
-            trust_remote_code=True,
         )
         self.x_key = x_key
         self.y_key = y_key
@@ -52,7 +51,6 @@ class ImbalancedDataset(Dataset):
             self.classes,
             self.num_classes,
             self.label_tensor,
-            self._encode_label,
         ) = self._initialize_label_metadata()
         self.imbalancedness = imbalance_method.value.impl(self.num_classes)
         self.indices = self._load_or_create_indices()
@@ -97,7 +95,7 @@ class ImbalancedDataset(Dataset):
 
     def _initialize_label_metadata(
         self,
-    ) -> tuple[list[str], list[str], int, torch.Tensor, Callable[[Any], int]]:
+    ) -> tuple[list[str], list[str], int, torch.Tensor]:
         """Prepare label encodings and metadata for different label formats."""
 
         if self.y_key is None:
@@ -105,10 +103,7 @@ class ImbalancedDataset(Dataset):
             num_classes = 1
             label_tensor = torch.zeros(len(self.dataset), dtype=torch.long)
 
-            def encode_label(_: Any) -> int:
-                return 0
-
-            return labels, labels, num_classes, label_tensor, encode_label
+            return labels, labels, num_classes, label_tensor
 
         feature = self.dataset.features.get(self.y_key)
         raw_labels = self.dataset[self.y_key]
@@ -124,12 +119,7 @@ class ImbalancedDataset(Dataset):
 
             label_tensor = torch.tensor(encoded, dtype=torch.long)
 
-            def encode_label(value: Any) -> int:
-                if isinstance(value, int):
-                    return value
-                return feature.str2int(value)
-
-            return labels, labels, num_classes, label_tensor, encode_label
+            return labels, labels, num_classes, label_tensor
 
         unique_values: list[Any] = list(dict.fromkeys(raw_labels))
         labels = [str(value) for value in unique_values]
@@ -138,10 +128,7 @@ class ImbalancedDataset(Dataset):
         encoded = [value_to_index[value] for value in raw_labels]
         label_tensor = torch.tensor(encoded, dtype=torch.long)
 
-        def encode_label(value: Any) -> int:
-            return value_to_index[value]
-
-        return labels, labels, num_classes, label_tensor, encode_label
+        return labels, labels, num_classes, label_tensor
 
     def add_generated_images(self, cycle_idx: int, num_images: int, labels: list[int]):
         """
