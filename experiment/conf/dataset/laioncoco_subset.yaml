@@ -1,0 +1,5 @@
+dataset_path: ytaek-oh/laioncoco-subset-100k
+split: train
+x_key: url
+y_key: null
+imbalance_method: all_data
