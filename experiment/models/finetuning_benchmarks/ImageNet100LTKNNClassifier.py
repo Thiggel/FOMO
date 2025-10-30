@@ -11,6 +11,7 @@ class ImageNet100LTKNNClassifier(BaseKNNClassifier):
     def __init__(self, *args, seed: int = 42, **kwargs):
         super().__init__(*args, **kwargs)
         self.seed = seed
+        self._log_per_class_accuracy = True
 
     def setup(self, stage=None):
         # Recreate the exact long-tailed dataset used during training
