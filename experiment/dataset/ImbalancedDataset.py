@@ -1,10 +1,16 @@
+import hashlib
+import io
 import os
+from typing import Any, Callable, Optional
+
 import torch
+import requests
 from PIL import Image
 from torch.utils.data import Dataset
 import pickle
 
 from datasets import load_dataset
+from datasets.features import ClassLabel
 from experiment.dataset.imbalancedness.ImbalanceMethods import (
     ImbalanceMethods,
     ImbalanceMethod,
@@ -21,7 +27,7 @@ class ImbalancedDataset(Dataset):
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         split: str = "train+validation",
         x_key: str = "image",
-        y_key: str = "label",
+        y_key: Optional[str] = "label",
         checkpoint_filename: str = None,
         transform=None,
     ):
@@ -32,6 +38,7 @@ class ImbalancedDataset(Dataset):
         self.additional_data_path = additional_data_path
 
         print("Loading dataset", dataset_path)
+        self.dataset_path = dataset_path
         self.dataset = load_dataset(
             dataset_path,
             split=split,
@@ -40,10 +47,13 @@ class ImbalancedDataset(Dataset):
         self.x_key = x_key
         self.y_key = y_key
 
-        self.labels = self.dataset.features[y_key].names
-
-        self.classes = self.dataset.features[y_key].names
-        self.num_classes = len(self.classes)
+        (
+            self.labels,
+            self.classes,
+            self.num_classes,
+            self.label_tensor,
+            self._encode_label,
+        ) = self._initialize_label_metadata()
         self.imbalancedness = imbalance_method.value.impl(self.num_classes)
         self.indices = self._load_or_create_indices()
 
@@ -51,6 +61,9 @@ class ImbalancedDataset(Dataset):
         self.image_storage = ImageStorage(
             self.additional_data_path,
         )
+
+        self._image_cache_dir: Optional[str] = None
+        self._download_timeout = 10
 
         # Keep track of additional images per cycle
         self.additional_image_counts = self._load_or_create_image_counts()
@@ -81,6 +94,54 @@ class ImbalancedDataset(Dataset):
         )
         with open(counts_file, "wb") as f:
             pickle.dump(self.additional_image_counts, f)
+
+    def _initialize_label_metadata(
+        self,
+    ) -> tuple[list[str], list[str], int, torch.Tensor, Callable[[Any], int]]:
+        """Prepare label encodings and metadata for different label formats."""
+
+        if self.y_key is None:
+            labels = ["unlabeled"]
+            num_classes = 1
+            label_tensor = torch.zeros(len(self.dataset), dtype=torch.long)
+
+            def encode_label(_: Any) -> int:
+                return 0
+
+            return labels, labels, num_classes, label_tensor, encode_label
+
+        feature = self.dataset.features.get(self.y_key)
+        raw_labels = self.dataset[self.y_key]
+
+        if isinstance(feature, ClassLabel):
+            labels = feature.names
+            num_classes = len(labels)
+
+            if raw_labels and isinstance(raw_labels[0], str):
+                encoded = [feature.str2int(label) for label in raw_labels]
+            else:
+                encoded = raw_labels
+
+            label_tensor = torch.tensor(encoded, dtype=torch.long)
+
+            def encode_label(value: Any) -> int:
+                if isinstance(value, int):
+                    return value
+                return feature.str2int(value)
+
+            return labels, labels, num_classes, label_tensor, encode_label
+
+        unique_values: list[Any] = list(dict.fromkeys(raw_labels))
+        labels = [str(value) for value in unique_values]
+        num_classes = len(labels)
+        value_to_index = {value: idx for idx, value in enumerate(unique_values)}
+        encoded = [value_to_index[value] for value in raw_labels]
+        label_tensor = torch.tensor(encoded, dtype=torch.long)
+
+        def encode_label(value: Any) -> int:
+            return value_to_index[value]
+
+        return labels, labels, num_classes, label_tensor, encode_label
 
     def add_generated_images(self, cycle_idx: int, num_images: int, labels: list[int]):
         """
@@ -145,9 +206,10 @@ class ImbalancedDataset(Dataset):
         """
         if idx < len(self.indices):
             # Get item from original dataset
-            datapoint = self.dataset[self.indices[idx]]
-            image = datapoint[self.x_key]
-            label = datapoint[self.y_key]
+            dataset_index = self.indices[idx]
+            datapoint = self.dataset[dataset_index]
+            image = self._load_image(datapoint)
+            label = self.label_tensor[dataset_index].item()
         else:
             # Get generated image
             cycle_idx, image_idx, label = self._get_additional_image_info(idx)
@@ -158,15 +220,101 @@ class ImbalancedDataset(Dataset):
                 f"index {image_idx}"
             )
 
-        image = image.convert("RGB")
+        if image.mode != "RGB":
+            image = image.convert("RGB")
 
         if self.transform:
             image = self.transform(image)
 
         return image, label
 
+    def _ensure_cache_dir(self) -> Optional[str]:
+        if self._image_cache_dir is not None:
+            return self._image_cache_dir
+
+        base_cache_dir = os.environ.get("BASE_CACHE_DIR")
+        if base_cache_dir is None:
+            return None
+
+        dataset_cache_dir = os.path.join(
+            base_cache_dir,
+            "hf_image_cache",
+            self.dataset_path.replace("/", "_"),
+        )
+        os.makedirs(dataset_cache_dir, exist_ok=True)
+        self._image_cache_dir = dataset_cache_dir
+        return self._image_cache_dir
+
+    def _cached_image_path(self, url: str) -> Optional[str]:
+        cache_dir = self._ensure_cache_dir()
+        if cache_dir is None:
+            return None
+
+        filename = hashlib.sha256(url.encode("utf-8")).hexdigest() + ".png"
+        return os.path.join(cache_dir, filename)
+
+    def _load_from_cache(self, path: str) -> Optional[Image.Image]:
+        if not os.path.exists(path):
+            return None
+
+        with Image.open(path) as cached_image:
+            return cached_image.copy()
+
+    def _download_image(self, url: str) -> Image.Image:
+        cache_path = self._cached_image_path(url)
+        if cache_path:
+            cached_image = self._load_from_cache(cache_path)
+            if cached_image is not None:
+                return cached_image
+
+        response = requests.get(url, timeout=self._download_timeout)
+        response.raise_for_status()
+
+        image = Image.open(io.BytesIO(response.content))
+
+        if cache_path:
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            image.save(cache_path)
+
+            with Image.open(cache_path) as cached_image:
+                return cached_image.copy()
+
+        return image
+
+    def _load_image(self, datapoint: dict) -> Image.Image:
+        image_value = datapoint[self.x_key]
+
+        if isinstance(image_value, Image.Image):
+            return image_value
+
+        if isinstance(image_value, dict):
+            if "path" in image_value and image_value["path"]:
+                with Image.open(image_value["path"]) as pil_image:
+                    return pil_image.copy()
+            if "bytes" in image_value and image_value["bytes"]:
+                return Image.open(io.BytesIO(image_value["bytes"]))
+
+        if isinstance(image_value, (bytes, bytearray)):
+            return Image.open(io.BytesIO(image_value))
+
+        if isinstance(image_value, str):
+            if image_value.startswith("http://") or image_value.startswith(
+                "https://"
+            ):
+                return self._download_image(image_value)
+
+            if os.path.exists(image_value):
+                with Image.open(image_value) as pil_image:
+                    return pil_image.copy()
+
+        raise ValueError(
+            f"Unsupported image type for key {self.x_key}: {type(image_value)}"
+        )
+
     def _get_inverse_distribution(self):
-        labels = torch.tensor(self.dataset[self.y_key], device="cuda")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        labels = self.label_tensor.to(device)
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
 
         inverse = 1 - imbalance_probs
@@ -179,14 +327,16 @@ class ImbalancedDataset(Dataset):
         """
         print("Creating dataset indices on GPU...")
 
-        # Load labels to a GPU tensor
-        labels = torch.tensor(self.dataset[self.y_key], device="cuda")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Load labels to target device tensor
+        labels = self.label_tensor.to(device)
 
         # Get imbalance probabilities for all labels
         imbalance_probs = self.imbalancedness.get_imbalance(labels)
 
         # Generate random numbers for each sample
-        random_numbers = torch.rand(len(labels), device="cuda")
+        random_numbers = torch.rand(len(labels), device=device)
 
         # Create mask to filter indices
         mask = imbalance_probs >= random_numbers

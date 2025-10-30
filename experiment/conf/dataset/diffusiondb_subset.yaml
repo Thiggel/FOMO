@@ -1,0 +1,5 @@
+dataset_path: poloclub/diffusiondb
+split: train[:100000]
+x_key: image
+y_key: null
+imbalance_method: all_data
