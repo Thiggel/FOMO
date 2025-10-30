@@ -30,6 +30,7 @@ class ImageNet100LTFineTune(TransferLearningBenchmark):
             *args,
             **kwargs,
         )
+        self._log_per_class_accuracy = True
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
