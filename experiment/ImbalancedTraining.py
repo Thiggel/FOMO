@@ -123,6 +123,7 @@ class ImbalancedTraining:
             self.initial_train_ds_size = len(self.datamodule.train_dataset)
             self.added_indices = set()
             self.original_indices = set(range(self.initial_train_ds_size))
+        self.last_ood_results: Optional[dict] = None
 
         self.num_workers = min(6, get_num_workers() // 2)
 
@@ -253,6 +254,17 @@ class ImbalancedTraining:
 
             print(f"Selected {len(ood_indices)} samples for augmentation")
 
+            if (
+                self.args.logger
+                and (wandb_logger := self.trainer_args.get("logger", None))
+                and hasattr(wandb_logger, "experiment")
+            ):
+                cycle_log_idx = cycle_idx + 1
+                self._log_ood_class_distribution(
+                    cycle_log_idx, ood_labels, wandb_logger
+                )
+                self._log_ood_partition_summary(cycle_log_idx, wandb_logger)
+
             if self.args.remove_diffusion:
                 # Add samples back to dataset
                 self.added_indices.update(ood_indices)
@@ -382,6 +394,7 @@ class ImbalancedTraining:
         )
 
         ood_indices = ood.ood()
+        self.last_ood_results = ood.last_results
 
         return ood_indices
 
@@ -585,7 +598,9 @@ class ImbalancedTraining:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dataset = self.datamodule.train_dataset.dataset
         num_classes = dataset.num_classes
-        class_counts = torch.zeros(num_classes, device=device)
+        class_counts = torch.zeros(
+            num_classes, device=device, dtype=torch.long
+        )
 
         # Process in batches
         loader = DataLoader(
@@ -603,7 +618,8 @@ class ImbalancedTraining:
             counts = torch.bincount(labels, minlength=num_classes)
             class_counts += counts
 
-        self.class_counts = class_counts
+        class_counts_cpu = class_counts.cpu()
+        self.class_counts = class_counts_cpu
 
         # Create dictionary mapping class indices to class names
         class_names_dict = {}
@@ -624,10 +640,11 @@ class ImbalancedTraining:
 
         # Log distribution info
         print(f"\nCycle {cycle_idx} distribution:")
-        print(f"Total samples: {class_counts.sum().item()}")
-        print(f"Non-zero classes: {(class_counts > 0).sum().item()}")
-        print(f"Mean samples per class: {class_counts.mean().item():.2f}")
-        print(f"Std samples per class: {class_counts.std().item():.2f}")
+        counts_float = class_counts_cpu.float()
+        print(f"Total samples: {counts_float.sum().item()}")
+        print(f"Non-zero classes: {(class_counts_cpu > 0).sum().item()}")
+        print(f"Mean samples per class: {counts_float.mean().item():.2f}")
+        print(f"Std samples per class: {counts_float.std().item():.2f}")
 
         # Create visualization and log to Wandb
         if (
@@ -643,14 +660,33 @@ class ImbalancedTraining:
                 import matplotlib.pyplot as plt
 
                 # Convert to numpy for plotting
-                counts_np = class_counts.cpu().numpy()
+                original_counts, generated_counts = (
+                    self._compute_original_generated_counts(class_counts_cpu)
+                )
+                counts_np = class_counts_cpu.numpy()
+                original_np = original_counts.numpy()
+                generated_np = generated_counts.numpy()
 
                 # Create distribution plot
-                plt.figure(figsize=(12, 6))
-                plt.bar(range(num_classes), counts_np)
-                plt.xlabel("Class Index")
-                plt.ylabel("Number of Samples")
-                plt.title(f"Class Distribution - Cycle {cycle_idx}")
+                fig, ax = plt.subplots(figsize=(12, 6))
+                indices = np.arange(num_classes)
+                ax.bar(
+                    indices,
+                    original_np,
+                    label="Original",
+                    color="tab:blue",
+                )
+                ax.bar(
+                    indices,
+                    generated_np,
+                    bottom=original_np,
+                    label="Generated",
+                    color="tab:orange",
+                )
+                ax.set_xlabel("Class Index")
+                ax.set_ylabel("Number of Samples")
+                ax.set_title(f"Class Distribution - Cycle {cycle_idx}")
+                ax.legend()
 
                 # Save as PNG instead of PDF
                 vis_dir = (
@@ -658,36 +694,42 @@ class ImbalancedTraining:
                 )
                 os.makedirs(vis_dir, exist_ok=True)
                 png_path = f"{vis_dir}/class_dist_cycle_{cycle_idx}.png"
-                plt.savefig(png_path, dpi=100, bbox_inches="tight")
-                plt.close()
+                pdf_path = f"{vis_dir}/class_dist_cycle_{cycle_idx}.pdf"
+                fig.savefig(png_path, dpi=100, bbox_inches="tight")
+                fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
+                plt.close(fig)
 
                 # Log PNG to Wandb
                 wandb_logger = self.trainer_args["logger"]
                 wandb_logger.experiment.log(
                     {
                         f"class_distribution/cycle_{cycle_idx}": wandb.Image(png_path),
+                        f"class_distribution_pdf/cycle_{cycle_idx}": wandb.File(pdf_path),
                         "cycle": cycle_idx,
                         "class_distribution_stats": {
-                            "total_samples": class_counts.sum().item(),
-                            "non_zero_classes": (class_counts > 0).sum().item(),
-                            "mean_samples_per_class": class_counts.mean().item(),
-                            "std_samples_per_class": class_counts.std().item(),
+                            "total_samples": counts_float.sum().item(),
+                            "non_zero_classes": (class_counts_cpu > 0).sum().item(),
+                            "mean_samples_per_class": counts_float.mean().item(),
+                            "std_samples_per_class": counts_float.std().item(),
                         },
                     }
                 )
 
                 # Optionally, create a more detailed visualization for classes with samples
                 if (
-                    class_counts > 0
+                    class_counts_cpu > 0
                 ).sum().item() < 50:  # Only if there are fewer than 50 classes with samples
                     # Get indices of classes with samples
                     non_zero_indices = (
-                        torch.nonzero(class_counts).squeeze().cpu().numpy()
+                        torch.nonzero(class_counts_cpu).squeeze().cpu().numpy()
                     )
 
                     # Create bar plot with class names
                     plt.figure(figsize=(14, 8))
-                    bars = plt.bar(non_zero_indices, counts_np[non_zero_indices])
+                    bars = plt.bar(
+                        non_zero_indices,
+                        counts_np[non_zero_indices],
+                    )
 
                     # Add class names as labels
                     class_names = [
@@ -864,6 +906,189 @@ class ImbalancedTraining:
 
         return original_img, generated_img
 
+    def _get_label_for_dataset_index(self, dataset, index: int) -> int:
+        """Resolve the label for a dataset index, handling Subset nesting and generated data."""
+        if isinstance(dataset, Subset):
+            base_index = dataset.indices[index]
+            return self._get_label_for_dataset_index(dataset.dataset, base_index)
+
+        if hasattr(dataset, "indices") and hasattr(dataset, "label_tensor"):
+            if index < len(dataset.indices):
+                dataset_index = dataset.indices[index]
+                return int(dataset.label_tensor[dataset_index].item())
+
+            _, _, label = dataset._get_additional_image_info(index)
+            return int(label)
+
+        _, label = dataset[index]
+        if torch.is_tensor(label):
+            return int(label.item())
+
+        return int(label)
+
+    def _get_top_class_names(self, labels: list[int], top_k: int = 3) -> list[str]:
+        """Return the most common class names for the provided labels."""
+        if not labels:
+            return []
+
+        dataset = self.datamodule.train_dataset.dataset
+        label_tensor = torch.tensor(labels, dtype=torch.long)
+        counts = torch.bincount(label_tensor, minlength=dataset.num_classes)
+        nonzero_indices = torch.nonzero(counts, as_tuple=False).squeeze()
+
+        if nonzero_indices.numel() == 0:
+            return []
+
+        nonzero_counts = counts[nonzero_indices]
+        sorted_counts, order = torch.sort(nonzero_counts, descending=True)
+        top_indices = nonzero_indices[order][:top_k]
+
+        return [dataset.get_class_name(idx.item()) for idx in top_indices]
+
+    def _compute_original_generated_counts(
+        self, total_counts: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Split total counts into original and generated components."""
+
+        train_subset = self.datamodule.train_dataset
+        base_dataset = train_subset.dataset
+
+        if not hasattr(train_subset, "indices"):
+            return total_counts.clone(), torch.zeros_like(total_counts)
+
+        subset_indices_tensor = torch.tensor(train_subset.indices, dtype=torch.long)
+        original_mask = subset_indices_tensor < len(base_dataset.indices)
+
+        if original_mask.any():
+            base_indices_tensor = torch.tensor(base_dataset.indices, dtype=torch.long)
+            original_dataset_indices = base_indices_tensor[
+                subset_indices_tensor[original_mask]
+            ]
+            original_labels = base_dataset.label_tensor[original_dataset_indices]
+            original_counts = torch.bincount(
+                original_labels.cpu(), minlength=total_counts.numel()
+            )
+        else:
+            original_counts = torch.zeros_like(total_counts, dtype=torch.long)
+
+        original_counts = original_counts.to(
+            device=total_counts.device, dtype=torch.long
+        )
+        generated_counts = (
+            total_counts.to(torch.long) - original_counts
+        ).clamp(min=0)
+
+        return original_counts, generated_counts.to(device=total_counts.device)
+
+    def _log_ood_class_distribution(
+        self,
+        cycle_idx: int,
+        ood_labels: torch.Tensor,
+        wandb_logger,
+    ) -> None:
+        if ood_labels.numel() == 0:
+            return
+
+        dataset = self.datamodule.train_dataset.dataset
+        counts = torch.bincount(
+            ood_labels.cpu(), minlength=dataset.num_classes
+        )
+        nonzero_mask = counts > 0
+        if nonzero_mask.sum().item() == 0:
+            return
+
+        nonzero_indices = torch.nonzero(nonzero_mask, as_tuple=False).squeeze()
+        nonzero_counts = counts[nonzero_indices]
+        sorted_counts, order = torch.sort(nonzero_counts, descending=True)
+        sorted_indices = nonzero_indices[order]
+        top_k = min(20, sorted_indices.numel())
+        top_indices = sorted_indices[:top_k]
+        top_counts = sorted_counts[:top_k]
+        class_names = [
+            dataset.get_class_name(idx.item()) for idx in top_indices
+        ]
+
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        vis_dir = (
+            f"visualizations/ood_class_distributions/{self.checkpoint_filename}"
+        )
+        os.makedirs(vis_dir, exist_ok=True)
+        png_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.png"
+        pdf_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.pdf"
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.bar(range(len(class_names)), top_counts.numpy())
+        ax.set_xticks(range(len(class_names)))
+        ax.set_xticklabels(class_names, rotation=45, ha="right")
+        ax.set_ylabel("Number of OOD samples")
+        ax.set_title(f"Top OOD Classes - Cycle {cycle_idx}")
+        fig.tight_layout()
+        fig.savefig(png_path, dpi=120, bbox_inches="tight")
+        fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
+        plt.close(fig)
+
+        wandb_logger.experiment.log(
+            {
+                f"ood_class_distribution/cycle_{cycle_idx}": wandb.Image(png_path),
+                f"ood_class_distribution_pdf/cycle_{cycle_idx}": wandb.File(
+                    pdf_path
+                ),
+                "cycle": cycle_idx,
+            }
+        )
+
+    def _log_ood_partition_summary(self, cycle_idx: int, wandb_logger) -> None:
+        if not self.last_ood_results:
+            return
+
+        distances = self.last_ood_results.get("distances")
+        dataset_indices = self.last_ood_results.get("dataset_indices")
+        sorted_indices = self.last_ood_results.get("sorted_indices")
+
+        if distances is None or dataset_indices is None or sorted_indices is None:
+            return
+
+        num_samples = len(distances)
+        if num_samples == 0:
+            return
+
+        percentile_ranges = [(0.95, 1.0), (0.90, 0.95), (0.85, 0.90), (0.80, 0.85)]
+        summary = {}
+        table = wandb.Table(columns=["OOD percentile", "Top classes"])
+
+        for lower, upper in percentile_ranges:
+            start_idx = int(np.floor((1 - upper) * num_samples))
+            end_idx = int(np.ceil((1 - lower) * num_samples))
+
+            if end_idx <= start_idx:
+                top_class_names = []
+            else:
+                positions = sorted_indices[start_idx:end_idx]
+                labels = [
+                    self._get_label_for_dataset_index(
+                        self.datamodule.train_dataset, dataset_indices[pos]
+                    )
+                    for pos in positions
+                ]
+                top_class_names = self._get_top_class_names(labels)
+
+            range_key = f"{int(lower * 100)}-{int(upper * 100)}%"
+            padded_top = (top_class_names + ["N/A"] * 3)[:3]
+            summary[range_key] = padded_top
+            table.add_data(range_key, ", ".join(padded_top))
+
+        wandb_logger.experiment.log(
+            {
+                f"ood_partition_summary/cycle_{cycle_idx}": summary,
+                f"ood_partition_summary_table/cycle_{cycle_idx}": table,
+                "cycle": cycle_idx,
+            }
+        )
+
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
         Generate new data using the diffusion model and log examples to Wandb.
@@ -885,11 +1110,13 @@ class ImbalancedTraining:
         wandb_logger = self.trainer_args.get("logger", None)
         log_every_n_classes = getattr(self.args, "log_every_n_classes", 1)
         max_wandb_pairs = getattr(self.args, "max_wandb_augmentation_pairs", 8)
+        target_wandb_pairs = max(4, max_wandb_pairs)
         logged_classes = 0
         wandb_pairs = []
 
         total_images_saved = 0
         already_saved_sample_classes = set()
+        dataset_obj = self.datamodule.train_dataset.dataset
 
         if self.args.generation_model == "flux":
             # Flux doesn't support batching, so process one image at a time
@@ -908,6 +1135,47 @@ class ImbalancedTraining:
                     num_generations_per_image=self.args.num_generations_per_ood_sample,
                 )
 
+                label_int = int(label.item() if torch.is_tensor(label) else label)
+                class_name = dataset_obj.get_class_name(label_int)
+
+                orig_small = None
+                gen_small = None
+                if (
+                    has_wandb
+                    and wandb_logger
+                    and hasattr(wandb_logger, "experiment")
+                ):
+                    orig_small, gen_small = self._prepare_wandb_image_pair(
+                        image, batch_images[0], denorm, image_resize
+                    )
+
+                    if len(wandb_pairs) < target_wandb_pairs:
+                        wandb_pairs.append(
+                            (
+                                class_name,
+                                orig_small.copy()
+                                if hasattr(orig_small, "copy")
+                                else orig_small,
+                                gen_small.copy()
+                                if hasattr(gen_small, "copy")
+                                else gen_small,
+                            )
+                        )
+
+                    logged_classes += 1
+                    if logged_classes % log_every_n_classes == 0:
+                        wandb_logger.experiment.log(
+                            {
+                                f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
+                                    orig_small
+                                ),
+                                f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
+                                    gen_small
+                                ),
+                                "cycle": cycle_idx,
+                            }
+                        )
+
                 # Check if this class should be saved as an example (first time seeing this class)
                 if (
                     self.args.save_class_distribution
@@ -922,10 +1190,6 @@ class ImbalancedTraining:
                     os.makedirs(save_dir, exist_ok=True)
 
                     # Get class name
-                    class_name = self.datamodule.train_dataset.dataset.get_class_name(
-                        label
-                    )
-
                     # Save original and first generated image as examples
                     filename_generated = f"{class_name}_generated.png"
                     save_path_generated = f"{save_dir}/{filename_generated}"
@@ -939,43 +1203,6 @@ class ImbalancedTraining:
                         save_image(image.cpu(), save_path_original)
                     else:
                         image.save(save_path_original, "PNG")
-
-                    # For Wandb logging
-                    if (
-                        has_wandb
-                        and wandb_logger
-                        and hasattr(wandb_logger, "experiment")
-                    ):
-                        orig_small, gen_small = self._prepare_wandb_image_pair(
-                            image, batch_images[0], denorm, image_resize
-                        )
-
-                        if len(wandb_pairs) < max_wandb_pairs:
-                            wandb_pairs.append(
-                                (
-                                    class_name,
-                                    orig_small.copy()
-                                    if hasattr(orig_small, "copy")
-                                    else orig_small,
-                                    gen_small.copy()
-                                    if hasattr(gen_small, "copy")
-                                    else gen_small,
-                                )
-                            )
-
-                        logged_classes += 1
-                        if logged_classes % log_every_n_classes == 0:
-                            wandb_logger.experiment.log(
-                                {
-                                    f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
-                                        orig_small
-                                    ),
-                                    f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
-                                        gen_small
-                                    ),
-                                    "cycle": cycle_idx,
-                                }
-                            )
 
                 # Save all generated images
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
@@ -1031,6 +1258,47 @@ class ImbalancedTraining:
                     batch_images.extend(generated_images)
                     remaining_generations -= current_generations
 
+                label_int = int(labels[0].item())
+                class_name = dataset_obj.get_class_name(label_int)
+
+                orig_small = None
+                gen_small = None
+                if (
+                    has_wandb
+                    and wandb_logger
+                    and hasattr(wandb_logger, "experiment")
+                ):
+                    orig_small, gen_small = self._prepare_wandb_image_pair(
+                        images[0], batch_images[0], denorm, image_resize
+                    )
+
+                    if len(wandb_pairs) < target_wandb_pairs:
+                        wandb_pairs.append(
+                            (
+                                class_name,
+                                orig_small.copy()
+                                if hasattr(orig_small, "copy")
+                                else orig_small,
+                                gen_small.copy()
+                                if hasattr(gen_small, "copy")
+                                else gen_small,
+                            )
+                        )
+
+                    logged_classes += 1
+                    if logged_classes % log_every_n_classes == 0:
+                        wandb_logger.experiment.log(
+                            {
+                                f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
+                                    orig_small
+                                ),
+                                f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
+                                    gen_small
+                                ),
+                                "cycle": cycle_idx,
+                            }
+                        )
+
                 if (
                     self.args.save_class_distribution
                     and labels[0].item() not in already_saved_sample_classes
@@ -1044,10 +1312,6 @@ class ImbalancedTraining:
                     os.makedirs(save_dir, exist_ok=True)
 
                     # Get class name for the current label
-                    class_name = self.datamodule.train_dataset.dataset.get_class_name(
-                        labels[0].item()
-                    )
-
                     # Save original and generated images
                     filename_generated = f"{class_name}_generated.png"
                     save_path_generated = f"{save_dir}/{filename_generated}"
@@ -1056,43 +1320,6 @@ class ImbalancedTraining:
                     filename_original = f"{class_name}_original.png"
                     save_path_original = f"{save_dir}/{filename_original}"
                     save_image(images[0].cpu(), save_path_original)
-
-                    # For Wandb logging - prepare image pairs (original and generated)
-                    if (
-                        has_wandb
-                        and wandb_logger
-                        and hasattr(wandb_logger, "experiment")
-                    ):
-                        orig_small, gen_small = self._prepare_wandb_image_pair(
-                            images[0], batch_images[0], denorm, image_resize
-                        )
-
-                        if len(wandb_pairs) < max_wandb_pairs:
-                            wandb_pairs.append(
-                                (
-                                    class_name,
-                                    orig_small.copy()
-                                    if hasattr(orig_small, "copy")
-                                    else orig_small,
-                                    gen_small.copy()
-                                    if hasattr(gen_small, "copy")
-                                    else gen_small,
-                                )
-                            )
-
-                        logged_classes += 1
-                        if logged_classes % log_every_n_classes == 0:
-                            wandb_logger.experiment.log(
-                                {
-                                    f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
-                                        orig_small
-                                    ),
-                                    f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
-                                        gen_small
-                                    ),
-                                    "cycle": cycle_idx,
-                                }
-                            )
 
                 # Save all generated images for this batch
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(

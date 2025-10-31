@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -29,6 +31,7 @@ class OOD:
         self.cycle_idx = cycle_idx
         self.device = device
         self.dtype = dtype
+        self.last_results: Optional[dict] = None
 
     def extract_features(self):
         """Extract features from the dataset without normalization"""
@@ -115,10 +118,20 @@ class OOD:
         )
 
         # Get indices of points with largest mean k-NN distances
-        top_indices = np.argsort(distances)[-num_samples:][::-1]
+        sorted_indices_desc = np.argsort(distances)[::-1]
+        top_indices = sorted_indices_desc[:num_samples]
 
         # Map to original dataset indices
         ood_indices = [indices[i] for i in top_indices]
+
+        # Store details for downstream analysis/logging
+        self.last_results = {
+            "distances": distances,
+            "dataset_indices": indices,
+            "sorted_indices": sorted_indices_desc,
+            "top_indices": top_indices,
+            "top_dataset_indices": ood_indices,
+        }
 
         # Save results and visualizations
         if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
