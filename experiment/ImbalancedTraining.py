@@ -1034,12 +1034,21 @@ class ImbalancedTraining:
         wandb_logger.experiment.log(
             {
                 f"ood_class_distribution/cycle_{cycle_idx}": wandb.Image(png_path),
-                f"ood_class_distribution_pdf/cycle_{cycle_idx}": wandb.File(
-                    pdf_path
-                ),
                 "cycle": cycle_idx,
             }
         )
+
+        if hasattr(wandb_logger.experiment, "log_artifact"):
+            artifact_name = (
+                f"{self.checkpoint_filename}_cycle_{cycle_idx}_ood_class_dist_pdf"
+            )
+            artifact = wandb.Artifact(
+                name=artifact_name,
+                type="visualization",
+                metadata={"cycle": cycle_idx},
+            )
+            artifact.add_file(pdf_path, name=os.path.basename(pdf_path))
+            wandb_logger.experiment.log_artifact(artifact)
 
     def _log_ood_partition_summary(self, cycle_idx: int, wandb_logger) -> None:
         if not self.last_ood_results:
