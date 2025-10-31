@@ -264,6 +264,7 @@ class ImbalancedTraining:
                     cycle_log_idx, ood_labels, wandb_logger
                 )
                 self._log_ood_partition_summary(cycle_log_idx, wandb_logger)
+                self._log_ood_distance_cdf(cycle_log_idx, wandb_logger)
 
             if self.args.remove_diffusion:
                 # Add samples back to dataset
@@ -1097,6 +1098,59 @@ class ImbalancedTraining:
                 "cycle": cycle_idx,
             }
         )
+
+    def _log_ood_distance_cdf(self, cycle_idx: int, wandb_logger) -> None:
+        if not self.last_ood_results:
+            return
+
+        distances = self.last_ood_results.get("distances")
+
+        if distances is None or len(distances) == 0:
+            return
+
+        sorted_distances = np.sort(distances)
+        num_points = sorted_distances.size
+
+        if num_points == 0:
+            return
+
+        empirical_cdf = np.arange(1, num_points + 1) / num_points
+
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        vis_dir = f"visualizations/ood_distance_cdf/{self.checkpoint_filename}"
+        os.makedirs(vis_dir, exist_ok=True)
+
+        pdf_path = f"{vis_dir}/ood_distance_cdf_cycle_{cycle_idx}.pdf"
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.step(sorted_distances, empirical_cdf, where="post", linewidth=2)
+        ax.set_xlabel("k-NN distance")
+        ax.set_ylabel("Empirical CDF")
+        ax.set_title(f"Empirical CDF of OOD Distances - Cycle {cycle_idx}")
+        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+        fig.tight_layout()
+        fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
+        plt.close(fig)
+
+        wandb_logger.experiment.log(
+            {f"ood_distance_cdf_pdf/cycle_{cycle_idx}": wandb.File(pdf_path), "cycle": cycle_idx}
+        )
+
+        if hasattr(wandb_logger.experiment, "log_artifact"):
+            artifact_name = (
+                f"{self.checkpoint_filename}_cycle_{cycle_idx}_ood_distance_cdf"
+            )
+            artifact = wandb.Artifact(
+                name=artifact_name,
+                type="visualization",
+                metadata={"cycle": cycle_idx},
+            )
+            artifact.add_file(pdf_path, name=os.path.basename(pdf_path))
+            wandb_logger.experiment.log_artifact(artifact)
 
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
