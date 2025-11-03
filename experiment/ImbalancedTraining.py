@@ -13,6 +13,7 @@ import numpy as np
 from torch.utils.data import Subset, random_split, Dataset, DataLoader
 import lightning.pytorch as L
 from lightning.pytorch.callbacks import EarlyStopping
+import re
 
 try:
     from lightning.pytorch.strategies import DeepSpeedStrategy
@@ -131,6 +132,12 @@ class ImbalancedTraining:
             self.visualize_embedding_space(0)
         if self.args.logger and self.args.log_class_dist:
             self.save_class_dist(0)
+
+    @staticmethod
+    def _sanitize_artifact_name(name: str) -> str:
+        sanitized = re.sub(r"[^A-Za-z0-9_.-]+", "_", name)
+        sanitized = re.sub(r"_+", "_", sanitized).strip("._-")
+        return sanitized or "artifact"
 
     def get_class_indices_map(self, dataset):
         """Efficiently create a mapping of class labels to their indices"""
@@ -1040,7 +1047,7 @@ class ImbalancedTraining:
         )
 
         if hasattr(wandb_logger.experiment, "log_artifact"):
-            artifact_name = (
+            artifact_name = self._sanitize_artifact_name(
                 f"{self.checkpoint_filename}_cycle_{cycle_idx}_ood_class_dist_pdf"
             )
             artifact = wandb.Artifact(
@@ -1141,7 +1148,7 @@ class ImbalancedTraining:
         )
 
         if hasattr(wandb_logger.experiment, "log_artifact"):
-            artifact_name = (
+            artifact_name = self._sanitize_artifact_name(
                 f"{self.checkpoint_filename}_cycle_{cycle_idx}_ood_distance_cdf"
             )
             artifact = wandb.Artifact(
