@@ -110,6 +110,7 @@ class ImbalancedTraining:
         self.checkpoint_filename = checkpoint_filename
         self.n_epochs_per_cycle = args.n_epochs_per_cycle
         self.max_cycles = args.max_cycles
+        self.completed_cycles = 0
         self.transform = transforms.Compose(
             [
                 transforms.Resize((args.crop_size, args.crop_size)),
@@ -127,10 +128,73 @@ class ImbalancedTraining:
 
         self.num_workers = min(6, get_num_workers() // 2)
 
-        if self.args.logger and self.args.log_tsne:
-            self.visualize_embedding_space(0)
-        if self.args.logger and self.args.log_class_dist:
-            self.save_class_dist(0)
+        if self.datamodule is not None and self.args.logger:
+            self._run_training_analysis(stage_label="start", cycle_reference=0)
+
+    def _run_training_analysis(self, stage_label: str, cycle_reference: int) -> None:
+        """Run configured analysis routines for a specific training stage."""
+
+        if not self.args.logger or self.datamodule is None:
+            return
+
+        if self.args.log_tsne:
+            self.visualize_embedding_space(cycle_reference, stage_label=stage_label)
+
+        if self.args.log_class_dist:
+            self.save_class_dist(cycle_reference, stage_label=stage_label)
+
+        self._log_generated_samples_summary(stage_label)
+
+    def _log_generated_samples_summary(self, stage_label: str) -> None:
+        """Log a summary of generated samples for the current stage."""
+
+        if not (self.args.logger and self.args.log_generated_samples):
+            return
+
+        wandb_logger = self.trainer_args.get("logger", None)
+        if not wandb_logger or not hasattr(wandb_logger, "experiment"):
+            return
+
+        train_dataset = getattr(self.datamodule, "train_dataset", None)
+        if train_dataset is None:
+            return
+
+        base_dataset = train_dataset
+        while isinstance(base_dataset, Subset):
+            base_dataset = base_dataset.dataset
+
+        additional_counts = getattr(base_dataset, "additional_image_counts", None)
+
+        if additional_counts is None:
+            additional_counts = {}
+
+        total_generated = sum(
+            cycle_data.get("count", 0) for cycle_data in additional_counts.values()
+        )
+
+        summary_payload = {
+            "stage": stage_label,
+            "total_generated_images": int(total_generated),
+            "cycles_with_generation": int(len(additional_counts)),
+        }
+
+        table = wandb.Table(columns=["cycle", "generated_images", "unique_classes"])
+
+        for cycle_key, cycle_data in sorted(
+            additional_counts.items(), key=lambda item: str(item[0])
+        ):
+            count = int(cycle_data.get("count", 0))
+            labels = cycle_data.get("labels", []) or []
+            unique_classes = len(set(labels))
+            table.add_data(str(cycle_key), count, int(unique_classes))
+
+        wandb_logger.experiment.log(
+            {
+                f"generated_samples/summary_{stage_label}": summary_payload,
+                f"generated_samples/table_{stage_label}": table,
+                "analysis_stage": stage_label,
+            }
+        )
 
     def get_class_indices_map(self, dataset):
         """Efficiently create a mapping of class labels to their indices"""
@@ -359,6 +423,16 @@ class ImbalancedTraining:
                     )
                     self.ssl_method.load_state_dict(state_dict)
 
+        if self.datamodule is not None and self.args.logger:
+            final_cycle_reference = (
+                self.completed_cycles
+                if self.completed_cycles
+                else (self.max_cycles if self.max_cycles else 0)
+            )
+            self._run_training_analysis(
+                stage_label="end", cycle_reference=final_cycle_reference
+            )
+
         return self.finetune() if self.args.finetune else {}
 
     def get_random_indices(self, dataset) -> list:
@@ -541,7 +615,9 @@ class ImbalancedTraining:
 
         return plt.gcf()
 
-    def visualize_embedding_space(self, cycle_idx) -> None:
+    def visualize_embedding_space(
+        self, cycle_idx: int, stage_label: Optional[str] = None
+    ) -> None:
 
         old_transform = self.datamodule.train_dataset.dataset.transform
         self.datamodule.train_dataset.dataset.transform = transforms.Compose(
@@ -575,7 +651,8 @@ class ImbalancedTraining:
 
         vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
-        png_path = f"{vis_dir}/tsne_cycle_{cycle_idx}.png"
+        cycle_label = stage_label if stage_label is not None else cycle_idx
+        png_path = f"{vis_dir}/tsne_cycle_{cycle_label}.png"
         fig.savefig(png_path, dpi=100, bbox_inches="tight")
         plt.close(fig)
 
@@ -587,14 +664,20 @@ class ImbalancedTraining:
         ):
             wandb_logger = self.trainer_args["logger"]
             wandb_logger.experiment.log(
-                {f"tsne/cycle_{cycle_idx}": wandb.Image(png_path), "cycle": cycle_idx}
+                {
+                    f"tsne/cycle_{cycle_label}": wandb.Image(png_path),
+                    "cycle": cycle_label,
+                    "analysis_stage": stage_label or "cycle",
+                }
             )
 
         del embeddings, tsne_embeddings
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-    def save_class_dist(self, cycle_idx: int) -> None:
+    def save_class_dist(
+        self, cycle_idx: int, stage_label: Optional[str] = None
+    ) -> None:
         """Save class distribution for current cycle using GPU acceleration and log to Wandb"""
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dataset = self.datamodule.train_dataset.dataset
@@ -613,7 +696,8 @@ class ImbalancedTraining:
 
         # Count labels in batches
         for _, labels in tqdm(
-            loader, desc=f"Counting class distribution for cycle {cycle_idx}"
+            loader,
+            desc=f"Counting class distribution for cycle {stage_label if stage_label is not None else cycle_idx}"
         ):
             labels = labels.to(device)
             counts = torch.bincount(labels, minlength=num_classes)
@@ -634,13 +718,14 @@ class ImbalancedTraining:
         os.makedirs(save_path, exist_ok=True)
 
         # Save counts as tensor
-        torch.save(class_counts.cpu(), f"{save_path}/dist_cycle_{cycle_idx}.pt")
+        cycle_label = stage_label if stage_label is not None else cycle_idx
+        torch.save(class_counts.cpu(), f"{save_path}/dist_cycle_{cycle_label}.pt")
 
         # Save class names dictionary
-        torch.save(class_names_dict, f"{save_path}/class_names_cycle_{cycle_idx}.pt")
+        torch.save(class_names_dict, f"{save_path}/class_names_cycle_{cycle_label}.pt")
 
         # Log distribution info
-        print(f"\nCycle {cycle_idx} distribution:")
+        print(f"\nCycle {cycle_label} distribution:")
         counts_float = class_counts_cpu.float()
         print(f"Total samples: {counts_float.sum().item()}")
         print(f"Non-zero classes: {(class_counts_cpu > 0).sum().item()}")
@@ -686,7 +771,7 @@ class ImbalancedTraining:
                 )
                 ax.set_xlabel("Class Index")
                 ax.set_ylabel("Number of Samples")
-                ax.set_title(f"Class Distribution - Cycle {cycle_idx}")
+                ax.set_title(f"Class Distribution - Cycle {cycle_label}")
                 ax.legend()
 
                 # Save as PNG instead of PDF
@@ -694,8 +779,8 @@ class ImbalancedTraining:
                     f"visualizations/class_distributions/{self.checkpoint_filename}"
                 )
                 os.makedirs(vis_dir, exist_ok=True)
-                png_path = f"{vis_dir}/class_dist_cycle_{cycle_idx}.png"
-                pdf_path = f"{vis_dir}/class_dist_cycle_{cycle_idx}.pdf"
+                png_path = f"{vis_dir}/class_dist_cycle_{cycle_label}.png"
+                pdf_path = f"{vis_dir}/class_dist_cycle_{cycle_label}.pdf"
                 fig.savefig(png_path, dpi=100, bbox_inches="tight")
                 fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
                 plt.close(fig)
@@ -704,9 +789,10 @@ class ImbalancedTraining:
                 wandb_logger = self.trainer_args["logger"]
                 wandb_logger.experiment.log(
                     {
-                        f"class_distribution/cycle_{cycle_idx}": wandb.Image(png_path),
-                        f"class_distribution_pdf/cycle_{cycle_idx}": wandb.File(pdf_path),
-                        "cycle": cycle_idx,
+                        f"class_distribution/cycle_{cycle_label}": wandb.Image(png_path),
+                        f"class_distribution_pdf/cycle_{cycle_label}": wandb.File(pdf_path),
+                        "cycle": cycle_label,
+                        "analysis_stage": stage_label or "cycle",
                         "class_distribution_stats": {
                             "total_samples": counts_float.sum().item(),
                             "non_zero_classes": (class_counts_cpu > 0).sum().item(),
@@ -741,13 +827,13 @@ class ImbalancedTraining:
                     plt.xlabel("Class Name")
                     plt.ylabel("Number of Samples")
                     plt.title(
-                        f"Class Distribution (Non-zero Classes) - Cycle {cycle_idx}"
+                        f"Class Distribution (Non-zero Classes) - Cycle {cycle_label}"
                     )
                     plt.tight_layout()
 
                     # Save detailed plot
                     detailed_png_path = (
-                        f"{vis_dir}/class_dist_detailed_cycle_{cycle_idx}.png"
+                        f"{vis_dir}/class_dist_detailed_cycle_{cycle_label}.png"
                     )
                     plt.savefig(detailed_png_path, dpi=100, bbox_inches="tight")
                     plt.close()
@@ -755,10 +841,11 @@ class ImbalancedTraining:
                     # Log detailed PNG to Wandb
                     wandb_logger.experiment.log(
                         {
-                            f"class_distribution_detailed/cycle_{cycle_idx}": wandb.Image(
+                            f"class_distribution_detailed/cycle_{cycle_label}": wandb.Image(
                                 detailed_png_path
                             ),
-                            "cycle": cycle_idx,
+                            "cycle": cycle_label,
+                            "analysis_stage": stage_label or "cycle",
                         }
                     )
 
@@ -784,6 +871,8 @@ class ImbalancedTraining:
                 self.visualize_embedding_space(cycle_idx + 1)
             if self.args.logger and self.args.log_class_dist:
                 self.save_class_dist(cycle_idx + 1)
+
+            self.completed_cycles = cycle_idx + 1
 
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
