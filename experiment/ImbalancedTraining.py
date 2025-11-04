@@ -1229,12 +1229,15 @@ class ImbalancedTraining:
         ax.set_title(f"Empirical CDF of OOD Distances - Cycle {cycle_idx}")
         ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
         fig.tight_layout()
+
+        # Log the visualization to W&B as an image for quick inspection.
+        cdf_image = wandb.Image(fig)
+        wandb_logger.experiment.log(
+            {f"ood_distance_cdf/cycle_{cycle_idx}": cdf_image, "cycle": cycle_idx}
+        )
+
         fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
         plt.close(fig)
-
-        wandb_logger.experiment.log(
-            {f"ood_distance_cdf_pdf/cycle_{cycle_idx}": wandb.File(pdf_path), "cycle": cycle_idx}
-        )
 
         if hasattr(wandb_logger.experiment, "log_artifact"):
             artifact_name = self._sanitize_artifact_name(
