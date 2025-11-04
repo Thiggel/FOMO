@@ -10,7 +10,7 @@ classification_head: false
 patch_size: 16
 
 # Training hyperparameters
-lr: 1e-4
+lr: 0.5
 temperature: 0.1
 use_temperature_schedule: false
 temperature_min: 0.1
@@ -31,15 +31,15 @@ splits: [0.8, 0.1, 0.1]
 
 # OOD augmentation settings
 k: 100
-num_ood_samples: 1000
+num_ood_samples: 500
 every_nth_ood_sample: 1
-num_generations_per_ood_sample: 100
+num_generations_per_ood_sample: 5
 save_class_distribution: false
 
 # Masking settings
 allow_overlap: false
 aspect_ratio: [0.75, 1.5]
-generation_model: stable_diffusion
+generation_model: flux
 enc_mask_scale: [0.85, 1.0]
 min_keep: 10
 num_enc_masks: 1

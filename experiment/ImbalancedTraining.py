@@ -62,7 +62,7 @@ class FluxAugmentor:
         images,
         num_generations_per_image: int = 1,
         prompt: Optional[str] = None,
-        num_steps: int = 20,
+        num_steps: int = 6,
         guidance: float = 2.5,
     ):
         pipe_prior_output = self.pipe_prior_redux(image=images, prompt=prompt)

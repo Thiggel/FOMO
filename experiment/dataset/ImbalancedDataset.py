@@ -42,6 +42,7 @@ class ImbalancedDataset(Dataset):
         self.dataset = load_dataset(
             dataset_path,
             split=split,
+            trust_remote_code=True
         )
         self.x_key = x_key
         self.y_key = y_key

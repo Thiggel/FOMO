@@ -188,3 +188,7 @@ ood_samples/*
 class_dists.pdf
 class_dists.png
 outputs
+.DS_Store
+*.sh.*
+class_dists
+*.swp
