@@ -1,5 +1,5 @@
 import sys
-from typing import Optional
+from typing import Any, Optional
 from sklearn.manifold import TSNE
 import numpy as np
 import wandb
@@ -10,6 +10,7 @@ import io
 from tqdm import tqdm
 import torch
 import numpy as np
+import torch.nn.functional as F
 from torch.utils.data import Subset, random_split, Dataset, DataLoader
 import lightning.pytorch as L
 from lightning.pytorch.callbacks import EarlyStopping
@@ -126,6 +127,13 @@ class ImbalancedTraining:
             self.added_indices = set()
             self.original_indices = set(range(self.initial_train_ds_size))
         self.last_ood_results: Optional[dict] = None
+        self.visualization_history = getattr(self.args, "visualization_history", 5)
+        self.ood_distance_history: list[dict[str, Any]] = []
+        self.ood_distance_bins: Optional[np.ndarray] = None
+        self.ood_class_metrics_history: list[dict[str, Any]] = []
+        self.ood_class_sort_order: Optional[list[int]] = None
+        self.class_distribution_history: list[dict[str, Any]] = []
+        self.class_distribution_order: Optional[list[int]] = None
 
         self.num_workers = min(6, get_num_workers() // 2)
 
@@ -202,6 +210,80 @@ class ImbalancedTraining:
         sanitized = re.sub(r"[^A-Za-z0-9_.-]+", "_", name)
         sanitized = re.sub(r"_+", "_", sanitized).strip("._-")
         return sanitized or "artifact"
+
+    @staticmethod
+    def _shade_color(color: str, alpha: float, lighten: float = 0.0) -> tuple[float, ...]:
+        import matplotlib.colors as mcolors
+
+        base_rgb = np.array(mcolors.to_rgb(color))
+        shaded_rgb = np.clip(base_rgb + (1.0 - base_rgb) * np.clip(lighten, 0.0, 1.0), 0.0, 1.0)
+        return (*shaded_rgb, np.clip(alpha, 0.0, 1.0))
+
+    def _compute_sample_losses(self, dataset_indices: list[int]) -> Optional[torch.Tensor]:
+        if not dataset_indices:
+            return None
+
+        if not hasattr(self.ssl_method, "model"):
+            print("Warning: SSL method does not expose a model attribute for loss computation.")
+            return None
+
+        device = (
+            self.ssl_method.device
+            if hasattr(self.ssl_method, "device")
+            else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        )
+        dtype = getattr(self.ssl_method, "dtype", torch.float32)
+
+        subset = Subset(self.datamodule.train_dataset, dataset_indices)
+        loader = DataLoader(
+            subset,
+            batch_size=min(len(dataset_indices), self.args.val_batch_size),
+            num_workers=self.num_workers,
+            pin_memory=torch.cuda.is_available(),
+        )
+
+        was_training = self.ssl_method.training
+        self.ssl_method.eval()
+        model = self.ssl_method.model
+        model_device = next(model.parameters(), torch.tensor(0)).device
+        if model_device != device:
+            model.to(device=device, dtype=dtype)
+
+        losses: list[torch.Tensor] = []
+
+        try:
+            with torch.no_grad():
+                for images, labels in loader:
+                    images = images.to(device=device, dtype=dtype)
+                    labels = labels.to(device=device)
+
+                    outputs = model(images)
+                    if isinstance(outputs, tuple):
+                        outputs = outputs[0]
+
+                    if outputs.dim() <= 1:
+                        raise RuntimeError(
+                            "Model outputs do not provide logits for loss computation."
+                        )
+
+                    batch_losses = F.cross_entropy(
+                        outputs, labels, reduction="none"
+                    )
+                    losses.append(batch_losses.detach().cpu())
+        except Exception as exc:
+            print(
+                "Warning: Failed to compute per-sample losses for OOD analysis:"
+                f" {exc}"
+            )
+            return None
+        finally:
+            if was_training:
+                self.ssl_method.train()
+
+        if not losses:
+            return None
+
+        return torch.cat(losses)
 
     def get_class_indices_map(self, dataset):
         """Efficiently create a mapping of class labels to their indices"""
@@ -332,7 +414,7 @@ class ImbalancedTraining:
             ):
                 cycle_log_idx = cycle_idx + 1
                 self._log_ood_class_distribution(
-                    cycle_log_idx, ood_labels, wandb_logger
+                    cycle_log_idx, ood_labels, wandb_logger, ood_indices
                 )
                 self._log_ood_partition_summary(cycle_log_idx, wandb_logger)
                 self._log_ood_distance_cdf(cycle_log_idx, wandb_logger)
@@ -390,6 +472,11 @@ class ImbalancedTraining:
                 self.datamodule.train_dataset = Subset(
                     self.datamodule.train_dataset.dataset, combined_indices
                 )
+
+                if self.args.logger and self.args.log_generated_samples:
+                    self._log_generated_samples_summary(
+                        stage_label=f"cycle_{cycle_idx + 1}"
+                    )
 
                 # Clean up GPU memory after diffusion
                 if torch.cuda.is_available():
@@ -760,28 +847,161 @@ class ImbalancedTraining:
                 original_np = original_counts.numpy()
                 generated_np = generated_counts.numpy()
 
-                # Create distribution plot
-                fig, ax = plt.subplots(figsize=(12, 6))
-                indices = np.arange(num_classes)
-                ax.bar(
-                    indices,
-                    original_np,
-                    label="Original",
-                    color="tab:blue",
-                )
-                ax.bar(
-                    indices,
-                    generated_np,
-                    bottom=original_np,
-                    label="Generated",
-                    color="tab:orange",
-                )
-                ax.set_xlabel("Class Index")
-                ax.set_ylabel("Number of Samples")
-                ax.set_title(f"Class Distribution - Cycle {cycle_label}")
-                ax.legend()
+                total_np = counts_np
+                max_classes = getattr(self.args, "class_distribution_plot_topk", 30)
+                sorted_indices = np.argsort(total_np)[::-1]
 
-                # Save as PNG instead of PDF
+                if self.class_distribution_order is None:
+                    self.class_distribution_order = (
+                        sorted_indices[:max_classes].astype(int).tolist()
+                    )
+                else:
+                    for idx in sorted_indices:
+                        if (
+                            int(idx) not in self.class_distribution_order
+                            and len(self.class_distribution_order) < max_classes
+                        ):
+                            self.class_distribution_order.append(int(idx))
+                    self.class_distribution_order = self.class_distribution_order[
+                        :max_classes
+                    ]
+
+                order = self.class_distribution_order
+
+                if self.class_distribution_history:
+                    updated_history = []
+                    for entry in self.class_distribution_history:
+                        index_map = {
+                            idx: pos for pos, idx in enumerate(entry["class_indices"])
+                        }
+                        total_vals = np.array(
+                            [
+                                float(entry["total"][index_map[idx]])
+                                if idx in index_map
+                                else 0.0
+                                for idx in order
+                            ],
+                            dtype=float,
+                        )
+                        original_vals = np.array(
+                            [
+                                float(entry["original"][index_map[idx]])
+                                if idx in index_map
+                                else 0.0
+                                for idx in order
+                            ],
+                            dtype=float,
+                        )
+                        generated_vals = np.array(
+                            [
+                                float(entry["generated"][index_map[idx]])
+                                if idx in index_map
+                                else 0.0
+                                for idx in order
+                            ],
+                            dtype=float,
+                        )
+                        updated_history.append(
+                            {
+                                **entry,
+                                "class_indices": list(order),
+                                "class_names": [
+                                    class_names_dict.get(idx, f"Class {idx}")
+                                    for idx in order
+                                ],
+                                "total": total_vals,
+                                "original": original_vals,
+                                "generated": generated_vals,
+                            }
+                        )
+                    self.class_distribution_history = updated_history
+
+                order_array = np.array(order, dtype=int)
+                class_names_ordered = [
+                    class_names_dict.get(idx, f"Class {idx}") for idx in order
+                ]
+                total_ordered = total_np[order_array]
+                original_ordered = original_np[order_array]
+                generated_ordered = generated_np[order_array]
+
+                new_entry = {
+                    "cycle": cycle_label,
+                    "class_indices": list(order),
+                    "class_names": class_names_ordered,
+                    "total": total_ordered.astype(float),
+                    "original": original_ordered.astype(float),
+                    "generated": generated_ordered.astype(float),
+                }
+
+                self.class_distribution_history.append(new_entry)
+                if len(self.class_distribution_history) > self.visualization_history:
+                    self.class_distribution_history = self.class_distribution_history[
+                        -self.visualization_history :
+                    ]
+
+                # Create distribution plot with history overlay
+                fig, ax = plt.subplots(figsize=(14, 7))
+                x = np.arange(len(order), dtype=float)
+                bar_width = 0.8
+                original_labelled_cycles: set[int] = set()
+                generated_labelled_cycles: set[int] = set()
+
+                history_to_plot = self.class_distribution_history[
+                    -self.visualization_history :
+                ]
+                for idx, entry in enumerate(history_to_plot):
+                    lighten = 0.5 * (
+                        (len(history_to_plot) - idx - 1)
+                        / max(len(history_to_plot) - 1, 1)
+                        if len(history_to_plot) > 1
+                        else 0.0
+                    )
+                    alpha = 0.85 if idx == len(history_to_plot) - 1 else 0.45
+                    original_color = self._shade_color(
+                        "tab:blue", alpha=alpha, lighten=lighten
+                    )
+                    generated_color = self._shade_color(
+                        "tab:orange", alpha=alpha, lighten=lighten
+                    )
+
+                    original_label = None
+                    if entry["cycle"] not in original_labelled_cycles:
+                        original_label = f"Cycle {entry['cycle']} - Original"
+                        original_labelled_cycles.add(entry["cycle"])
+
+                    ax.bar(
+                        x,
+                        entry["original"],
+                        width=bar_width,
+                        color=original_color,
+                        label=original_label,
+                        zorder=2,
+                    )
+
+                    if np.any(entry["generated"] > 0):
+                        generated_label = None
+                        if entry["cycle"] not in generated_labelled_cycles:
+                            generated_label = f"Cycle {entry['cycle']} - Generated"
+                            generated_labelled_cycles.add(entry["cycle"])
+
+                        ax.bar(
+                            x,
+                            entry["generated"],
+                            width=bar_width,
+                            bottom=entry["original"],
+                            color=generated_color,
+                            label=generated_label,
+                            zorder=3,
+                        )
+
+                ax.set_xticks(x)
+                ax.set_xticklabels(class_names_ordered, rotation=45, ha="right")
+                ax.set_ylabel("Number of samples")
+                ax.set_title(f"Class Distribution History - Cycle {cycle_label}")
+                ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5)
+                ax.legend(loc="upper right")
+                fig.tight_layout()
+
                 vis_dir = (
                     f"visualizations/class_distributions/{self.checkpoint_filename}"
                 )
@@ -792,12 +1012,33 @@ class ImbalancedTraining:
                 fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
                 plt.close(fig)
 
-                # Log PNG to Wandb
                 wandb_logger = self.trainer_args["logger"]
+                table = wandb.Table(
+                    columns=[
+                        "class",
+                        "total_samples",
+                        "original_samples",
+                        "generated_samples",
+                    ]
+                )
+                for name, total_val, original_val, generated_val in zip(
+                    class_names_ordered,
+                    total_ordered,
+                    original_ordered,
+                    generated_ordered,
+                ):
+                    table.add_data(
+                        name,
+                        float(total_val),
+                        float(original_val),
+                        float(generated_val),
+                    )
+
                 wandb_logger.experiment.log(
                     {
                         f"class_distribution/cycle_{cycle_label}": wandb.Image(png_path),
                         f"class_distribution_pdf/cycle_{cycle_label}": wandb.File(pdf_path),
+                        f"class_distribution_table/cycle_{cycle_label}": table,
                         "cycle": cycle_label,
                         "analysis_stage": stage_label or "cycle",
                         "class_distribution_stats": {
@@ -808,53 +1049,6 @@ class ImbalancedTraining:
                         },
                     }
                 )
-
-                # Optionally, create a more detailed visualization for classes with samples
-                if (
-                    class_counts_cpu > 0
-                ).sum().item() < 50:  # Only if there are fewer than 50 classes with samples
-                    # Get indices of classes with samples
-                    non_zero_indices = (
-                        torch.nonzero(class_counts_cpu).squeeze().cpu().numpy()
-                    )
-
-                    # Create bar plot with class names
-                    plt.figure(figsize=(14, 8))
-                    bars = plt.bar(
-                        non_zero_indices,
-                        counts_np[non_zero_indices],
-                    )
-
-                    # Add class names as labels
-                    class_names = [
-                        class_names_dict.get(idx, f"Class {idx}")
-                        for idx in non_zero_indices
-                    ]
-                    plt.xticks(non_zero_indices, class_names, rotation=90)
-                    plt.xlabel("Class Name")
-                    plt.ylabel("Number of Samples")
-                    plt.title(
-                        f"Class Distribution (Non-zero Classes) - Cycle {cycle_label}"
-                    )
-                    plt.tight_layout()
-
-                    # Save detailed plot
-                    detailed_png_path = (
-                        f"{vis_dir}/class_dist_detailed_cycle_{cycle_label}.png"
-                    )
-                    plt.savefig(detailed_png_path, dpi=100, bbox_inches="tight")
-                    plt.close()
-
-                    # Log detailed PNG to Wandb
-                    wandb_logger.experiment.log(
-                        {
-                            f"class_distribution_detailed/cycle_{cycle_label}": wandb.Image(
-                                detailed_png_path
-                            ),
-                            "cycle": cycle_label,
-                            "analysis_stage": stage_label or "cycle",
-                        }
-                    )
 
             except Exception as e:
                 print(f"Warning: Failed to log class distribution to wandb: {str(e)}")
@@ -1082,28 +1276,180 @@ class ImbalancedTraining:
         cycle_idx: int,
         ood_labels: torch.Tensor,
         wandb_logger,
+        ood_dataset_indices: list[int],
     ) -> None:
-        if ood_labels.numel() == 0:
+        if ood_labels.numel() == 0 or not ood_dataset_indices:
+            return
+
+        if not self.last_ood_results:
+            print("Warning: Missing OOD statistics; skipping class distribution logging.")
             return
 
         dataset = self.datamodule.train_dataset.dataset
-        counts = torch.bincount(
-            ood_labels.cpu(), minlength=dataset.num_classes
-        )
-        nonzero_mask = counts > 0
-        if nonzero_mask.sum().item() == 0:
+        distances = self.last_ood_results.get("distances")
+        dataset_indices = self.last_ood_results.get("dataset_indices")
+
+        if distances is None or dataset_indices is None:
+            print("Warning: OOD distances unavailable; skipping class distribution logging.")
             return
 
-        nonzero_indices = torch.nonzero(nonzero_mask, as_tuple=False).squeeze()
-        nonzero_counts = counts[nonzero_indices]
-        sorted_counts, order = torch.sort(nonzero_counts, descending=True)
-        sorted_indices = nonzero_indices[order]
-        top_k = min(20, sorted_indices.numel())
-        top_indices = sorted_indices[:top_k]
-        top_counts = sorted_counts[:top_k]
-        class_names = [
-            dataset.get_class_name(idx.item()) for idx in top_indices
+        index_to_distance = {
+            int(idx): float(dist)
+            for idx, dist in zip(dataset_indices, distances)
+            if np.isfinite(dist)
+        }
+
+        filtered_records = [
+            (idx, label.item() if torch.is_tensor(label) else int(label), index_to_distance.get(int(idx)))
+            for idx, label in zip(ood_dataset_indices, ood_labels)
         ]
+
+        filtered_records = [
+            (idx, label, dist)
+            for idx, label, dist in filtered_records
+            if dist is not None and np.isfinite(dist)
+        ]
+
+        if not filtered_records:
+            print("Warning: No valid OOD distances found for selected samples.")
+            return
+
+        record_indices, record_labels, record_distances = zip(*filtered_records)
+        labels_tensor = torch.tensor(record_labels, dtype=torch.long)
+        distance_tensor = torch.tensor(record_distances, dtype=torch.float32)
+
+        loss_tensor = self._compute_sample_losses([int(idx) for idx in record_indices])
+        loss_available = loss_tensor is not None
+        if loss_tensor is not None and len(loss_tensor) != len(distance_tensor):
+            loss_tensor = None
+            loss_available = False
+            print(
+                "Warning: Loss tensor size mismatch; ignoring loss statistics for OOD analysis."
+            )
+
+        unique_labels = torch.unique(labels_tensor)
+        class_metrics: list[dict[str, Any]] = []
+
+        for class_idx in unique_labels.tolist():
+            mask = labels_tensor == class_idx
+            if not mask.any():
+                continue
+
+            class_distances = distance_tensor[mask]
+            avg_distance = float(class_distances.mean().item())
+            avg_loss = (
+                float(loss_tensor[mask].mean().item())
+                if loss_tensor is not None
+                else float("nan")
+            )
+            class_metrics.append(
+                {
+                    "class_idx": class_idx,
+                    "class_name": dataset.get_class_name(class_idx),
+                    "avg_distance": avg_distance,
+                    "avg_loss": avg_loss,
+                    "count": int(mask.sum().item()),
+                }
+            )
+
+        if not class_metrics:
+            return
+
+        class_metrics.sort(key=lambda item: item["avg_distance"], reverse=True)
+        top_k = min(20, len(class_metrics))
+
+        if self.ood_class_sort_order is None:
+            self.ood_class_sort_order = [
+                metric["class_idx"] for metric in class_metrics[:top_k]
+            ]
+        else:
+            for metric in class_metrics:
+                if (
+                    metric["class_idx"] not in self.ood_class_sort_order
+                    and len(self.ood_class_sort_order) < top_k
+                ):
+                    self.ood_class_sort_order.append(metric["class_idx"])
+            self.ood_class_sort_order = self.ood_class_sort_order[:top_k]
+
+        order = self.ood_class_sort_order
+        metric_map = {metric["class_idx"]: metric for metric in class_metrics}
+
+        # Re-align existing history to the new order
+        if self.ood_class_metrics_history:
+            updated_history = []
+            for entry in self.ood_class_metrics_history:
+                index_map = {
+                    idx: pos for pos, idx in enumerate(entry["class_indices"])
+                }
+                avg_distances = np.array(
+                    [
+                        float(entry["avg_distances"][index_map[idx]])
+                        if idx in index_map
+                        else 0.0
+                        for idx in order
+                    ],
+                    dtype=float,
+                )
+                avg_losses = np.array(
+                    [
+                        float(entry["avg_losses"][index_map[idx]])
+                        if idx in index_map
+                        else np.nan
+                        for idx in order
+                    ],
+                    dtype=float,
+                )
+                counts = np.array(
+                    [
+                        float(entry["counts"][index_map[idx]])
+                        if idx in index_map
+                        else 0.0
+                        for idx in order
+                    ],
+                    dtype=float,
+                )
+                updated_history.append(
+                    {
+                        **entry,
+                        "class_indices": list(order),
+                        "class_names": [
+                            dataset.get_class_name(idx) for idx in order
+                        ],
+                        "avg_distances": avg_distances,
+                        "avg_losses": avg_losses,
+                        "counts": counts,
+                    }
+                )
+            self.ood_class_metrics_history = updated_history
+
+        class_names = [dataset.get_class_name(idx) for idx in order]
+        avg_distances = np.array(
+            [metric_map.get(idx, {}).get("avg_distance", 0.0) for idx in order],
+            dtype=float,
+        )
+        avg_losses = np.array(
+            [metric_map.get(idx, {}).get("avg_loss", np.nan) for idx in order],
+            dtype=float,
+        )
+        counts = np.array(
+            [metric_map.get(idx, {}).get("count", 0) for idx in order], dtype=float
+        )
+
+        new_entry = {
+            "cycle": cycle_idx,
+            "class_indices": list(order),
+            "class_names": class_names,
+            "avg_distances": avg_distances,
+            "avg_losses": avg_losses,
+            "counts": counts,
+            "loss_available": loss_available,
+        }
+
+        self.ood_class_metrics_history.append(new_entry)
+        if len(self.ood_class_metrics_history) > self.visualization_history:
+            self.ood_class_metrics_history = self.ood_class_metrics_history[
+                -self.visualization_history :
+            ]
 
         import matplotlib
 
@@ -1117,20 +1463,83 @@ class ImbalancedTraining:
         png_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.png"
         pdf_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.pdf"
 
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.bar(range(len(class_names)), top_counts.numpy())
-        ax.set_xticks(range(len(class_names)))
+        history_to_plot = self.ood_class_metrics_history[-self.visualization_history :]
+        fig, ax = plt.subplots(figsize=(14, 7))
+        x = np.arange(len(order), dtype=float)
+        bar_width = 0.4
+        distance_labelled_cycles: set[int] = set()
+        loss_labelled_cycles: set[int] = set()
+
+        for idx, entry in enumerate(history_to_plot):
+            lighten = 0.5 * (
+                (len(history_to_plot) - idx - 1)
+                / max(len(history_to_plot) - 1, 1)
+                if len(history_to_plot) > 1
+                else 0.0
+            )
+            alpha = 0.9 if idx == len(history_to_plot) - 1 else 0.5
+            dist_color = self._shade_color("tab:blue", alpha=alpha, lighten=lighten)
+            loss_color = self._shade_color("tab:orange", alpha=alpha, lighten=lighten)
+
+            distance_label = None
+            if entry["cycle"] not in distance_labelled_cycles:
+                distance_label = f"Cycle {entry['cycle']} - Avg distance"
+                distance_labelled_cycles.add(entry["cycle"])
+
+            ax.bar(
+                x - bar_width / 2,
+                entry["avg_distances"],
+                width=bar_width,
+                color=dist_color,
+                label=distance_label,
+                zorder=3 if idx == len(history_to_plot) - 1 else 2,
+            )
+
+            if entry["loss_available"] and not np.all(np.isnan(entry["avg_losses"])):
+                loss_label = None
+                if entry["cycle"] not in loss_labelled_cycles:
+                    loss_label = f"Cycle {entry['cycle']} - Avg loss"
+                    loss_labelled_cycles.add(entry["cycle"])
+
+                ax.bar(
+                    x + bar_width / 2,
+                    entry["avg_losses"],
+                    width=bar_width,
+                    color=loss_color,
+                    label=loss_label,
+                    zorder=3 if idx == len(history_to_plot) - 1 else 2,
+                )
+
+        ax.set_xticks(x)
         ax.set_xticklabels(class_names, rotation=45, ha="right")
-        ax.set_ylabel("Number of OOD samples")
-        ax.set_title(f"Top OOD Classes - Cycle {cycle_idx}")
+        ax.set_ylabel("Value")
+        ax.set_title(
+            f"OOD Class Metrics - Avg Distance & Loss (Cycle {cycle_idx})"
+        )
+        ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5)
+        ax.legend(loc="upper right")
         fig.tight_layout()
         fig.savefig(png_path, dpi=120, bbox_inches="tight")
         fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
         plt.close(fig)
 
+        table = wandb.Table(
+            columns=["class", "avg_distance", "avg_loss", "count"]
+        )
+        for name, distance, loss, count in zip(
+            class_names, avg_distances, avg_losses, counts
+        ):
+            table.add_data(
+                name,
+                float(distance),
+                None if np.isnan(loss) else float(loss),
+                int(count),
+            )
+
         wandb_logger.experiment.log(
             {
                 f"ood_class_distribution/cycle_{cycle_idx}": wandb.Image(png_path),
+                f"ood_class_metrics_table/cycle_{cycle_idx}": table,
                 "cycle": cycle_idx,
             }
         )
@@ -1204,36 +1613,90 @@ class ImbalancedTraining:
         if distances is None or len(distances) == 0:
             return
 
-        sorted_distances = np.sort(distances)
-        num_points = sorted_distances.size
-
-        if num_points == 0:
+        distances = np.asarray(distances, dtype=float)
+        if distances.size == 0:
             return
 
-        empirical_cdf = np.arange(1, num_points + 1) / num_points
+        self.ood_distance_history.append(
+            {"cycle": cycle_idx, "distances": distances}
+        )
+        if len(self.ood_distance_history) > self.visualization_history:
+            self.ood_distance_history = self.ood_distance_history[
+                -self.visualization_history :
+            ]
+
+        all_distances = np.concatenate(
+            [entry["distances"] for entry in self.ood_distance_history]
+        )
+
+        if all_distances.size == 0:
+            return
+
+        min_val = float(all_distances.min())
+        max_val = float(all_distances.max())
+        if np.isclose(min_val, max_val):
+            bins = np.linspace(min_val - 1e-6, max_val + 1e-6, num=10)
+        else:
+            bins = np.histogram_bin_edges(all_distances, bins="auto")
+            if bins.size < 5:
+                bins = np.linspace(min_val, max_val, num=10)
+        self.ood_distance_bins = bins
 
         import matplotlib
 
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
-        vis_dir = f"visualizations/ood_distance_cdf/{self.checkpoint_filename}"
+        vis_dir = f"visualizations/ood_distance_distribution/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
 
-        pdf_path = f"{vis_dir}/ood_distance_cdf_cycle_{cycle_idx}.pdf"
+        pdf_path = f"{vis_dir}/ood_distance_distribution_cycle_{cycle_idx}.pdf"
 
         fig, ax = plt.subplots(figsize=(12, 6))
-        ax.step(sorted_distances, empirical_cdf, where="post", linewidth=2)
-        ax.set_xlabel("k-NN distance")
-        ax.set_ylabel("Empirical CDF")
-        ax.set_title(f"Empirical CDF of OOD Distances - Cycle {cycle_idx}")
+        history_to_plot = self.ood_distance_history[-self.visualization_history :]
+
+        for idx, entry in enumerate(history_to_plot):
+            lighten = 0.5 * (
+                (len(history_to_plot) - idx - 1)
+                / max(len(history_to_plot) - 1, 1)
+                if len(history_to_plot) > 1
+                else 0.0
+            )
+            alpha = 0.7 if idx == len(history_to_plot) - 1 else 0.3
+            color = self._shade_color("tab:purple", alpha=alpha, lighten=lighten)
+
+            ax.hist(
+                entry["distances"],
+                bins=self.ood_distance_bins,
+                density=True,
+                color=color,
+                label=f"Cycle {entry['cycle']}",
+                histtype="stepfilled",
+                edgecolor=self._shade_color(
+                    "tab:purple", alpha=min(alpha + 0.2, 1.0), lighten=lighten / 2
+                ),
+                linewidth=1.0,
+            )
+
+        ax.set_xlabel("OOD distance")
+        ax.set_ylabel("Density")
+        ax.set_title(f"Distribution of OOD Distances - Cycle {cycle_idx}")
         ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+        ax.legend(loc="upper right")
         fig.tight_layout()
 
-        # Log the visualization to W&B as an image for quick inspection.
-        cdf_image = wandb.Image(fig)
+        hist_image = wandb.Image(fig)
         wandb_logger.experiment.log(
-            {f"ood_distance_cdf/cycle_{cycle_idx}": cdf_image, "cycle": cycle_idx}
+            {
+                f"ood_distance_distribution/cycle_{cycle_idx}": hist_image,
+                "cycle": cycle_idx,
+                f"ood_distance_stats/cycle_{cycle_idx}": {
+                    "mean": float(distances.mean()),
+                    "std": float(distances.std()),
+                    "min": float(distances.min()),
+                    "max": float(distances.max()),
+                },
+            }
         )
 
         fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
@@ -1241,7 +1704,7 @@ class ImbalancedTraining:
 
         if hasattr(wandb_logger.experiment, "log_artifact"):
             artifact_name = self._sanitize_artifact_name(
-                f"{self.checkpoint_filename}_cycle_{cycle_idx}_ood_distance_cdf"
+                f"{self.checkpoint_filename}_cycle_{cycle_idx}_ood_distance_distribution"
             )
             artifact = wandb.Artifact(
                 name=artifact_name,
