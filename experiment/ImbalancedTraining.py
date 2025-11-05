@@ -1034,21 +1034,45 @@ class ImbalancedTraining:
                         float(generated_val),
                     )
 
-                wandb_logger.experiment.log(
-                    {
-                        f"class_distribution/cycle_{cycle_label}": wandb.Image(png_path),
-                        f"class_distribution_pdf/cycle_{cycle_label}": wandb.File(pdf_path),
-                        f"class_distribution_table/cycle_{cycle_label}": table,
-                        "cycle": cycle_label,
-                        "analysis_stage": stage_label or "cycle",
-                        "class_distribution_stats": {
-                            "total_samples": counts_float.sum().item(),
-                            "non_zero_classes": (class_counts_cpu > 0).sum().item(),
-                            "mean_samples_per_class": counts_float.mean().item(),
-                            "std_samples_per_class": counts_float.std().item(),
-                        },
-                    }
-                )
+                log_payload = {
+                    f"class_distribution/cycle_{cycle_label}": wandb.Image(png_path),
+                    f"class_distribution_table/cycle_{cycle_label}": table,
+                    "cycle": cycle_label,
+                    "analysis_stage": stage_label or "cycle",
+                    "class_distribution_stats": {
+                        "total_samples": counts_float.sum().item(),
+                        "non_zero_classes": (class_counts_cpu > 0).sum().item(),
+                        "mean_samples_per_class": counts_float.mean().item(),
+                        "std_samples_per_class": counts_float.std().item(),
+                    },
+                }
+
+                wandb_logger.experiment.log(log_payload)
+
+                if hasattr(wandb, "Artifact") and hasattr(
+                    wandb_logger.experiment, "log_artifact"
+                ):
+                    artifact_name = (
+                        f"class_distribution_pdf_"
+                        f"{self.checkpoint_filename}_cycle_{cycle_label}"
+                    )
+                    artifact = wandb.Artifact(
+                        name=artifact_name,
+                        type="class_distribution_pdf",
+                    )
+                    artifact.add_file(pdf_path)
+                    wandb_logger.experiment.log_artifact(
+                        artifact,
+                        aliases=[
+                            f"cycle_{cycle_label}",
+                            stage_label or "cycle",
+                        ],
+                    )
+                else:
+                    print(
+                        "Warning: wandb version does not support Artifact logging;"
+                        " skipping PDF upload."
+                    )
 
             except Exception as e:
                 print(f"Warning: Failed to log class distribution to wandb: {str(e)}")
