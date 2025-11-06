@@ -1666,6 +1666,18 @@ class ImbalancedTraining:
                 bins = np.linspace(min_val, max_val, num=10)
         self.ood_distance_bins = bins
 
+        # Determine a reasonable right-side cutoff so the plot focuses on the modes.
+        cutoff_density_threshold = 0.005
+        histogram_density, bin_edges = np.histogram(
+            all_distances, bins=self.ood_distance_bins, density=True
+        )
+        above_threshold_indices = np.where(histogram_density >= cutoff_density_threshold)[0]
+        right_cutoff = None
+        if above_threshold_indices.size > 0:
+            last_idx = int(above_threshold_indices[-1])
+            # Extend the limit to the edge of the last bin that meets the threshold
+            right_cutoff = float(bin_edges[min(last_idx + 1, len(bin_edges) - 1)])
+
         import matplotlib
 
         matplotlib.use("Agg")
@@ -1707,6 +1719,10 @@ class ImbalancedTraining:
         ax.set_title(f"Distribution of OOD Distances - Cycle {cycle_idx}")
         ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
         ax.legend(loc="upper right")
+        if right_cutoff is not None:
+            # Add a small padding so the final bar is fully visible.
+            padding = max((right_cutoff - ax.get_xlim()[0]) * 0.01, 1e-6)
+            ax.set_xlim(right=right_cutoff + padding)
         fig.tight_layout()
 
         hist_image = wandb.Image(fig)
