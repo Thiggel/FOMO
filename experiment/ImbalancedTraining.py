@@ -671,7 +671,6 @@ class ImbalancedTraining:
                 tsne_embeddings[mask, 1],
                 s=3,
                 color=colors[cls],
-                label=class_names[cls] if class_names else cls,
                 alpha=0.5,
             )
 
@@ -684,25 +683,9 @@ class ImbalancedTraining:
                 tsne_embeddings[mask, 1],
                 s=10,
                 color=colors[cls],
-                label=class_names[cls] if class_names else cls,
                 edgecolors="black",
                 alpha=1.0,
             )
-
-        legend = plt.legend(
-            bbox_to_anchor=(1.05, 1),  # Position right of the plot
-            loc="upper left",
-            fontsize="xx-small",  # Very small font
-            markerscale=0.5,  # Smaller markers
-            ncol=2,  # Use 2 columns to save vertical space
-            frameon=True,  # Add a frame
-            title="Classes",  # Add a title
-            title_fontsize="small",
-        )
-
-        for handle in legend.legend_handles:
-            if hasattr(handle, "set_sizes"):
-                handle.set_sizes([10])
 
         plt.xlabel("t-SNE Dimension 1")
         plt.ylabel("t-SNE Dimension 2")
