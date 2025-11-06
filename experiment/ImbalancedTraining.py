@@ -1381,99 +1381,32 @@ class ImbalancedTraining:
 
         class_metrics.sort(key=lambda item: item["avg_distance"], reverse=True)
         top_k = min(20, len(class_metrics))
+        selected_metrics = class_metrics[:top_k]
 
-        if self.ood_class_sort_order is None:
-            self.ood_class_sort_order = [
-                metric["class_idx"] for metric in class_metrics[:top_k]
-            ]
-        else:
-            for metric in class_metrics:
-                if (
-                    metric["class_idx"] not in self.ood_class_sort_order
-                    and len(self.ood_class_sort_order) < top_k
-                ):
-                    self.ood_class_sort_order.append(metric["class_idx"])
-            self.ood_class_sort_order = self.ood_class_sort_order[:top_k]
-
-        order = self.ood_class_sort_order
-        metric_map = {metric["class_idx"]: metric for metric in class_metrics}
-
-        # Re-align existing history to the new order
-        if self.ood_class_metrics_history:
-            updated_history = []
-            for entry in self.ood_class_metrics_history:
-                index_map = {
-                    idx: pos for pos, idx in enumerate(entry["class_indices"])
-                }
-                avg_distances = np.array(
-                    [
-                        float(entry["avg_distances"][index_map[idx]])
-                        if idx in index_map
-                        else 0.0
-                        for idx in order
-                    ],
-                    dtype=float,
-                )
-                avg_losses = np.array(
-                    [
-                        float(entry["avg_losses"][index_map[idx]])
-                        if idx in index_map
-                        else np.nan
-                        for idx in order
-                    ],
-                    dtype=float,
-                )
-                counts = np.array(
-                    [
-                        float(entry["counts"][index_map[idx]])
-                        if idx in index_map
-                        else 0.0
-                        for idx in order
-                    ],
-                    dtype=float,
-                )
-                updated_history.append(
-                    {
-                        **entry,
-                        "class_indices": list(order),
-                        "class_names": [
-                            dataset.get_class_name(idx) for idx in order
-                        ],
-                        "avg_distances": avg_distances,
-                        "avg_losses": avg_losses,
-                        "counts": counts,
-                    }
-                )
-            self.ood_class_metrics_history = updated_history
-
-        class_names = [dataset.get_class_name(idx) for idx in order]
+        order = [metric["class_idx"] for metric in selected_metrics]
+        class_names = [metric["class_name"] for metric in selected_metrics]
         avg_distances = np.array(
-            [metric_map.get(idx, {}).get("avg_distance", 0.0) for idx in order],
-            dtype=float,
+            [metric["avg_distance"] for metric in selected_metrics], dtype=float
         )
         avg_losses = np.array(
-            [metric_map.get(idx, {}).get("avg_loss", np.nan) for idx in order],
-            dtype=float,
+            [metric["avg_loss"] for metric in selected_metrics], dtype=float
         )
         counts = np.array(
-            [metric_map.get(idx, {}).get("count", 0) for idx in order], dtype=float
+            [metric["count"] for metric in selected_metrics], dtype=float
         )
 
-        new_entry = {
-            "cycle": cycle_idx,
-            "class_indices": list(order),
-            "class_names": class_names,
-            "avg_distances": avg_distances,
-            "avg_losses": avg_losses,
-            "counts": counts,
-            "loss_available": loss_available,
-        }
-
-        self.ood_class_metrics_history.append(new_entry)
-        if len(self.ood_class_metrics_history) > self.visualization_history:
-            self.ood_class_metrics_history = self.ood_class_metrics_history[
-                -self.visualization_history :
-            ]
+        self.ood_class_sort_order = order
+        self.ood_class_metrics_history = [
+            {
+                "cycle": cycle_idx,
+                "class_indices": list(order),
+                "class_names": class_names,
+                "avg_distances": avg_distances,
+                "avg_losses": avg_losses,
+                "counts": counts,
+                "loss_available": loss_available,
+            }
+        ]
 
         import matplotlib
 
@@ -1486,53 +1419,30 @@ class ImbalancedTraining:
         os.makedirs(vis_dir, exist_ok=True)
         png_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.png"
         pdf_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.pdf"
-
-        history_to_plot = self.ood_class_metrics_history[-self.visualization_history :]
         fig, ax = plt.subplots(figsize=(14, 7))
         x = np.arange(len(order), dtype=float)
         bar_width = 0.4
-        distance_labelled_cycles: set[int] = set()
-        loss_labelled_cycles: set[int] = set()
+        dist_color = self._shade_color("tab:blue", alpha=0.9, lighten=0.0)
+        loss_color = self._shade_color("tab:orange", alpha=0.9, lighten=0.0)
 
-        for idx, entry in enumerate(history_to_plot):
-            lighten = 0.5 * (
-                (len(history_to_plot) - idx - 1)
-                / max(len(history_to_plot) - 1, 1)
-                if len(history_to_plot) > 1
-                else 0.0
-            )
-            alpha = 0.9 if idx == len(history_to_plot) - 1 else 0.5
-            dist_color = self._shade_color("tab:blue", alpha=alpha, lighten=lighten)
-            loss_color = self._shade_color("tab:orange", alpha=alpha, lighten=lighten)
+        ax.bar(
+            x - bar_width / 2,
+            avg_distances,
+            width=bar_width,
+            color=dist_color,
+            label="Avg distance",
+            zorder=3,
+        )
 
-            distance_label = None
-            if entry["cycle"] not in distance_labelled_cycles:
-                distance_label = f"Cycle {entry['cycle']} - Avg distance"
-                distance_labelled_cycles.add(entry["cycle"])
-
+        if loss_available and not np.all(np.isnan(avg_losses)):
             ax.bar(
-                x - bar_width / 2,
-                entry["avg_distances"],
+                x + bar_width / 2,
+                avg_losses,
                 width=bar_width,
-                color=dist_color,
-                label=distance_label,
-                zorder=3 if idx == len(history_to_plot) - 1 else 2,
+                color=loss_color,
+                label="Avg loss",
+                zorder=3,
             )
-
-            if entry["loss_available"] and not np.all(np.isnan(entry["avg_losses"])):
-                loss_label = None
-                if entry["cycle"] not in loss_labelled_cycles:
-                    loss_label = f"Cycle {entry['cycle']} - Avg loss"
-                    loss_labelled_cycles.add(entry["cycle"])
-
-                ax.bar(
-                    x + bar_width / 2,
-                    entry["avg_losses"],
-                    width=bar_width,
-                    color=loss_color,
-                    label=loss_label,
-                    zorder=3 if idx == len(history_to_plot) - 1 else 2,
-                )
 
         ax.set_xticks(x)
         ax.set_xticklabels(class_names, rotation=45, ha="right")
