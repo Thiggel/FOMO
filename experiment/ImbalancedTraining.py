@@ -943,8 +943,7 @@ class ImbalancedTraining:
                 fig, ax = plt.subplots(figsize=(14, 7))
                 x = np.arange(len(order), dtype=float)
                 bar_width = 0.8
-                original_labelled_cycles: set[int] = set()
-                generated_labelled_cycles: set[int] = set()
+                plotted_cycles: set[Any] = set()
 
                 history_to_plot = self.class_distribution_history[
                     -self.visualization_history :
@@ -957,42 +956,26 @@ class ImbalancedTraining:
                         else 0.0
                     )
                     alpha = 0.85 if idx == len(history_to_plot) - 1 else 0.45
-                    original_color = self._shade_color(
+                    total_color = self._shade_color(
                         "tab:blue", alpha=alpha, lighten=lighten
                     )
-                    generated_color = self._shade_color(
-                        "tab:orange", alpha=alpha, lighten=lighten
-                    )
 
-                    original_label = None
-                    if entry["cycle"] not in original_labelled_cycles:
-                        original_label = f"Cycle {entry['cycle']} - Original"
-                        original_labelled_cycles.add(entry["cycle"])
+                    label = None
+                    if entry["cycle"] not in plotted_cycles:
+                        label = f"Cycle {entry['cycle']}"
+                        plotted_cycles.add(entry["cycle"])
+
+                    # Ensure newer cycles are plotted behind older ones to show evolution
+                    z_order = 1 + (len(history_to_plot) - 1 - idx)
 
                     ax.bar(
                         x,
-                        entry["original"],
+                        entry["total"],
                         width=bar_width,
-                        color=original_color,
-                        label=original_label,
-                        zorder=2,
+                        color=total_color,
+                        label=label,
+                        zorder=z_order,
                     )
-
-                    if np.any(entry["generated"] > 0):
-                        generated_label = None
-                        if entry["cycle"] not in generated_labelled_cycles:
-                            generated_label = f"Cycle {entry['cycle']} - Generated"
-                            generated_labelled_cycles.add(entry["cycle"])
-
-                        ax.bar(
-                            x,
-                            entry["generated"],
-                            width=bar_width,
-                            bottom=entry["original"],
-                            color=generated_color,
-                            label=generated_label,
-                            zorder=3,
-                        )
 
                 ax.set_xticks(x)
                 ax.set_xticklabels(class_names_ordered, rotation=45, ha="right")
