@@ -34,6 +34,8 @@ k: 100
 num_ood_samples: 500
 every_nth_ood_sample: 1
 num_generations_per_ood_sample: 5
+ood_selection_strategy: top  # options: top, mode_window
+ood_mode_histogram_bins: auto
 save_class_distribution: false
 
 # Masking settings
