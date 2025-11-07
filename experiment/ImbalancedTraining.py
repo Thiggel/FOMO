@@ -661,6 +661,7 @@ class ImbalancedTraining:
 
         unique_classes = np.unique(labels_np)
         colors = self.generate_colors(len(unique_classes))
+        color_map = {cls: colors[idx] for idx, cls in enumerate(unique_classes)}
 
         for cls in unique_classes:
             mask = (labels_np == cls) & (
@@ -670,7 +671,7 @@ class ImbalancedTraining:
                 tsne_embeddings[mask, 0],
                 tsne_embeddings[mask, 1],
                 s=3,
-                color=colors[cls],
+                color=color_map[cls],
                 alpha=0.5,
             )
 
@@ -682,7 +683,7 @@ class ImbalancedTraining:
                 tsne_embeddings[mask, 0],
                 tsne_embeddings[mask, 1],
                 s=10,
-                color=colors[cls],
+                color=color_map[cls],
                 edgecolors="black",
                 alpha=1.0,
             )
