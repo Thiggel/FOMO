@@ -1595,10 +1595,16 @@ class ImbalancedTraining:
         ax.set_title(f"Distribution of OOD Distances - Cycle {cycle_idx}")
         ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
         ax.legend(loc="upper right")
+        # Ensure the distribution doesn't show negative distances, which are not meaningful.
+        left_limit = 0.0
+        current_left, current_right = ax.get_xlim()
+        # Preserve any existing right-side adjustments while enforcing the left boundary at 0.
+        ax.set_xlim(left=left_limit, right=current_right)
+
         if right_cutoff is not None:
             # Add a small padding so the final bar is fully visible.
-            padding = max((right_cutoff - ax.get_xlim()[0]) * 0.01, 1e-6)
-            ax.set_xlim(right=right_cutoff + padding)
+            padding = max((right_cutoff - left_limit) * 0.01, 1e-6)
+            ax.set_xlim(left=left_limit, right=right_cutoff + padding)
         fig.tight_layout()
 
         hist_image = wandb.Image(fig)
