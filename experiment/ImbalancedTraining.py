@@ -92,6 +92,20 @@ class StableDiffusionAugmentor:
         ).images
 
 
+class OODDistanceEpochLogger(L.Callback):
+    def __init__(self, training_ref: "ImbalancedTraining", epoch_interval: int = 100):
+        super().__init__()
+        self.training_ref = training_ref
+        self.epoch_interval = max(1, epoch_interval)
+
+    def on_train_epoch_end(self, trainer, pl_module) -> None:  # pragma: no cover - callback integration
+        current_epoch = trainer.current_epoch + 1
+        if current_epoch % self.epoch_interval != 0:
+            return
+
+        self.training_ref.log_average_ood_distance_for_epoch(current_epoch)
+
+
 class ImbalancedTraining:
     def __init__(
         self,
@@ -129,11 +143,21 @@ class ImbalancedTraining:
         self.last_ood_results: Optional[dict] = None
         self.visualization_history = getattr(self.args, "visualization_history", 5)
         self.ood_distance_history: list[dict[str, Any]] = []
+        self.avg_ood_distance_history: list[dict[str, Any]] = []
+        self.max_ood_distance_history: list[dict[str, Any]] = []
         self.ood_distance_bins: Optional[np.ndarray] = None
         self.ood_class_metrics_history: list[dict[str, Any]] = []
         self.ood_class_sort_order: Optional[list[int]] = None
         self.class_distribution_history: list[dict[str, Any]] = []
         self.class_distribution_order: Optional[list[int]] = None
+
+        self._visualization_data_root = os.path.join(
+            "visualizations",
+            "data",
+            self.checkpoint_filename,
+            f"run_{self.run_idx + 1}",
+        )
+        os.makedirs(self._visualization_data_root, exist_ok=True)
 
         self.num_workers = min(6, get_num_workers() // 2)
 
@@ -218,6 +242,12 @@ class ImbalancedTraining:
         base_rgb = np.array(mcolors.to_rgb(color))
         shaded_rgb = np.clip(base_rgb + (1.0 - base_rgb) * np.clip(lighten, 0.0, 1.0), 0.0, 1.0)
         return (*shaded_rgb, np.clip(alpha, 0.0, 1.0))
+
+    def _save_visualization_data(self, relative_path: str, data: Any) -> str:
+        output_path = os.path.join(self._visualization_data_root, relative_path)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        torch.save(data, output_path)
+        return output_path
 
     def _compute_sample_losses(self, dataset_indices: list[int]) -> Optional[torch.Tensor]:
         if not dataset_indices:
@@ -336,10 +366,17 @@ class ImbalancedTraining:
 
         return class_counts
 
-    def get_outliers(self, cycle_idx):
+    def get_outliers(
+        self, cycle_idx, precomputed_ood_indices: Optional[list[int]] = None
+    ):
         if self.args.sample_selection == "ood":
             print("Using OOD detection for sample selection")
-            ood_indices = self.get_ood_indices(self.datamodule.train_dataset, cycle_idx)
+            if precomputed_ood_indices is not None:
+                ood_indices = precomputed_ood_indices
+            else:
+                ood_indices = self.get_ood_indices(
+                    self.datamodule.train_dataset, cycle_idx
+                )
         elif self.args.sample_selection == "oracle":
             print("Using oracle indices for sample selection")
             ood_indices = self.get_oracle_indices()
@@ -361,6 +398,17 @@ class ImbalancedTraining:
             print(f"\nCycle {cycle_idx} - Initial dataset size: {initial_size}")
 
             cycle_trainer_args = self.trainer_args.copy()
+            callbacks = list(cycle_trainer_args.get("callbacks", []))
+            if self.max_cycles <= 1 and self.args.logger:
+                interval = getattr(self.args, "avg_ood_epoch_interval", 100)
+                try:
+                    interval = int(interval)
+                except (TypeError, ValueError):
+                    interval = 100
+                callbacks.append(
+                    OODDistanceEpochLogger(self, epoch_interval=max(1, interval))
+                )
+            cycle_trainer_args["callbacks"] = callbacks
 
             if torch.cuda.is_available():
                 if self.args.use_deepspeed and DeepSpeedStrategy is not None:
@@ -386,19 +434,62 @@ class ImbalancedTraining:
             trainer = L.Trainer(**cycle_trainer_args)
             trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
 
-            if cycle_idx >= self.max_cycles - 1:
-                return
+            wandb_logger = self.trainer_args.get("logger", None)
+            has_wandb = (
+                self.args.logger
+                and wandb_logger
+                and hasattr(wandb_logger, "experiment")
+            )
+            should_augment = (
+                self.args.ood_augmentation and cycle_idx < self.max_cycles - 1
+            )
+            run_ood_analysis = has_wandb or should_augment
 
-            if not self.args.ood_augmentation:
+            ssl_transform = None
+            precomputed_ood_indices: Optional[list[int]] = None
+            cycle_log_idx = cycle_idx + 1
+
+            if run_ood_analysis:
+                base_dataset = self.datamodule.train_dataset.dataset
+                ssl_transform = copy.deepcopy(base_dataset.transform)
+                base_dataset.transform = self.transform
+
+                precomputed_ood_indices = self.get_ood_indices(
+                    self.datamodule.train_dataset, cycle_idx
+                )
+
+                if has_wandb:
+                    self._log_ood_distance_cdf(cycle_log_idx, wandb_logger)
+                    self._log_ood_partition_summary(cycle_log_idx, wandb_logger)
+                else:
+                    self._log_average_ood_distance(
+                        step_index=cycle_log_idx,
+                        step_type="cycle",
+                        label=f"Cycle {cycle_log_idx}",
+                        wandb_logger=None,
+                    )
+                    self._log_max_ood_distance(
+                        step_index=cycle_log_idx,
+                        step_type="cycle",
+                        label=f"Cycle {cycle_log_idx}",
+                        wandb_logger=None,
+                    )
+
+            if not should_augment:
+                if ssl_transform is not None:
+                    self.datamodule.train_dataset.dataset.transform = ssl_transform
+                if cycle_idx >= self.max_cycles - 1:
+                    return
                 print("OOD augmentation disabled, skipping generation")
                 return
 
-            ssl_transform = copy.deepcopy(
-                self.datamodule.train_dataset.dataset.transform
-            )
-            self.datamodule.train_dataset.dataset.transform = self.transform
+            if ssl_transform is None:
+                ssl_transform = copy.deepcopy(
+                    self.datamodule.train_dataset.dataset.transform
+                )
+                self.datamodule.train_dataset.dataset.transform = self.transform
 
-            ood_indices = self.get_outliers(cycle_idx)
+            ood_indices = self.get_outliers(cycle_idx, precomputed_ood_indices)
 
             ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
             ood_labels = torch.tensor(
@@ -407,17 +498,10 @@ class ImbalancedTraining:
 
             print(f"Selected {len(ood_indices)} samples for augmentation")
 
-            if (
-                self.args.logger
-                and (wandb_logger := self.trainer_args.get("logger", None))
-                and hasattr(wandb_logger, "experiment")
-            ):
-                cycle_log_idx = cycle_idx + 1
+            if has_wandb:
                 self._log_ood_class_distribution(
                     cycle_log_idx, ood_labels, wandb_logger, ood_indices
                 )
-                self._log_ood_partition_summary(cycle_log_idx, wandb_logger)
-                self._log_ood_distance_cdf(cycle_log_idx, wandb_logger)
 
             if self.args.remove_diffusion:
                 # Add samples back to dataset
@@ -725,11 +809,25 @@ class ImbalancedTraining:
         ood_indices = [idx for idx in ood_indices if 0 <= idx < len(labels)]
         ood_mask[ood_indices] = True
 
+        cycle_label = stage_label if stage_label is not None else cycle_idx
+        cycle_label_str = str(cycle_label)
+        self._save_visualization_data(
+            os.path.join("tsne", f"cycle_{cycle_label_str}.pt"),
+            {
+                "cycle": cycle_label,
+                "stage_label": stage_label,
+                "tsne_embeddings": torch.tensor(
+                    tsne_embeddings, dtype=torch.float32
+                ),
+                "labels": labels.cpu(),
+                "ood_indices": ood_indices,
+            },
+        )
+
         fig = self.plot_tsne(tsne_embeddings, labels, class_names, ood_mask=ood_mask)
 
         vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
-        cycle_label = stage_label if stage_label is not None else cycle_idx
         png_path = f"{vis_dir}/tsne_cycle_{cycle_label}.png"
         fig.savefig(png_path, dpi=100, bbox_inches="tight")
         plt.close(fig)
@@ -791,16 +889,18 @@ class ImbalancedTraining:
                 self.datamodule.train_dataset.dataset.get_class_name(idx)
             )
 
-        # Save distribution and class names
-        save_path = f"{os.environ['BASE_CACHE_DIR']}/class_distributions/{self.checkpoint_filename}"
-        os.makedirs(save_path, exist_ok=True)
-
         # Save counts as tensor
         cycle_label = stage_label if stage_label is not None else cycle_idx
-        torch.save(class_counts.cpu(), f"{save_path}/dist_cycle_{cycle_label}.pt")
-
-        # Save class names dictionary
-        torch.save(class_names_dict, f"{save_path}/class_names_cycle_{cycle_label}.pt")
+        self._save_visualization_data(
+            os.path.join("class_distribution", f"counts_cycle_{cycle_label}.pt"),
+            class_counts_cpu,
+        )
+        self._save_visualization_data(
+            os.path.join(
+                "class_distribution", f"class_names_cycle_{cycle_label}.pt"
+            ),
+            class_names_dict,
+        )
 
         # Log distribution info
         print(f"\nCycle {cycle_label} distribution:")
@@ -922,6 +1022,11 @@ class ImbalancedTraining:
                     self.class_distribution_history = self.class_distribution_history[
                         -self.visualization_history :
                     ]
+
+                self._save_visualization_data(
+                    os.path.join("class_distribution", "history.pt"),
+                    self.class_distribution_history,
+                )
 
                 # Create distribution plot with history overlay
                 fig, ax = plt.subplots(figsize=(14, 7))
@@ -1375,6 +1480,23 @@ class ImbalancedTraining:
             }
         ]
 
+        self._save_visualization_data(
+            os.path.join("ood_class_metrics", f"cycle_{cycle_idx:04d}.pt"),
+            {
+                "cycle": cycle_idx,
+                "class_indices": list(order),
+                "class_names": class_names,
+                "avg_distances": avg_distances.tolist(),
+                "avg_losses": avg_losses.tolist(),
+                "counts": counts.tolist(),
+                "loss_available": loss_available,
+            },
+        )
+        self._save_visualization_data(
+            os.path.join("ood_class_metrics", "history.pt"),
+            self.ood_class_metrics_history,
+        )
+
         import matplotlib
 
         matplotlib.use("Agg")
@@ -1497,6 +1619,11 @@ class ImbalancedTraining:
             summary[range_key] = padded_top
             table.add_data(range_key, ", ".join(padded_top))
 
+        self._save_visualization_data(
+            os.path.join("ood_partition_summary", f"cycle_{cycle_idx:04d}.pt"),
+            summary,
+        )
+
         wandb_logger.experiment.log(
             {
                 f"ood_partition_summary/cycle_{cycle_idx}": summary,
@@ -1504,6 +1631,231 @@ class ImbalancedTraining:
                 "cycle": cycle_idx,
             }
         )
+
+    def _log_average_ood_distance(
+        self,
+        step_index: int,
+        step_type: str,
+        label: str,
+        wandb_logger,
+    ) -> None:
+        if not self.last_ood_results:
+            return
+
+        distances = self.last_ood_results.get("distances")
+        if distances is None or len(distances) == 0:
+            return
+
+        distances = np.asarray(distances, dtype=float)
+        if distances.size == 0:
+            return
+
+        mean_distance = float(distances.mean())
+        std_distance = float(distances.std())
+        entry = {
+            "step_index": int(step_index),
+            "step_type": step_type,
+            "label": label,
+            "mean_distance": mean_distance,
+            "std_distance": std_distance,
+        }
+
+        self.avg_ood_distance_history.append(entry)
+
+        distances_tensor = torch.tensor(distances, dtype=torch.float32)
+        filename_prefix = f"{step_type}_{step_index:04d}"
+        self._save_visualization_data(
+            os.path.join("ood_average_distance", f"{filename_prefix}_distances.pt"),
+            distances_tensor,
+        )
+        self._save_visualization_data(
+            os.path.join("ood_average_distance", "history.pt"),
+            self.avg_ood_distance_history,
+        )
+
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        x_positions = np.arange(1, len(self.avg_ood_distance_history) + 1)
+        means = [entry["mean_distance"] for entry in self.avg_ood_distance_history]
+        labels = [entry["label"] for entry in self.avg_ood_distance_history]
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(x_positions, means, marker="o", linewidth=2, color="tab:purple")
+        ax.set_xlabel("Cycle")
+        ax.set_ylabel("Average OOD distance")
+        ax.set_title("Average OOD Distance Over Time")
+        ax.set_xticks(x_positions)
+        ax.set_xticklabels(labels, rotation=45, ha="right")
+        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
+        fig.tight_layout()
+
+        vis_dir = os.path.join(
+            "visualizations",
+            "ood_average_distance",
+            self.checkpoint_filename,
+        )
+        os.makedirs(vis_dir, exist_ok=True)
+        image_path = os.path.join(vis_dir, "avg_ood_distance.png")
+        pdf_path = os.path.join(vis_dir, "avg_ood_distance.pdf")
+        fig.savefig(image_path, dpi=120, bbox_inches="tight")
+        fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
+
+        if wandb_logger and hasattr(wandb_logger, "experiment"):
+            wandb_logger.experiment.log(
+                {
+                    "ood_average_distance/mean": mean_distance,
+                    "ood_average_distance/std": std_distance,
+                    "ood_average_distance/step_label": label,
+                    "ood_average_distance_plot": wandb.Image(fig),
+                }
+            )
+
+        plt.close(fig)
+
+        if (
+            wandb_logger
+            and hasattr(wandb_logger, "experiment")
+            and hasattr(wandb_logger.experiment, "log_artifact")
+        ):
+            artifact_name = self._sanitize_artifact_name(
+                f"{self.checkpoint_filename}_ood_average_distance"
+            )
+            artifact = wandb.Artifact(name=artifact_name, type="visualization")
+            artifact.add_file(pdf_path, name=os.path.basename(pdf_path))
+            wandb_logger.experiment.log_artifact(artifact)
+
+    def _log_max_ood_distance(
+        self,
+        step_index: int,
+        step_type: str,
+        label: str,
+        wandb_logger,
+    ) -> None:
+        if not self.last_ood_results:
+            return
+
+        distances = self.last_ood_results.get("distances")
+        if distances is None or len(distances) == 0:
+            return
+
+        distances = np.asarray(distances, dtype=float)
+        if distances.size == 0:
+            return
+
+        max_distance = float(distances.max())
+        entry = {
+            "step_index": int(step_index),
+            "step_type": step_type,
+            "label": label,
+            "max_distance": max_distance,
+        }
+
+        self.max_ood_distance_history.append(entry)
+
+        distances_tensor = torch.tensor(distances, dtype=torch.float32)
+        filename_prefix = f"{step_type}_{step_index:04d}"
+        self._save_visualization_data(
+            os.path.join("ood_max_distance", f"{filename_prefix}_distances.pt"),
+            distances_tensor,
+        )
+        self._save_visualization_data(
+            os.path.join("ood_max_distance", "history.pt"),
+            self.max_ood_distance_history,
+        )
+
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        x_positions = np.arange(1, len(self.max_ood_distance_history) + 1)
+        maxima = [entry["max_distance"] for entry in self.max_ood_distance_history]
+        labels = [entry["label"] for entry in self.max_ood_distance_history]
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(x_positions, maxima, marker="o", linewidth=2, color="tab:red")
+        ax.set_xlabel("Cycle")
+        ax.set_ylabel("Maximum OOD distance")
+        ax.set_title("Maximum OOD Distance Over Time")
+        ax.set_xticks(x_positions)
+        ax.set_xticklabels(labels, rotation=45, ha="right")
+        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
+        fig.tight_layout()
+
+        vis_dir = os.path.join(
+            "visualizations",
+            "ood_max_distance",
+            self.checkpoint_filename,
+        )
+        os.makedirs(vis_dir, exist_ok=True)
+        image_path = os.path.join(vis_dir, "max_ood_distance.png")
+        pdf_path = os.path.join(vis_dir, "max_ood_distance.pdf")
+        fig.savefig(image_path, dpi=120, bbox_inches="tight")
+        fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
+
+        if wandb_logger and hasattr(wandb_logger, "experiment"):
+            wandb_logger.experiment.log(
+                {
+                    "ood_max_distance/max": max_distance,
+                    "ood_max_distance/step_label": label,
+                    "ood_max_distance_plot": wandb.Image(fig),
+                }
+            )
+
+        plt.close(fig)
+
+        if (
+            wandb_logger
+            and hasattr(wandb_logger, "experiment")
+            and hasattr(wandb_logger.experiment, "log_artifact")
+        ):
+            artifact_name = self._sanitize_artifact_name(
+                f"{self.checkpoint_filename}_ood_max_distance"
+            )
+            artifact = wandb.Artifact(name=artifact_name, type="visualization")
+            artifact.add_file(pdf_path, name=os.path.basename(pdf_path))
+            wandb_logger.experiment.log_artifact(artifact)
+
+    def log_average_ood_distance_for_epoch(self, epoch: int) -> None:
+        wandb_logger = self.trainer_args.get("logger", None)
+        if not (
+            self.args.logger
+            and wandb_logger
+            and hasattr(wandb_logger, "experiment")
+            and self.datamodule is not None
+        ):
+            return
+
+        train_dataset = getattr(self.datamodule, "train_dataset", None)
+        if train_dataset is None:
+            return
+
+        base_dataset = train_dataset
+        while isinstance(base_dataset, Subset):
+            base_dataset = base_dataset.dataset
+
+        old_transform = base_dataset.transform
+        base_dataset.transform = self.transform
+
+        try:
+            self.get_ood_indices(train_dataset, f"epoch_{epoch}")
+            self._log_average_ood_distance(
+                step_index=epoch,
+                step_type="epoch",
+                label=f"Epoch {epoch}",
+                wandb_logger=wandb_logger,
+            )
+            self._log_max_ood_distance(
+                step_index=epoch,
+                step_type="epoch",
+                label=f"Epoch {epoch}",
+                wandb_logger=wandb_logger,
+            )
+        finally:
+            base_dataset.transform = old_transform
 
     def _log_ood_distance_cdf(self, cycle_idx: int, wandb_logger) -> None:
         if not self.last_ood_results:
@@ -1518,13 +1870,24 @@ class ImbalancedTraining:
         if distances.size == 0:
             return
 
-        self.ood_distance_history.append(
-            {"cycle": cycle_idx, "distances": distances}
-        )
+        history_entry = {"cycle": cycle_idx, "distances": distances}
+        self.ood_distance_history.append(history_entry)
         if len(self.ood_distance_history) > self.visualization_history:
             self.ood_distance_history = self.ood_distance_history[
                 -self.visualization_history :
             ]
+
+        self._save_visualization_data(
+            os.path.join(
+                "ood_distance_distribution",
+                f"cycle_{cycle_idx:04d}_distances.pt",
+            ),
+            torch.tensor(distances, dtype=torch.float32),
+        )
+        self._save_visualization_data(
+            os.path.join("ood_distance_distribution", "history.pt"),
+            self.ood_distance_history,
+        )
 
         all_distances = np.concatenate(
             [entry["distances"] for entry in self.ood_distance_history]
@@ -1636,6 +1999,19 @@ class ImbalancedTraining:
             )
             artifact.add_file(pdf_path, name=os.path.basename(pdf_path))
             wandb_logger.experiment.log_artifact(artifact)
+
+        self._log_average_ood_distance(
+            step_index=cycle_idx,
+            step_type="cycle",
+            label=f"Cycle {cycle_idx}",
+            wandb_logger=wandb_logger,
+        )
+        self._log_max_ood_distance(
+            step_index=cycle_idx,
+            step_type="cycle",
+            label=f"Cycle {cycle_idx}",
+            wandb_logger=wandb_logger,
+        )
 
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
