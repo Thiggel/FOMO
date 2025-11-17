@@ -399,15 +399,25 @@ class ImbalancedTraining:
 
             cycle_trainer_args = self.trainer_args.copy()
             callbacks = list(cycle_trainer_args.get("callbacks", []))
-            if self.max_cycles <= 1 and self.args.logger:
+            should_log_ood_epochs = False
+            if self.args.logger:
                 interval = getattr(self.args, "avg_ood_epoch_interval", 100)
                 try:
                     interval = int(interval)
                 except (TypeError, ValueError):
                     interval = 100
-                callbacks.append(
-                    OODDistanceEpochLogger(self, epoch_interval=max(1, interval))
-                )
+
+                if self.max_cycles <= 1 or getattr(self.args, "ssl", None) == "simclr":
+                    should_log_ood_epochs = True
+
+                if should_log_ood_epochs and not any(
+                    isinstance(cb, OODDistanceEpochLogger) for cb in callbacks
+                ):
+                    callbacks.append(
+                        OODDistanceEpochLogger(
+                            self, epoch_interval=max(1, interval)
+                        )
+                    )
             cycle_trainer_args["callbacks"] = callbacks
 
             if torch.cuda.is_available():
