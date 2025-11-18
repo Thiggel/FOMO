@@ -72,11 +72,23 @@ class FluxAugmentor:
     ):
         pipe_prior_output = self.pipe_prior_redux(image=images, prompt=prompt)
 
+        prompt_embeds = pipe_prior_output.prompt_embeds
+        pooled_prompt_embeds = pipe_prior_output.pooled_prompt_embeds
+
+        if num_generations_per_image > 1:
+            prompt_embeds = prompt_embeds.repeat_interleave(
+                num_generations_per_image, dim=0
+            )
+            pooled_prompt_embeds = pooled_prompt_embeds.repeat_interleave(
+                num_generations_per_image, dim=0
+            )
+
         return self.pipe(
-            **pipe_prior_output,
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             num_inference_steps=num_steps,
             guidance_scale=guidance,
-            num_images_per_prompt=num_generations_per_image,
+            num_images_per_prompt=1,
         ).images
 
 
@@ -2088,12 +2100,6 @@ class ImbalancedTraining:
         def _log_sample_outputs(
             original_image, generated_images, label, class_name: str
         ) -> None:
-            if not generated_images:
-                print(
-                    f"Warning: no generated images for class {class_name} (label {label}); skipping logging and save."
-                )
-                return
-
             nonlocal logged_classes
             orig_small = None
             gen_small = None
@@ -2168,6 +2174,13 @@ class ImbalancedTraining:
                     guidance=flux_guidance,
                 )
 
+                expected = len(batch) * self.args.num_generations_per_ood_sample
+                if len(generated_images) != expected:
+                    raise RuntimeError(
+                        "Flux generation returned an unexpected number of images "
+                        f"(expected {expected}, got {len(generated_images)})."
+                    )
+
                 per_sample_generated = []
                 for sample_idx in range(len(batch)):
                     start = sample_idx * self.args.num_generations_per_ood_sample
@@ -2214,6 +2227,13 @@ class ImbalancedTraining:
                     guidance=sd3_guidance,
                     strength=sd3_strength,
                 )
+
+                expected = len(batch) * self.args.num_generations_per_ood_sample
+                if len(generated_images) != expected:
+                    raise RuntimeError(
+                        "Stable Diffusion 3 generation returned an unexpected number of images "
+                        f"(expected {expected}, got {len(generated_images)})."
+                    )
 
                 per_sample_generated = []
                 for sample_idx in range(len(batch)):
