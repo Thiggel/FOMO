@@ -117,7 +117,6 @@ class StableDiffusion3Augmentor:
             torch_dtype=torch.float16,
             token=self.token,
         ).to(self.device)
-        self.pipe.enable_vae_slicing()
         self.pipe.set_progress_bar_config(disable=True)
 
     @torch.inference_mode()
