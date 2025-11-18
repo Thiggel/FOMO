@@ -2088,6 +2088,12 @@ class ImbalancedTraining:
         def _log_sample_outputs(
             original_image, generated_images, label, class_name: str
         ) -> None:
+            if not generated_images:
+                print(
+                    f"Warning: no generated images for class {class_name} (label {label}); skipping logging and save."
+                )
+                return
+
             nonlocal logged_classes
             orig_small = None
             gen_small = None
