@@ -28,6 +28,7 @@ from pytorch_lightning.utilities.deepspeed import (
 )
 from experiment.ood.ood import OOD
 from diffusers import (
+    StableDiffusion3Img2ImgPipeline,
     StableDiffusionImageVariationPipeline,
     FluxPriorReduxPipeline,
     FluxPipeline,
@@ -57,12 +58,15 @@ class FluxAugmentor:
             text_encoder_2=None,
             torch_dtype=self.dtype,
         ).to(self.device)
+        self.pipe.enable_vae_slicing()
+        self.pipe.enable_vae_tiling()
 
+    @torch.inference_mode()
     def augment(
         self,
         images,
         num_generations_per_image: int = 1,
-        prompt: Optional[str] = None,
+        prompt: Optional[torch.Tensor] = None,
         num_steps: int = 6,
         guidance: float = 2.5,
     ):
@@ -90,6 +94,43 @@ class StableDiffusionAugmentor:
             num_inference_steps=20,
             num_images_per_prompt=num_generations_per_image,
         ).images
+
+
+class StableDiffusion3Augmentor:
+    def __init__(self, device: Optional[str] = None, token: Optional[str] = None):
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.token = token or os.getenv("HF_TOKEN")
+        self.pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(
+            "stabilityai/stable-diffusion-3-medium-diffusers",
+            torch_dtype=torch.float16,
+            token=self.token,
+        ).to(self.device)
+        self.pipe.enable_vae_slicing()
+        self.pipe.set_progress_bar_config(disable=True)
+
+    @torch.inference_mode()
+    def augment(
+        self,
+        images,
+        num_generations_per_image: int = 1,
+        prompt: Optional[str] = "",
+        num_steps: int = 20,
+        guidance: float = 5.0,
+        strength: float = 0.6,
+    ):
+        if isinstance(prompt, str):
+            prompt = [prompt] * len(images)
+
+        output = self.pipe(
+            prompt=prompt,
+            image=images,
+            strength=strength,
+            num_inference_steps=num_steps,
+            guidance_scale=guidance,
+            num_images_per_prompt=num_generations_per_image,
+        )
+
+        return output.images
 
 
 class OODDistanceEpochLogger(L.Callback):
@@ -520,6 +561,8 @@ class ImbalancedTraining:
                 diffusion_pipe = (
                     StableDiffusionAugmentor()
                     if self.args.generation_model == "stable_diffusion"
+                    else StableDiffusion3Augmentor()
+                    if self.args.generation_model == "stable_diffusion_3"
                     else FluxAugmentor()
                 )
 
@@ -2015,8 +2058,8 @@ class ImbalancedTraining:
 
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
-        Generate new data using the diffusion model and log examples to Wandb.
-        For Flux model, process each image individually since it doesn't accept batches.
+        Generate new data using the configured diffusion model and log examples to Wandb.
+        All supported generators now run in batches to improve throughput.
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
         denorm = transforms.Compose(
@@ -2042,102 +2085,149 @@ class ImbalancedTraining:
         already_saved_sample_classes = set()
         dataset_obj = self.datamodule.train_dataset.dataset
 
-        if self.args.generation_model == "flux":
-            # Flux doesn't support batching, so process one image at a time
-            for idx, (image, label) in enumerate(
-                tqdm(ood_samples, desc="Generating New Data with Flux...")
-            ):
-                # Apply denormalization if the image is a tensor
-                if torch.is_tensor(image):
-                    image_pil = transforms.ToPILImage()(denorm(image))
+        def _log_sample_outputs(
+            original_image, generated_images, label, class_name: str
+        ) -> None:
+            nonlocal logged_classes
+            orig_small = None
+            gen_small = None
+            if has_wandb and wandb_logger and hasattr(wandb_logger, "experiment"):
+                orig_small, gen_small = self._prepare_wandb_image_pair(
+                    original_image, generated_images[0], denorm, image_resize
+                )
+
+                if len(wandb_pairs) < target_wandb_pairs:
+                    wandb_pairs.append(
+                        (
+                            class_name,
+                            orig_small.copy() if hasattr(orig_small, "copy") else orig_small,
+                            gen_small.copy() if hasattr(gen_small, "copy") else gen_small,
+                        )
+                    )
+
+                logged_classes += 1
+                if logged_classes % log_every_n_classes == 0:
+                    wandb_logger.experiment.log(
+                        {
+                            f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
+                                orig_small
+                            ),
+                            f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
+                                gen_small
+                            ),
+                            "cycle": cycle_idx,
+                        }
+                    )
+
+            if self.args.save_class_distribution and label not in already_saved_sample_classes:
+                already_saved_sample_classes.add(label)
+
+                save_dir = f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
+                os.makedirs(save_dir, exist_ok=True)
+
+                filename_generated = f"{class_name}_generated.png"
+                save_path_generated = f"{save_dir}/{filename_generated}"
+                generated_images[0].save(save_path_generated, "PNG")
+
+                filename_original = f"{class_name}_original.png"
+                save_path_original = f"{save_dir}/{filename_original}"
+
+                if torch.is_tensor(original_image):
+                    save_image(original_image.cpu(), save_path_original)
                 else:
-                    image_pil = image  # If already PIL
+                    original_image.save(save_path_original, "PNG")
 
-                # Generate multiple augmentations for this image
-                batch_images = pipe.augment(
-                    [image_pil],  # Flux expects a list of PIL images
+        if self.args.generation_model == "flux":
+            flux_batch_size = max(1, getattr(self.args, "flux_batch_size", 1))
+            flux_guidance = getattr(self.args, "flux_guidance", 2.5)
+            flux_num_steps = getattr(self.args, "flux_num_steps", 6)
+
+            dataloader = DataLoader(
+                ood_samples,
+                batch_size=flux_batch_size,
+                num_workers=0,
+                pin_memory=True,
+                shuffle=False,
+            )
+
+            for batch_idx, (images, labels) in enumerate(
+                tqdm(dataloader, desc="Generating New Data with Flux...")
+            ):
+                batch = [ToPILImage()(denorm(image)) for image in images]
+
+                generated_images = pipe.augment(
+                    batch,
                     num_generations_per_image=self.args.num_generations_per_ood_sample,
+                    num_steps=flux_num_steps,
+                    guidance=flux_guidance,
                 )
 
-                label_int = int(label.item() if torch.is_tensor(label) else label)
-                class_name = dataset_obj.get_class_name(label_int)
+                per_sample_generated = []
+                for sample_idx in range(len(batch)):
+                    start = sample_idx * self.args.num_generations_per_ood_sample
+                    end = start + self.args.num_generations_per_ood_sample
+                    per_sample_generated.append(generated_images[start:end])
 
-                orig_small = None
-                gen_small = None
-                if (
-                    has_wandb
-                    and wandb_logger
-                    and hasattr(wandb_logger, "experiment")
-                ):
-                    orig_small, gen_small = self._prepare_wandb_image_pair(
-                        image, batch_images[0], denorm, image_resize
-                    )
+                for image, label, generated in zip(images, labels, per_sample_generated):
+                    label_int = int(label.item() if torch.is_tensor(label) else label)
+                    class_name = dataset_obj.get_class_name(label_int)
+                    _log_sample_outputs(image, generated, label_int, class_name)
 
-                    if len(wandb_pairs) < target_wandb_pairs:
-                        wandb_pairs.append(
-                            (
-                                class_name,
-                                orig_small.copy()
-                                if hasattr(orig_small, "copy")
-                                else orig_small,
-                                gen_small.copy()
-                                if hasattr(gen_small, "copy")
-                                else gen_small,
-                            )
-                        )
-
-                    logged_classes += 1
-                    if logged_classes % log_every_n_classes == 0:
-                        wandb_logger.experiment.log(
-                            {
-                                f"cycle_{cycle_idx}/class_{class_name}/original": wandb.Image(
-                                    orig_small
-                                ),
-                                f"cycle_{cycle_idx}/class_{class_name}/generated": wandb.Image(
-                                    gen_small
-                                ),
-                                "cycle": cycle_idx,
-                            }
-                        )
-
-                # Check if this class should be saved as an example (first time seeing this class)
-                if (
-                    self.args.save_class_distribution
-                    and label not in already_saved_sample_classes
-                ):
-                    already_saved_sample_classes.add(label)
-
-                    # Save generated image
-                    save_dir = (
-                        f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
-                    )
-                    os.makedirs(save_dir, exist_ok=True)
-
-                    # Get class name
-                    # Save original and first generated image as examples
-                    filename_generated = f"{class_name}_generated.png"
-                    save_path_generated = f"{save_dir}/{filename_generated}"
-                    batch_images[0].save(save_path_generated, "PNG")
-
-                    filename_original = f"{class_name}_original.png"
-                    save_path_original = f"{save_dir}/{filename_original}"
-
-                    # Save original image
-                    if torch.is_tensor(image):
-                        save_image(image.cpu(), save_path_original)
-                    else:
-                        image.save(save_path_original, "PNG")
-
-                # Save all generated images
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
-                    batch_images, cycle_idx, total_images_saved
+                    generated_images, cycle_idx, total_images_saved
                 )
-                total_images_saved += len(batch_images)
+                total_images_saved += len(generated_images)
 
-                # Log progress
-                if idx % 10 == 0:
+                if batch_idx % 10 == 0:
                     print(
-                        f"Processed {idx}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
+                        f"Processed {batch_idx * flux_batch_size}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
+                    )
+        elif self.args.generation_model == "stable_diffusion_3":
+            sd3_batch_size = max(1, getattr(self.args, "sd3_batch_size", 1))
+            sd3_guidance = getattr(self.args, "sd3_guidance", 5.0)
+            sd3_num_steps = getattr(self.args, "sd3_num_steps", 20)
+            sd3_strength = getattr(self.args, "sd3_strength", 0.6)
+
+            dataloader = DataLoader(
+                ood_samples,
+                batch_size=sd3_batch_size,
+                num_workers=0,
+                pin_memory=True,
+                shuffle=False,
+            )
+
+            for batch_idx, (images, labels) in enumerate(
+                tqdm(dataloader, desc="Generating New Data with Stable Diffusion 3...")
+            ):
+                batch = [ToPILImage()(denorm(image)) for image in images]
+
+                generated_images = pipe.augment(
+                    batch,
+                    num_generations_per_image=self.args.num_generations_per_ood_sample,
+                    num_steps=sd3_num_steps,
+                    guidance=sd3_guidance,
+                    strength=sd3_strength,
+                )
+
+                per_sample_generated = []
+                for sample_idx in range(len(batch)):
+                    start = sample_idx * self.args.num_generations_per_ood_sample
+                    end = start + self.args.num_generations_per_ood_sample
+                    per_sample_generated.append(generated_images[start:end])
+
+                for image, label, generated in zip(images, labels, per_sample_generated):
+                    label_int = int(label.item() if torch.is_tensor(label) else label)
+                    class_name = dataset_obj.get_class_name(label_int)
+                    _log_sample_outputs(image, generated, label_int, class_name)
+
+                self.datamodule.train_dataset.dataset.image_storage.save_batch(
+                    generated_images, cycle_idx, total_images_saved
+                )
+                total_images_saved += len(generated_images)
+
+                if batch_idx % 10 == 0:
+                    print(
+                        f"Processed {batch_idx * sd3_batch_size}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
                     )
         else:
             # Original code for Stable Diffusion (supports batching)
