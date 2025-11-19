@@ -26,7 +26,8 @@ train_batch_size: 192
 grad_acc_steps: 1
 val_batch_size: 512
 sd_batch_size: 4
-sd3_batch_size: 2
+flux_batch_size: 4
+sd3_batch_size: 32
 crop_size: 224
 splits: [0.8, 0.1, 0.1]
 
