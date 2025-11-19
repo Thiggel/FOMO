@@ -1,0 +1,23 @@
+\centering
+\setlength{\tabcolsep}{2pt}
+\caption{\centering Number of Cycles\\(ViT-S, SimCLR, ImageNet-100-LT, 100 Epochs, 10k created images total)}
+{
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{l cc cc cc}
+    \toprule
+      & \multicolumn{2}{c}{\textbf{C-10}} &  \multicolumn{2}{c}{\textbf{Flowers}} &  \multicolumn{2}{c}{\textbf{Pets}} \\
+     \cmidrule(r){2-3}
+     \cmidrule(l){4-5}
+     \cmidrule(l){6-7}
+     \#Cycles  & Lin. & KNN & Lin. & KNN & Lin. & KNN \\
+    \toprule
+    
+    \multirow{1}{*}{2} & 64.08   &  61.15 & \textbf{39.87} & \textbf{31.63} & 26.02 & \textbf{14.83} \\  
+    \multirow{1}{*}{5} & 63.40 & 60.73 & 39.22 & 30.89 & \textbf{30.08} & 14.69\\
+    \multirow{1}{*}{10} & 64.46 & 60.63 & 31.38 & 31.28 & 27.91 & 14.23 \\
+    \multirow{1}{*}{20} & \textbf{68.68}   &  \textbf{62.02} & 35.95 & 31.56 & 26.56 & 14.72 \\  
+    
+    \bottomrule
+\end{tabular}
+\end{adjustbox}
+\label{table:n_cycle_abl}
