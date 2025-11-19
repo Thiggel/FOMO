@@ -1,16 +1,16 @@
 module purge
 module load gcc/default
-module load cuda12.1/toolkit/12.1
+module load cuda/12.1/12.1.1
 
-export SCRATCH_LOCAL="/var/scratch/ssalehid"
+export SCRATCH_LOCAL="/groups/gag51492/users"
 
 cd $SCRATCH_LOCAL
-mkdir FOMO
+mkdir -p FOMO2
 
 cd $HOME/FOMO
 
 # Base directory
-export BASE_CACHE_DIR="$SCRATCH_LOCAL/FOMO"
+export BASE_CACHE_DIR="$SCRATCH_LOCAL/FOMO2"
 
 # Hugging Face
 export HF_HOME="$BASE_CACHE_DIR"
@@ -29,6 +29,6 @@ export PYTORCH_LIGHTNING_HOME="$BASE_CACHE_DIR/lightning_logs"
 
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 
-activate fomo
+source .venv/bin/activate
 
-pip install -r requirements.txt
+python -m pip install -r requirements.txt

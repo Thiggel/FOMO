@@ -12,10 +12,11 @@ mkdir -p job_logs/ablations
 
 python -m experiment \
     model=resnet50 \
-    ssl=dino \
+    ssl=simclr \
     dataset=imagenet100_imbalanced \
+    generation_model=stable_diffusion \
     max_cycles=8 \
     n_epochs_per_cycle=100 \
     ood_augmentation=true \
-    experiment_name=ablations_pretraining_dino \
-    train_batch_size=512 >& job_logs/ablations/pretraining_dino.out
+    experiment_name=ablations_generation_stable-diffusion-2 \
+    train_batch_size=512 >& job_logs/ablations/generation_stable-diffusion-2.out

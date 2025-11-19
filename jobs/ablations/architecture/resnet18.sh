@@ -11,11 +11,11 @@ cd $HOME/FOMO
 mkdir -p job_logs/ablations
 
 python -m experiment \
-    model=resnet50 \
-    ssl=dino \
+    model=resnet18 \
+    ssl=simclr \
     dataset=imagenet100_imbalanced \
     max_cycles=8 \
     n_epochs_per_cycle=100 \
     ood_augmentation=true \
-    experiment_name=ablations_pretraining_dino \
-    train_batch_size=512 >& job_logs/ablations/pretraining_dino.out
+    experiment_name=ablations_architecture_resnet18 \
+    train_batch_size=512 >& job_logs/ablations/architecture_resnet18.out
