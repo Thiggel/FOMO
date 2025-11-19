@@ -202,6 +202,7 @@ class ImbalancedTraining:
         self.ood_class_sort_order: Optional[list[int]] = None
         self.class_distribution_history: list[dict[str, Any]] = []
         self.class_distribution_order: Optional[list[int]] = None
+        self._offloaded_modules: list[tuple[str, torch.device]] = []
 
         self._visualization_data_root = os.path.join(
             "visualizations",
@@ -229,6 +230,75 @@ class ImbalancedTraining:
             self.save_class_dist(cycle_reference, stage_label=stage_label)
 
         self._log_generated_samples_summary(stage_label)
+
+    def _get_module_device(self, module: Optional[torch.nn.Module]) -> Optional[torch.device]:
+        if module is None:
+            return None
+
+        module_device = getattr(module, "device", None)
+        if isinstance(module_device, torch.device):
+            return module_device
+        if isinstance(module_device, str):
+            return torch.device(module_device)
+
+        for param in module.parameters():
+            return param.device
+
+        for buffer in module.buffers():
+            return buffer.device
+
+        return None
+
+    def _offload_models_for_generation(self) -> None:
+        if not torch.cuda.is_available():
+            self._offloaded_modules = []
+            return
+
+        modules_to_offload: list[tuple[str, torch.nn.Module]] = []
+        if hasattr(self, "ssl_method"):
+            modules_to_offload.append(("ssl_method", self.ssl_method))
+
+        self._offloaded_modules = []
+
+        for attr_name, module in modules_to_offload:
+            device = self._get_module_device(module)
+            if device is None or device.type != "cuda":
+                continue
+
+            module.to("cpu")
+            module_device_attr = getattr(type(module), "device", None)
+            if module_device_attr is not None and hasattr(module, "device"):
+                try:
+                    setattr(module, "device", torch.device("cpu"))
+                except AttributeError:
+                    pass
+
+            self._offloaded_modules.append((attr_name, device))
+
+        torch.cuda.empty_cache()
+
+    def _restore_offloaded_models(self) -> None:
+        if not self._offloaded_modules:
+            return
+
+        for attr_name, device in self._offloaded_modules:
+            module = getattr(self, attr_name, None)
+            if module is None:
+                continue
+
+            target_device = device
+            if target_device.type == "cuda" and not torch.cuda.is_available():
+                target_device = torch.device("cpu")
+
+            module.to(target_device)
+            module_device_attr = getattr(type(module), "device", None)
+            if module_device_attr is not None and hasattr(module, "device"):
+                try:
+                    setattr(module, "device", target_device)
+                except AttributeError:
+                    pass
+
+        self._offloaded_modules = []
 
     def _log_generated_samples_summary(self, stage_label: str) -> None:
         """Log a summary of generated samples for the current stage."""
@@ -579,19 +649,29 @@ class ImbalancedTraining:
                 )
                 print(f"Expected total new images: {expected_new_images}")
 
-                diffusion_pipe = (
-                    StableDiffusionAugmentor()
-                    if self.args.generation_model == "stable_diffusion"
-                    else StableDiffusion3Augmentor()
-                    if self.args.generation_model == "stable_diffusion_3"
-                    else FluxAugmentor()
-                )
+                diffusion_pipe = None
+                self._offload_models_for_generation()
+                try:
+                    diffusion_pipe = (
+                        StableDiffusionAugmentor()
+                        if self.args.generation_model == "stable_diffusion"
+                        else StableDiffusion3Augmentor()
+                        if self.args.generation_model == "stable_diffusion_3"
+                        else FluxAugmentor()
+                    )
 
-                self.generate_new_data(
-                    ood_samples,
-                    pipe=diffusion_pipe,
-                    save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
-                )
+                    self.generate_new_data(
+                        ood_samples,
+                        pipe=diffusion_pipe,
+                        save_subfolder=f"{self.args.additional_data_path}/{cycle_idx}",
+                    )
+                finally:
+                    if torch.cuda.is_available():
+                        if diffusion_pipe is not None:
+                            del diffusion_pipe
+                        torch.cuda.empty_cache()
+
+                    self._restore_offloaded_models()
 
                 # Add generated images to dataset
                 self.datamodule.train_dataset.dataset.add_generated_images(
@@ -625,11 +705,6 @@ class ImbalancedTraining:
                     self._log_generated_samples_summary(
                         stage_label=f"cycle_{cycle_idx + 1}"
                     )
-
-                # Clean up GPU memory after diffusion
-                if torch.cuda.is_available():
-                    del diffusion_pipe
-                    torch.cuda.empty_cache()
 
             # Reset transforms
             self.datamodule.train_dataset.dataset.transform = ssl_transform

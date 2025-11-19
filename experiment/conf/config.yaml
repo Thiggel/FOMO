@@ -26,7 +26,8 @@ train_batch_size: 192
 grad_acc_steps: 1
 val_batch_size: 512
 sd_batch_size: 4
-sd3_batch_size: 2
+flux_batch_size: 4
+sd3_batch_size: 32
 crop_size: 224
 splits: [0.8, 0.1, 0.1]
 
@@ -42,7 +43,7 @@ save_class_distribution: false
 # Masking settings
 allow_overlap: false
 aspect_ratio: [0.75, 1.5]
-generation_model: flux  # options: flux, stable_diffusion, stable_diffusion_3
+generation_model: stable_diffusion_3 # options: flux, stable_diffusion, stable_diffusion_3
 flux_num_steps: 6
 flux_guidance: 2.5
 sd3_num_steps: 20
