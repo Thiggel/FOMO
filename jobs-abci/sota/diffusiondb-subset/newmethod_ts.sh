@@ -10,4 +10,4 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/diffusiondb-subset
 
-python -m experiment model=resnet50 ssl=simclr dataset=diffusiondb_subset max_cycles=8 n_epochs_per_cycle=100 use_temperature_schedule=true ood_augmentation=true experiment_name=sota_diffusiondb-subset_newmethod_ts train_batch_size=512 use_deepspeed=false >& job_logs/diffusiondb-subset/newmethod_ts.out
+python -m experiment model=resnet50 ssl=simclr dataset=diffusiondb_subset max_cycles=8 n_epochs_per_cycle=100 use_temperature_schedule=true ood_augmentation=true experiment_name=sota_diffusiondb-subset_newmethod_ts train_batch_size=512 >& job_logs/diffusiondb-subset/newmethod_ts.out

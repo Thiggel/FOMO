@@ -10,4 +10,4 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/generation
 
-python -m experiment model=vit_base ssl=moco dataset=imagenet1k_imbalanced max_cycles=5 n_epochs_per_cycle=20 ood_augmentation=true experiment_name=ablations_generation_moco_stablediffusion train_batch_size=512 use_deepspeed=false >& job_logs/generation/moco_stablediffusion.out
+python -m experiment model=vit_base ssl=moco dataset=imagenet1k_imbalanced max_cycles=5 n_epochs_per_cycle=20 ood_augmentation=true experiment_name=ablations_generation_moco_stablediffusion train_batch_size=512 >& job_logs/generation/moco_stablediffusion.out

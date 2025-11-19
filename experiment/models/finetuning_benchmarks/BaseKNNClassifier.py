@@ -20,7 +20,6 @@ class BaseKNNClassifier(L.LightningModule):
         **kwargs,
     ):
         super().__init__()
-        self.use_deepspeed = False
         self.max_epochs = 1
         self.save_hyperparameters(ignore=["model"])
         self.transform = transform
