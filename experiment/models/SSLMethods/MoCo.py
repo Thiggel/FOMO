@@ -1,5 +1,6 @@
 import lightning.pytorch as L
 import torch
+import torch.distributed as dist
 from torch import nn
 from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
@@ -69,6 +70,7 @@ class MoCo(ContinuousScheduleMixin, L.LightningModule):
         momentum: float = 0.999,
         dim: int = 128,
         mlp: bool = True,
+        queue_size: int = 65536,
         *args,
         **kwargs,
     ):
@@ -137,6 +139,13 @@ class MoCo(ContinuousScheduleMixin, L.LightningModule):
             param_k.data.copy_(param_q.data)
             param_k.requires_grad = False
 
+        # Create the queue
+        self.register_buffer(
+            "queue",
+            F.normalize(torch.randn(dim, queue_size), dim=0),
+        )
+        self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
+
 
     @torch.no_grad()
     def _momentum_update_key_encoder(self):
@@ -149,57 +158,78 @@ class MoCo(ContinuousScheduleMixin, L.LightningModule):
             )
 
     def contrastive_loss(self, q, k):
-        """
-        Contrastive loss function
-
-        Args:
-            q: queries (batch)
-            k: keys (batch)
-        """
-        # Normalize features
+        """Compute InfoNCE loss with a dictionary of negatives."""
         q = F.normalize(q, dim=1)
         k = F.normalize(k, dim=1)
 
-        # Compute logits
-        # positive logits are the diagonal
-        logits = torch.mm(q, k.T) / self.hparams.temperature
+        # Positive logits: each query against its key
+        l_pos = torch.einsum("nc,nc->n", [q, k]).unsqueeze(-1)
 
-        # Targets: positive pairs are the diagonal elements
-        labels = torch.arange(logits.shape[0], device=logits.device)
+        # Negative logits: queries against the queue
+        l_neg = torch.einsum("nc,ck->nk", [q, self.queue.clone().detach()])
 
-        return F.cross_entropy(logits, labels) * (2 * self.hparams.temperature)
+        logits = torch.cat([l_pos, l_neg], dim=1)
+        logits /= self.hparams.temperature
+
+        labels = torch.zeros(logits.shape[0], dtype=torch.long, device=logits.device)
+        return F.cross_entropy(logits, labels)
+
+    @torch.no_grad()
+    def _concat_all_gather(self, tensor: torch.Tensor) -> torch.Tensor:
+        if dist.is_available() and dist.is_initialized():
+            tensors = [torch.zeros_like(tensor) for _ in range(dist.get_world_size())]
+            dist.all_gather(tensors, tensor)
+            tensor = torch.cat(tensors, dim=0)
+        return tensor
+
+    def _dequeue_and_enqueue(self, keys):
+        # gather keys before updating queue if using distributed training
+        keys = self._concat_all_gather(keys)
+
+        keys = F.normalize(keys, dim=1)
+
+        batch_size = keys.shape[0]
+        ptr = int(self.queue_ptr)
+        queue_size = self.queue.shape[1]
+
+        if batch_size > queue_size:
+            keys = keys[:queue_size]
+            batch_size = queue_size
+
+        # replace the keys at ptr (dequeue and enqueue)
+        end = ptr + batch_size
+        if end <= queue_size:
+            self.queue[:, ptr:end] = keys.T
+        else:
+            first_part = queue_size - ptr
+            self.queue[:, ptr:] = keys[:first_part].T
+            self.queue[:, : batch_size - first_part] = keys[first_part:].T
+
+        ptr = (ptr + batch_size) % queue_size
+        self.queue_ptr[0] = ptr
 
     def forward(self, im_q, im_k):
         """Forward computation during training"""
         # Compute query features
-        q = self.encoder_q(im_q)  # queries: NxC
-        q = self.predictor(q)  # apply predictor to queries (MoCo v3)
+        q = self.encoder_q(im_q)
+        q = self.predictor(q)
 
-        # Compute key features
-        with torch.no_grad():  # no gradient to keys
-            self._momentum_update_key_encoder()  # update the key encoder
-            k = self.encoder_k(im_k)  # keys: NxC
+        # Compute key features with momentum encoder
+        with torch.no_grad():
+            self._momentum_update_key_encoder()
+            k = self.encoder_k(im_k)
 
         return q, k
 
     def training_step(self, batch, batch_idx):
-        imgs, _ = batch  # imgs is a list containing im_q and im_k
+        imgs, _ = batch
         im_q, im_k = imgs
 
-        # Forward pass for both directions (symmetrized loss - MoCo v3)
-        q1, k2 = self(
-            im_q, im_k
-        )  # q1: queries from first view, k2: keys from second view
-        q2, k1 = self(
-            im_k, im_q
-        )  # q2: queries from second view, k1: keys from first view
+        q, k = self(im_q, im_k)
+        loss = self.contrastive_loss(q, k)
 
-        # Compute loss for both directions
-        loss_1 = self.contrastive_loss(q1, k2)
-        loss_2 = self.contrastive_loss(q2, k1)
-
-        # Total loss (symmetrized)
-        loss = loss_1 + loss_2
+        with torch.no_grad():
+            self._dequeue_and_enqueue(k)
 
         # Log metrics
         self.log("train_loss", loss, sync_dist=True)
@@ -209,7 +239,7 @@ class MoCo(ContinuousScheduleMixin, L.LightningModule):
     def configure_optimizers(self):
         # Define optimizer
         optimizer = SGD(
-            self.encoder_q.parameters(),
+            list(self.encoder_q.parameters()) + list(self.predictor.parameters()),
             lr=self.hparams.lr,
             weight_decay=self.hparams.weight_decay,
             momentum=0.9,
