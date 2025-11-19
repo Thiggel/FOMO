@@ -10,4 +10,4 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/laioncoco-subset
 
-python -m experiment model=resnet50 ssl=sdclr dataset=laioncoco_subset max_cycles=8 n_epochs_per_cycle=100 ood_augmentation=true experiment_name=sota_laioncoco-subset_newmethod_sdclr train_batch_size=512 use_deepspeed=false >& job_logs/laioncoco-subset/newmethod_sdclr.out
+python -m experiment model=resnet50 ssl=sdclr dataset=laioncoco_subset num_cycles=8 total_epochs=800 ood_augmentation=true experiment_name=sota_laioncoco-subset_newmethod_sdclr train_batch_size=512 use_deepspeed=false >& job_logs/laioncoco-subset/newmethod_sdclr.out

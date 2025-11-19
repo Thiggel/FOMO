@@ -176,9 +176,18 @@ class ImbalancedTraining:
         self.datamodule = datamodule
         self.checkpoint_callback = checkpoint_callback
         self.checkpoint_filename = checkpoint_filename
-        self.n_epochs_per_cycle = args.n_epochs_per_cycle
-        self.max_cycles = args.max_cycles
+        self.total_epochs = args.total_epochs
+        self.num_cycles = args.num_cycles
+        if self.num_cycles <= 0:
+            raise ValueError("num_cycles must be a positive integer")
+        if self.total_epochs < self.num_cycles:
+            raise ValueError("total_epochs must be >= num_cycles")
+        if self.total_epochs % self.num_cycles != 0:
+            raise ValueError("total_epochs must be divisible by num_cycles")
+
+        self.n_epochs_per_cycle = self.total_epochs // self.num_cycles
         self.completed_cycles = 0
+        self.latest_checkpoint_path: Optional[str] = None
         self.transform = transforms.Compose(
             [
                 transforms.Resize((args.crop_size, args.crop_size)),
@@ -529,7 +538,7 @@ class ImbalancedTraining:
                 except (TypeError, ValueError):
                     interval = 100
 
-                if self.max_cycles <= 1 or getattr(self.args, "ssl", None) == "simclr":
+                if self.num_cycles <= 1 or getattr(self.args, "ssl", None) == "simclr":
                     should_log_ood_epochs = True
 
                 if should_log_ood_epochs and not any(
@@ -563,8 +572,31 @@ class ImbalancedTraining:
                 cycle_trainer_args["accelerator"] = "cuda"
                 cycle_trainer_args["devices"] = "auto"
 
+            cycle_trainer_args["max_epochs"] = self.n_epochs_per_cycle * (
+                cycle_idx + 1
+            )
+
             trainer = L.Trainer(**cycle_trainer_args)
-            trainer.fit(model=self.ssl_method, datamodule=self.datamodule)
+
+            resume_ckpt = None
+            if self.latest_checkpoint_path is not None and os.path.exists(
+                self.latest_checkpoint_path
+            ):
+                resume_ckpt = self.latest_checkpoint_path
+
+            trainer.fit(
+                model=self.ssl_method,
+                datamodule=self.datamodule,
+                ckpt_path=resume_ckpt,
+            )
+
+            if self.checkpoint_callback is not None:
+                latest_path = (
+                    getattr(self.checkpoint_callback, "last_model_path", None)
+                    or getattr(self.checkpoint_callback, "best_model_path", None)
+                )
+                if latest_path:
+                    self.latest_checkpoint_path = latest_path
 
             wandb_logger = self.trainer_args.get("logger", None)
             has_wandb = (
@@ -573,7 +605,7 @@ class ImbalancedTraining:
                 and hasattr(wandb_logger, "experiment")
             )
             should_augment = (
-                self.args.ood_augmentation and cycle_idx < self.max_cycles - 1
+                self.args.ood_augmentation and cycle_idx < self.num_cycles - 1
             )
             run_ood_analysis = has_wandb or should_augment
 
@@ -610,7 +642,7 @@ class ImbalancedTraining:
             if not should_augment:
                 if ssl_transform is not None:
                     self.datamodule.train_dataset.dataset.transform = ssl_transform
-                if cycle_idx >= self.max_cycles - 1:
+                if cycle_idx >= self.num_cycles - 1:
                     return
                 print("OOD augmentation disabled, skipping generation")
                 return
@@ -718,21 +750,27 @@ class ImbalancedTraining:
         if self.args.pretrain:
             self.pretrain_imbalanced()
 
-            if os.path.exists(self.checkpoint_callback.best_model_path):
+            final_checkpoint_path = (
+                self.latest_checkpoint_path
+                or getattr(self.checkpoint_callback, "last_model_path", None)
+                or getattr(self.checkpoint_callback, "best_model_path", None)
+            )
+
+            if final_checkpoint_path and os.path.exists(final_checkpoint_path):
                 if self.args.use_deepspeed:
                     output_path = (
-                        self.checkpoint_callback.best_model_path
+                        final_checkpoint_path
                         + "_fp32.pt".replace(":", "_").replace(" ", "_")
                     )
 
                     convert_zero_checkpoint_to_fp32_state_dict(
-                        self.checkpoint_callback.best_model_path,
+                        final_checkpoint_path,
                         output_path,
                     )
 
                     self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
                 else:
-                    checkpoint = torch.load(self.checkpoint_callback.best_model_path)
+                    checkpoint = torch.load(final_checkpoint_path)
                     state_dict = (
                         checkpoint["state_dict"]
                         if "state_dict" in checkpoint
@@ -744,7 +782,7 @@ class ImbalancedTraining:
             final_cycle_reference = (
                 self.completed_cycles
                 if self.completed_cycles
-                else (self.max_cycles if self.max_cycles else 0)
+                else (self.num_cycles if self.num_cycles else 0)
             )
             self._run_training_analysis(
                 stage_label="end", cycle_reference=final_cycle_reference
@@ -1295,9 +1333,9 @@ class ImbalancedTraining:
         )
         os.makedirs(visualization_dir, exist_ok=True)
 
-        for cycle_idx in range(self.max_cycles):
+        for cycle_idx in range(self.num_cycles):
             print(f"Run {self.run_idx + 1}/{self.args.num_runs}")
-            print(f"Pretraining cycle {cycle_idx + 1}/{self.max_cycles}")
+            print(f"Pretraining cycle {cycle_idx + 1}/{self.num_cycles}")
 
             # Train for one cycle
             self.pretrain_cycle(cycle_idx)

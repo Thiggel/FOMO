@@ -17,8 +17,8 @@ temperature_min: 0.1
 temperature_max: 1.0
 t_max: 400
 weight_decay: 1e-4
-max_cycles: 20
-n_epochs_per_cycle: 20
+total_epochs: 800
+num_cycles: 8
 warmup: 10
 
 # Batch sizes and processing
