@@ -266,8 +266,12 @@ class ImbalancedTraining:
                 continue
 
             module.to("cpu")
-            if hasattr(module, "device"):
-                setattr(module, "device", torch.device("cpu"))
+            module_device_attr = getattr(type(module), "device", None)
+            if module_device_attr is not None and hasattr(module, "device"):
+                try:
+                    setattr(module, "device", torch.device("cpu"))
+                except AttributeError:
+                    pass
 
             self._offloaded_modules.append((attr_name, device))
 
@@ -287,8 +291,12 @@ class ImbalancedTraining:
                 target_device = torch.device("cpu")
 
             module.to(target_device)
-            if hasattr(module, "device"):
-                setattr(module, "device", target_device)
+            module_device_attr = getattr(type(module), "device", None)
+            if module_device_attr is not None and hasattr(module, "device"):
+                try:
+                    setattr(module, "device", target_device)
+                except AttributeError:
+                    pass
 
         self._offloaded_modules = []
 
