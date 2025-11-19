@@ -10,4 +10,4 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/cycles
 
-python -m experiment model=vit_base ssl=simclr dataset=imagenet1k_imbalanced num_cycles=10 total_epochs=100 ood_augmentation=true experiment_name=ablations_cycles_cycles_10 train_batch_size=512 use_deepspeed=false >& job_logs/cycles/cycles_10.out
+python -m experiment model=vit_base ssl=simclr dataset=imagenet1k_imbalanced max_cycles=10 n_epochs_per_cycle=10 ood_augmentation=true experiment_name=ablations_cycles_cycles_10 train_batch_size=512 >& job_logs/cycles/cycles_10.out

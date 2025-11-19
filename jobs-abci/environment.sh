@@ -19,9 +19,6 @@ export TRANSFORMERS_CACHE="$BASE_CACHE_DIR/transformers"
 export HF_MODULES_CACHE="$BASE_CACHE_DIR/modules"
 export TMPDIR="/tmp"
 
-# DeepSpeed
-export DEEPSPEED_CACHE_DIR="$BASE_CACHE_DIR/deepspeed"
-
 # Weights & Biases
 export WANDB_DIR="$BASE_CACHE_DIR"
 

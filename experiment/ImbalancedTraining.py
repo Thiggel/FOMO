@@ -16,15 +16,8 @@ import lightning.pytorch as L
 from lightning.pytorch.callbacks import EarlyStopping
 import re
 
-try:
-    from lightning.pytorch.strategies import DeepSpeedStrategy
-except Exception:  # pragma: no cover - deepspeed optional
-    DeepSpeedStrategy = None
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
-)
-from pytorch_lightning.utilities.deepspeed import (
-    convert_zero_checkpoint_to_fp32_state_dict,
 )
 from experiment.ood.ood import OOD
 from diffusers import (
@@ -39,13 +32,19 @@ import matplotlib.pyplot as plt
 
 import os
 import pickle
+import math
+from contextlib import contextmanager
+import fcntl
+import torch.distributed as dist
 
 from experiment.dataset.ImageStorage import ImageStorage
 from experiment.utils.get_num_workers import get_num_workers
 
 
 class FluxAugmentor:
-    def __init__(self, device: Optional[str] = None, dtype: torch.dtype = torch.bfloat16):
+    def __init__(
+        self, device: Optional[str] = None, dtype: torch.dtype = torch.bfloat16
+    ):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.dtype = dtype
         self.pipe_prior_redux = FluxPriorReduxPipeline.from_pretrained(
@@ -150,7 +149,9 @@ class OODDistanceEpochLogger(L.Callback):
         self.training_ref = training_ref
         self.epoch_interval = max(1, epoch_interval)
 
-    def on_train_epoch_end(self, trainer, pl_module) -> None:  # pragma: no cover - callback integration
+    def on_train_epoch_end(
+        self, trainer, pl_module
+    ) -> None:  # pragma: no cover - callback integration
         current_epoch = trainer.current_epoch + 1
         if current_epoch % self.epoch_interval != 0:
             return
@@ -199,8 +200,8 @@ class ImbalancedTraining:
         )
         if self.datamodule is not None:
             self.initial_train_ds_size = len(self.datamodule.train_dataset)
-            self.added_indices = set()
-            self.original_indices = set(range(self.initial_train_ds_size))
+        self.added_indices = set()
+        self.original_indices = set(range(self.initial_train_ds_size))
         self.last_ood_results: Optional[dict] = None
         self.visualization_history = getattr(self.args, "visualization_history", 5)
         self.ood_distance_history: list[dict[str, Any]] = []
@@ -226,6 +227,48 @@ class ImbalancedTraining:
         if self.datamodule is not None and self.args.logger:
             self._run_training_analysis(stage_label="start", cycle_reference=0)
 
+    def _get_rank_info(self) -> tuple[int, int]:
+        if (
+            dist.is_available() and dist.is_initialized()
+        ):  # pragma: no cover - distributed runtime
+            return dist.get_rank(), dist.get_world_size()
+
+        rank = int(os.environ.get("RANK", "0"))
+        world_size = int(os.environ.get("WORLD_SIZE", "1"))
+        return rank, world_size
+
+    def _is_primary_process(self) -> bool:
+        rank, _ = self._get_rank_info()
+        return rank == 0
+
+    def _split_samples_for_rank(
+        self, samples: list, world_size: int, rank: int
+    ) -> tuple[list, int]:
+        if world_size <= 1:
+            return samples, 0
+
+        total = len(samples)
+        if total == 0:
+            return [], 0
+
+        per_rank = math.ceil(total / world_size)
+        start = min(rank * per_rank, total)
+        end = min(start + per_rank, total)
+        return samples[start:end], start
+
+    @contextmanager
+    def _acquire_generation_lock(self, cycle_idx: int):
+        lock_root = os.path.join(self.args.additional_data_path, "locks")
+        os.makedirs(lock_root, exist_ok=True)
+        lock_path = os.path.join(lock_root, f"cycle_{cycle_idx}.lock")
+
+        with open(lock_path, "w") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+
     def _run_training_analysis(self, stage_label: str, cycle_reference: int) -> None:
         """Run configured analysis routines for a specific training stage."""
 
@@ -240,7 +283,9 @@ class ImbalancedTraining:
 
         self._log_generated_samples_summary(stage_label)
 
-    def _get_module_device(self, module: Optional[torch.nn.Module]) -> Optional[torch.device]:
+    def _get_module_device(
+        self, module: Optional[torch.nn.Module]
+    ) -> Optional[torch.device]:
         if module is None:
             return None
 
@@ -367,11 +412,15 @@ class ImbalancedTraining:
         return sanitized or "artifact"
 
     @staticmethod
-    def _shade_color(color: str, alpha: float, lighten: float = 0.0) -> tuple[float, ...]:
+    def _shade_color(
+        color: str, alpha: float, lighten: float = 0.0
+    ) -> tuple[float, ...]:
         import matplotlib.colors as mcolors
 
         base_rgb = np.array(mcolors.to_rgb(color))
-        shaded_rgb = np.clip(base_rgb + (1.0 - base_rgb) * np.clip(lighten, 0.0, 1.0), 0.0, 1.0)
+        shaded_rgb = np.clip(
+            base_rgb + (1.0 - base_rgb) * np.clip(lighten, 0.0, 1.0), 0.0, 1.0
+        )
         return (*shaded_rgb, np.clip(alpha, 0.0, 1.0))
 
     def _save_visualization_data(self, relative_path: str, data: Any) -> str:
@@ -380,12 +429,16 @@ class ImbalancedTraining:
         torch.save(data, output_path)
         return output_path
 
-    def _compute_sample_losses(self, dataset_indices: list[int]) -> Optional[torch.Tensor]:
+    def _compute_sample_losses(
+        self, dataset_indices: list[int]
+    ) -> Optional[torch.Tensor]:
         if not dataset_indices:
             return None
 
         if not hasattr(self.ssl_method, "model"):
-            print("Warning: SSL method does not expose a model attribute for loss computation.")
+            print(
+                "Warning: SSL method does not expose a model attribute for loss computation."
+            )
             return None
 
         device = (
@@ -427,14 +480,11 @@ class ImbalancedTraining:
                             "Model outputs do not provide logits for loss computation."
                         )
 
-                    batch_losses = F.cross_entropy(
-                        outputs, labels, reduction="none"
-                    )
+                    batch_losses = F.cross_entropy(outputs, labels, reduction="none")
                     losses.append(batch_losses.detach().cpu())
         except Exception as exc:
             print(
-                "Warning: Failed to compute per-sample losses for OOD analysis:"
-                f" {exc}"
+                f"Warning: Failed to compute per-sample losses for OOD analysis: {exc}"
             )
             return None
         finally:
@@ -545,36 +595,16 @@ class ImbalancedTraining:
                     isinstance(cb, OODDistanceEpochLogger) for cb in callbacks
                 ):
                     callbacks.append(
-                        OODDistanceEpochLogger(
-                            self, epoch_interval=max(1, interval)
-                        )
+                        OODDistanceEpochLogger(self, epoch_interval=max(1, interval))
                     )
             cycle_trainer_args["callbacks"] = callbacks
 
             if torch.cuda.is_available():
-                if self.args.use_deepspeed and DeepSpeedStrategy is not None:
-                    strategy = DeepSpeedStrategy(
-                        config={
-                            "train_batch_size": self.args.train_batch_size
-                            * self.args.grad_acc_steps
-                            * torch.cuda.device_count(),
-                            "bf16": {"enabled": False},
-                            "zero_optimization": {
-                                "stage": 2,
-                            },
-                            "zero_allow_untested_optimizer": True,
-                        },
-                    )
-                    cycle_trainer_args["strategy"] = strategy
-                else:
-                    cycle_trainer_args.pop("strategy", None)
-
+                cycle_trainer_args.pop("strategy", None)
                 cycle_trainer_args["accelerator"] = "cuda"
                 cycle_trainer_args["devices"] = "auto"
 
-            cycle_trainer_args["max_epochs"] = self.n_epochs_per_cycle * (
-                cycle_idx + 1
-            )
+            cycle_trainer_args["max_epochs"] = self.n_epochs_per_cycle * (cycle_idx + 1)
 
             trainer = L.Trainer(**cycle_trainer_args)
 
@@ -591,10 +621,9 @@ class ImbalancedTraining:
             )
 
             if self.checkpoint_callback is not None:
-                latest_path = (
-                    getattr(self.checkpoint_callback, "last_model_path", None)
-                    or getattr(self.checkpoint_callback, "best_model_path", None)
-                )
+                latest_path = getattr(
+                    self.checkpoint_callback, "last_model_path", None
+                ) or getattr(self.checkpoint_callback, "best_model_path", None)
                 if latest_path:
                     self.latest_checkpoint_path = latest_path
 
@@ -676,10 +705,11 @@ class ImbalancedTraining:
                 expected_new_images = (
                     len(ood_samples) * self.args.num_generations_per_ood_sample
                 )
-                print(
-                    f"\nGenerating {self.args.num_generations_per_ood_sample} images for each of {len(ood_samples)} OOD samples"
-                )
-                print(f"Expected total new images: {expected_new_images}")
+                if self._is_primary_process():
+                    print(
+                        f"\nGenerating {self.args.num_generations_per_ood_sample} images for each of {len(ood_samples)} OOD samples"
+                    )
+                    print(f"Expected total new images: {expected_new_images}")
 
                 diffusion_pipe = None
                 self._offload_models_for_generation()
@@ -750,33 +780,14 @@ class ImbalancedTraining:
         if self.args.pretrain:
             self.pretrain_imbalanced()
 
-            final_checkpoint_path = (
-                self.latest_checkpoint_path
-                or getattr(self.checkpoint_callback, "last_model_path", None)
-                or getattr(self.checkpoint_callback, "best_model_path", None)
-            )
-
-            if final_checkpoint_path and os.path.exists(final_checkpoint_path):
-                if self.args.use_deepspeed:
-                    output_path = (
-                        final_checkpoint_path
-                        + "_fp32.pt".replace(":", "_").replace(" ", "_")
-                    )
-
-                    convert_zero_checkpoint_to_fp32_state_dict(
-                        final_checkpoint_path,
-                        output_path,
-                    )
-
-                    self.ssl_method.load_state_dict(torch.load(output_path)["state_dict"])
-                else:
-                    checkpoint = torch.load(final_checkpoint_path)
-                    state_dict = (
-                        checkpoint["state_dict"]
-                        if "state_dict" in checkpoint
-                        else checkpoint
-                    )
-                    self.ssl_method.load_state_dict(state_dict)
+            if os.path.exists(self.checkpoint_callback.best_model_path):
+                checkpoint = torch.load(self.checkpoint_callback.best_model_path)
+                state_dict = (
+                    checkpoint["state_dict"]
+                    if "state_dict" in checkpoint
+                    else checkpoint
+                )
+                self.ssl_method.load_state_dict(state_dict)
 
         if self.datamodule is not None and self.args.logger:
             final_cycle_reference = (
@@ -957,7 +968,6 @@ class ImbalancedTraining:
     def visualize_embedding_space(
         self, cycle_idx: int, stage_label: Optional[str] = None
     ) -> None:
-
         old_transform = self.datamodule.train_dataset.dataset.transform
         self.datamodule.train_dataset.dataset.transform = transforms.Compose(
             [
@@ -993,9 +1003,7 @@ class ImbalancedTraining:
             {
                 "cycle": cycle_label,
                 "stage_label": stage_label,
-                "tsne_embeddings": torch.tensor(
-                    tsne_embeddings, dtype=torch.float32
-                ),
+                "tsne_embeddings": torch.tensor(tsne_embeddings, dtype=torch.float32),
                 "labels": labels.cpu(),
                 "ood_indices": ood_indices,
             },
@@ -1035,9 +1043,7 @@ class ImbalancedTraining:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dataset = self.datamodule.train_dataset.dataset
         num_classes = dataset.num_classes
-        class_counts = torch.zeros(
-            num_classes, device=device, dtype=torch.long
-        )
+        class_counts = torch.zeros(num_classes, device=device, dtype=torch.long)
 
         # Process in batches
         loader = DataLoader(
@@ -1050,7 +1056,7 @@ class ImbalancedTraining:
         # Count labels in batches
         for _, labels in tqdm(
             loader,
-            desc=f"Counting class distribution for cycle {stage_label if stage_label is not None else cycle_idx}"
+            desc=f"Counting class distribution for cycle {stage_label if stage_label is not None else cycle_idx}",
         ):
             labels = labels.to(device)
             counts = torch.bincount(labels, minlength=num_classes)
@@ -1073,9 +1079,7 @@ class ImbalancedTraining:
             class_counts_cpu,
         )
         self._save_visualization_data(
-            os.path.join(
-                "class_distribution", f"class_names_cycle_{cycle_label}.pt"
-            ),
+            os.path.join("class_distribution", f"class_names_cycle_{cycle_label}.pt"),
             class_names_dict,
         )
 
@@ -1398,25 +1402,9 @@ class ImbalancedTraining:
             self.trainer_args["accumulate_grad_batches"] = 1
 
             if torch.cuda.is_available():
-                if (
-                    self.args.use_deepspeed
-                    and DeepSpeedStrategy is not None
-                    and getattr(finetuner, "use_deepspeed", True)
-                ):
-                    strategy = DeepSpeedStrategy(
-                        config={
-                            "train_batch_size": 64 * torch.cuda.device_count(),
-                            "train_micro_batch_size_per_gpu": 64,
-                            "zero_optimization": {"stage": 1},
-                            "zero_allow_untested_optimizer": True,
-                        },
-                    )
-                    self.trainer_args["strategy"] = strategy
-                    self.trainer_args.pop("accelerator", None)
-                else:
-                    self.trainer_args.pop("strategy", None)
-                    self.trainer_args["accelerator"] = "cuda"
-                    self.trainer_args["devices"] = "auto"
+                self.trainer_args.pop("strategy", None)
+                self.trainer_args["accelerator"] = "cuda"
+                self.trainer_args["devices"] = "auto"
 
             trainer = L.Trainer(**self.trainer_args)
             trainer.fit(model=finetuner)
@@ -1538,9 +1526,7 @@ class ImbalancedTraining:
         original_counts = original_counts.to(
             device=total_counts.device, dtype=torch.long
         )
-        generated_counts = (
-            total_counts.to(torch.long) - original_counts
-        ).clamp(min=0)
+        generated_counts = (total_counts.to(torch.long) - original_counts).clamp(min=0)
 
         return original_counts, generated_counts.to(device=total_counts.device)
 
@@ -1555,7 +1541,9 @@ class ImbalancedTraining:
             return
 
         if not self.last_ood_results:
-            print("Warning: Missing OOD statistics; skipping class distribution logging.")
+            print(
+                "Warning: Missing OOD statistics; skipping class distribution logging."
+            )
             return
 
         dataset = self.datamodule.train_dataset.dataset
@@ -1563,7 +1551,9 @@ class ImbalancedTraining:
         dataset_indices = self.last_ood_results.get("dataset_indices")
 
         if distances is None or dataset_indices is None:
-            print("Warning: OOD distances unavailable; skipping class distribution logging.")
+            print(
+                "Warning: OOD distances unavailable; skipping class distribution logging."
+            )
             return
 
         index_to_distance = {
@@ -1573,7 +1563,11 @@ class ImbalancedTraining:
         }
 
         filtered_records = [
-            (idx, label.item() if torch.is_tensor(label) else int(label), index_to_distance.get(int(idx)))
+            (
+                idx,
+                label.item() if torch.is_tensor(label) else int(label),
+                index_to_distance.get(int(idx)),
+            )
             for idx, label in zip(ood_dataset_indices, ood_labels)
         ]
 
@@ -1640,9 +1634,7 @@ class ImbalancedTraining:
         avg_losses = np.array(
             [metric["avg_loss"] for metric in selected_metrics], dtype=float
         )
-        counts = np.array(
-            [metric["count"] for metric in selected_metrics], dtype=float
-        )
+        counts = np.array([metric["count"] for metric in selected_metrics], dtype=float)
 
         self.ood_class_sort_order = order
         self.ood_class_metrics_history = [
@@ -1679,9 +1671,7 @@ class ImbalancedTraining:
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
-        vis_dir = (
-            f"visualizations/ood_class_distributions/{self.checkpoint_filename}"
-        )
+        vis_dir = f"visualizations/ood_class_distributions/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
         png_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.png"
         pdf_path = f"{vis_dir}/ood_class_dist_cycle_{cycle_idx}.pdf"
@@ -1713,9 +1703,7 @@ class ImbalancedTraining:
         ax.set_xticks(x)
         ax.set_xticklabels(class_names, rotation=45, ha="right")
         ax.set_ylabel("Value")
-        ax.set_title(
-            f"OOD Class Metrics - Avg Distance & Loss (Cycle {cycle_idx})"
-        )
+        ax.set_title(f"OOD Class Metrics - Avg Distance & Loss (Cycle {cycle_idx})")
         ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5)
         ax.legend(loc="upper right")
         fig.tight_layout()
@@ -1723,9 +1711,7 @@ class ImbalancedTraining:
         fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
         plt.close(fig)
 
-        table = wandb.Table(
-            columns=["class", "avg_distance", "avg_loss", "count"]
-        )
+        table = wandb.Table(columns=["class", "avg_distance", "avg_loss", "count"])
         for name, distance, loss, count in zip(
             class_names, avg_distances, avg_losses, counts
         ):
@@ -2088,7 +2074,9 @@ class ImbalancedTraining:
         histogram_density, bin_edges = np.histogram(
             all_distances, bins=self.ood_distance_bins, density=True
         )
-        above_threshold_indices = np.where(histogram_density >= cutoff_density_threshold)[0]
+        above_threshold_indices = np.where(
+            histogram_density >= cutoff_density_threshold
+        )[0]
         right_cutoff = None
         if above_threshold_indices.size > 0:
             last_idx = int(above_threshold_indices[-1])
@@ -2110,8 +2098,7 @@ class ImbalancedTraining:
 
         for idx, entry in enumerate(history_to_plot):
             lighten = 0.5 * (
-                (len(history_to_plot) - idx - 1)
-                / max(len(history_to_plot) - 1, 1)
+                (len(history_to_plot) - idx - 1) / max(len(history_to_plot) - 1, 1)
                 if len(history_to_plot) > 1
                 else 0.0
             )
@@ -2197,6 +2184,21 @@ class ImbalancedTraining:
         reliability.
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
+        rank, world_size = self._get_rank_info()
+        is_primary_rank = rank == 0
+        total_samples = len(ood_samples)
+        local_samples, shard_start = self._split_samples_for_rank(
+            ood_samples, world_size, rank
+        )
+
+        if not local_samples:
+            if is_primary_rank:
+                print("No OOD samples assigned for generation.")
+            return
+
+        generations_per_sample = self.args.num_generations_per_ood_sample
+        global_total_expected = total_samples * generations_per_sample
+
         denorm = transforms.Compose(
             [
                 transforms.Normalize(
@@ -2207,7 +2209,9 @@ class ImbalancedTraining:
         )
 
         # For Wandb logging
-        has_wandb = self.args.logger and self.args.log_generated_samples
+        has_wandb = (
+            is_primary_rank and self.args.logger and self.args.log_generated_samples
+        )
         image_resize = transforms.Resize((64, 64))  # Resize to 64x64 for Wandb
         wandb_logger = self.trainer_args.get("logger", None)
         log_every_n_classes = getattr(self.args, "log_every_n_classes", 1)
@@ -2216,9 +2220,24 @@ class ImbalancedTraining:
         logged_classes = 0
         wandb_pairs = []
 
-        total_images_saved = 0
+        total_augmented_classes = len(
+            {
+                int(label.item() if torch.is_tensor(label) else label)
+                for _, label in ood_samples
+            }
+        )
+        next_storage_index = shard_start * generations_per_sample
+        local_images_saved = 0
         already_saved_sample_classes = set()
         dataset_obj = self.datamodule.train_dataset.dataset
+
+        def _save_images_with_lock(
+            images_to_save: list[Image.Image], offset: int
+        ) -> None:
+            if not images_to_save:
+                return
+            with self._acquire_generation_lock(cycle_idx):
+                dataset_obj.image_storage.save_batch(images_to_save, cycle_idx, offset)
 
         def _log_sample_outputs(
             original_image, generated_images, label, class_name: str
@@ -2235,8 +2254,12 @@ class ImbalancedTraining:
                     wandb_pairs.append(
                         (
                             class_name,
-                            orig_small.copy() if hasattr(orig_small, "copy") else orig_small,
-                            gen_small.copy() if hasattr(gen_small, "copy") else gen_small,
+                            orig_small.copy()
+                            if hasattr(orig_small, "copy")
+                            else orig_small,
+                            gen_small.copy()
+                            if hasattr(gen_small, "copy")
+                            else gen_small,
                         )
                     )
 
@@ -2254,10 +2277,15 @@ class ImbalancedTraining:
                         }
                     )
 
-            if self.args.save_class_distribution and label not in already_saved_sample_classes:
+            if (
+                self.args.save_class_distribution
+                and label not in already_saved_sample_classes
+            ):
                 already_saved_sample_classes.add(label)
 
-                save_dir = f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
+                save_dir = (
+                    f"{os.environ['BASE_CACHE_DIR']}/ood_samples/cycle_{cycle_idx}/"
+                )
                 os.makedirs(save_dir, exist_ok=True)
 
                 filename_generated = f"{class_name}_generated.png"
@@ -2277,18 +2305,24 @@ class ImbalancedTraining:
             flux_num_steps = getattr(self.args, "flux_num_steps", 6)
 
             for idx, (image, label) in enumerate(
-                tqdm(ood_samples, desc="Generating New Data with Flux...")
+                tqdm(
+                    local_samples,
+                    desc=f"Generating New Data with Flux... (rank {rank})",
+                    disable=not is_primary_rank,
+                )
             ):
-                image_pil = ToPILImage()(denorm(image)) if torch.is_tensor(image) else image
+                image_pil = (
+                    ToPILImage()(denorm(image)) if torch.is_tensor(image) else image
+                )
 
                 generated_images = pipe.augment(
                     [image_pil],
-                    num_generations_per_image=self.args.num_generations_per_ood_sample,
+                    num_generations_per_image=generations_per_sample,
                     num_steps=flux_num_steps,
                     guidance=flux_guidance,
                 )
 
-                expected = self.args.num_generations_per_ood_sample
+                expected = generations_per_sample
                 if len(generated_images) != expected:
                     raise RuntimeError(
                         "Flux generation returned an unexpected number of images "
@@ -2299,14 +2333,13 @@ class ImbalancedTraining:
                 class_name = dataset_obj.get_class_name(label_int)
                 _log_sample_outputs(image, generated_images, label_int, class_name)
 
-                self.datamodule.train_dataset.dataset.image_storage.save_batch(
-                    generated_images, cycle_idx, total_images_saved
-                )
-                total_images_saved += len(generated_images)
+                _save_images_with_lock(generated_images, next_storage_index)
+                next_storage_index += len(generated_images)
+                local_images_saved += len(generated_images)
 
-                if idx % 10 == 0:
+                if idx % 10 == 0 and is_primary_rank:
                     print(
-                        f"Processed {idx}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
+                        f"Processed {idx}/{len(local_samples)} images on rank {rank}, generated {local_images_saved} augmentations"
                     )
         elif self.args.generation_model == "stable_diffusion_3":
             sd3_batch_size = max(1, getattr(self.args, "sd3_batch_size", 1))
@@ -2315,7 +2348,7 @@ class ImbalancedTraining:
             sd3_strength = getattr(self.args, "sd3_strength", 0.6)
 
             dataloader = DataLoader(
-                ood_samples,
+                local_samples,
                 batch_size=sd3_batch_size,
                 num_workers=0,
                 pin_memory=True,
@@ -2323,19 +2356,23 @@ class ImbalancedTraining:
             )
 
             for batch_idx, (images, labels) in enumerate(
-                tqdm(dataloader, desc="Generating New Data with Stable Diffusion 3...")
+                tqdm(
+                    dataloader,
+                    desc=f"Generating New Data with Stable Diffusion 3... (rank {rank})",
+                    disable=not is_primary_rank,
+                )
             ):
                 batch = [ToPILImage()(denorm(image)) for image in images]
 
                 generated_images = pipe.augment(
                     batch,
-                    num_generations_per_image=self.args.num_generations_per_ood_sample,
+                    num_generations_per_image=generations_per_sample,
                     num_steps=sd3_num_steps,
                     guidance=sd3_guidance,
                     strength=sd3_strength,
                 )
 
-                expected = len(batch) * self.args.num_generations_per_ood_sample
+                expected = len(batch) * generations_per_sample
                 if len(generated_images) != expected:
                     raise RuntimeError(
                         "Stable Diffusion 3 generation returned an unexpected number of images "
@@ -2348,19 +2385,23 @@ class ImbalancedTraining:
                     end = start + self.args.num_generations_per_ood_sample
                     per_sample_generated.append(generated_images[start:end])
 
-                for image, label, generated in zip(images, labels, per_sample_generated):
+                for image, label, generated in zip(
+                    images, labels, per_sample_generated
+                ):
                     label_int = int(label.item() if torch.is_tensor(label) else label)
                     class_name = dataset_obj.get_class_name(label_int)
                     _log_sample_outputs(image, generated, label_int, class_name)
 
-                self.datamodule.train_dataset.dataset.image_storage.save_batch(
-                    generated_images, cycle_idx, total_images_saved
-                )
-                total_images_saved += len(generated_images)
+                _save_images_with_lock(generated_images, next_storage_index)
+                next_storage_index += len(generated_images)
+                local_images_saved += len(generated_images)
 
-                if batch_idx % 10 == 0:
+                if batch_idx % 10 == 0 and is_primary_rank:
+                    processed = min(
+                        (batch_idx + 1) * sd3_batch_size, len(local_samples)
+                    )
                     print(
-                        f"Processed {batch_idx * sd3_batch_size}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
+                        f"Processed {processed}/{len(local_samples)} images on rank {rank}, generated {local_images_saved} augmentations"
                     )
         else:
             # Original code for Stable Diffusion (supports batching)
@@ -2373,7 +2414,7 @@ class ImbalancedTraining:
                 1, self.args.sd_batch_size // generations_per_batch
             )
             dataloader = DataLoader(
-                ood_samples,
+                local_samples,
                 batch_size=effective_batch_size,
                 num_workers=0,
                 pin_memory=True,
@@ -2381,7 +2422,11 @@ class ImbalancedTraining:
             )
 
             for batch_idx, (images, labels) in enumerate(
-                tqdm(dataloader, desc="Generating New Data with Stable Diffusion...")
+                tqdm(
+                    dataloader,
+                    desc=f"Generating New Data with Stable Diffusion... (rank {rank})",
+                    disable=not is_primary_rank,
+                )
             ):
                 # Denormalize the batch
                 batch = denorm(images)
@@ -2410,11 +2455,7 @@ class ImbalancedTraining:
 
                 orig_small = None
                 gen_small = None
-                if (
-                    has_wandb
-                    and wandb_logger
-                    and hasattr(wandb_logger, "experiment")
-                ):
+                if has_wandb and wandb_logger and hasattr(wandb_logger, "experiment"):
                     orig_small, gen_small = self._prepare_wandb_image_pair(
                         images[0], batch_images[0], denorm, image_resize
                     )
@@ -2469,12 +2510,12 @@ class ImbalancedTraining:
                     save_image(images[0].cpu(), save_path_original)
 
                 # Save all generated images for this batch
-                self.datamodule.train_dataset.dataset.image_storage.save_batch(
-                    batch_images, cycle_idx, total_images_saved
-                )
-                total_images_saved += len(batch_images)
+                _save_images_with_lock(batch_images, next_storage_index)
+                next_storage_index += len(batch_images)
+                local_images_saved += len(batch_images)
 
-        print(f"Total images generated and saved: {total_images_saved}")
+        if is_primary_rank:
+            print(f"Total images generated and saved: {global_total_expected}")
 
         # Log a summary of how many classes were augmented
         if has_wandb and wandb_logger and hasattr(wandb_logger, "experiment"):
@@ -2502,9 +2543,7 @@ class ImbalancedTraining:
 
             wandb_logger.experiment.log(
                 {
-                    f"cycle_{cycle_idx}/augmented_classes": len(
-                        already_saved_sample_classes
-                    ),
+                    f"cycle_{cycle_idx}/augmented_classes": total_augmented_classes,
                     "cycle": cycle_idx,
                 }
             )

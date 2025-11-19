@@ -10,4 +10,4 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/imagenet-100
 
-python -m experiment model=resnet50 ssl=simclr dataset=imagenet100_balanced num_cycles=8 total_epochs=800 ood_augmentation=true ood_selection_strategy=mode_window experiment_name=sota_imagenet-100_newmethod_mode_window train_batch_size=512 use_deepspeed=false log_class_dist=true log_generated_samples=true log_tsne=true num_runs=3 >& job_logs/imagenet-100/newmethod_mode_window.out
+python -m experiment model=resnet50 ssl=simclr dataset=imagenet100_balanced max_cycles=8 n_epochs_per_cycle=100 ood_augmentation=true ood_selection_strategy=mode_window experiment_name=sota_imagenet-100_newmethod_mode_window train_batch_size=512 log_class_dist=true log_generated_samples=true log_tsne=true num_runs=3 >& job_logs/imagenet-100/newmethod_mode_window.out

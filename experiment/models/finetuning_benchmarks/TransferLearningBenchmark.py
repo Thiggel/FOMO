@@ -21,7 +21,6 @@ class TransferLearningBenchmark(L.LightningModule):
         **kwargs,
     ):
         super().__init__()
-        self.use_deepspeed = True
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.base_transform = transform  # Store original transform

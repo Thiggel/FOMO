@@ -10,4 +10,4 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/imagenet-100-lt
 
-python -m experiment model=resnet50 ssl=simclr dataset=imagenet100_imbalanced num_cycles=8 total_epochs=800 use_temperature_schedule=true experiment_name=sota_imagenet-100-lt_ts train_batch_size=512 use_deepspeed=false >& job_logs/imagenet-100-lt/ts.out
+python -m experiment model=resnet50 ssl=simclr dataset=imagenet100_imbalanced max_cycles=8 n_epochs_per_cycle=100 use_temperature_schedule=true experiment_name=sota_imagenet-100-lt_ts train_batch_size=512 >& job_logs/imagenet-100-lt/ts.out

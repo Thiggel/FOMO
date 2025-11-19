@@ -86,7 +86,6 @@ log_class_dist: false
 log_generated_samples: true
 log_every_n_classes: 1
 max_wandb_augmentation_pairs: 8
-use_deepspeed: true
 
 # Optional paths
 additional_data_path: null
