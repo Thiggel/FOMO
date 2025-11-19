@@ -8,14 +8,13 @@ cd $HOME/FOMO
 
 . jobs/environment.sh
 
-mkdir -p job_logs/ablations
+mkdir -p job_logs/baseline
 
 python -m experiment \
     model=resnet50 \
-    ssl=dino \
+    ssl=simclr \
     dataset=imagenet100_imbalanced \
     max_cycles=8 \
     n_epochs_per_cycle=100 \
-    ood_augmentation=true \
-    experiment_name=ablations_pretraining_dino \
-    train_batch_size=512 >& job_logs/ablations/pretraining_dino.out
+    experiment_name=baseline_imagenet-100-lt_imbalanced \
+    train_batch_size=512 >& job_logs/baseline/imbalanced.out

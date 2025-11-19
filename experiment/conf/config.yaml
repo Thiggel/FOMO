@@ -36,7 +36,7 @@ k: 100
 num_ood_samples: 500
 every_nth_ood_sample: 1
 num_generations_per_ood_sample: 5
-ood_selection_strategy: top  # options: top, mode_window
+ood_selection_strategy: mode_window  # options: top, mode_window
 ood_mode_histogram_bins: auto
 save_class_distribution: false
 
@@ -63,6 +63,8 @@ use_bfloat16: false
 ema: [0.996, 1.0]
 
 # Run configuration
+# default to three runs so every PBS job reuses the same setting without
+# specifying it explicitly
 num_runs: 3
 max_hours_per_run: 18
 seeds: [0, 1, 2, 3, 4]

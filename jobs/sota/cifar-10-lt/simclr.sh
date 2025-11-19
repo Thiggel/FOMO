@@ -1,5 +1,25 @@
+#!/bin/sh
+#PBS -q rt_HF
+#PBS -l select=4
+#PBS -l walltime=140:00:00
+#PBS -P gag51492
+
 cd $HOME/FOMO
 
 . jobs/environment.sh
 
-python -m experiment model=resnet50 ssl=simclr dataset=cifar10_imbalanced num_cycles=1 total_epochs=800 experiment_name=sota_cifar-10-lt_simclr
+mkdir -p job_logs/cifar-10-lt
+
+python -m experiment \
+    model=resnet50 \
+    dataset=cifar10_imbalanced \
+    ssl=simclr \
+    ood_augmentation=false \
+    max_cycles=8 \
+    n_epochs_per_cycle=100 \
+    experiment_name=sota_cifar-10-lt_simclr \
+    train_batch_size=512 \
+    log_class_dist=true \
+    log_generated_samples=true \
+    log_tsne=true \
+    num_runs=3 >& job_logs/cifar-10-lt/simclr.out
