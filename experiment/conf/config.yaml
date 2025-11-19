@@ -43,7 +43,7 @@ save_class_distribution: false
 # Masking settings
 allow_overlap: false
 aspect_ratio: [0.75, 1.5]
-generation_model: flux  # options: flux, stable_diffusion, stable_diffusion_3
+generation_model: stable_diffusion_3 # options: flux, stable_diffusion, stable_diffusion_3
 flux_num_steps: 6
 flux_guidance: 2.5
 sd3_num_steps: 20
