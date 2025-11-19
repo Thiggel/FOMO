@@ -2058,7 +2058,8 @@ class ImbalancedTraining:
     def generate_new_data(self, ood_samples, pipe, save_subfolder) -> None:
         """
         Generate new data using the configured diffusion model and log examples to Wandb.
-        All supported generators now run in batches to improve throughput.
+        Stable Diffusion 3 supports batching, while Flux runs one image at a time for
+        reliability.
         """
         cycle_idx = int(save_subfolder.split("/")[-1])
         denorm = transforms.Compose(
@@ -2137,56 +2138,40 @@ class ImbalancedTraining:
                     original_image.save(save_path_original, "PNG")
 
         if self.args.generation_model == "flux":
-            flux_batch_size = max(1, getattr(self.args, "flux_batch_size", 1))
             flux_guidance = getattr(self.args, "flux_guidance", 2.5)
             flux_num_steps = getattr(self.args, "flux_num_steps", 6)
 
-            dataloader = DataLoader(
-                ood_samples,
-                batch_size=flux_batch_size,
-                num_workers=0,
-                pin_memory=True,
-                shuffle=False,
-            )
-
-            for batch_idx, (images, labels) in enumerate(
-                tqdm(dataloader, desc="Generating New Data with Flux...")
+            for idx, (image, label) in enumerate(
+                tqdm(ood_samples, desc="Generating New Data with Flux...")
             ):
-                batch = [ToPILImage()(denorm(image)) for image in images]
+                image_pil = ToPILImage()(denorm(image)) if torch.is_tensor(image) else image
 
                 generated_images = pipe.augment(
-                    batch,
+                    [image_pil],
                     num_generations_per_image=self.args.num_generations_per_ood_sample,
                     num_steps=flux_num_steps,
                     guidance=flux_guidance,
                 )
 
-                expected = len(batch) * self.args.num_generations_per_ood_sample
+                expected = self.args.num_generations_per_ood_sample
                 if len(generated_images) != expected:
                     raise RuntimeError(
                         "Flux generation returned an unexpected number of images "
                         f"(expected {expected}, got {len(generated_images)})."
                     )
 
-                per_sample_generated = []
-                for sample_idx in range(len(batch)):
-                    start = sample_idx * self.args.num_generations_per_ood_sample
-                    end = start + self.args.num_generations_per_ood_sample
-                    per_sample_generated.append(generated_images[start:end])
-
-                for image, label, generated in zip(images, labels, per_sample_generated):
-                    label_int = int(label.item() if torch.is_tensor(label) else label)
-                    class_name = dataset_obj.get_class_name(label_int)
-                    _log_sample_outputs(image, generated, label_int, class_name)
+                label_int = int(label.item() if torch.is_tensor(label) else label)
+                class_name = dataset_obj.get_class_name(label_int)
+                _log_sample_outputs(image, generated_images, label_int, class_name)
 
                 self.datamodule.train_dataset.dataset.image_storage.save_batch(
                     generated_images, cycle_idx, total_images_saved
                 )
                 total_images_saved += len(generated_images)
 
-                if batch_idx % 10 == 0:
+                if idx % 10 == 0:
                     print(
-                        f"Processed {batch_idx * flux_batch_size}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
+                        f"Processed {idx}/{len(ood_samples)} images, generated {total_images_saved} augmentations"
                     )
         elif self.args.generation_model == "stable_diffusion_3":
             sd3_batch_size = max(1, getattr(self.args, "sd3_batch_size", 1))
