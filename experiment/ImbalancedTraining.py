@@ -72,11 +72,23 @@ class FluxAugmentor:
     ):
         pipe_prior_output = self.pipe_prior_redux(image=images, prompt=prompt)
 
+        prompt_embeds = pipe_prior_output.prompt_embeds
+        pooled_prompt_embeds = pipe_prior_output.pooled_prompt_embeds
+
+        if num_generations_per_image > 1:
+            prompt_embeds = prompt_embeds.repeat_interleave(
+                num_generations_per_image, dim=0
+            )
+            pooled_prompt_embeds = pooled_prompt_embeds.repeat_interleave(
+                num_generations_per_image, dim=0
+            )
+
         return self.pipe(
-            **pipe_prior_output,
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             num_inference_steps=num_steps,
             guidance_scale=guidance,
-            num_images_per_prompt=num_generations_per_image,
+            num_images_per_prompt=1,
         ).images
 
 
@@ -439,15 +451,25 @@ class ImbalancedTraining:
 
             cycle_trainer_args = self.trainer_args.copy()
             callbacks = list(cycle_trainer_args.get("callbacks", []))
-            if self.max_cycles <= 1 and self.args.logger:
+            should_log_ood_epochs = False
+            if self.args.logger:
                 interval = getattr(self.args, "avg_ood_epoch_interval", 100)
                 try:
                     interval = int(interval)
                 except (TypeError, ValueError):
                     interval = 100
-                callbacks.append(
-                    OODDistanceEpochLogger(self, epoch_interval=max(1, interval))
-                )
+
+                if self.max_cycles <= 1 or getattr(self.args, "ssl", None) == "simclr":
+                    should_log_ood_epochs = True
+
+                if should_log_ood_epochs and not any(
+                    isinstance(cb, OODDistanceEpochLogger) for cb in callbacks
+                ):
+                    callbacks.append(
+                        OODDistanceEpochLogger(
+                            self, epoch_interval=max(1, interval)
+                        )
+                    )
             cycle_trainer_args["callbacks"] = callbacks
 
             if torch.cuda.is_available():

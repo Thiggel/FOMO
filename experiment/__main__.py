@@ -114,8 +114,9 @@ def run(
     args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
 
     dataset_id = args.dataset.dataset_path.replace("/", "_")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
     checkpoint_filename = (
-        args.experiment_name + "_" + dataset_id + "_" + str(datetime.now())
+        args.experiment_name + "_" + dataset_id + "_" + timestamp
     )
 
     dataset_pickle_filename = dataset_id + "_" + args.dataset.imbalance_method
