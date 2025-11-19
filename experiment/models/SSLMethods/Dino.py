@@ -33,6 +33,7 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
         # Create student and teacher networks
         self.model = model
         self.teacher = copy.deepcopy(model)
+        self.teacher.eval()
 
         # Get the actual output dimension from the model
         # Try to get it from different possible attributes
@@ -48,6 +49,8 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
 
         # Disable gradient updates for teacher
         for param in self.teacher.parameters():
+            param.requires_grad = False
+        for param in self.teacher_head.parameters():
             param.requires_grad = False
 
         # Copy student head weights to teacher head
@@ -96,17 +99,16 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
     def _get_teacher_output(self, global_views):
         """Get teacher output for global views only."""
         with torch.no_grad():
-            teacher_output = []
+            teacher_probs = []
+            teacher_logits = []
             for view in global_views:
                 feat = self.teacher(view)
-                out = self.teacher_head(feat)
-                # Center and normalize
-                out = out - self.center
-                out = F.normalize(out, dim=-1)
-                # Apply softmax with temperature
-                out = F.softmax(out / self.hparams.teacher_temp, dim=-1)
-                teacher_output.append(out)
-        return teacher_output
+                logits = self.teacher_head(feat)
+                teacher_logits.append(logits)
+                centered = (logits - self.center) / self.hparams.teacher_temp
+                probs = F.softmax(centered, dim=-1)
+                teacher_probs.append(probs)
+        return teacher_probs, teacher_logits
 
     def _get_student_output(self, views):
         """Get student output for all views."""
@@ -114,8 +116,6 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
         for view in views:
             feat = self.model(view)
             out = self.student_head(feat)
-            # Normalize
-            out = F.normalize(out, dim=-1)
             student_output.append(out)
         return student_output
 
@@ -163,10 +163,10 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
         all_views = views  # All views for student
 
         # Get teacher output (only for global views)
-        teacher_output = self._get_teacher_output(global_views)
+        teacher_output, teacher_logits = self._get_teacher_output(global_views)
 
-        # Update center
-        self._update_center(teacher_output)
+        # Update center with logits before softmax
+        self._update_center(teacher_logits)
 
         # Get student output (for all views)
         student_output = self._get_student_output(all_views)

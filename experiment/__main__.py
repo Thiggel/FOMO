@@ -87,7 +87,7 @@ def init_ssl_type(
         "lr": args.ssl.lr,
         "temperature": args.ssl.temperature,
         "weight_decay": args.ssl.weight_decay,
-        "max_epochs": args.max_cycles * args.n_epochs_per_cycle,
+        "max_epochs": args.total_epochs,
         "parserargs": args,
         "use_temperature_schedule": args.use_temperature_schedule,
         "temperature_min": args.temperature_min,
@@ -170,6 +170,7 @@ def run(
         dirpath=checkpoints_dir,
         filename=checkpoint_filename + "-last-epoch-{epoch}-{val_loss:.4f}",
         save_top_k=0,  # Setting this to 0 disables saving based on a metric
+        save_last=True,
     )
 
     every_20_epoch_checkpoint = ModelCheckpoint(
@@ -197,8 +198,10 @@ def run(
 
     callbacks = [last_epoch_checkpoint, every_20_epoch_checkpoint, stats_monitor]
 
+    epochs_per_cycle = args.total_epochs // args.num_cycles
+
     trainer_args = {
-        "max_epochs": args.n_epochs_per_cycle,
+        "max_epochs": epochs_per_cycle,
         "accumulate_grad_batches": args.grad_acc_steps,
         "callbacks": callbacks,
         "enable_checkpointing": True,
