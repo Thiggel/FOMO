@@ -19,6 +19,8 @@ t_max: 400
 weight_decay: 1e-4
 total_epochs: 800
 num_cycles: 8
+max_cycles: null
+n_epochs_per_cycle: null
 warmup: 10
 
 # Batch sizes and processing
