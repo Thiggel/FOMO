@@ -42,6 +42,32 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
+def resolve_training_schedule(args: DictConfig) -> tuple[int, int, int]:
+    """Derive the training schedule from CLI overrides and defaults."""
+
+    num_cycles = args.get("max_cycles")
+    num_cycles = num_cycles if num_cycles is not None else args.num_cycles
+
+    if num_cycles <= 0:
+        raise ValueError("num_cycles must be a positive integer")
+
+    epochs_per_cycle_override = args.get("n_epochs_per_cycle")
+    if epochs_per_cycle_override is not None:
+        if epochs_per_cycle_override <= 0:
+            raise ValueError("n_epochs_per_cycle must be a positive integer")
+        total_epochs = epochs_per_cycle_override * num_cycles
+        epochs_per_cycle = epochs_per_cycle_override
+    else:
+        total_epochs = args.total_epochs
+        if total_epochs < num_cycles:
+            raise ValueError("total_epochs must be >= num_cycles")
+        if total_epochs % num_cycles != 0:
+            raise ValueError("total_epochs must be divisible by num_cycles")
+        epochs_per_cycle = total_epochs // num_cycles
+
+    return num_cycles, total_epochs, epochs_per_cycle
+
+
 def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDataModule:
     ssl_method = SSLTypes.get_ssl_type(args.ssl.ssl_method)
 
@@ -105,6 +131,12 @@ def run(
     run_idx: int = 0,
 ) -> dict:
     set_seed(seed)
+
+    # Resolve potential CLI overrides for cycle configuration before anything else
+    num_cycles, total_epochs, epochs_per_cycle = resolve_training_schedule(args)
+    args.num_cycles = num_cycles
+    args.total_epochs = total_epochs
+    args.n_epochs_per_cycle = epochs_per_cycle
 
     args.train_batch_size = args.train_batch_size // torch.cuda.device_count()
 
@@ -197,8 +229,6 @@ def run(
     stats_monitor = DeviceStatsMonitor()
 
     callbacks = [last_epoch_checkpoint, every_20_epoch_checkpoint, stats_monitor]
-
-    epochs_per_cycle = args.total_epochs // args.num_cycles
 
     trainer_args = {
         "max_epochs": epochs_per_cycle,
