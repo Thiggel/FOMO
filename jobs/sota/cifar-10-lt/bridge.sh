@@ -1,6 +1,6 @@
 #!/bin/sh
 #PBS -q rt_HF
-#PBS -l select=4
+#PBS -l select=1
 #PBS -l walltime=140:00:00
 #PBS -P gag51492
 
@@ -10,7 +10,7 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/cifar-10-lt
 
-python -m experiment \
+torchrun --standalone --nproc_per_node=8 -m experiment \
     model=resnet50 \
     dataset=cifar10_imbalanced \
     ssl=simclr \

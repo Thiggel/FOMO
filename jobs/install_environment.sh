@@ -1,6 +1,6 @@
 #!/bin/sh
 #PBS -q rt_HF
-#PBS -l select=4
+#PBS -l select=1
 #PBS -l walltime=140:00:00
 #PBS -P gag51492
 
