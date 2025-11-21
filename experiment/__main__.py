@@ -14,7 +14,6 @@ from lightning.pytorch.loggers import WandbLogger
 import wandb
 from torch import nn
 import torch.multiprocessing as mp
-from huggingface_hub import login
 import hydra
 from omegaconf import DictConfig
 
@@ -306,7 +305,7 @@ def run_different_seeds(args: DictConfig) -> dict:
 
 def run_app(args: DictConfig) -> None:
     load_dotenv()
-    login(token=os.getenv("HUGGINGFACE_TOKEN"))
+    #login(token=os.getenv("HUGGINGFACE_TOKEN"))
 
     args.additional_data_path = (
         os.environ["BASE_CACHE_DIR"]

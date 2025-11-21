@@ -192,3 +192,4 @@ outputs
 *.sh.*
 class_dists
 *.swp
+*.job.*
