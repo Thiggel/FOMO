@@ -2,6 +2,7 @@ import sys
 from typing import Any, Optional
 from sklearn.manifold import TSNE
 import numpy as np
+from PIL import Image
 import wandb
 from torchvision import transforms
 from torchvision.transforms import ToPILImage
