@@ -1054,11 +1054,15 @@ class ImbalancedTraining:
         class_counts = torch.zeros(num_classes, device=device, dtype=torch.long)
 
         # Process in batches
+        dataloader_num_workers = (
+            getattr(self.datamodule, "num_workers", None) or self.num_workers
+        )
+        pin_memory = torch.cuda.is_available()
         loader = DataLoader(
             self.datamodule.train_dataset,
             batch_size=self.args.val_batch_size,
-            num_workers=0,
-            pin_memory=False,
+            num_workers=dataloader_num_workers,
+            pin_memory=pin_memory,
         )
 
         # Count labels in batches
