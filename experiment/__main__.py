@@ -52,8 +52,6 @@ def resolve_training_schedule(args: DictConfig) -> tuple[int, int, int]:
 
     epochs_per_cycle_override = args.get("n_epochs_per_cycle")
     if epochs_per_cycle_override is not None:
-        if epochs_per_cycle_override <= 0:
-            raise ValueError("n_epochs_per_cycle must be a positive integer")
         total_epochs = epochs_per_cycle_override * num_cycles
         epochs_per_cycle = epochs_per_cycle_override
     else:

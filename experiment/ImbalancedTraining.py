@@ -192,9 +192,8 @@ class ImbalancedTraining:
                 raise ValueError("total_epochs must be divisible by num_cycles")
             self.n_epochs_per_cycle = self.total_epochs // self.num_cycles
         else:
-            if self.n_epochs_per_cycle <= 0:
-                raise ValueError("n_epochs_per_cycle must be a positive integer")
             self.total_epochs = self.n_epochs_per_cycle * self.num_cycles
+
         self.completed_cycles = 0
         self.latest_checkpoint_path: Optional[str] = None
         self.transform = transforms.Compose(
@@ -547,10 +546,12 @@ class ImbalancedTraining:
             pin_memory=True,
         )
 
-        class_counts = torch.zeros(dataset.num_classes)
+        device = torch.device("cuda:0")
+
+        class_counts = torch.zeros(dataset.num_classes, device=device)
 
         for _, labels in tqdm(dataloader, desc="Counting class distribution"):
-            counts = torch.bincount(labels, minlength=dataset.num_classes)
+            counts = torch.bincount(labels.to(device), minlength=dataset.num_classes)
             class_counts += counts
 
         return class_counts
@@ -1057,7 +1058,7 @@ class ImbalancedTraining:
         loader = DataLoader(
             self.datamodule.train_dataset,
             batch_size=self.args.val_batch_size,
-            num_workers=0,
+            num_workers=12,
             pin_memory=False,
         )
 
