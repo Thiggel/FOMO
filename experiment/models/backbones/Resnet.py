@@ -22,18 +22,24 @@ class ResNet(nn.Module):
         return next(self.parameters()).dtype
 
     def extract_features(self, x):
-        with torch.no_grad():
-            features = self.resnet.conv1(x)
-            features = self.resnet.bn1(features)
-            features = self.resnet.relu(features)
-            features = self.resnet.maxpool(features)
-            features = self.resnet.layer1(features)
-            features = self.resnet.layer2(features)
-            features = self.resnet.layer3(features)
-            features = self.resnet.layer4(features)
-            features = self.resnet.avgpool(features)
-            features = torch.flatten(features, 1)
-        return features
+        was_training = self.resnet.training
+        try:
+            self.resnet.eval()
+            with torch.no_grad():
+                features = self.resnet.conv1(x)
+                features = self.resnet.bn1(features)
+                features = self.resnet.relu(features)
+                features = self.resnet.maxpool(features)
+                features = self.resnet.layer1(features)
+                features = self.resnet.layer2(features)
+                features = self.resnet.layer3(features)
+                features = self.resnet.layer4(features)
+                features = self.resnet.avgpool(features)
+                features = torch.flatten(features, 1)
+            return features
+        finally:
+            if was_training:
+                self.resnet.train()
 
 
 class ResNet18(ResNet):
