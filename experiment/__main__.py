@@ -17,6 +17,8 @@ import torch.multiprocessing as mp
 import hydra
 from omegaconf import DictConfig
 
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 from experiment.utils.set_seed import set_seed
 from experiment.utils.print_mean_std import print_mean_std
 from experiment.utils.get_model_name import get_model_name
