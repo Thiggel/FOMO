@@ -230,6 +230,7 @@ class ImbalancedTraining:
         os.makedirs(self._visualization_data_root, exist_ok=True)
 
         self.num_workers = min(6, get_num_workers() // 2)
+        self.class_distribution_workers = self._determine_class_distribution_workers()
 
         if self.datamodule is not None and self.args.logger:
             self._run_training_analysis(stage_label="start", cycle_reference=0)
@@ -539,10 +540,11 @@ class ImbalancedTraining:
         return class_to_indices
 
     def get_sorted_classes_distribution(self, dataset):
+        num_workers = self.class_distribution_workers
         dataloader = DataLoader(
             dataset,
             batch_size=self.args.val_batch_size,
-            num_workers=self.num_workers,
+            num_workers=num_workers,
             pin_memory=True,
         )
 
@@ -555,6 +557,37 @@ class ImbalancedTraining:
             class_counts += counts
 
         return class_counts
+
+    def _determine_class_distribution_workers(self) -> int:
+        """Choose a conservative worker count for class distribution scans.
+
+        Counting class distributions touches the backing storage directly and can
+        trigger HDF5 multiprocessing issues when multiple workers are used. For
+        datasets backed by ``ImageStorage`` we therefore default to single-worker
+        loading unless the user explicitly overrides ``class_distribution_workers``
+        in the config.
+        """
+
+        explicit_setting = getattr(self.args, "class_distribution_workers", None)
+        if explicit_setting is not None:
+            try:
+                return max(0, int(explicit_setting))
+            except (TypeError, ValueError):
+                print(
+                    "Invalid class_distribution_workers value; falling back to auto-detected setting."
+                )
+
+        dataset = getattr(self.datamodule, "train_dataset", None)
+        while hasattr(dataset, "dataset"):
+            dataset = dataset.dataset
+
+        if hasattr(dataset, "image_storage"):
+            print(
+                "Using single worker for class distribution counting to avoid HDF5 multiprocessing issues."
+            )
+            return 0
+
+        return self.num_workers
 
     def get_outliers(
         self, cycle_idx, precomputed_ood_indices: Optional[list[int]] = None
@@ -1058,7 +1091,7 @@ class ImbalancedTraining:
         loader = DataLoader(
             self.datamodule.train_dataset,
             batch_size=self.args.val_batch_size,
-            num_workers=12,
+            num_workers=self.class_distribution_workers,
             pin_memory=False,
         )
 
