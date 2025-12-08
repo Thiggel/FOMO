@@ -101,17 +101,18 @@ class ImageStorage:
         h5_path = self._get_hdf5_path(cycle_idx, file_idx)
 
         if not os.path.exists(h5_path):
-            print("File does not exist")
-            exit()
-            return None
+            raise FileNotFoundError(
+                f"Image file '{h5_path}' does not exist for index {global_idx}"
+            )
 
         with h5py.File(h5_path, "r") as f:
             if "images" not in f or local_idx >= len(f["images"]):
-                print(
-                    "Image not found", f, f["images"], f["indices"], local_idx, "\n\n"
+                stored_indices = list(f.get("indices", []))
+                raise IndexError(
+                    "Image not found in HDF5 storage: "
+                    f"file='{h5_path}', local_idx={local_idx}, "
+                    f"available={len(f['images'])}, stored_indices={stored_indices}"
                 )
-                exit()
-                return None
 
             img_bytes = f["images"][local_idx]
             return Image.open(io.BytesIO(img_bytes.tobytes()))

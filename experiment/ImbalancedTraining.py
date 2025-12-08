@@ -230,6 +230,7 @@ class ImbalancedTraining:
         os.makedirs(self._visualization_data_root, exist_ok=True)
 
         self.num_workers = min(6, get_num_workers() // 2)
+        self.class_distribution_workers = self._determine_class_distribution_workers()
 
         if self.datamodule is not None and self.args.logger:
             self._run_training_analysis(stage_label="start", cycle_reference=0)
@@ -539,22 +540,71 @@ class ImbalancedTraining:
         return class_to_indices
 
     def get_sorted_classes_distribution(self, dataset):
-        dataloader = DataLoader(
+        return self._count_class_distribution_with_retry(
             dataset,
-            batch_size=self.args.val_batch_size,
-            num_workers=self.num_workers,
+            desc_prefix="Counting class distribution",
             pin_memory=True,
         )
 
-        device = torch.device("cuda:0")
+    def _determine_class_distribution_workers(self) -> int:
+        """Choose the worker count for class distribution scans.
 
-        class_counts = torch.zeros(dataset.num_classes, device=device)
+        Prefer the explicit ``class_distribution_workers`` config value when it
+        is provided; otherwise fall back to the standard dataloader worker
+        setting. Multiprocessing issues can still arise with some backends, so
+        counting will retry with a single worker if necessary.
+        """
 
-        for _, labels in tqdm(dataloader, desc="Counting class distribution"):
-            counts = torch.bincount(labels.to(device), minlength=dataset.num_classes)
-            class_counts += counts
+        explicit_setting = getattr(self.args, "class_distribution_workers", None)
+        if explicit_setting is not None:
+            try:
+                return max(0, int(explicit_setting))
+            except (TypeError, ValueError):
+                print(
+                    "Invalid class_distribution_workers value; falling back to auto-detected setting."
+                )
 
-        return class_counts
+        return self.num_workers
+
+    def _count_class_distribution_with_retry(
+        self, dataset, desc_prefix: str, pin_memory: bool
+    ) -> torch.Tensor:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        num_classes = dataset.num_classes
+
+        attempt_workers = self.class_distribution_workers
+        fallback_used = False
+
+        while True:
+            dataloader = DataLoader(
+                dataset,
+                batch_size=self.args.val_batch_size,
+                num_workers=attempt_workers,
+                pin_memory=pin_memory,
+            )
+
+            class_counts = torch.zeros(num_classes, device=device, dtype=torch.long)
+
+            try:
+                for _, labels in tqdm(
+                    dataloader,
+                    desc=desc_prefix,
+                ):
+                    counts = torch.bincount(
+                        labels.to(device), minlength=num_classes
+                    )
+                    class_counts += counts
+                return class_counts
+            except RuntimeError as exc:
+                if fallback_used or attempt_workers == 0:
+                    raise
+
+                print(
+                    f"{desc_prefix} failed with {attempt_workers} workers ({exc}). "
+                    "Retrying with a single worker to avoid multiprocessing issues."
+                )
+                attempt_workers = 0
+                fallback_used = True
 
     def get_outliers(
         self, cycle_idx, precomputed_ood_indices: Optional[list[int]] = None
@@ -1049,29 +1099,17 @@ class ImbalancedTraining:
         self, cycle_idx: int, stage_label: Optional[str] = None
     ) -> None:
         """Save class distribution for current cycle using GPU acceleration and log to Wandb"""
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dataset = self.datamodule.train_dataset.dataset
         num_classes = dataset.num_classes
-        class_counts = torch.zeros(num_classes, device=device, dtype=torch.long)
-
-        # Process in batches
-        loader = DataLoader(
+        class_counts_cpu = self._count_class_distribution_with_retry(
             self.datamodule.train_dataset,
-            batch_size=self.args.val_batch_size,
-            num_workers=12,
+            desc_prefix=(
+                f"Counting class distribution for cycle {stage_label}"
+                if stage_label is not None
+                else f"Counting class distribution for cycle {cycle_idx}"
+            ),
             pin_memory=False,
-        )
-
-        # Count labels in batches
-        for _, labels in tqdm(
-            loader,
-            desc=f"Counting class distribution for cycle {stage_label if stage_label is not None else cycle_idx}",
-        ):
-            labels = labels.to(device)
-            counts = torch.bincount(labels, minlength=num_classes)
-            class_counts += counts
-
-        class_counts_cpu = class_counts.cpu()
+        ).cpu()
         self.class_counts = class_counts_cpu
 
         # Create dictionary mapping class indices to class names
