@@ -1,5 +1,5 @@
 #!/bin/sh
-#PBS -q rt_HF
+#PBS -q rt_HG
 #PBS -l select=1
 #PBS -l walltime=140:00:00
 #PBS -P gag51492
@@ -10,7 +10,7 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/imagenet-100-lt
 
-torchrun --standalone --nproc_per_node=8 -m experiment \
+torchrun --standalone --nproc_per_node=1 -m experiment \
     model=resnet50 \
     dataset=imagenet100_imbalanced \
     ssl=simclr \

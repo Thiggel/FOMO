@@ -1,4 +1,5 @@
 import sys
+import gc
 from typing import Any, Optional
 from sklearn.manifold import TSNE
 import numpy as np
@@ -570,7 +571,7 @@ class ImbalancedTraining:
         self, dataset, desc_prefix: str, pin_memory: bool
     ) -> torch.Tensor:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        num_classes = dataset.num_classes
+        num_classes = dataset.num_classes if hasattr(dataset, 'num_classes') else dataset.dataset.num_classes
 
         attempt_workers = self.class_distribution_workers
         fallback_used = False
@@ -579,7 +580,7 @@ class ImbalancedTraining:
             dataloader = DataLoader(
                 dataset,
                 batch_size=self.args.val_batch_size,
-                num_workers=attempt_workers,
+                num_workers=4,
                 pin_memory=pin_memory,
             )
 
@@ -605,6 +606,9 @@ class ImbalancedTraining:
                 )
                 attempt_workers = 0
                 fallback_used = True
+            
+            del dataloader
+            gc.collect()
 
     def get_outliers(
         self, cycle_idx, precomputed_ood_indices: Optional[list[int]] = None

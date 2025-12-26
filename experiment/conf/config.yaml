@@ -10,15 +10,15 @@ classification_head: false
 patch_size: 16
 
 # Training hyperparameters
-lr: 0.5
+lr: 1e-4
 temperature: 0.1
 use_temperature_schedule: false
 temperature_min: 0.1
 temperature_max: 1.0
-t_max: 400
+t_max: 250
 weight_decay: 1e-4
-total_epochs: 800
-num_cycles: 8
+total_epochs: 500
+num_cycles: 5
 max_cycles: null
 n_epochs_per_cycle: null
 warmup: 10

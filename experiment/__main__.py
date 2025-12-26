@@ -215,7 +215,7 @@ def run(
         log_name = args.experiment_name if args.experiment_name else checkpoint_filename
         os.environ["WANDB_DIR"] = os.environ["BASE_CACHE_DIR"]
         wandb_logger = WandbLogger(
-            project="FOMO4",
+            project="FOMO5",
             name=log_name + str(seed),
             group=log_name,
             save_dir=os.environ["BASE_CACHE_DIR"],
