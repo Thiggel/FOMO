@@ -10,11 +10,12 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/baseline
 
-torchrun --standalone --nproc_per_node=8 -m experiment \
+torchrun --standalone --nproc_per_node=1 -m experiment \
     model=resnet50 \
     ssl=simclr \
     dataset=imagenet100_balanced \
-    max_cycles=8 \
+    max_cycles=5 \
     n_epochs_per_cycle=100 \
     experiment_name=baseline_imagenet-100-lt_balanced \
+    num_runs=3 \
     train_batch_size=512 >& job_logs/baseline/balanced.out

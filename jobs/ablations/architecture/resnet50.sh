@@ -10,12 +10,13 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/ablations
 
-torchrun --standalone --nproc_per_node=8 -m experiment \
+torchrun --standalone --nproc_per_node=1 -m experiment \
     model=resnet50 \
     ssl=simclr \
     dataset=imagenet100_imbalanced \
-    max_cycles=8 \
+    max_cycles=5 \
     n_epochs_per_cycle=100 \
     ood_augmentation=true \
     experiment_name=ablations_architecture_resnet50 \
+    num_runs=3 \
     train_batch_size=512 >& job_logs/ablations/architecture_resnet50.out

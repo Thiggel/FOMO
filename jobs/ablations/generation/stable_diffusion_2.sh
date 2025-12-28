@@ -10,13 +10,14 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/ablations
 
-torchrun --standalone --nproc_per_node=8 -m experiment \
+torchrun --standalone --nproc_per_node=1 -m experiment \
     model=resnet50 \
     ssl=simclr \
     dataset=imagenet100_imbalanced \
     generation_model=stable_diffusion \
-    max_cycles=8 \
+    max_cycles=5 \
     n_epochs_per_cycle=100 \
     ood_augmentation=true \
     experiment_name=ablations_generation_stable-diffusion-2 \
+    num_runs=3 \
     train_batch_size=512 >& job_logs/ablations/generation_stable-diffusion-2.out

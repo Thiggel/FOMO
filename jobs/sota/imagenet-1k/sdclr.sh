@@ -13,14 +13,13 @@ mkdir -p job_logs/imagenet-1k
 torchrun --standalone --nproc_per_node=1 -m experiment \
     model=resnet50 \
     dataset=imagenet1k_alldata \
-    ssl=simclr \
+    ssl=sdclr \
     ood_augmentation=false \
-    use_temperature_schedule=true \
     max_cycles=5 \
     n_epochs_per_cycle=100 \
-    experiment_name=sota_imagenet-1k_ts \
+    experiment_name=sota_imagenet-1k_sdclr \
     train_batch_size=512 \
     log_class_dist=true \
     log_generated_samples=true \
     log_tsne=true \
-    num_runs=3 >& job_logs/imagenet-1k/ts.out
+    num_runs=3 >& job_logs/imagenet-1k/sdclr.out

@@ -10,12 +10,12 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/imagenet-1k
 
-torchrun --standalone --nproc_per_node=8 -m experiment \
+torchrun --standalone --nproc_per_node=1 -m experiment \
     model=resnet50 \
     dataset=imagenet1k_alldata \
     ssl=sdclr \
     ood_augmentation=true \
-    max_cycles=8 \
+    max_cycles=5 \
     n_epochs_per_cycle=100 \
     experiment_name=sota_imagenet-1k_bridge-sdclr \
     train_batch_size=512 \

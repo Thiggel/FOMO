@@ -10,12 +10,12 @@ cd $HOME/FOMO
 
 mkdir -p job_logs/cifar-10-lt
 
-torchrun --standalone --nproc_per_node=8 -m experiment \
+torchrun --standalone --nproc_per_node=1 -m experiment \
     model=resnet50 \
     dataset=cifar10_imbalanced \
     ssl=simclr \
     ood_augmentation=false \
-    max_cycles=8 \
+    max_cycles=5 \
     n_epochs_per_cycle=100 \
     experiment_name=sota_cifar-10-lt_simclr \
     train_batch_size=512 \
