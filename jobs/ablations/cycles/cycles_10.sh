@@ -16,6 +16,7 @@ torchrun --standalone --nproc_per_node=1 -m experiment \
     dataset=imagenet100_imbalanced \
     max_cycles=10 \
     n_epochs_per_cycle=50 \
+    num_ood_samples=250 \
     ood_augmentation=true \
     experiment_name=ablations_cycles_10 \
     num_runs=3 \
