@@ -111,9 +111,9 @@ ABLATION_GROUPS = OrderedDict(
             OrderedDict(
                 [
                     ("ablations/cycles/cycles_2", "2 cycles"),
+                    ("baseline/newmethod_imbalanced", "5 cycles"),
                     ("ablations/cycles/cycles_10", "10 cycles"),
                     ("ablations/cycles/cycles_20", "20 cycles"),
-                    ("baseline/newmethod_imbalanced", "5 cycles"),
                 ]
             ),
         ),
@@ -401,7 +401,7 @@ def main():
         by_exp,
         LINEAR_MAIN,
         "main_sota_linear.tex",
-        "Linear-probe transfer for all source datasets. PASS and DiffusionDB use 10k examples with a 100/0/0 pretraining split. The average is computed over all seven downstream linear-probe tasks.",
+        "Linear-probe transfer for all source datasets. PASS and DiffusionDB use 10k examples with a 100/0/0 pretraining split. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix. The average is computed over all seven downstream linear-probe tasks.",
         "tab:main_sota_linear",
     )
     sota_average_table(by_exp)
@@ -425,7 +425,7 @@ def main():
         "pretraining",
         LINEAR_MAIN,
         "main_ablation_pretraining.tex",
-        "Effect of the SSL pretraining objective inside BRIDGE on ImageNet-100-LT.",
+        "Effect of the SSL pretraining objective inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.",
         "tab:main_ablation_pretraining",
     )
     ablation_table(
@@ -433,7 +433,7 @@ def main():
         "generation",
         LINEAR_MAIN,
         "main_ablation_generation.tex",
-        "Effect of the augmentation mechanism inside BRIDGE on ImageNet-100-LT.",
+        "Effect of the augmentation mechanism inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.",
         "tab:main_ablation_generation",
     )
     ablation_table(
@@ -441,8 +441,24 @@ def main():
         "selection",
         LINEAR_MAIN,
         "main_ablation_selection.tex",
-        "Effect of sample-selection strategy inside BRIDGE on ImageNet-100-LT.",
+        "Effect of sample-selection strategy inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.",
         "tab:main_ablation_selection",
+    )
+    ablation_table(
+        by_exp,
+        "cycles",
+        LINEAR_MAIN,
+        "main_ablation_cycles.tex",
+        "Effect of cycle count inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.",
+        "tab:main_ablation_cycles",
+    )
+    ablation_table(
+        by_exp,
+        "architecture",
+        LINEAR_MAIN,
+        "main_ablation_architecture.tex",
+        "Effect of encoder architecture inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.",
+        "tab:main_ablation_architecture",
     )
     main_ablation_summary(by_exp)
 

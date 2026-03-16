@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Effect of cycle count inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.}
+\label{tab:main_ablation_cycles}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{l c c c c c c}
+\toprule
+Setting & C10 & C100 & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+2 cycles & 67.9 {\scriptsize$\pm$ 0.6} & 40.7 {\scriptsize$\pm$ 0.6} & \textbf{30.5 {\scriptsize$\pm$ 3.2}} & 27.4 {\scriptsize$\pm$ 1.7} & 40.1 {\scriptsize$\pm$ 0.4} & 33.1 {\scriptsize$\pm$ 1.4} \\
+5 cycles & 70.7 {\scriptsize$\pm$ 1.7} & 43.3 {\scriptsize$\pm$ 0.6} & 26.6 {\scriptsize$\pm$ 2.7} & 31.2 {\scriptsize$\pm$ 3.7} & 42.0 {\scriptsize$\pm$ 1.2} & 34.3 {\scriptsize$\pm$ 1.8} \\
+10 cycles & 70.5 {\scriptsize$\pm$ 1.2} & 43.8 {\scriptsize$\pm$ 0.6} & 24.8 {\scriptsize$\pm$ 5.2} & 31.3 {\scriptsize$\pm$ 1.7} & 41.9 {\scriptsize$\pm$ 0.6} & 34.1 {\scriptsize$\pm$ 1.7} \\
+20 cycles & \textbf{71.6 {\scriptsize$\pm$ 1.1}} & \textbf{44.6 {\scriptsize$\pm$ 0.9}} & 27.0 {\scriptsize$\pm$ 2.1} & \textbf{33.3 {\scriptsize$\pm$ 4.4}} & \textbf{42.1 {\scriptsize$\pm$ 1.5}} & \textbf{35.1 {\scriptsize$\pm$ 1.6}} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

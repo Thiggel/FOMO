@@ -1,0 +1,85 @@
+\section{Experiments}
+\label{experiments}
+
+
+\input{Tables/baseline_comp}
+
+\input{Tables/sota_comp}
+
+\input{Tables/ablations}
+
+
+%
+%\begin{figure*}[htbp]
+%   \centering
+%   \begin{subfigure}[b]{0.3\textwidth}
+%       \centering
+%       \includegraphics[width=\textwidth]{Images/most-ood-images-cycle 1.png}
+%       \caption{Most OOD images after cycle 1}
+%       \label{fig:most-ood-images-1}
+%   \end{subfigure}
+%   \hfill
+%   \begin{subfigure}[b]{0.3\textwidth}
+%       \centering
+%       \includegraphics[width=\textwidth]{Images/most-ood-images-cycle 2.png}
+%       \caption{Most OOD images after cycle 2}
+%       \label{fig:most-ood-images-2}
+%   \end{subfigure}
+%   \hfill
+%   \begin{subfigure}[b]{0.3\textwidth}
+%       \centering
+%       \includegraphics[width=\textwidth]{Images/most-ood-images-cycle 3.png}
+%       \caption{Most OOD images after cycle 3}
+%       \label{fig:most-ood-images-3}
+%   \end{subfigure}
+%   \caption{The characteristics of the detected OOD datapoints change over time, commencing as strange patterns and over time turning into much more mundane objects.}
+%   \label{fig:most-ood-images}
+%\end{figure*}
+%
+
+\noindent
+To evaluate the performance of our proposed method BRADD (Balancing Representations through Automated Detection and Diffusion), we conduct experiments on ImageNet-100-LT. We test various backbone architectures, SSL methods, and implementation details through comprehensive ablation studies, and compare against state-of-the-art approaches.
+
+\subsection{ImageNet-100 Experiments}
+
+\noindent
+ImageNet-100 is a subset of ImageNet with 100 randomly selected classes \cite{tian2020contrastive}. Following previous work \cite{imagenet-lt}, we introduce imbalance by creating a long-tailed distribution (ImageNet-100-LT) that follows a Pareto distribution with $\alpha=6$. The dataset contains around 15 thousand images.\\
+\noindent
+\textbf{Models.} We evaluate our method across multiple architectures: ResNet-50 (25.6M parameters), ViT-Small (22.1M parameters), and ViT-Base (86.6M parameters).\\
+\noindent
+\textbf{Self-Supervised Learning Methods.} Our primary experiments use SimCLR \cite{chen2020simple} with a temperature of 0.5, and we later compare with DINO \cite{DINO} and MoCo \cite{moco} in our ablation studies.\\
+\noindent
+\textbf{Downstream Evaluation.} We evaluate the learned features using both linear probing and K-nearest neighbor (KNN) classification across multiple datasets: CIFAR-10, CIFAR-100 \cite{krizhevsky2009learning}, Stanford Cars \cite{cars}, FGVC Aircraft \cite{aircraft}, Oxford Flowers \cite{flowers}, and Oxford-IIIT Pets \cite{pets}.\\
+\noindent
+\textbf{Baselines.} We train two baselines: (1) a model trained on a balanced subset of ImageNet-100 with as much data uniformly removed as in ImageNet-100-LT and (2) a model trained on the imbalanced ImageNet-100-LT.\\
+\noindent
+\textbf{Proposed Method.} Our proposed method BRADD starts with ImageNet-100-LT and trains for multiple cycles, where each cycle consists of training epochs followed by OOD detection and generation steps.
+\subsection{Experimental Results}
+\noindent
+Table \ref{table:baseline_comp} compares our method against balanced and imbalanced baselines using a ViT-B backbone with SimCLR. The results demonstrate that:
+\begin{itemize}
+\item While imbalance causes only slight performance degradation compared to the balanced setting on some datasets, our method consistently outperforms both baselines across all datasets.
+\item BRADD achieves substantial improvements in linear probing, with gains of up to 11.72\% on Oxford Flowers and 7.53\% on Oxford-IIIT Pets compared to the imbalanced baseline.
+\item Our method also shows consistent improvements in KNN classification, demonstrating the enhanced quality of the learned feature space.
+\end{itemize}
+\noindent
+Table \ref{table:sota_comp} shows BRADD compared to state-of-the-art methods using ResNet-50 with SimCLR (500 epochs):
+\begin{itemize}
+\item Our method achieves superior linear probing performance on CIFAR-10 (73.34\%) and CIFAR-100 (45.38\%) compared to previous methods.
+\item While TS \cite{ts} performs better on KNN classification for most datasets, BRADD shows competitive performance across all benchmarks.
+\end{itemize}
+\subsection{Ablation Studies}
+\noindent
+To analyze the effectiveness of different components in our approach, we conducted extensive ablation studies:\\
+\noindent
+\textbf{SSL Method.} Table \ref{table:pretraining-abl} demonstrates that SimCLR consistently outperforms DINO and MoCo across all datasets when using our method, with substantial margins particularly on fine-grained classification tasks.\\
+\noindent
+\textbf{Backbone Architecture.} As shown in Table \ref{table:backbone_abl}, we compared ViT-S, ViT-B, and ResNet-50 backbones. ResNet-50 achieves the best linear probing performance on CIFAR-10 (71.17\%), while ViT architectures perform better on fine-grained datasets, with ViT-B showing the strongest performance on Oxford-IIIT Pets (30.08\%).\\
+\noindent
+\textbf{Sample Selection Strategy.} In Table \ref{table:sample_selection}, we compare uniform sampling versus our OOD-based selection. The results confirm that OOD-based selection provides consistent performance gains, validating our hypothesis that targeting underrepresented regions of the feature space is more effective than random augmentation.\\
+\noindent
+\textbf{Sample Generation Method.} Table \ref{table:sample_generation} compares re-population (adding back removed samples) versus generation using Stable Diffusion. While both approaches improve over the baseline, Stable Diffusion generation yields better results, particularly on fine-grained datasets like Oxford Flowers.\\
+\noindent
+\textbf{Number of Cycles.} As shown in Table \ref{table:n_cycle_abl}, we tested different numbers of cycles (2, 5, 10, 20) while keeping the total number of generated images fixed. Performance generally improves with more cycles, with the best results at 20 cycles for CIFAR-10 (68.68\% linear probing accuracy) and 5 cycles for Oxford-IIIT Pets (30.08\%).\\\
+\noindent
+\textbf{Number of OOD Samples.} Table \ref{table:n_samples_abl} analyzes the effect of selecting different numbers of samples per cycle for augmentation. We find that 500 samples per cycle provides the optimal balance, while selecting too many samples (2500) degrades performance, suggesting that focusing on the most out-of-distribution samples is important.

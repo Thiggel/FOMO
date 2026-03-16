@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage{neurips_2025}
+\usepackage{neurips_2026}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -14,6 +14,7 @@
 \usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{adjustbox}
+\usepackage{placeins}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{algorithm}
@@ -31,32 +32,38 @@
 \maketitle
 
 \begin{abstract}
-Self supervised pretraining inherits the sampling bias of its source data. Most remedies for long tailed self supervised learning are model centric. They change the loss, schedule, or optimization dynamics while leaving the training distribution fixed. We study a data centric alternative. \method\ alternates between self supervised pretraining, non parametric OOD scoring in representation space, and targeted image generation with a frozen diffusion model. The final method replaces our earlier extreme tail selector with a histogram based mode window that targets a dense sparse band and avoids the visually noisy far tail. Across ImageNet-100-LT, CIFAR-10-LT, CIFAR-100-LT, PASS, and DiffusionDB source pretraining, \method\ achieves the best average linear probe transfer among the methods we evaluate. On ImageNet-100-LT source pretraining, \method\ improves average linear transfer over imbalanced SimCLR by 3.05 points. Across the five source regimes, the gain over source matched SimCLR ranges from 2.41 to 4.89 points. Ablations show that Stable Diffusion 3 is the strongest generator, SimCLR is the strongest SSL objective for the repair loop, and the new mode window selector improves over the older top tail rule, although uniform sampling remains competitive in the isolated selection ablation. Full linear and $k$NN tables, additional supporting figures, runtime statistics, and license notes are provided in the appendix.
+Self supervised pretraining inherits the sampling bias of its source data. Most remedies for long tailed self supervised learning are model centric. They modify the loss, the schedule, or the optimization dynamics while leaving the training distribution fixed. We present \method, a data centric alternative that alternates pretraining, mean $k$NN OOD scoring, and targeted image generation with a frozen diffusion model. The final method replaces a simpler extreme tail selector with a histogram based mode window that targets the modal shoulder of the OOD distribution and avoids the noisy far tail. Across ImageNet-100-LT, CIFAR-10-LT, CIFAR-100-LT, PASS, and DiffusionDB source pretraining, \method\ achieves the best average linear probe transfer among the evaluated methods. On ImageNet-100-LT source pretraining, it improves the seven task average over imbalanced SimCLR by 3.05 points, and across the five source regimes its gain over source matched SimCLR ranges from 2.41 to 4.89 points. Ablations show that Stable Diffusion 3 is the strongest generator, SimCLR is the strongest SSL objective inside the repair loop, and the mode window selector is a better replacement for pure top tail sampling.
 \end{abstract}
 
+\begin{center}
+    \includegraphics[width=0.92\linewidth]{figures/BRIDGE.pdf}
+    \captionof{figure}{Conceptual overview of BRIDGE. The encoder is trained on the current unlabeled source set, sparse points in representation space are identified by mean $k$NN distance, and a frozen image to image diffusion model generates additional views for the selected region. The final method uses the mode window selector from Section~\ref{sec:mode-window} rather than a pure extreme tail rule.}
+    \label{fig:bridge-overview}
+\end{center}
+
 \section{Introduction}
-Self supervised learning has become a standard tool for learning transferable visual representations from unlabeled images. Strong methods now span contrastive learning, masked prediction, and self distillation~\citep{chen2020simple,he2020momentum,he2022masked,DINO,oquab2023dinov2}. Yet these methods still inherit the sampling bias of the source corpus. When the source data is long tailed or otherwise skewed, the learned embedding allocates most of its capacity to dense majority regions and leaves sparse regions weakly modeled. This hurts transfer, especially on fine grained tasks and tail heavy recognition settings.
+Self supervised learning has become a standard way to learn transferable visual representations from unlabeled images. Strong methods now span contrastive learning, masked prediction, and self distillation~\citep{chen2020simple,he2020momentum,he2022masked,DINO,oquab2023dinov2}. Their success, however, still depends on the geometry of the source data. When the source corpus is long tailed or otherwise skewed, the learned representation devotes most of its capacity to dense regions and leaves sparse regions weakly modeled. This is a data problem as much as it is an optimization problem, and it can reduce downstream transfer on both in domain and fine grained targets.
 
-Most prior attempts to address long tailed SSL are model centric. Temperature Schedules reshapes the optimization trajectory of contrastive learning over time~\citep{ts}. SDCLR introduces a self competitor to emphasize harder and rarer samples~\citep{sdclr}. Other work adds external OOD data or frequency aware training heuristics to the SSL loop~\citep{colt,fassl}. These are effective ideas, but they still treat the source distribution as mostly fixed.
+Most prior attempts to address long tailed SSL are model centric. Temperature Schedules reshapes the optimization trajectory of contrastive learning over time~\citep{ts}. SDCLR introduces a self competitor to emphasize harder and rarer samples~\citep{sdclr}. Other work adds external OOD data or frequency aware training heuristics to the SSL loop~\citep{colt,fassl}. These methods are important baselines, but they still treat the source distribution as mostly fixed.
 
-We study the complementary direction. Can we repair the source dataset itself while training proceeds? Our answer is \method, a cyclic data repair loop. After each pretraining stage, we embed the current training set, score each image by mean $k$NN distance, select a sparse but semantically recoverable region of the representation space, and generate new training images for that region with a frozen diffusion model. The next cycle trains on the expanded dataset. The encoder therefore exposes where the data manifold is thin, and generation densifies those weak regions before the next round of learning.
+We study the complementary direction and ask whether the source dataset itself can be repaired while SSL training proceeds. We propose \method, a cyclic data repair loop shown in Figure~\ref{fig:bridge-overview}. After each pretraining stage, we embed the current training set, score each image by mean $k$NN distance, select a sparse but still semantically recoverable region of the representation space, and generate new training images for that region with a frozen diffusion model. The next cycle trains on the repaired dataset. The encoder therefore reveals where the data manifold is thin, and the generated images densify those regions before the next round of learning.
 
-The submission differs from our earlier draft in two important ways. First, the main method no longer selects the most extreme OOD samples. Instead it builds a histogram over OOD distances and draws a fixed budget around the mode of that histogram. This skips the super OOD tail, which often contains noisy or weakly useful images. The old tail only rule is retained as an ablation. Second, the empirical scope now extends beyond ImageNet derived long tails. In addition to ImageNet-100-LT, CIFAR-10-LT, and CIFAR-100-LT, we evaluate web scale unlabeled source data from PASS and DiffusionDB.
+Two aspects of the final design are central to the present study. First, the main method no longer selects the most extreme OOD samples. Instead it builds a histogram over OOD distances and allocates a fixed sampling budget around the modal region of that histogram. This skips the super OOD tail, which often contains noisy or weakly useful images. The pure tail rule is retained as an explicit ablation. Second, the empirical scope is substantially broader. In addition to ImageNet-100-LT, CIFAR-10-LT, and CIFAR-100-LT, we evaluate web scale unlabeled source data from PASS and DiffusionDB. BRIDGE is best on the seven task average in all five source regimes that we study.
 
-This paper makes three contributions. First, it introduces a data centric SSL loop that repairs sparse representation regions with frozen diffusion augmentation. Second, it replaces pure tail selection with a histogram based mode window that is better aligned with semantically recoverable sparse regions and improves over the older top tail rule. Third, it provides a broad empirical study across five source regimes, seven downstream tasks, three seeds, strong baselines, and targeted ablations.
+The paper makes three contributions. First, it introduces a data centric SSL loop that repairs sparse representation regions with frozen diffusion augmentation rather than changing the SSL loss. Second, it replaces pure tail selection with a histogram based mode window that better targets semantically recoverable sparse regions. Third, it provides a broad empirical study across five source regimes, seven downstream tasks, three seeds, competitive long tail SSL baselines, and five targeted ablation groups.
 
 \section{Related Work}
 \paragraph{Self supervised visual representation learning.}
-Modern vision SSL is dominated by contrastive methods such as SimCLR and MoCo~\citep{chen2020simple,he2020momentum}, self distillation methods such as DINO~\citep{DINO}, and masked prediction methods such as MAE~\citep{he2022masked}. These methods have made unlabeled pretraining routine, but they usually take the source dataset as given.
+Modern vision SSL is dominated by contrastive methods such as SimCLR and MoCo~\citep{chen2020simple,he2020momentum}, self distillation methods such as DINO~\citep{DINO}, and masked prediction methods such as MAE~\citep{he2022masked}. These methods have made unlabeled pretraining routine, but they usually treat the source dataset as fixed and place most of the burden on the objective.
 
 \paragraph{Long tailed and imbalanced SSL.}
-Long tailed data changes both optimization and representation geometry. TS addresses this with a schedule over the contrastive temperature~\citep{ts}. SDCLR prunes a self competitor to emphasize hard and tail examples~\citep{sdclr}. FASSL introduces frequency aware SSL training~\citep{fassl}. COLT injects external OOD data into long tail SSL~\citep{colt}. Our setting is different. \method\ does not modify the core SSL loss and does not require a separate external OOD collection. It repairs sparse regions using images generated from the training data already in hand.
+Long tailed data changes both optimization and representation geometry. TS addresses this with a schedule over the contrastive temperature~\citep{ts}. SDCLR prunes a self competitor to emphasize hard and tail examples~\citep{sdclr}. FASSL introduces frequency aware SSL training~\citep{fassl}. COLT injects external OOD data into long tail SSL~\citep{colt}. Our setting is different. \method\ does not require class frequencies, does not modify the core SSL loss, and does not require a separate external OOD collection. It instead repairs sparse regions using images generated from the data already being trained on.
 
 \paragraph{OOD scoring and data curation.}
-Data centric AI emphasizes that dataset composition is often as important as model design~\citep{whang2023data}. For our setting, the scoring rule must work without labels, density estimation assumptions, or class frequency estimates. Mean deep nearest neighbor distance satisfies these constraints and has been effective for OOD detection in high dimensional representation spaces~\citep{sun2022out}.
+Data centric AI emphasizes that dataset composition can be as important as model design~\citep{whang2023data}. For our setting, the scoring rule must work without labels, density estimation assumptions, or class frequency estimates. Mean deep nearest neighbor distance satisfies these constraints and has been effective for OOD detection in high dimensional representation spaces~\citep{sun2022out}. Our contribution is to use this signal not only for detection, but for targeted repair of underrepresented regions.
 
 \paragraph{Diffusion based augmentation.}
-Diffusion models enable high quality image synthesis with strong semantic control~\citep{ho2020denoising,rombach2022highresolution}. Prior long tail work has often used generated images in supervised settings. Our use is different. A frozen image to image diffusion model serves as a repair operator inside an SSL loop. Generation is targeted at sparse representation regions instead of globally sampled prompts.
+Diffusion models enable high quality image synthesis with strong semantic control~\citep{ho2020denoising,rombach2022highresolution}. Prior long tail work has often used generated images in supervised settings. Our use is different. A frozen image to image diffusion model serves as a repair operator inside an SSL loop, and generation is targeted at sparse representation regions instead of globally sampled prompts.
 
 \section{Method}
 \subsection{Setting and repair loop}
@@ -71,19 +78,20 @@ where $\pi_j\left(z_i^{(c)}\right)$ is the $j$th nearest neighbor of $z_i^{(c)}$
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\linewidth]{figures/method_overview.pdf}
-    \caption{Left: the BRIDGE repair loop. Right: the new mode window selector on a representative OOD histogram. The new selector targets the densest sparse band instead of the extreme right tail.}
-    \label{fig:method-overview}
+    \includegraphics[width=\linewidth]{figures/mode_window_selection.pdf}
+    \caption{Representative OOD histogram and the selector used in BRIDGE. After clipping the empirical distance distribution to the 1st to 99th percentile range, BRIDGE selects samples closest to the modal bin center. The top tail rule is shown only as an ablation reference.}
+    \label{fig:mode-window}
 \end{figure}
 
 \subsection{Mode window OOD selection}
+\label{sec:mode-window}
 The old version of our method selected the largest OOD scores directly. That rule is simple but brittle. The farthest samples are often visually noisy, outlying even relative to the sparse regions that are still semantically useful for repair.
 
 Our current selector therefore works in two steps. First, it clips the empirical OOD distribution to its $1\%$ to $99\%$ quantile range and builds a histogram over the clipped values. Let $b^{\star}$ denote the modal bin and let $m^{(c)}$ denote the center of that bin. Second, given an augmentation budget $B$, we select the $B$ samples whose OOD scores are closest to $m^{(c)}$,
 \begin{equation}
     S^{(c)} = \operatorname*{arg\,top-}B_i\, -\left| d_i^{(c)} - m^{(c)} \right|.
 \end{equation}
-This is a symmetric selection around the densest sparse region rather than a direct grab of the farthest tail. Figure~\ref{fig:method-overview} illustrates the mechanism, and Appendix Figure~\ref{fig:cycle-histories} shows that the OOD shoulder can move substantially across training.
+This yields a symmetric selection around the densest sparse region rather than a direct grab of the farthest tail. Figure~\ref{fig:mode-window} illustrates the mechanism, and Appendix Figure~\ref{fig:cycle-histories} shows that the OOD shoulder can move substantially across training.
 
 \subsection{Diffusion based repair}
 Given the selected set $S^{(c)}$, we generate $G$ synthetic variants per selected image with a frozen image to image diffusion model $g_{\phi}$. In the main method we use Stable Diffusion 3. The generation ablation replaces it with FLUX or with a no generation re population baseline. The repaired source set is
@@ -93,7 +101,7 @@ Given the selected set $S^{(c)}$, we generate $G$ synthetic variants per selecte
 Because the generator is frozen, the learned component remains the SSL encoder. The repair loop is therefore compatible with any SSL objective that can provide embeddings for OOD scoring.
 
 \subsection{Design rationale}
-The key choice is that we do not try to densify the most isolated samples at all cost. The farthest tail often contains degenerate crops, artifacts, or images whose semantics are too unstable for reliable image to image augmentation. The histogram mode captures a more useful target. It finds images that are underrepresented relative to the main body of the representation space, yet still belong to a coherent local neighborhood. In the completed selection ablation, this change improves average linear transfer by 0.32 points and average $k$NN transfer by 0.77 points over the older top tail rule on ImageNet-100-LT. Uniform sampling remains competitive in that isolated ablation, so we interpret the mode window as a better replacement for pure tail selection rather than as a universally dominant selector.
+The key choice is that we do not try to densify the most isolated samples at all costs. The farthest tail often contains degenerate crops, artifacts, or images whose semantics are too unstable for reliable image to image augmentation. The histogram mode targets a more useful region. It identifies images that are underrepresented relative to the main body of the representation space, yet still belong to a coherent local neighborhood. In the completed selection ablation, this change improves the full seven task average over the older top tail rule for both linear probe and $k$NN transfer. Uniform sampling remains competitive and even slightly stronger on average in that isolated ablation, so we view the mode window as a principled replacement for extreme tail selection rather than as a universally dominant selector.
 
 \section{Experimental Setup}
 \paragraph{Source datasets.}
@@ -106,68 +114,79 @@ We evaluate transfer on seven benchmarks: CIFAR-10-LT, CIFAR-100-LT, Stanford Ca
 All reported numbers are mean $\pm$ standard deviation over three seeds. The main backbone is ResNet-50. Unless noted otherwise, BRIDGE uses $k = 100$ for OOD scoring, selects 500 images per cycle, generates 5 images per selected image, and trains for 5 cycles with 100 epochs per cycle. The cycle ablation changes the number of cycles while adjusting the per cycle budget accordingly. The successful DINO ablation uses two local crops. Appendix~\ref{app:implementation} gives additional implementation details, runtime summaries, and asset notes.
 
 \paragraph{Compared methods.}
-We compare SimCLR, TS, SDCLR, \method, and two hybrids that combine BRIDGE with TS or SDCLR. The combinations are natural because BRIDGE changes the data while TS and SDCLR change the optimization dynamics.
+We compare SimCLR, TS, SDCLR, \method, and two hybrids that combine BRIDGE with TS or SDCLR. These are meaningful comparisons because BRIDGE changes the data while TS and SDCLR change the optimization dynamics.
+
+\paragraph{Ablation protocol.}
+All ablations are run on ImageNet-100-LT source pretraining with the same downstream suite and three seed evaluation. Each ablation changes one component at a time. The pretraining ablation swaps SimCLR, MoCo, and DINO. The generation ablation compares Stable Diffusion 3, FLUX, and no generation re population. The selection ablation compares the new mode window rule, the old top tail rule that takes the most OOD examples directly, and uniform sampling. The cycle ablation varies the number of repair cycles. The architecture ablation compares ResNet-18, ResNet-50, ViT-S, and ViT-B.
 
 \section{Results}
 \subsection{Balanced and imbalanced baselines}
-Table~\ref{tab:main_baselines_linear} compares balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT source data. \method\ improves the seven task average linear probe score by 3.05 points over the imbalanced baseline and by 3.14 points over the balanced baseline. The gains are broad rather than isolated. Relative to imbalanced SimCLR, BRIDGE improves CIFAR-10-LT by 5.37 points, CIFAR-100-LT by 4.71 points, Flowers by 2.83 points, and ImageNet-100-LT transfer by 2.35 points.
+Table~\ref{tab:main_baselines_linear} compares balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT source data. The difference between balanced and imbalanced SimCLR alone is small in this protocol, which suggests that simply discarding majority data is not a sufficient fix. \method\ improves the seven task average linear probe score by 3.05 points over the imbalanced baseline and by 3.14 points over the balanced baseline. The gains are broad rather than isolated. Relative to imbalanced SimCLR, BRIDGE improves CIFAR-10-LT by 5.37 points, CIFAR-100-LT by 4.71 points, Flowers by 2.83 points, and ImageNet-100-LT transfer by 2.35 points.
 
 \input{tables/main_baselines_linear}
 
 \subsection{Comparison across source datasets}
-Table~\ref{tab:main_sota_average} reports the average linear transfer over all seven downstream tasks for each source regime. BRIDGE achieves the best average linear transfer in all five source regimes that we evaluate. Relative to source matched SimCLR, the average gain is +2.41 points on ImageNet-100-LT, +3.15 on CIFAR-10-LT, +4.89 on CIFAR-100-LT, +3.15 on PASS, and +2.54 on DiffusionDB. Appendix Figure~\ref{fig:source-regime-gain} visualizes the same trend.
+Table~\ref{tab:main_sota_average} first reports the seven task average for each source regime. BRIDGE is the strongest average transfer method in all five regimes that we evaluate. Relative to source matched SimCLR, the average gain is +2.41 points on ImageNet-100-LT, +3.15 on CIFAR-10-LT, +4.89 on CIFAR-100-LT, +3.15 on PASS, and +2.54 on DiffusionDB.
 
-The detailed pattern is also informative. Plain BRIDGE is the strongest average transfer method in every regime. BRIDGE+TS is the strongest method on the in domain ImageNet-100-LT target when the source is PASS or DiffusionDB, but those target gains do not translate into the best overall average transfer. SDCLR and BRIDGE+SDCLR are consistently weaker in our setting.
+Table~\ref{tab:main_sota_linear} then shows the per target linear probe comparison for the five displayed targets, while the Cars and Aircraft columns are deferred to the appendix. The detailed pattern is consistent with the average table, but it also clarifies where each competitor is strongest. BRIDGE is best on the overall average for every source regime. TS or BRIDGE+TS is best on the in domain ImageNet-100-LT target in three of the five source regimes, but that advantage does not translate into the best cross task average. SDCLR and BRIDGE+SDCLR remain substantially weaker throughout this protocol.
 
 \input{tables/main_sota_average}
 
-\subsection{Ablations}
-Table~\ref{tab:main_ablation_summary} summarizes the most important ablations. Three conclusions are stable.
+\input{tables/main_sota_linear}
 
-First, SimCLR is the strongest SSL objective for the cyclic repair loop. It substantially outperforms MoCo and DINO on both average linear and average $k$NN transfer. Second, generation quality matters. Stable Diffusion 3 is clearly stronger than FLUX and stronger than the no generation re population baseline, which indicates that the repaired data must be both targeted and semantically plausible. Third, the new \modesel\ selector improves over the older \topsel\ rule. Uniform sampling remains slightly stronger in this isolated selection ablation, which suggests that once the candidate budget is already small, diversity and locality can both be useful. Appendix Figure~\ref{fig:ablation-tradeoffs} summarizes these tradeoffs visually.
+\subsection{Ablations}
+We now examine each design choice separately on ImageNet-100-LT source pretraining. Each ablation changes one component of BRIDGE while holding the rest of the pipeline fixed. The main text reports the most informative linear probe tables. The appendix gives the full linear probe and $k$NN versions.
+
+Table~\ref{tab:main_ablation_summary} provides a compact overview of the main ablation winners. The detailed tables that follow are the ones we use for interpretation.
 
 \input{tables/main_ablation_summary}
 
+\paragraph{SSL objective.}
+Table~\ref{tab:main_ablation_pretraining} compares SimCLR, MoCo, and DINO inside the BRIDGE loop. SimCLR is best on every reported metric by a large margin. MoCo is a distant second. DINO remains the weakest option even after the successful final configuration that reduced the number of local crops. In this setting, the repair loop is therefore most effective when paired with a standard contrastive objective rather than momentum contrast or self distillation.
+
+\input{tables/main_ablation_pretraining}
+
+\paragraph{Generation mechanism.}
+Table~\ref{tab:main_ablation_generation} compares Stable Diffusion 3, FLUX, and a no generation re population baseline. Stable Diffusion 3 is best on every reported metric and improves the seven task average by 8.81 points over re population. FLUX is better than no generation, but it still trails Stable Diffusion 3 substantially. This result indicates that BRIDGE needs semantically faithful generation, not only a mechanism that increases data volume.
+
+\input{tables/main_ablation_generation}
+
+\paragraph{Sample selection.}
+Table~\ref{tab:main_ablation_selection} compares the new mode window selector, the old top tail rule that directly takes the most OOD examples, and uniform sampling. The mode window rule improves over the older top tail rule on the average and on most of the shown targets, which justifies replacing the extreme tail variant. Uniform sampling is still the strongest option in this isolated ablation on average, Flowers, and Pets. Taken together, these results indicate that mode window selection is a better replacement for extreme tail selection while preserving the intended repair behavior.
+
+\input{tables/main_ablation_selection}
+
+\paragraph{Cycle count.}
+Table~\ref{tab:main_ablation_cycles} varies the number of repair cycles. Performance improves from 2 to 5 to 10 to 20 cycles on the overall average, with 20 cycles producing the strongest average transfer and the best results on CIFAR-10-LT, CIFAR-100-LT, Pets, and ImageNet-100-LT. Two cycles already recover some benefit, but the best results appear only once the repair loop has time to iterate. We nevertheless keep 5 cycles as the default in the broad comparison because it offers the best balance between quality and tractable wall time across all source regimes.
+
+\input{tables/main_ablation_cycles}
+
+\paragraph{Encoder architecture.}
+Table~\ref{tab:main_ablation_architecture} compares ResNet-18, ResNet-50, ViT-S, and ViT-B. ResNet-50 gives the best average transfer and is strongest on CIFAR-10-LT, CIFAR-100-LT, and Pets. ViT-B is the best model on Flowers and ImageNet-100-LT, but its overall average remains slightly below ResNet-50. This is why the final comparison in the main paper uses ResNet-50 as the default backbone.
+
+\input{tables/main_ablation_architecture}
+
+\FloatBarrier
+
 \section{Limitations}
-BRIDGE is more expensive than fixed data SSL because every cycle requires feature extraction, OOD scoring, and image generation. The successful experiments reported here use a specific compute regime based on A100 nodes and 24 hour wall time limits, and Appendix~\ref{app:compute} shows that total project compute is substantial. The PASS and DiffusionDB experiments are limited to 10k subsets for tractability. The main paper also centers the final comparison on ResNet-50, even though the appendix includes broader architecture ablations. Finally, the submission does not benchmark newer post project methods that appeared after the original draft.
+BRIDGE is more expensive than fixed data SSL because every cycle requires feature extraction, OOD scoring, and image generation. The successful experiments reported here use a specific compute regime based on A100 nodes and 24 hour wall time limits, and Appendix~\ref{app:compute} shows that total project compute is substantial. The PASS and DiffusionDB experiments are limited to 10k subsets for tractability. The main paper also centers the final comparison on ResNet-50, even though the appendix includes broader architecture ablations. Finally, the submission does not benchmark newer methods that appeared after the experimental campaign was completed.
 
 \section{Conclusion}
-The experiments support a simple conclusion. Long tail SSL is not only an optimization problem. It is also a data geometry problem. By repeatedly identifying sparse representation regions and repairing them with frozen diffusion augmentation, BRIDGE improves average transfer across conventional long tailed sources and across two web scale unlabeled sources. The new mode window selector is important because it replaces an overly literal extreme tail rule with a more stable target region. Within the completed experimental protocol, BRIDGE is the strongest average transfer method across all five source regimes that we study.
+The experiments support a simple conclusion. Long tail SSL is not only an optimization problem. It is also a data geometry problem. By repeatedly identifying sparse representation regions and repairing them with frozen diffusion augmentation, BRIDGE improves average transfer across conventional long tailed sources and across two web scale unlabeled sources. The new mode window selector matters because it replaces an overly literal extreme tail rule with a more stable target region. Within the completed experimental protocol, BRIDGE is the strongest average transfer method across all five source regimes that we study.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
 
 \appendix
 
-\section{Additional Supporting Figures}
+\section{Additional Diagnostics}
 \label{app:figures}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.82\linewidth]{figures/source_regime_gain.pdf}
-    \caption{Average linear gain of BRIDGE over source matched SimCLR across all five source regimes. The gain is positive in every case.}
-    \label{fig:source-regime-gain}
-\end{figure}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\linewidth]{figures/ablation_tradeoffs.pdf}
-    \caption{Average linear and average $k$NN transfer for the main ablation groups. Stable Diffusion 3 is the strongest generator, SimCLR is the strongest SSL objective, and the mode window selector improves over the older top tail rule while uniform sampling remains competitive.}
-    \label{fig:ablation-tradeoffs}
-\end{figure}
-
-\begin{figure}[h]
-    \centering
     \includegraphics[width=\linewidth]{figures/cycle_histories_example.pdf}
-    \caption{Representative OOD histograms from a successful ImageNet-100-LT TS run. The sparse shoulder moves across cycles, which motivates selecting around a local modal band rather than only the farthest tail.}
+    \caption{Representative OOD histograms from a successful ImageNet-100-LT TS run. The sparse shoulder moves across cycles, which motivates selecting around a local modal band rather than always taking the farthest tail.}
     \label{fig:cycle-histories}
-\end{figure}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\linewidth]{figures/class_dists.pdf}
-    \caption{Class count evolution across BRIDGE cycles for a representative ImageNet-100-LT run. This figure is diagnostic only. The pretraining objective itself remains label free.}
-    \label{fig:class-dists}
 \end{figure}
 
 \section{Implementation and Reproducibility}
@@ -260,7 +279,7 @@ A method that improves representation quality under biased source data can reduc
 \item {\bf Limitations}
     \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
     \item[] Answer: \answerYes{}
-    \item[] Justification: Section~6 discusses compute cost, subset size constraints for PASS and DiffusionDB, the focus on ResNet-50 in the main text, and the absence of post project baselines. Appendix~\ref{app:compute} expands on the compute budget.
+    \item[] Justification: Section~6 discusses compute cost, subset size constraints for PASS and DiffusionDB, the focus on ResNet-50 in the main text, and the absence of newer baselines that appeared after the experimental campaign was completed. Appendix~\ref{app:compute} expands on the compute budget.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer NA means that the paper has no limitation while the answer No means that the paper has limitations, but those are not discussed in the paper. 
@@ -287,7 +306,7 @@ A method that improves representation quality under biased source data can reduc
         \item Theorems and Lemmas that the proof relies upon should be properly referenced. 
     \end{itemize}
 
-    \item {\bf Experimental result reproducibility}
+\item {\bf Experimental result reproducibility}
     \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
     \item[] Answer: \answerYes{}
     \item[] Justification: Sections~3 to~5 specify the source regimes, targets, training schedule, selection rule, generator choices, and evaluation protocol. Appendix~\ref{app:implementation} adds the exact budgets, splits, and reporting procedure.
@@ -338,7 +357,7 @@ A method that improves representation quality under biased source data can reduc
 \item {\bf Experiment statistical significance}
     \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
     \item[] Answer: \answerYes{}
-    \item[] Justification: All main and appendix tables report mean $\pm$ standard deviation over three independent seeds, and Section~4 states this explicitly. The figures in Appendix~\ref{app:figures} visualize the same aggregate trends.
+    \item[] Justification: All main and appendix tables report mean $\pm$ standard deviation over three independent seeds, and Section~4 states this explicitly.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer NA means that the paper does not include experiments.
@@ -460,7 +479,7 @@ A method that improves representation quality under biased source data can reduc
     \item[] Guidelines:
     \begin{itemize}
         \item The answer NA means that the core method development in this research does not involve LLMs as any important, original, or non-standard components.
-        \item Please refer to our LLM policy (\url{https://neurips.cc/Conferences/2025/LLM}) for what should or should not be described.
+        \item Please refer to the NeurIPS LLM policy (\url{https://neurips.cc/public/LLM}) for what should or should not be described.
     \end{itemize}
 
 \end{enumerate}

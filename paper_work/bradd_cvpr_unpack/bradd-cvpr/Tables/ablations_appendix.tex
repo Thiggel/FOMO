@@ -1,0 +1,32 @@
+\begin{table*}[!tb]
+\caption{\textbf{Ablations of the key parameters of our method.} We evaluate the models by training a linear layer on top of the frozen representations (Lin.) or using the in-context (IC) evaluation of~\citet{balazevic2024towards} using the validation images for PascalVOC12 and ADE20k.}
+\setlength{\tabcolsep}{3pt}
+    \centering
+    \begin{subtable}[t]{.43\textwidth}
+        \centering
+        \input{Styles/Tables/patch_selection_abl}
+    \end{subtable}
+    % \hfill
+    \begin{subtable}[t]{0.43\textwidth}
+        \centering
+        \input{Styles/Tables/sorting_abl}
+    \end{subtable}
+    \par \vspace{5mm} % Adjust the space as needed\
+    \begin{subtable}[t]{0.42\textwidth}
+        \centering
+        \input{Styles/Tables/distance_measure_ablation}
+    \end{subtable}
+    \begin{subtable}[t]{0.42\textwidth}
+        \centering
+        \input{Styles/Tables/ROI_Align}
+    \end{subtable}
+    \par \vspace{5mm} % Adjust the space as needed
+    \begin{subtable}[t]{0.42\textwidth}
+        \centering
+        \input{Styles/Tables/steepness_abl}
+    \end{subtable}
+    \begin{subtable}[t]{0.42\textwidth}
+        \centering
+        \input{Styles/Tables/epochs_abl}
+    \end{subtable}
+\end{table*}
