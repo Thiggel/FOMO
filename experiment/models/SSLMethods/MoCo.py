@@ -79,6 +79,7 @@ class MoCo(ContinuousScheduleMixin, L.LightningModule):
 
         # Create encoder Q (online network)
         self.encoder_q = model
+        self.model = self.encoder_q
 
         # Create encoder K (momentum network)
         self.encoder_k = copy.deepcopy(model)

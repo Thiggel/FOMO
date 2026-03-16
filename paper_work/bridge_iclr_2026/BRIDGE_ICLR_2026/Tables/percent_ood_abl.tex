@@ -1,0 +1,23 @@
+\centering
+\setlength{\tabcolsep}{2pt}
+\caption{\centering Number of most OOD samples selected for aug.  per cycle\\(ViT-B, SimCLR, ImageNet-100-LT, 100 Epochs, 2500 created images per cycle)}
+{
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{l cc cc cc}
+    \toprule
+      & \multicolumn{2}{c}{\textbf{C-10}} &  \multicolumn{2}{c}{\textbf{Flowers}} &  \multicolumn{2}{c}{\textbf{Pets}} \\
+     \cmidrule(r){2-3}
+     \cmidrule(l){4-5}
+     \cmidrule(l){6-7}
+     \#Samples  & Lin. & KNN & Lin. & KNN & Lin. & KNN \\
+    \toprule
+    
+    \multirow{1}{*}{5} & 62.09  &  59.04 & 33.33 & 28.55 & 25.47 & 13.79 \\  
+    \multirow{1}{*}{500} & \textbf{63.40} & \textbf{60.73} & \textbf{39.22} & \textbf{30.89} & \textbf{30.08} & \textbf{14.69}\\
+    \multirow{1}{*}{1250} & 58.09 & 56.10 & 28.10 & 24.21 & 27.10 & 11.50 \\
+    \multirow{1}{*}{2500} & 57.03   &  55.75 & 24.18 & 23.15 & 23.57 & 11.42 \\ 
+    
+    \bottomrule
+\end{tabular}
+\end{adjustbox}
+\label{table:n_samples_abl}}

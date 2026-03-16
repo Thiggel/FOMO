@@ -10,7 +10,7 @@ def get_mean_std(results: list[dict]) -> dict:
     tensor_data = torch.tensor([list(d.values()) for d in results])
 
     mean = tensor_data.mean(dim=0)
-    std_dev = tensor_data.std(dim=0)
+    std_dev = tensor_data.std(dim=0, unbiased=False)
 
     return {
         key: {"mean": m.item(), "std": s.item()}

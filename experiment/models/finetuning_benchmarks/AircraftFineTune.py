@@ -3,11 +3,11 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets.utils import download_and_extract_archive, verify_str_arg
-import os
 from PIL import Image, UnidentifiedImageError
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
+from .DatasetRoots import get_data_root, allow_data_downloads
 
 
 class FGVCAircraft(Dataset):
@@ -103,25 +103,26 @@ class AircraftFineTune(TransferLearningBenchmark):
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
-        base_path = os.getenv("BASE_CACHE_DIR")
+        data_root = get_data_root()
+        allow_downloads = allow_data_downloads()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             train_dataset = FGVCAircraft(
-                root=base_path + "/data",
+                root=data_root,
                 split="train",
-                download=True,
+                download=allow_downloads,
                 transform=self.transform,
             )
             val_dataset = FGVCAircraft(
-                root=base_path + "/data",
+                root=data_root,
                 split="val",
-                download=True,
+                download=allow_downloads,
                 transform=self.transform,
             )
             test_dataset = FGVCAircraft(
-                root=base_path + "/data",
+                root=data_root,
                 split="test",
-                download=True,
+                download=allow_downloads,
                 transform=self.transform,
             )
 

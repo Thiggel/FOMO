@@ -23,7 +23,7 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
         teacher_temp: float = 0.04,
         student_temp: float = 0.1,
         center_momentum: float = 0.9,
-        n_local_crops: int = 6,
+        n_local_crops: int = 2,
         *args,
         **kwargs,
     ):

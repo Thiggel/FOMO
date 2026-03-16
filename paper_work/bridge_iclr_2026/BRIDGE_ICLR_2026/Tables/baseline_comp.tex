@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{2pt}
+\caption{\centering \textbf{Comparison to balanced and imbalanced baselines}\\(ViT-B, SimCLR, ImageNet-100-LT, 100 epochs)}
+{
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{l cc cc cc cc cc cc}
+    \toprule
+     & \multicolumn{2}{c}{\textbf{C-10}} &  \multicolumn{2}{c}{\textbf{C-100}}  &  \multicolumn{2}{c}{\textbf{Cars}} &  \multicolumn{2}{c}{\textbf{Aircraft}} &  \multicolumn{2}{c}{\textbf{Flowers}} &  \multicolumn{2}{c}{\textbf{Pets}} \\
+     \cmidrule(r){2-3}
+     \cmidrule(l){4-5}
+     \cmidrule(l){6-7}
+     \cmidrule(l){8-9}
+     \cmidrule(l){10-11}
+     \cmidrule(l){12-13}
+    Setting & Lin. & KNN & Lin. & KNN & Lin. & KNN & Lin. & KNN & Lin. & KNN & Lin. & KNN \\
+    \midrule
+    
+    \multirow{1}{*}{Balanced} & 59.90 & 57.13 & 33.63 & 28.34 & 4.29 & 3.31 & 9.14 & 4.83 & 31.25 & 26.04 & 23.64 & 13.04 \\
+    \multirow{1}{*}{Imbalanced} & 59.89 & 57.25 & 33.02 & 27.78 & 3.80 & 3.43 & 8.75 & 5.37 & 27.50 & 25.42 & 22.55 & 11.96 \\
+    \multirow{1}{*}{BRADD (ours)} & \textbf{64.00} & \textbf{60.73} & \textbf{38.42} & \textbf{31.56} & \textbf{6.13} & \textbf{4.54} & \textbf{11.55} & \textbf{6.72} & \textbf{39.22} & \textbf{30.89} & \textbf{30.08} & \textbf{14.69} \\
+    \bottomrule
+\end{tabular}
+\end{adjustbox}
+\label{table:baseline_comp}}
+\end{table}

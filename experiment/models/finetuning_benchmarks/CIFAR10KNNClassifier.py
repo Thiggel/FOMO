@@ -1,25 +1,26 @@
-import os
 from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader
 
 from .BaseKNNClassifier import BaseKNNClassifier
+from .DatasetRoots import get_data_root, allow_data_downloads
 
 
 class CIFAR10KNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
-        base_path = os.getenv("BASE_CACHE_DIR")
+        data_root = get_data_root()
+        allow_downloads = allow_data_downloads()
         if stage == "fit" or stage is None:
             self.train_dataset = CIFAR10(
-                root=base_path + "/data",
+                root=data_root,
                 train=True,
-                download=True,
+                download=allow_downloads,
                 transform=self.transform,
             )
         if stage == "test" or stage is None:
             self.test_dataset = CIFAR10(
-                root=base_path + "/data",
+                root=data_root,
                 train=False,
-                download=True,
+                download=allow_downloads,
                 transform=self.transform,
             )
 

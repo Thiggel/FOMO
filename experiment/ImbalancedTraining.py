@@ -129,6 +129,8 @@ class StableDiffusion3Augmentor:
         num_steps: int = 20,
         guidance: float = 5.0,
         strength: float = 0.6,
+        height: Optional[int] = None,
+        width: Optional[int] = None,
     ):
         if isinstance(prompt, str):
             prompt = [prompt] * len(images)
@@ -140,6 +142,8 @@ class StableDiffusion3Augmentor:
             num_inference_steps=num_steps,
             guidance_scale=guidance,
             num_images_per_prompt=num_generations_per_image,
+            height=height,
+            width=width,
         )
 
         return output.images
@@ -196,7 +200,6 @@ class ImbalancedTraining:
             self.total_epochs = self.n_epochs_per_cycle * self.num_cycles
 
         self.completed_cycles = 0
-        self.latest_checkpoint_path: Optional[str] = None
         self.transform = transforms.Compose(
             [
                 transforms.Resize((args.crop_size, args.crop_size)),
@@ -206,8 +209,9 @@ class ImbalancedTraining:
                 ),
             ]
         )
-        if self.datamodule is not None:
-            self.initial_train_ds_size = len(self.datamodule.train_dataset)
+        self.initial_train_ds_size = (
+            len(self.datamodule.train_dataset) if self.datamodule is not None else 0
+        )
         self.added_indices = set()
         self.original_indices = set(range(self.initial_train_ds_size))
         self.last_ood_results: Optional[dict] = None
@@ -221,6 +225,12 @@ class ImbalancedTraining:
         self.class_distribution_history: list[dict[str, Any]] = []
         self.class_distribution_order: Optional[list[int]] = None
         self._offloaded_modules: list[tuple[str, torch.device]] = []
+        self.enable_media_logging = bool(
+            getattr(self.args, "enable_media_logging", False)
+        )
+        self.save_visualization_data = bool(
+            getattr(self.args, "save_visualization_data", False)
+        ) and self.enable_media_logging
 
         self._visualization_data_root = os.path.join(
             "visualizations",
@@ -228,7 +238,8 @@ class ImbalancedTraining:
             self.checkpoint_filename,
             f"run_{self.run_idx + 1}",
         )
-        os.makedirs(self._visualization_data_root, exist_ok=True)
+        if self.save_visualization_data:
+            os.makedirs(self._visualization_data_root, exist_ok=True)
 
         self.num_workers = min(6, get_num_workers() // 2)
         self.class_distribution_workers = self._determine_class_distribution_workers()
@@ -281,7 +292,11 @@ class ImbalancedTraining:
     def _run_training_analysis(self, stage_label: str, cycle_reference: int) -> None:
         """Run configured analysis routines for a specific training stage."""
 
-        if not self.args.logger or self.datamodule is None:
+        if (
+            not self.args.logger
+            or not self.enable_media_logging
+            or self.datamodule is None
+        ):
             return
 
         if self.args.log_tsne:
@@ -366,7 +381,11 @@ class ImbalancedTraining:
     def _log_generated_samples_summary(self, stage_label: str) -> None:
         """Log a summary of generated samples for the current stage."""
 
-        if not (self.args.logger and self.args.log_generated_samples):
+        if not (
+            self.args.logger
+            and self.enable_media_logging
+            and self.args.log_generated_samples
+        ):
             return
 
         wandb_logger = self.trainer_args.get("logger", None)
@@ -433,6 +452,8 @@ class ImbalancedTraining:
         return (*shaded_rgb, np.clip(alpha, 0.0, 1.0))
 
     def _save_visualization_data(self, relative_path: str, data: Any) -> str:
+        if not self.save_visualization_data:
+            return ""
         output_path = os.path.join(self._visualization_data_root, relative_path)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         torch.save(data, output_path)
@@ -662,33 +683,17 @@ class ImbalancedTraining:
                     )
             cycle_trainer_args["callbacks"] = callbacks
 
-            if torch.cuda.is_available():
-                cycle_trainer_args.pop("strategy", None)
-                cycle_trainer_args["accelerator"] = "cuda"
-                cycle_trainer_args["devices"] = "auto"
-
             cycle_trainer_args["max_epochs"] = self.n_epochs_per_cycle * (cycle_idx + 1)
+            if len(self.datamodule.val_dataset) == 0:
+                cycle_trainer_args["limit_val_batches"] = 0
+                cycle_trainer_args["num_sanity_val_steps"] = 0
 
             trainer = L.Trainer(**cycle_trainer_args)
-
-            resume_ckpt = None
-            if self.latest_checkpoint_path is not None and os.path.exists(
-                self.latest_checkpoint_path
-            ):
-                resume_ckpt = self.latest_checkpoint_path
 
             trainer.fit(
                 model=self.ssl_method,
                 datamodule=self.datamodule,
-                ckpt_path=resume_ckpt,
             )
-
-            if self.checkpoint_callback is not None:
-                latest_path = getattr(
-                    self.checkpoint_callback, "last_model_path", None
-                ) or getattr(self.checkpoint_callback, "best_model_path", None)
-                if latest_path:
-                    self.latest_checkpoint_path = latest_path
 
             wandb_logger = self.trainer_args.get("logger", None)
             has_wandb = (
@@ -844,7 +849,10 @@ class ImbalancedTraining:
             self.pretrain_imbalanced()
 
             if os.path.exists(self.checkpoint_callback.best_model_path):
-                checkpoint = torch.load(self.checkpoint_callback.best_model_path)
+                checkpoint = torch.load(
+                    self.checkpoint_callback.best_model_path,
+                    weights_only=False,
+                )
                 state_dict = (
                     checkpoint["state_dict"]
                     if "state_dict" in checkpoint
@@ -1031,6 +1039,9 @@ class ImbalancedTraining:
     def visualize_embedding_space(
         self, cycle_idx: int, stage_label: Optional[str] = None
     ) -> None:
+        if not self.enable_media_logging:
+            return
+
         old_transform = self.datamodule.train_dataset.dataset.transform
         self.datamodule.train_dataset.dataset.transform = transforms.Compose(
             [
@@ -1103,6 +1114,9 @@ class ImbalancedTraining:
         self, cycle_idx: int, stage_label: Optional[str] = None
     ) -> None:
         """Save class distribution for current cycle using GPU acceleration and log to Wandb"""
+        if not self.enable_media_logging:
+            return
+
         dataset = self.datamodule.train_dataset.dataset
         num_classes = dataset.num_classes
         class_counts_cpu = self._count_class_distribution_with_retry(
@@ -1145,6 +1159,7 @@ class ImbalancedTraining:
         # Create visualization and log to Wandb
         if (
             self.args.logger
+            and self.enable_media_logging
             and self.args.log_class_dist
             and hasattr(self.trainer_args.get("logger", None), "experiment")
         ):
@@ -1383,10 +1398,11 @@ class ImbalancedTraining:
 
     def pretrain_imbalanced(self) -> None:
         """Run the main training loop with OOD detection and augmentation"""
-        visualization_dir = (
-            f"visualizations/class_distributions/{self.checkpoint_filename}"
-        )
-        os.makedirs(visualization_dir, exist_ok=True)
+        if self.enable_media_logging:
+            visualization_dir = (
+                f"visualizations/class_distributions/{self.checkpoint_filename}"
+            )
+            os.makedirs(visualization_dir, exist_ok=True)
 
         for cycle_idx in range(self.num_cycles):
             print(f"Run {self.run_idx + 1}/{self.args.num_runs}")
@@ -1396,9 +1412,13 @@ class ImbalancedTraining:
             self.pretrain_cycle(cycle_idx)
 
             # Save and visualize class distribution
-            if self.args.logger and self.args.log_tsne:
+            if self.args.logger and self.enable_media_logging and self.args.log_tsne:
                 self.visualize_embedding_space(cycle_idx + 1)
-            if self.args.logger and self.args.log_class_dist:
+            if (
+                self.args.logger
+                and self.enable_media_logging
+                and self.args.log_class_dist
+            ):
                 self.save_class_dist(cycle_idx + 1)
 
             self.completed_cycles = cycle_idx + 1
@@ -1535,9 +1555,16 @@ class ImbalancedTraining:
             return []
 
         dataset = self.datamodule.train_dataset.dataset
+        num_classes = int(getattr(dataset, "num_classes", 0))
+        if num_classes <= 0:
+            return []
+
+        if num_classes == 1:
+            return [dataset.get_class_name(0)]
+
         label_tensor = torch.tensor(labels, dtype=torch.long)
-        counts = torch.bincount(label_tensor, minlength=dataset.num_classes)
-        nonzero_indices = torch.nonzero(counts, as_tuple=False).squeeze()
+        counts = torch.bincount(label_tensor, minlength=num_classes)
+        nonzero_indices = torch.nonzero(counts, as_tuple=False).flatten()
 
         if nonzero_indices.numel() == 0:
             return []
@@ -1588,6 +1615,9 @@ class ImbalancedTraining:
         wandb_logger,
         ood_dataset_indices: list[int],
     ) -> None:
+        if not self.enable_media_logging:
+            return
+
         if ood_labels.numel() == 0 or not ood_dataset_indices:
             return
 
@@ -1810,7 +1840,11 @@ class ImbalancedTraining:
 
         percentile_ranges = [(0.95, 1.0), (0.90, 0.95), (0.85, 0.90), (0.80, 0.85)]
         summary = {}
-        table = wandb.Table(columns=["OOD percentile", "Top classes"])
+        table = (
+            wandb.Table(columns=["OOD percentile", "Top classes"])
+            if self.enable_media_logging
+            else None
+        )
 
         for lower, upper in percentile_ranges:
             start_idx = int(np.floor((1 - upper) * num_samples))
@@ -1831,20 +1865,22 @@ class ImbalancedTraining:
             range_key = f"{int(lower * 100)}-{int(upper * 100)}%"
             padded_top = (top_class_names + ["N/A"] * 3)[:3]
             summary[range_key] = padded_top
-            table.add_data(range_key, ", ".join(padded_top))
+            if table is not None:
+                table.add_data(range_key, ", ".join(padded_top))
 
         self._save_visualization_data(
             os.path.join("ood_partition_summary", f"cycle_{cycle_idx:04d}.pt"),
             summary,
         )
 
-        wandb_logger.experiment.log(
-            {
-                f"ood_partition_summary/cycle_{cycle_idx}": summary,
-                f"ood_partition_summary_table/cycle_{cycle_idx}": table,
-                "cycle": cycle_idx,
-            }
-        )
+        log_payload = {
+            f"ood_partition_summary/cycle_{cycle_idx}": summary,
+            "cycle": cycle_idx,
+        }
+        if table is not None:
+            log_payload[f"ood_partition_summary_table/cycle_{cycle_idx}"] = table
+
+        wandb_logger.experiment.log(log_payload)
 
     def _log_average_ood_distance(
         self,
@@ -1887,6 +1923,18 @@ class ImbalancedTraining:
             self.avg_ood_distance_history,
         )
 
+        if wandb_logger and hasattr(wandb_logger, "experiment"):
+            wandb_logger.experiment.log(
+                {
+                    "ood_average_distance/mean": mean_distance,
+                    "ood_average_distance/std": std_distance,
+                    "ood_average_distance/step_label": label,
+                }
+            )
+
+        if not self.enable_media_logging:
+            return
+
         import matplotlib
 
         matplotlib.use("Agg")
@@ -1920,10 +1968,8 @@ class ImbalancedTraining:
         if wandb_logger and hasattr(wandb_logger, "experiment"):
             wandb_logger.experiment.log(
                 {
-                    "ood_average_distance/mean": mean_distance,
-                    "ood_average_distance/std": std_distance,
-                    "ood_average_distance/step_label": label,
                     "ood_average_distance_plot": wandb.Image(fig),
+                    "ood_average_distance/step_label": label,
                 }
             )
 
@@ -1980,6 +2026,17 @@ class ImbalancedTraining:
             self.max_ood_distance_history,
         )
 
+        if wandb_logger and hasattr(wandb_logger, "experiment"):
+            wandb_logger.experiment.log(
+                {
+                    "ood_max_distance/max": max_distance,
+                    "ood_max_distance/step_label": label,
+                }
+            )
+
+        if not self.enable_media_logging:
+            return
+
         import matplotlib
 
         matplotlib.use("Agg")
@@ -2013,9 +2070,8 @@ class ImbalancedTraining:
         if wandb_logger and hasattr(wandb_logger, "experiment"):
             wandb_logger.experiment.log(
                 {
-                    "ood_max_distance/max": max_distance,
-                    "ood_max_distance/step_label": label,
                     "ood_max_distance_plot": wandb.Image(fig),
+                    "ood_max_distance/step_label": label,
                 }
             )
 
@@ -2134,6 +2190,34 @@ class ImbalancedTraining:
             # Extend the limit to the edge of the last bin that meets the threshold
             right_cutoff = float(bin_edges[min(last_idx + 1, len(bin_edges) - 1)])
 
+        stats_payload = {
+            "mean": float(distances.mean()),
+            "std": float(distances.std()),
+            "min": float(distances.min()),
+            "max": float(distances.max()),
+        }
+
+        if not self.enable_media_logging:
+            wandb_logger.experiment.log(
+                {
+                    f"ood_distance_stats/cycle_{cycle_idx}": stats_payload,
+                    "cycle": cycle_idx,
+                }
+            )
+            self._log_average_ood_distance(
+                step_index=cycle_idx,
+                step_type="cycle",
+                label=f"Cycle {cycle_idx}",
+                wandb_logger=wandb_logger,
+            )
+            self._log_max_ood_distance(
+                step_index=cycle_idx,
+                step_type="cycle",
+                label=f"Cycle {cycle_idx}",
+                wandb_logger=wandb_logger,
+            )
+            return
+
         import matplotlib
 
         matplotlib.use("Agg")
@@ -2191,12 +2275,7 @@ class ImbalancedTraining:
             {
                 f"ood_distance_distribution/cycle_{cycle_idx}": hist_image,
                 "cycle": cycle_idx,
-                f"ood_distance_stats/cycle_{cycle_idx}": {
-                    "mean": float(distances.mean()),
-                    "std": float(distances.std()),
-                    "min": float(distances.min()),
-                    "max": float(distances.max()),
-                },
+                f"ood_distance_stats/cycle_{cycle_idx}": stats_payload,
             }
         )
 
@@ -2261,7 +2340,10 @@ class ImbalancedTraining:
 
         # For Wandb logging
         has_wandb = (
-            is_primary_rank and self.args.logger and self.args.log_generated_samples
+            is_primary_rank
+            and self.args.logger
+            and self.enable_media_logging
+            and self.args.log_generated_samples
         )
         image_resize = transforms.Resize((64, 64))  # Resize to 64x64 for Wandb
         wandb_logger = self.trainer_args.get("logger", None)
@@ -2397,6 +2479,7 @@ class ImbalancedTraining:
             sd3_guidance = getattr(self.args, "sd3_guidance", 5.0)
             sd3_num_steps = getattr(self.args, "sd3_num_steps", 20)
             sd3_strength = getattr(self.args, "sd3_strength", 0.6)
+            sd3_resolution = int(self.args.crop_size)
 
             dataloader = DataLoader(
                 local_samples,
@@ -2421,6 +2504,8 @@ class ImbalancedTraining:
                     num_steps=sd3_num_steps,
                     guidance=sd3_guidance,
                     strength=sd3_strength,
+                    height=sd3_resolution,
+                    width=sd3_resolution,
                 )
 
                 expected = len(batch) * generations_per_sample

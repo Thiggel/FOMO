@@ -33,13 +33,17 @@ Use `--use-temperature-schedule` to enable a cosine schedule for the temperature
 --early_stopping_patience
 --checkpoint
 --num_runs
---max_hours_per_run
+--seed
+--aggregate_only
 
 --logger, --no-logger
 
 --pretrain, --no-pretrain
 --finetune, --no-finetune
 ```
+
+For SLURM arrays, each task runs one seed (`SLURM_ARRAY_TASK_ID` selects from `seeds[:num_runs]`).
+After all seed jobs finish, aggregate with `python -m experiment aggregate_only=true ...` using the same `experiment_name`, dataset, and run settings.
 
 ## File Structure
 

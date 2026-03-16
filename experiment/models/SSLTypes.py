@@ -157,7 +157,7 @@ class SSLTypes(Enum):
                     size=parserargs.crop_size,
                     global_crops_scale=(0.4, 1.0),
                     local_crops_scale=(0.05, 0.4),
-                    local_crops_number=6,  # You can adjust this number
+                    local_crops_number=2,
                 ),
                 collate_fn=lambda parserargs: dino_collate,
             ),

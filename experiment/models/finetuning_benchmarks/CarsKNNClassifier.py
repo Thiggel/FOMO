@@ -4,15 +4,24 @@ from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import StanfordCars
 from .BaseKNNClassifier import BaseKNNClassifier
 from .StanfordCarsDataset import StanfordCarsDataset
+from .DatasetRoots import get_stanford_cars_root
 
 
 class CarsKNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
-        base_path = os.getenv("BASE_CACHE_DIR") + "/stanford_cars"
+        base_path = get_stanford_cars_root()
+        train_root = os.path.join(base_path, "cars_train")
+        annotations_file = os.path.join(base_path, "devkit", "cars_train_annos.mat")
+
+        if not os.path.isdir(train_root):
+            raise FileNotFoundError(
+                f"Stanford Cars train split not found at {train_root}. "
+                f"STANFORD_CARS_ROOT={os.getenv('STANFORD_CARS_ROOT')!r}, BASE_CACHE_DIR={os.getenv('BASE_CACHE_DIR')!r}"
+            )
 
         base_dataset = StanfordCarsDataset(
-            root_dir=base_path + "/cars_train",
-            annotations_file=base_path + "/devkit/cars_train_annos.mat",
+            root_dir=train_root,
+            annotations_file=annotations_file,
             transform=self.transform,
         )
 

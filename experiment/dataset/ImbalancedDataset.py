@@ -2,6 +2,8 @@ import hashlib
 import io
 import os
 from typing import Any, Optional
+from contextlib import contextmanager
+import fcntl
 
 import torch
 import requests
@@ -23,6 +25,7 @@ class ImbalancedDataset(Dataset):
     def __init__(
         self,
         dataset_path: str,
+        dataset_name: Optional[str] = None,
         additional_data_path: str = "additional_data",
         imbalance_method: ImbalanceMethod = ImbalanceMethods.LinearlyIncreasing,
         split: str = "train+validation",
@@ -39,11 +42,16 @@ class ImbalancedDataset(Dataset):
 
         print("Loading dataset", dataset_path)
         self.dataset_path = dataset_path
-        self.dataset = load_dataset(
-            dataset_path,
-            split=split,
-            trust_remote_code=True
-        )
+        self.dataset_name = dataset_name
+        load_kwargs = {
+            "split": split,
+            "trust_remote_code": True,
+        }
+        with self._acquire_dataset_load_lock(split):
+            if dataset_name is not None:
+                self.dataset = load_dataset(dataset_path, dataset_name, **load_kwargs)
+            else:
+                self.dataset = load_dataset(dataset_path, **load_kwargs)
         self.x_key = x_key
         self.y_key = y_key
 
@@ -72,6 +80,31 @@ class ImbalancedDataset(Dataset):
 
     def get_class_name(self, label: int) -> str:
         return self.labels[label]
+
+    @contextmanager
+    def _acquire_dataset_load_lock(self, split: str):
+        lock_root = os.path.join(
+            os.environ.get("HF_DATASETS_CACHE", os.environ["BASE_CACHE_DIR"]),
+            "load_locks",
+        )
+        os.makedirs(lock_root, exist_ok=True)
+
+        lock_key = "::".join(
+            [
+                self.dataset_path,
+                self.dataset_name or "",
+                split,
+            ]
+        )
+        lock_name = hashlib.sha256(lock_key.encode("utf-8")).hexdigest() + ".lock"
+        lock_path = os.path.join(lock_root, lock_name)
+
+        with open(lock_path, "w") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
 
     def _load_or_create_image_counts(self) -> dict:
         """Load or create a dictionary tracking number of images per cycle."""
@@ -220,13 +253,21 @@ class ImbalancedDataset(Dataset):
         if self._image_cache_dir is not None:
             return self._image_cache_dir
 
-        base_cache_dir = os.environ.get("BASE_CACHE_DIR")
-        if base_cache_dir is None:
+        cache_root = os.environ.get("FOMO_HF_IMAGE_CACHE")
+        if cache_root is None:
+            dataset_tmpdir = os.environ.get("FOMO_DATASET_TMPDIR")
+            if dataset_tmpdir is not None:
+                cache_root = os.path.join(dataset_tmpdir, "hf-cache", "image-cache")
+            else:
+                base_cache_dir = os.environ.get("BASE_CACHE_DIR")
+                if base_cache_dir is not None:
+                    cache_root = os.path.join(base_cache_dir, "hf_image_cache")
+
+        if cache_root is None:
             return None
 
         dataset_cache_dir = os.path.join(
-            base_cache_dir,
-            "hf_image_cache",
+            cache_root,
             self.dataset_path.replace("/", "_"),
         )
         os.makedirs(dataset_cache_dir, exist_ok=True)

@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Sample-selection strategy ablation with full kNN results.}
+\label{tab:app_selection_knn}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{l c c c c c c c c}
+\toprule
+Setting & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+Mode window & \textbf{66.3 {\scriptsize$\pm$ 0.8}} & 35.3 {\scriptsize$\pm$ 0.4} & \textbf{5.1 {\scriptsize$\pm$ 0.7}} & 9.5 {\scriptsize$\pm$ 0.1} & 24.8 {\scriptsize$\pm$ 0.6} & 18.9 {\scriptsize$\pm$ 1.0} & 36.7 {\scriptsize$\pm$ 0.7} & 28.1 {\scriptsize$\pm$ 0.6} \\
+Top tail & 65.7 {\scriptsize$\pm$ 0.8} & 34.4 {\scriptsize$\pm$ 0.2} & 4.1 {\scriptsize$\pm$ 0.4} & 9.6 {\scriptsize$\pm$ 0.2} & 23.9 {\scriptsize$\pm$ 0.9} & 18.1 {\scriptsize$\pm$ 0.8} & 35.4 {\scriptsize$\pm$ 1.2} & 27.3 {\scriptsize$\pm$ 0.6} \\
+Uniform & 66.1 {\scriptsize$\pm$ 1.0} & \textbf{35.7 {\scriptsize$\pm$ 0.3}} & 4.9 {\scriptsize$\pm$ 0.1} & \textbf{10.2 {\scriptsize$\pm$ 0.7}} & \textbf{25.3 {\scriptsize$\pm$ 0.4}} & \textbf{19.0 {\scriptsize$\pm$ 0.8}} & \textbf{37.4 {\scriptsize$\pm$ 0.6}} & \textbf{28.4 {\scriptsize$\pm$ 0.6}} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

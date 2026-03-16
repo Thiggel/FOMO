@@ -34,6 +34,8 @@ class OOD:
         self.selection_strategy = getattr(args, "ood_selection_strategy", "top")
         self.mode_histogram_bins = getattr(args, "ood_mode_histogram_bins", "auto")
         self.last_results: Optional[dict] = None
+        self.mode_histogram_max_bins = 512
+        self.mode_histogram_quantile_range = (0.01, 0.99)
 
     def extract_features(self):
         """Extract features from the dataset without normalization"""
@@ -191,23 +193,72 @@ class OOD:
 
         sorted_indices = np.argsort(distances)
         sorted_distances = distances[sorted_indices]
+        finite_mask = np.isfinite(sorted_distances)
 
-        try:
-            hist_density, bin_edges = np.histogram(
-                sorted_distances, bins=self.mode_histogram_bins, density=True
+        if not finite_mask.all():
+            sorted_indices = sorted_indices[finite_mask]
+            sorted_distances = sorted_distances[finite_mask]
+            total_samples = len(sorted_distances)
+            if total_samples == 0:
+                return np.array([], dtype=int), None
+            num_samples = min(num_samples, total_samples)
+
+        if np.isclose(sorted_distances[0], sorted_distances[-1]):
+            mode_left = float(sorted_distances[0])
+            mode_right = float(sorted_distances[-1])
+            mode_center = mode_left
+            hist_density = np.array([float(total_samples)], dtype=np.float64)
+            bin_edges = np.array([mode_left - 0.5, mode_right + 0.5], dtype=np.float64)
+        else:
+            quantile_low, quantile_high = self.mode_histogram_quantile_range
+            clipped_low, clipped_high = np.quantile(
+                sorted_distances, [quantile_low, quantile_high]
             )
-        except TypeError:
+
+            if not np.isfinite(clipped_low) or not np.isfinite(clipped_high):
+                clipped_low = float(sorted_distances[0])
+                clipped_high = float(sorted_distances[-1])
+
+            if clipped_high <= clipped_low:
+                clipped_low = float(sorted_distances[0])
+                clipped_high = float(sorted_distances[-1])
+
+            histogram_values = sorted_distances[
+                (sorted_distances >= clipped_low) & (sorted_distances <= clipped_high)
+            ]
+            if histogram_values.size < 2 or np.isclose(clipped_low, clipped_high):
+                histogram_values = sorted_distances
+                clipped_low = float(sorted_distances[0])
+                clipped_high = float(sorted_distances[-1])
+
+            bins = self.mode_histogram_bins
+            if isinstance(bins, str) and bins.isdigit():
+                bins = int(bins)
+
+            if isinstance(bins, str):
+                try:
+                    candidate_edges = np.histogram_bin_edges(histogram_values, bins=bins)
+                    bins = max(1, len(candidate_edges) - 1)
+                except (TypeError, ValueError):
+                    bins = int(np.sqrt(histogram_values.size))
+
+            bins = max(8, int(bins))
+            bins = min(bins, self.mode_histogram_max_bins, histogram_values.size)
+
             hist_density, bin_edges = np.histogram(
-                sorted_distances, bins="auto", density=True
+                histogram_values,
+                bins=bins,
+                range=(clipped_low, clipped_high),
+                density=False,
             )
 
-        if hist_density.size == 0:
-            return sorted_indices[:num_samples], None
+            if hist_density.size == 0:
+                return sorted_indices[:num_samples], None
 
-        mode_bin_idx = int(np.argmax(hist_density))
-        mode_left = float(bin_edges[mode_bin_idx])
-        mode_right = float(bin_edges[mode_bin_idx + 1])
-        mode_center = (mode_left + mode_right) / 2
+            mode_bin_idx = int(np.argmax(hist_density))
+            mode_left = float(bin_edges[mode_bin_idx])
+            mode_right = float(bin_edges[mode_bin_idx + 1])
+            mode_center = (mode_left + mode_right) / 2
 
         lower_target = num_samples // 2
         upper_target = num_samples - lower_target
@@ -279,6 +330,7 @@ class OOD:
             "mode_center": mode_center,
             "mode_bin_start": mode_left,
             "mode_bin_end": mode_right,
+            "histogram_bins": int(len(bin_edges) - 1),
             "hist_density": hist_density.tolist(),
             "hist_bin_edges": bin_edges.tolist(),
         }

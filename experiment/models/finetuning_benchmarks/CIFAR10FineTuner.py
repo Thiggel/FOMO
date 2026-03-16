@@ -1,4 +1,3 @@
-import os
 from torch import nn
 from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader, random_split
@@ -6,6 +5,7 @@ from torchvision import transforms
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
+from .DatasetRoots import get_data_root, allow_data_downloads
 
 
 class CIFAR10FineTuner(TransferLearningBenchmark):
@@ -24,20 +24,23 @@ class CIFAR10FineTuner(TransferLearningBenchmark):
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
-        base_path = os.getenv("BASE_CACHE_DIR")
+        data_root = get_data_root()
+        allow_downloads = allow_data_downloads()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             dataset = CIFAR10(
-                root=base_path + "/data", download=True, transform=self.transform
+                root=data_root,
+                download=allow_downloads,
+                transform=self.transform,
             )
 
         train_size = int(0.9 * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
         test_dataset = CIFAR10(
-            root=base_path + "/data",
+            root=data_root,
             train=False,
-            download=True,
+            download=allow_downloads,
             transform=self.transform,
         )
 

@@ -1,5 +1,5 @@
-dataset_path: mlfoundations/PASS
-split: train[:100000]
+dataset_path: experiment/dataset/hf_scripts/pass_subset.py
+split: train[:10000]
 x_key: image
 y_key: label
 imbalance_method: all_data

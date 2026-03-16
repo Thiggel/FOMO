@@ -1,0 +1,47 @@
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{2pt}
+\caption{\centering \textbf{Comparison to SOTA}\\(ResNet50, 800 epochs, mean acc.\ across three runs; values are \%)}
+{
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{l l cc cc cc cc cc cc cc cc}
+\toprule
+\multicolumn{2}{c}{} & \multicolumn{2}{c}{\textbf{C-10}} & \multicolumn{2}{c}{\textbf{C-100}} & \multicolumn{2}{c}{\textbf{Cars}} & \multicolumn{2}{c}{\textbf{Aircraft}} & \multicolumn{2}{c}{\textbf{Flowers}} & \multicolumn{2}{c}{\textbf{Pets}} & \multicolumn{2}{c}{\textbf{IN-100-LT}} \\
+\cmidrule(r){3-4}
+\cmidrule(l){5-6}
+\cmidrule(l){7-8}
+\cmidrule(l){9-10}
+\cmidrule(l){11-12}
+\cmidrule(l){13-14}
+\cmidrule(l){15-16}
+ & Method & Lin.\ & KNN & Lin.\ & KNN & Lin.\ & KNN & Lin.\ & KNN & Lin.\ & KNN & Lin.\ & KNN & Lin.\ & KNN \\
+\midrule
+\multirow{6}{*}{\rotatebox{90}{ImageNet-100}}
+ & SimCLR       & 69.6 & 33.1 & 44.0 & 10.1 & 16.0 & 1.3 & 18.6 & 2.3 & 39.7 & 4.4 & 39.7 & 5.7 & 55.6 & 8.8 \\
+ & TS           & 58.1 & 32.5 & 30.6 & 9.9  &  4.5 & 0.9 &  7.3 & \textbf{2.9} & 21.1 & 4.3 & 29.7 & \textbf{6.0} & 49.9 & 9.0 \\
+ & SDCLR        & \textbf{70.9} & 32.9 & \textbf{44.8} & 9.8 & 16.6 & 1.2 & \textbf{18.9} & 2.4 & 36.6 & 4.7 & \textbf{41.9} & 5.0 & 54.9 & 8.6 \\
+ & BRIDGE & 69.9 & \textbf{35.7} & 44.1 & \textbf{11.5} & \textbf{17.1} & \textbf{1.3} & 18.8 & 2.4 & \textbf{41.8} & \textbf{5.3} & 41.0 & 5.7 & \textbf{58.6} & \textbf{9.8} \\
+ & BRIDGE+TS    & 62.8 & 33.7 & 35.7 & 10.2 & 4.5 & 1.1 & 9.1 & 2.6 & 19.0 & 4.9 & 27.7 & 5.8 & 46.5 & 8.9 \\
+ & BRIDGE+SDCLR & 67.8 & 34.0 & 39.9 & 10.6 & 12.1 & 1.4 & 15.4 & 2.5 & 34.4 & 5.2 & 40.7 & 5.3 & 54.3 & 10.4 \\
+\midrule
+\multirow{6}{*}{\rotatebox{90}{CIFAR-10}}
+ & SimCLR       & 73.8 & 32.3 & 46.0 & 10.2 & 11.1 & 0.7 & 16.7 & 2.3 & 24.0 & 4.8 & 31.1 & 6.0 & 42.1 & 9.4 \\
+ & TS           & 70.6 & 31.6 & 37.1 & 9.9  &  6.1 & 0.8 & 10.1 & 2.6 & 13.9 & 3.2 & 25.2 & 5.6 & 35.4 & 9.4 \\
+ & SDCLR        & 73.3 & 31.5 & 45.3 & 9.6  &  9.2 & 1.0 & 16.1 & \textbf{2.7} & 24.0 & 4.4 & 25.9 & 5.4 & 40.8 & 8.7 \\
+  & BRIDGE & \textbf{78.0} & 31.8 & \textbf{50.4} & 10.5 & \textbf{13.2} & 1.5 & 16.9 & 2.3 & 23.4 & 5.9 & 29.2 & 5.4 & 45.6 & 8.5 \\
+ & BRIDGE+TS    & 75.7 & \textbf{34.2} & 39.1 & \textbf{11.8} & 4.8 & 1.1 & 8.0 & 2.3 & 11.4 & \textbf{6.8} & 19.5 & 5.9 & 33.9 & \textbf{9.8} \\
+ & BRIDGE+SDCLR & 77.0 & 33.5 & 49.5 & 10.6 & 13.3 & \textbf{1.5} & \textbf{17.4} & 2.8 & 22.5 & 4.6 & \textbf{31.8} & 5.2 & \textbf{46.2} & 8.9 \\
+\midrule
+\multirow{6}{*}{\rotatebox{90}{CIFAR-100}}
+ & SimCLR       & 68.2 & 31.2 & 42.7 & 9.7  & 9.0 & \textbf{1.1} & 13.7 & \textbf{2.9} & 22.7 & 3.7 & 27.5 & 5.4 & 38.2 & 8.8 \\
+ & TS           & 66.5 & 29.8 & 40.4 & 8.8  & 4.3 & 0.8 & 10.1 & 2.4 & 18.3 & 3.8 & 24.2 & \textbf{5.5} & 36.0 & 8.0 \\
+ & SDCLR        & 68.3 & 31.0 & 42.6 & 9.4  & 6.4 & 0.9 & 12.5 & 2.6 & 18.1 & 3.9 & 20.8 & 5.3 & 37.7 & 8.7 \\
+  & BRIDGE & 71.3 & \textbf{33.3} & 47.8 & \textbf{10.3} & 9.0 & 1.1 & 13.7 & 2.6 & \textbf{25.8} & \textbf{5.0} & 25.0 & 5.7 & 41.9 & 8.6 \\
+ & BRIDGE+TS    & 63.3 & 27.9 & 38.1 & 8.2 & 2.6 & 1.1 & 6.0 & 2.3 & 15.0 & 4.2 & 13.6 & 4.6 & 32.9 & 7.3 \\
+ & BRIDGE+SDCLR & \textbf{72.9} & 31.7 & \textbf{48.8} & 9.7 & \textbf{10.7} & 1.0 & \textbf{14.8} & 2.6 & 22.9 & 4.7 & \textbf{30.4} & 5.4 & \textbf{43.9} & \textbf{9.5} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+}
+\label{table:sota_comp_fomo_final}
+\end{table}

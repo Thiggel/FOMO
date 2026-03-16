@@ -1,0 +1,37 @@
+% \resizebox{\linewidth}{!}
+% \begin{table}[h]   
+% \centering
+% \label{table:mask_abl}
+% \setlength{\tabcolsep}{2pt}
+% {\begin{tabular}{cr rcr}
+%     \toprule
+%      Mask  & LS & k=21 & k=300 & HB\\
+%     \toprule
+%     \multirow{1}{*}{all}    & 69.0   & 19.5  & 37.0 & 66.2\\
+%     \multirow{1}{*}{bg}     & 67.9   & 16.0  & 37.5 & 64.9\\
+%     \rowcolor{lightcyan}\multirow{1}{*}{fg}     & 68.5   & 18.8  & 40.3 & 66.2\\
+%     \bottomrule
+% \end{tabular}}
+% \end{table}
+
+\centering
+\setlength{\tabcolsep}{2pt}
+\caption{\centering Pretraining\\(ViT-B, ImageNet-100-LT, 100 epochs)}
+{
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{l cc cc cc}
+    \toprule
+     & \multicolumn{2}{c}{\textbf{C-10}} &  \multicolumn{2}{c}{\textbf{Flowers}} &  \multicolumn{2}{c}{\textbf{Pets}} \\
+     \cmidrule(r){2-3}
+     \cmidrule(l){4-5}
+     \cmidrule(l){6-7}
+    backbone & Lin. & KNN & Lin. & KNN & Lin. & KNN \\
+    \midrule
+    \multirow{1}{*}{SimCLR}     & \textbf{63.40} & \textbf{60.73} & \textbf{39.22} & \textbf{30.89} & \textbf{30.08} & \textbf{14.69}\\
+    \multirow{1}{*}{DINO} & 47.97 & 37.36  & 20.92 & 12.46 & 10.30 & 6.00 \\
+    \multirow{1}{*}{MoCo}    & 49.13   & 42.86  & 15.03 & 17.63 & 14.36 & 7.50\\
+    \bottomrule
+\end{tabular}
+\end{adjustbox}
+
+\label{table:pretraining-abl}}

@@ -1,0 +1,468 @@
+\documentclass{article}
+\usepackage{neurips_2025}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{adjustbox}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\title{BRIDGE: Balancing Representations by Identifying and Generating Underrepresented Data}
+\author{Anonymous Authors}
+
+\newcommand{\method}{BRIDGE}
+\newcommand{\topsel}{\textsc{TopTail}}
+\newcommand{\modesel}{\textsc{ModeWindow}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Self supervised pretraining inherits the sampling bias of its source data. Most remedies for long tailed self supervised learning are model centric. They change the loss, schedule, or optimization dynamics while leaving the training distribution fixed. We study a data centric alternative. \method\ alternates between self supervised pretraining, non parametric OOD scoring in representation space, and targeted image generation with a frozen diffusion model. The final method replaces our earlier extreme tail selector with a histogram based mode window that targets a dense sparse band and avoids the visually noisy far tail. Across ImageNet-100-LT, CIFAR-10-LT, CIFAR-100-LT, PASS, and DiffusionDB source pretraining, \method\ achieves the best average linear probe transfer among the methods we evaluate. On ImageNet-100-LT source pretraining, \method\ improves average linear transfer over imbalanced SimCLR by 3.05 points. Across the five source regimes, the gain over source matched SimCLR ranges from 2.41 to 4.89 points. Ablations show that Stable Diffusion 3 is the strongest generator, SimCLR is the strongest SSL objective for the repair loop, and the new mode window selector improves over the older top tail rule, although uniform sampling remains competitive in the isolated selection ablation. Full linear and $k$NN tables, additional supporting figures, runtime statistics, and license notes are provided in the appendix.
+\end{abstract}
+
+\section{Introduction}
+Self supervised learning has become a standard tool for learning transferable visual representations from unlabeled images. Strong methods now span contrastive learning, masked prediction, and self distillation~\citep{chen2020simple,he2020momentum,he2022masked,DINO,oquab2023dinov2}. Yet these methods still inherit the sampling bias of the source corpus. When the source data is long tailed or otherwise skewed, the learned embedding allocates most of its capacity to dense majority regions and leaves sparse regions weakly modeled. This hurts transfer, especially on fine grained tasks and tail heavy recognition settings.
+
+Most prior attempts to address long tailed SSL are model centric. Temperature Schedules reshapes the optimization trajectory of contrastive learning over time~\citep{ts}. SDCLR introduces a self competitor to emphasize harder and rarer samples~\citep{sdclr}. Other work adds external OOD data or frequency aware training heuristics to the SSL loop~\citep{colt,fassl}. These are effective ideas, but they still treat the source distribution as mostly fixed.
+
+We study the complementary direction. Can we repair the source dataset itself while training proceeds? Our answer is \method, a cyclic data repair loop. After each pretraining stage, we embed the current training set, score each image by mean $k$NN distance, select a sparse but semantically recoverable region of the representation space, and generate new training images for that region with a frozen diffusion model. The next cycle trains on the expanded dataset. The encoder therefore exposes where the data manifold is thin, and generation densifies those weak regions before the next round of learning.
+
+The submission differs from our earlier draft in two important ways. First, the main method no longer selects the most extreme OOD samples. Instead it builds a histogram over OOD distances and draws a fixed budget around the mode of that histogram. This skips the super OOD tail, which often contains noisy or weakly useful images. The old tail only rule is retained as an ablation. Second, the empirical scope now extends beyond ImageNet derived long tails. In addition to ImageNet-100-LT, CIFAR-10-LT, and CIFAR-100-LT, we evaluate web scale unlabeled source data from PASS and DiffusionDB.
+
+This paper makes three contributions. First, it introduces a data centric SSL loop that repairs sparse representation regions with frozen diffusion augmentation. Second, it replaces pure tail selection with a histogram based mode window that is better aligned with semantically recoverable sparse regions and improves over the older top tail rule. Third, it provides a broad empirical study across five source regimes, seven downstream tasks, three seeds, strong baselines, and targeted ablations.
+
+\section{Related Work}
+\paragraph{Self supervised visual representation learning.}
+Modern vision SSL is dominated by contrastive methods such as SimCLR and MoCo~\citep{chen2020simple,he2020momentum}, self distillation methods such as DINO~\citep{DINO}, and masked prediction methods such as MAE~\citep{he2022masked}. These methods have made unlabeled pretraining routine, but they usually take the source dataset as given.
+
+\paragraph{Long tailed and imbalanced SSL.}
+Long tailed data changes both optimization and representation geometry. TS addresses this with a schedule over the contrastive temperature~\citep{ts}. SDCLR prunes a self competitor to emphasize hard and tail examples~\citep{sdclr}. FASSL introduces frequency aware SSL training~\citep{fassl}. COLT injects external OOD data into long tail SSL~\citep{colt}. Our setting is different. \method\ does not modify the core SSL loss and does not require a separate external OOD collection. It repairs sparse regions using images generated from the training data already in hand.
+
+\paragraph{OOD scoring and data curation.}
+Data centric AI emphasizes that dataset composition is often as important as model design~\citep{whang2023data}. For our setting, the scoring rule must work without labels, density estimation assumptions, or class frequency estimates. Mean deep nearest neighbor distance satisfies these constraints and has been effective for OOD detection in high dimensional representation spaces~\citep{sun2022out}.
+
+\paragraph{Diffusion based augmentation.}
+Diffusion models enable high quality image synthesis with strong semantic control~\citep{ho2020denoising,rombach2022highresolution}. Prior long tail work has often used generated images in supervised settings. Our use is different. A frozen image to image diffusion model serves as a repair operator inside an SSL loop. Generation is targeted at sparse representation regions instead of globally sampled prompts.
+
+\section{Method}
+\subsection{Setting and repair loop}
+Let $D^{(0)} = \{x_i\}_{i=1}^{N_0}$ denote an unlabeled source dataset and let $f_{\theta}$ be an SSL encoder trained with objective $\mathcal{L}_{\mathrm{ssl}}$. \method\ alternates between pretraining and dataset repair over $C$ cycles. At cycle $c$, the current encoder is $f_{\theta^{(c)}}$ and the current source set is $D^{(c)}$.
+
+After training on $D^{(c)}$, we embed every image and compute a non parametric OOD score from mean $k$NN distance,
+\begin{equation}
+    z_i^{(c)} = f_{\theta^{(c)}}(x_i), \qquad
+    d_i^{(c)} = \frac{1}{k} \sum_{j=1}^{k} \left\lVert z_i^{(c)} - \pi_j\left(z_i^{(c)}\right) \right\rVert_2^2,
+\end{equation}
+where $\pi_j\left(z_i^{(c)}\right)$ is the $j$th nearest neighbor of $z_i^{(c)}$ inside the current training set. Large values indicate that an image lies in a sparse part of the learned representation space.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/method_overview.pdf}
+    \caption{Left: the BRIDGE repair loop. Right: the new mode window selector on a representative OOD histogram. The new selector targets the densest sparse band instead of the extreme right tail.}
+    \label{fig:method-overview}
+\end{figure}
+
+\subsection{Mode window OOD selection}
+The old version of our method selected the largest OOD scores directly. That rule is simple but brittle. The farthest samples are often visually noisy, outlying even relative to the sparse regions that are still semantically useful for repair.
+
+Our current selector therefore works in two steps. First, it clips the empirical OOD distribution to its $1\%$ to $99\%$ quantile range and builds a histogram over the clipped values. Let $b^{\star}$ denote the modal bin and let $m^{(c)}$ denote the center of that bin. Second, given an augmentation budget $B$, we select the $B$ samples whose OOD scores are closest to $m^{(c)}$,
+\begin{equation}
+    S^{(c)} = \operatorname*{arg\,top-}B_i\, -\left| d_i^{(c)} - m^{(c)} \right|.
+\end{equation}
+This is a symmetric selection around the densest sparse region rather than a direct grab of the farthest tail. Figure~\ref{fig:method-overview} illustrates the mechanism, and Appendix Figure~\ref{fig:cycle-histories} shows that the OOD shoulder can move substantially across training.
+
+\subsection{Diffusion based repair}
+Given the selected set $S^{(c)}$, we generate $G$ synthetic variants per selected image with a frozen image to image diffusion model $g_{\phi}$. In the main method we use Stable Diffusion 3. The generation ablation replaces it with FLUX or with a no generation re population baseline. The repaired source set is
+\begin{equation}
+    D^{(c+1)} = D^{(c)} \cup \left\{ g_{\phi}(x, \epsilon_j) \mid x \in S^{(c)},\, j = 1, \dots, G \right\}.
+\end{equation}
+Because the generator is frozen, the learned component remains the SSL encoder. The repair loop is therefore compatible with any SSL objective that can provide embeddings for OOD scoring.
+
+\subsection{Design rationale}
+The key choice is that we do not try to densify the most isolated samples at all cost. The farthest tail often contains degenerate crops, artifacts, or images whose semantics are too unstable for reliable image to image augmentation. The histogram mode captures a more useful target. It finds images that are underrepresented relative to the main body of the representation space, yet still belong to a coherent local neighborhood. In the completed selection ablation, this change improves average linear transfer by 0.32 points and average $k$NN transfer by 0.77 points over the older top tail rule on ImageNet-100-LT. Uniform sampling remains competitive in that isolated ablation, so we interpret the mode window as a better replacement for pure tail selection rather than as a universally dominant selector.
+
+\section{Experimental Setup}
+\paragraph{Source datasets.}
+We pretrain on five unlabeled source regimes. Three are long tailed image classification datasets, namely ImageNet-100-LT, CIFAR-10-LT, and CIFAR-100-LT. Two are web scale unlabeled corpora, namely PASS~\citep{pass} and DiffusionDB~\citep{diffusiondb}. For PASS and DiffusionDB we use 10k example subsets and override the pretraining split to $[1.0, 0.0, 0.0]$, so all sampled images are used for SSL pretraining.
+
+\paragraph{Downstream evaluation.}
+We evaluate transfer on seven benchmarks: CIFAR-10-LT, CIFAR-100-LT, Stanford Cars~\citep{cars}, FGVC Aircraft~\citep{aircraft}, Oxford Flowers~\citep{flowers}, Oxford-IIIT Pets~\citep{pets}, and ImageNet-100-LT. The main paper reports linear probe results. Full linear probe and $k$NN tables are deferred to the appendix.
+
+\paragraph{Training protocol.}
+All reported numbers are mean $\pm$ standard deviation over three seeds. The main backbone is ResNet-50. Unless noted otherwise, BRIDGE uses $k = 100$ for OOD scoring, selects 500 images per cycle, generates 5 images per selected image, and trains for 5 cycles with 100 epochs per cycle. The cycle ablation changes the number of cycles while adjusting the per cycle budget accordingly. The successful DINO ablation uses two local crops. Appendix~\ref{app:implementation} gives additional implementation details, runtime summaries, and asset notes.
+
+\paragraph{Compared methods.}
+We compare SimCLR, TS, SDCLR, \method, and two hybrids that combine BRIDGE with TS or SDCLR. The combinations are natural because BRIDGE changes the data while TS and SDCLR change the optimization dynamics.
+
+\section{Results}
+\subsection{Balanced and imbalanced baselines}
+Table~\ref{tab:main_baselines_linear} compares balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT source data. \method\ improves the seven task average linear probe score by 3.05 points over the imbalanced baseline and by 3.14 points over the balanced baseline. The gains are broad rather than isolated. Relative to imbalanced SimCLR, BRIDGE improves CIFAR-10-LT by 5.37 points, CIFAR-100-LT by 4.71 points, Flowers by 2.83 points, and ImageNet-100-LT transfer by 2.35 points.
+
+\input{tables/main_baselines_linear}
+
+\subsection{Comparison across source datasets}
+Table~\ref{tab:main_sota_average} reports the average linear transfer over all seven downstream tasks for each source regime. BRIDGE achieves the best average linear transfer in all five source regimes that we evaluate. Relative to source matched SimCLR, the average gain is +2.41 points on ImageNet-100-LT, +3.15 on CIFAR-10-LT, +4.89 on CIFAR-100-LT, +3.15 on PASS, and +2.54 on DiffusionDB. Appendix Figure~\ref{fig:source-regime-gain} visualizes the same trend.
+
+The detailed pattern is also informative. Plain BRIDGE is the strongest average transfer method in every regime. BRIDGE+TS is the strongest method on the in domain ImageNet-100-LT target when the source is PASS or DiffusionDB, but those target gains do not translate into the best overall average transfer. SDCLR and BRIDGE+SDCLR are consistently weaker in our setting.
+
+\input{tables/main_sota_average}
+
+\subsection{Ablations}
+Table~\ref{tab:main_ablation_summary} summarizes the most important ablations. Three conclusions are stable.
+
+First, SimCLR is the strongest SSL objective for the cyclic repair loop. It substantially outperforms MoCo and DINO on both average linear and average $k$NN transfer. Second, generation quality matters. Stable Diffusion 3 is clearly stronger than FLUX and stronger than the no generation re population baseline, which indicates that the repaired data must be both targeted and semantically plausible. Third, the new \modesel\ selector improves over the older \topsel\ rule. Uniform sampling remains slightly stronger in this isolated selection ablation, which suggests that once the candidate budget is already small, diversity and locality can both be useful. Appendix Figure~\ref{fig:ablation-tradeoffs} summarizes these tradeoffs visually.
+
+\input{tables/main_ablation_summary}
+
+\section{Limitations}
+BRIDGE is more expensive than fixed data SSL because every cycle requires feature extraction, OOD scoring, and image generation. The successful experiments reported here use a specific compute regime based on A100 nodes and 24 hour wall time limits, and Appendix~\ref{app:compute} shows that total project compute is substantial. The PASS and DiffusionDB experiments are limited to 10k subsets for tractability. The main paper also centers the final comparison on ResNet-50, even though the appendix includes broader architecture ablations. Finally, the submission does not benchmark newer post project methods that appeared after the original draft.
+
+\section{Conclusion}
+The experiments support a simple conclusion. Long tail SSL is not only an optimization problem. It is also a data geometry problem. By repeatedly identifying sparse representation regions and repairing them with frozen diffusion augmentation, BRIDGE improves average transfer across conventional long tailed sources and across two web scale unlabeled sources. The new mode window selector is important because it replaces an overly literal extreme tail rule with a more stable target region. Within the completed experimental protocol, BRIDGE is the strongest average transfer method across all five source regimes that we study.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+
+\section{Additional Supporting Figures}
+\label{app:figures}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.82\linewidth]{figures/source_regime_gain.pdf}
+    \caption{Average linear gain of BRIDGE over source matched SimCLR across all five source regimes. The gain is positive in every case.}
+    \label{fig:source-regime-gain}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{figures/ablation_tradeoffs.pdf}
+    \caption{Average linear and average $k$NN transfer for the main ablation groups. Stable Diffusion 3 is the strongest generator, SimCLR is the strongest SSL objective, and the mode window selector improves over the older top tail rule while uniform sampling remains competitive.}
+    \label{fig:ablation-tradeoffs}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{figures/cycle_histories_example.pdf}
+    \caption{Representative OOD histograms from a successful ImageNet-100-LT TS run. The sparse shoulder moves across cycles, which motivates selecting around a local modal band rather than only the farthest tail.}
+    \label{fig:cycle-histories}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{figures/class_dists.pdf}
+    \caption{Class count evolution across BRIDGE cycles for a representative ImageNet-100-LT run. This figure is diagnostic only. The pretraining objective itself remains label free.}
+    \label{fig:class-dists}
+\end{figure}
+
+\section{Implementation and Reproducibility}
+\label{app:implementation}
+\paragraph{Core training configuration.}
+The completed main runs use ResNet-50 encoders. Most baseline, BRIDGE, and source regime comparisons use 5 cycles with 100 epochs per cycle. The default BRIDGE configuration uses mean $k$NN distance with $k = 100$, selects 500 samples per cycle, and generates 5 images per selected sample. The default optimizer is AdamW with weight decay $10^{-4}$, and method specific learning rates and temperatures follow the completed job configurations.
+
+\paragraph{OOD scoring and selection.}
+Features are extracted without feature normalization and nearest neighbor distances are computed with FAISS using squared $\ell_2$ distance. The mode window selector clips the empirical OOD distribution to the 1st to 99th percentile range, builds a histogram with the code level auto bin heuristic, and selects the examples closest to the modal bin center.
+
+\paragraph{Generators.}
+The main method uses Stable Diffusion 3 in image to image mode. The generation ablation replaces it with FLUX or with a no generation re population baseline. In the completed PASS and DiffusionDB runs we increase the SD3 batch size to 12 to fit the 24 hour Slurm limit.
+
+\paragraph{Source data specifics.}
+PASS and DiffusionDB use \texttt{train[:10000]} with pretraining split override \texttt{[1.0, 0.0, 0.0]}. This keeps the source data budget aligned across methods while avoiding unnecessary pretraining validation overhead. The long tailed ImageNet-100, CIFAR-10, and CIFAR-100 regimes follow the completed job configurations used in the final sweep.
+
+\paragraph{Seeds and reporting.}
+All main claims are supported by three seed averages. Tables report mean $\pm$ standard deviation over those seeds. The exact table values are generated from the completed job logs by the local export scripts in \texttt{scripts/export\_paper\_results.py} and \texttt{scripts/generate\_neurips\_paper\_tables.py}.
+
+\section{Compute Resources and Runtime}
+\label{app:compute}
+Most completed experiments use one node with two NVIDIA A100 80GB GPUs and a 24 hour wall time limit. The successful DINO ablation uses four A100 80GB GPUs after reducing the number of local crops from six to two. Over the successful experiments reported in the paper, the aggregate training time is approximately 3022 wall clock hours, or about 6142 GPU hours. This excludes failed runs, timeout runs, cache migration jobs, and other debugging or pilot jobs, so the full project required more compute than the successful totals alone.
+
+Representative mean wall clock times over three seeds are as follows. On ImageNet-100-LT source pretraining, SimCLR takes 16.9 hours and BRIDGE takes 21.8 hours. On PASS, SimCLR takes 10.2 hours and BRIDGE takes 14.9 hours. On DiffusionDB, SimCLR takes 11.6 hours and BRIDGE takes 16.4 hours. The successful DINO ablation takes 16.3 hours on four GPUs in its final configuration.
+
+\section{Assets and Terms of Use}
+\label{app:assets}
+We use existing datasets and pretrained generators under their original release terms.
+
+\paragraph{Source datasets.}
+ImageNet-100-LT is derived from ImageNet, whose official access terms restrict the images to non commercial research and educational use. PASS is released under Creative Commons Attribution 4.0. DiffusionDB is released under CC0-1.0. CIFAR-10, CIFAR-100, Stanford Cars, FGVC Aircraft, Oxford Flowers, and Oxford-IIIT Pets are used from their official academic benchmark releases. When an official page provides download terms instead of a standard software style license, we follow those original terms.
+
+\paragraph{Generators.}
+Stable Diffusion 3 Medium is used under the Stability AI Community License. FLUX.1-dev is used only in the ablation and is subject to the FLUX.1-dev Non-Commercial License. We do not redistribute model weights, third party datasets, or generated image corpora as part of this submission.
+
+\section{Broader Impact}
+\label{app:impact}
+A method that improves representation quality under biased source data can reduce the need for manual relabeling and can make SSL more useful for domains where balanced data is difficult to collect. That is a positive outcome. At the same time, our method relies on large image generators and on web sourced datasets. These carry familiar risks related to license compliance, privacy, and unintended memorization or harmful content. Our experiments stay within existing dataset and model release terms and do not release new generators or scraped image collections. Any future deployment would still require a task specific review of fairness, privacy, and content safety.
+
+\section{Full Results}
+\label{app:full-results}
+\input{tables/app_baselines_linear_full}
+\input{tables/app_baselines_knn_full}
+\input{tables/app_sota_linear_full}
+\input{tables/app_sota_knn_full}
+\input{tables/app_pretraining_linear}
+\input{tables/app_pretraining_knn}
+\input{tables/app_generation_linear}
+\input{tables/app_generation_knn}
+\input{tables/app_selection_linear}
+\input{tables/app_selection_knn}
+\input{tables/app_cycles_linear}
+\input{tables/app_cycles_knn}
+\input{tables/app_architecture_linear}
+\input{tables/app_architecture_knn}
+
+\section{Algorithm}
+\begin{algorithm}[h]
+\caption{BRIDGE training loop}
+\begin{algorithmic}[1]
+\STATE Initialize unlabeled source set $D^{(0)}$, encoder $f_{\theta}$, frozen generator $g_{\phi}$
+\FOR{$c = 0, \dots, C-1$}
+    \STATE Pretrain $f_{\theta}$ on $D^{(c)}$ for $E_c$ epochs
+    \STATE Embed all images in $D^{(c)}$ and compute mean $k$NN distances $\{d_i^{(c)}\}$
+    \STATE Clip the distance range, build a histogram, and find the modal bin center $m^{(c)}$
+    \STATE Select $B$ images whose OOD distances are closest to $m^{(c)}$
+    \STATE Generate $G$ synthetic images per selected image with frozen generator $g_{\phi}$
+    \STATE Form $D^{(c+1)}$ by adding the generated images to $D^{(c)}$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
+\section*{NeurIPS Paper Checklist}
+
+\begin{enumerate}
+
+\item {\bf Claims}
+    \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The abstract and introduction restrict the claims to the completed five source regimes, the evaluated baselines and ablations, and the observed average transfer gains. Limitations are stated explicitly in Section~6.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the abstract and introduction do not include the claims made in the paper.
+        \item The abstract and/or introduction should clearly state the claims made, including the contributions made in the paper and important assumptions and limitations. A No or NA answer to this question will not be perceived well by the reviewers. 
+        \item The claims made should match theoretical and experimental results, and reflect how much the results can be expected to generalize to other settings. 
+        \item It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper. 
+    \end{itemize}
+
+\item {\bf Limitations}
+    \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Section~6 discusses compute cost, subset size constraints for PASS and DiffusionDB, the focus on ResNet-50 in the main text, and the absence of post project baselines. Appendix~\ref{app:compute} expands on the compute budget.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper has no limitation while the answer No means that the paper has limitations, but those are not discussed in the paper. 
+        \item The authors are encouraged to create a separate "Limitations" section in their paper.
+        \item The paper should point out any strong assumptions and how robust the results are to violations of these assumptions (e.g., independence assumptions, noiseless settings, model well-specification, asymptotic approximations only holding locally). The authors should reflect on how these assumptions might be violated in practice and what the implications would be.
+        \item The authors should reflect on the scope of the claims made, e.g., if the approach was only tested on a few datasets or with a few runs. In general, empirical results often depend on implicit assumptions, which should be articulated.
+        \item The authors should reflect on the factors that influence the performance of the approach. For example, a facial recognition algorithm may perform poorly when image resolution is low or images are taken in low lighting. Or a speech-to-text system might not be used reliably to provide closed captions for online lectures because it fails to handle technical jargon.
+        \item The authors should discuss the computational efficiency of the proposed algorithms and how they scale with dataset size.
+        \item If applicable, the authors should discuss possible limitations of their approach to address problems of privacy and fairness.
+        \item While the authors might fear that complete honesty about limitations might be used by reviewers as grounds for rejection, a worse outcome might be that reviewers discover limitations that aren't acknowledged in the paper. The authors should use their best judgment and recognize that individual actions in favor of transparency play an important role in developing norms that preserve the integrity of the community. Reviewers will be specifically instructed to not penalize honesty concerning limitations.
+    \end{itemize}
+
+\item {\bf Theory assumptions and proofs}
+    \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The paper is empirical. It does not claim a formal theorem or proof.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include theoretical results. 
+        \item All the theorems, formulas, and proofs in the paper should be numbered and cross-referenced.
+        \item All assumptions should be clearly stated or referenced in the statement of any theorems.
+        \item The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, the authors are encouraged to provide a short proof sketch to provide intuition. 
+        \item Inversely, any informal proof provided in the core of the paper should be complemented by formal proofs provided in appendix or supplemental material.
+        \item Theorems and Lemmas that the proof relies upon should be properly referenced. 
+    \end{itemize}
+
+    \item {\bf Experimental result reproducibility}
+    \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sections~3 to~5 specify the source regimes, targets, training schedule, selection rule, generator choices, and evaluation protocol. Appendix~\ref{app:implementation} adds the exact budgets, splits, and reporting procedure.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item If the paper includes experiments, a No answer to this question will not be perceived well by the reviewers: Making the paper reproducible is important, regardless of whether the code and data are provided or not.
+        \item If the contribution is a dataset and/or model, the authors should describe the steps taken to make their results reproducible or verifiable. 
+        \item Depending on the contribution, reproducibility can be accomplished in various ways. For example, if the contribution is a novel architecture, describing the architecture fully might suffice, or if the contribution is a specific model and empirical evaluation, it may be necessary to either make it possible for others to replicate the model with the same dataset, or provide access to the model. In general. releasing code and data is often one good way to accomplish this, but reproducibility can also be provided via detailed instructions for how to replicate the results, access to a hosted model (e.g., in the case of a large language model), releasing of a model checkpoint, or other means that are appropriate to the research performed.
+        \item While NeurIPS does not require releasing code, the conference does require all submissions to provide some reasonable avenue for reproducibility, which may depend on the nature of the contribution. For example
+        \begin{enumerate}
+            \item If the contribution is primarily a new algorithm, the paper should make it clear how to reproduce that algorithm.
+            \item If the contribution is primarily a new model architecture, the paper should describe the architecture clearly and fully.
+            \item If the contribution is a new model (e.g., a large language model), then there should either be a way to access this model for reproducing the results or a way to reproduce the model (e.g., with an open-source dataset or instructions for how to construct the dataset).
+            \item We recognize that reproducibility may be tricky in some cases, in which case authors are welcome to describe the particular way they provide for reproducibility. In the case of closed-source models, it may be that access to the model is limited in some way (e.g., to registered users), but it should be possible for other researchers to have some path to reproducing or verifying the results.
+        \end{enumerate}
+    \end{itemize}
+
+
+\item {\bf Open access to data and code}
+    \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?
+    \item[] Answer: \answerNo{}
+    \item[] Justification: The submission includes detailed experimental instructions in the appendix, but it does not attach an anonymized public code or data release. The paper only relies on existing public datasets and model releases under their original terms.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that paper does not include experiments requiring code.
+        \item Please see the NeurIPS code and data submission guidelines (\url{https://nips.cc/public/guides/CodeSubmissionPolicy}) for more details.
+        \item While we encourage the release of code and data, we understand that this might not be possible, so "No" is an acceptable answer. Papers cannot be rejected simply for not including code, unless this is central to the contribution (e.g., for a new open-source benchmark).
+        \item The instructions should contain the exact command and environment needed to run to reproduce the results. See the NeurIPS code and data submission guidelines (\url{https://nips.cc/public/guides/CodeSubmissionPolicy}) for more details.
+        \item The authors should provide instructions on data access and preparation, including how to access the raw data, preprocessed data, intermediate data, and generated data, etc.
+        \item The authors should provide scripts to reproduce all experimental results for the new proposed method and baselines. If only a subset of experiments are reproducible, they should state which ones are omitted from the script and why.
+        \item At submission time, to preserve anonymity, the authors should release anonymized versions (if applicable).
+        \item Providing as much information as possible in supplemental material (appended to the paper) is recommended, but including URLs to data and code is permitted.
+    \end{itemize}
+
+
+\item {\bf Experimental setting/details}
+    \item[] Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer, etc.) necessary to understand the results?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The main text states the source datasets, targets, cycles, budgets, and evaluation metrics. Appendix~\ref{app:implementation} adds the exact OOD scoring, selection, generation, and split details.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item The experimental setting should be presented in the core of the paper to a level of detail that is necessary to appreciate the results and make sense of them.
+        \item The full details can be provided either with the code, in appendix, or as supplemental material.
+    \end{itemize}
+
+\item {\bf Experiment statistical significance}
+    \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: All main and appendix tables report mean $\pm$ standard deviation over three independent seeds, and Section~4 states this explicitly. The figures in Appendix~\ref{app:figures} visualize the same aggregate trends.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item The authors should answer "Yes" if the results are accompanied by error bars, confidence intervals, or statistical significance tests, at least for the experiments that support the main claims of the paper.
+        \item The factors of variability that the error bars are capturing should be clearly stated (for example, train/test split, initialization, random drawing of some parameter, or overall run with given experimental conditions).
+        \item The method for calculating the error bars should be explained (closed form formula, call to a library function, bootstrap, etc.)
+        \item The assumptions made should be given (e.g., Normally distributed errors).
+        \item It should be clear whether the error bar is the standard deviation or the standard error of the mean.
+        \item It is OK to report 1-sigma error bars, but one should state it. The authors should preferably report a 2-sigma error bar than state that they have a 96\% CI, if the hypothesis of Normality of errors is not verified.
+        \item For asymmetric distributions, the authors should be careful not to show in tables or plots symmetric error bars that would yield results that are out of range (e.g. negative error rates).
+        \item If error bars are reported in tables or plots, The authors should explain in the text how they were calculated and reference the corresponding figures or tables in the text.
+    \end{itemize}
+
+\item {\bf Experiments compute resources}
+    \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Appendix~\ref{app:compute} specifies the GPU type, node configuration, wall time regime, representative runtimes, and aggregate successful compute. It also states that the full project compute was higher due to failed and pilot jobs.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not include experiments.
+        \item The paper should indicate the type of compute workers CPU or GPU, internal cluster, or cloud provider, including relevant memory and storage.
+        \item The paper should provide the amount of compute required for each of the individual experimental runs as well as estimate the total compute. 
+        \item The paper should disclose whether the full research project required more compute than the experiments reported in the paper (e.g., preliminary or failed experiments that didn't make it into the paper). 
+    \end{itemize}
+    
+\item {\bf Code of ethics}
+    \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics \url{https://neurips.cc/public/EthicsGuidelines}?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The work uses existing public datasets and model releases under their published terms, stays within academic research usage, and does not involve human subjects or undisclosed conflicts.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the authors have not reviewed the NeurIPS Code of Ethics.
+        \item If the authors answer No, they should explain the special circumstances that require a deviation from the Code of Ethics.
+        \item The authors should make sure to preserve anonymity (e.g., if there is a special consideration due to laws or regulations in their jurisdiction).
+    \end{itemize}
+
+
+\item {\bf Broader impacts}
+    \item[] Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Appendix~\ref{app:impact} discusses potential benefits for biased data regimes as well as risks tied to web sourced datasets and image generators, including privacy, licensing, and harmful content concerns.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that there is no societal impact of the work performed.
+        \item If the authors answer NA or No, they should explain why their work has no societal impact or why the paper does not address societal impact.
+        \item Examples of negative societal impacts include potential malicious or unintended uses (e.g., disinformation, generating fake profiles, surveillance), fairness considerations (e.g., deployment of technologies that could make decisions that unfairly impact specific groups), privacy considerations, and security considerations.
+        \item The conference expects that many papers will be foundational research and not tied to particular applications, let alone deployments. However, if there is a direct path to any negative applications, the authors should point it out. For example, it is legitimate to point out that an improvement in the quality of generative models could be used to generate deepfakes for disinformation. On the other hand, it is not needed to point out that a generic algorithm for optimizing neural networks could enable people to train models that generate Deepfakes faster.
+        \item The authors should consider possible harms that could arise when the technology is being used as intended and functioning correctly, harms that could arise when the technology is being used as intended but gives incorrect results, and harms following from (intentional or unintentional) misuse of the technology.
+        \item If there are negative societal impacts, the authors could also discuss possible mitigation strategies (e.g., gated release of models, providing defenses in addition to attacks, mechanisms for monitoring misuse, mechanisms to monitor how a system learns from feedback over time, improving the efficiency and accessibility of ML).
+    \end{itemize}
+    
+\item {\bf Safeguards}
+    \item[] Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pretrained language models, image generators, or scraped datasets)?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The submission does not release a new generator, a new scraped dataset, or a new model checkpoint. It uses existing assets under their published access controls and terms.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper poses no such risks.
+        \item Released models that have a high risk for misuse or dual-use should be released with necessary safeguards to allow for controlled use of the model, for example by requiring that users adhere to usage guidelines or restrictions to access the model or implementing safety filters. 
+        \item Datasets that have been scraped from the Internet could pose safety risks. The authors should describe how they avoided releasing unsafe images.
+        \item We recognize that providing effective safeguards is challenging, and many papers do not require this, but we encourage authors to take this into account and make a best faith effort.
+    \end{itemize}
+
+\item {\bf Licenses for existing assets}
+    \item[] Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Appendix~\ref{app:assets} names the primary datasets and generators and states the official license or access terms that apply to them. The paper cites the original dataset and model papers throughout.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not use existing assets.
+        \item The authors should cite the original paper that produced the code package or dataset.
+        \item The authors should state which version of the asset is used and, if possible, include a URL.
+        \item The name of the license (e.g., CC-BY 4.0) should be included for each asset.
+        \item For scraped data from a particular source (e.g., website), the copyright and terms of service of that source should be provided.
+        \item If assets are released, the license, copyright information, and terms of use in the package should be provided. For popular datasets, \url{paperswithcode.com/datasets} has curated licenses for some datasets. Their licensing guide can help determine the license of a dataset.
+        \item For existing datasets that are re-packaged, both the original license and the license of the derived asset (if it has changed) should be provided.
+        \item If this information is not available online, the authors are encouraged to reach out to the asset's creators.
+    \end{itemize}
+
+\item {\bf New assets}
+    \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The paper does not release a new dataset, model, or code package.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not release new assets.
+        \item Researchers should communicate the details of the dataset/code/model as part of their submissions via structured templates. This includes details about training, license, limitations, etc. 
+        \item The paper should discuss whether and how consent was obtained from people whose asset is used.
+        \item At submission time, remember to anonymize your assets (if applicable). You can either create an anonymized URL or include an anonymized zip file.
+    \end{itemize}
+
+\item {\bf Crowdsourcing and research with human subjects}
+    \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)? 
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The paper does not involve crowdsourcing or research with human subjects.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not involve crowdsourcing nor research with human subjects.
+        \item Including this information in the supplemental material is fine, but if the main contribution of the paper involves human subjects, then as much detail as possible should be included in the main paper. 
+        \item According to the NeurIPS Code of Ethics, workers involved in data collection, curation, or other labor should be paid at least the minimum wage in the country of the data collector. 
+    \end{itemize}
+
+\item {\bf Institutional review board (IRB) approvals or equivalent for research with human subjects}
+    \item[] Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The paper does not involve crowdsourcing or research with human subjects.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the paper does not involve crowdsourcing nor research with human subjects.
+        \item Depending on the country in which research is conducted, IRB approval (or equivalent) may be required for any human subjects research. If you obtained IRB approval, you should clearly state this in the paper. 
+        \item We recognize that the procedures for this may vary significantly between institutions and locations, and we expect authors to adhere to the NeurIPS Code of Ethics and the guidelines for their institution. 
+        \item For initial submissions, do not include any information that would break anonymity (if applicable), such as the institution conducting the review.
+    \end{itemize}
+
+\item {\bf Declaration of LLM usage}
+    \item[] Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does not impact the core methodology, scientific rigorousness, or originality of the research, declaration is not required.
+    \item[] Answer: \answerNA{}
+    \item[] Justification: LLMs are not part of the proposed method, the experiments, or the scientific claims.
+    \item[] Guidelines:
+    \begin{itemize}
+        \item The answer NA means that the core method development in this research does not involve LLMs as any important, original, or non-standard components.
+        \item Please refer to our LLM policy (\url{https://neurips.cc/Conferences/2025/LLM}) for what should or should not be described.
+    \end{itemize}
+
+\end{enumerate}
+
+\end{document}

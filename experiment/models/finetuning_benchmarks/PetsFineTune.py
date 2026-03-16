@@ -1,4 +1,3 @@
-import os
 from torch import nn
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
@@ -6,6 +5,7 @@ from torchvision.datasets import OxfordIIITPet
 import warnings
 
 from .TransferLearningBenchmark import TransferLearningBenchmark
+from .DatasetRoots import get_data_root, allow_data_downloads
 
 
 class PetsFineTune(TransferLearningBenchmark):
@@ -24,11 +24,14 @@ class PetsFineTune(TransferLearningBenchmark):
         self.train_dataset, self.val_dataset, self.test_dataset = self.get_datasets()
 
     def get_datasets(self):
-        base_path = os.getenv("BASE_CACHE_DIR")
+        data_root = get_data_root()
+        allow_downloads = allow_data_downloads()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             dataset = OxfordIIITPet(
-                root=base_path + "/data", download=True, transform=self.transform
+                root=data_root,
+                download=allow_downloads,
+                transform=self.transform,
             )
 
         train_size = int(0.8 * len(dataset))

@@ -7,8 +7,14 @@ from torchvision import transforms
 
 class StanfordCarsDataset(Dataset):
     def __init__(self, root_dir, annotations_file=None, transform=None, test=False):
-        self.root_dir = os.path.expanduser(root_dir)
+        self.root_dir = os.path.realpath(os.path.expanduser(root_dir))
         self.transform = transform
+
+        if not os.path.isdir(self.root_dir):
+            raise FileNotFoundError(
+                f"Stanford Cars directory does not exist: {self.root_dir}"
+            )
+
         self.image_paths = [
             os.path.join(self.root_dir, filename)
             for filename in os.listdir(self.root_dir)

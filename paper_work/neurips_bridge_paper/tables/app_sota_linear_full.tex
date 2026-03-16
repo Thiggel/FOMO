@@ -1,0 +1,49 @@
+\begin{table}[t]
+\centering
+\tiny
+\setlength{\tabcolsep}{3.5pt}
+\caption{Full linear-probe transfer results across all source datasets and comparison methods.}
+\label{tab:app_sota_linear_full}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{l l c c c c c c c c c}
+\toprule
+Source & Method & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+ImageNet-100-LT & SimCLR & 73.9 {\scriptsize$\pm$ 0.5} & 46.8 {\scriptsize$\pm$ 0.4} & 13.7 {\scriptsize$\pm$ 0.3} & 19.6 {\scriptsize$\pm$ 0.2} & 35.9 {\scriptsize$\pm$ 7.2} & 38.6 {\scriptsize$\pm$ 1.5} & 50.4 {\scriptsize$\pm$ 0.5} & 39.8 {\scriptsize$\pm$ 1.5} \\
+ & TS & 72.5 {\scriptsize$\pm$ 0.4} & 44.0 {\scriptsize$\pm$ 0.5} & 12.5 {\scriptsize$\pm$ 1.2} & 15.0 {\scriptsize$\pm$ 0.1} & 35.7 {\scriptsize$\pm$ 1.8} & 40.6 {\scriptsize$\pm$ 2.2} & \textbf{56.7 {\scriptsize$\pm$ 1.2}} & 39.6 {\scriptsize$\pm$ 1.1} \\
+ & SDCLR & 41.1 {\scriptsize$\pm$ 1.7} & 18.0 {\scriptsize$\pm$ 0.6} & 1.4 {\scriptsize$\pm$ 0.3} & 2.3 {\scriptsize$\pm$ 0.5} & 10.8 {\scriptsize$\pm$ 1.7} & 10.4 {\scriptsize$\pm$ 0.3} & 21.9 {\scriptsize$\pm$ 0.6} & 15.1 {\scriptsize$\pm$ 0.8} \\
+ & BRIDGE (ours) & \textbf{75.7 {\scriptsize$\pm$ 0.2}} & \textbf{48.8 {\scriptsize$\pm$ 0.3}} & \textbf{16.1 {\scriptsize$\pm$ 1.0}} & \textbf{22.4 {\scriptsize$\pm$ 0.3}} & \textbf{36.4 {\scriptsize$\pm$ 2.4}} & \textbf{42.7 {\scriptsize$\pm$ 1.9}} & 53.7 {\scriptsize$\pm$ 0.6} & \textbf{42.3 {\scriptsize$\pm$ 1.0}} \\
+ & BRIDGE+TS (ours) & 73.2 {\scriptsize$\pm$ 0.1} & 45.5 {\scriptsize$\pm$ 0.4} & 9.5 {\scriptsize$\pm$ 1.2} & 13.0 {\scriptsize$\pm$ 0.7} & 26.4 {\scriptsize$\pm$ 2.7} & 34.4 {\scriptsize$\pm$ 1.7} & 47.6 {\scriptsize$\pm$ 0.6} & 35.7 {\scriptsize$\pm$ 1.0} \\
+ & BRIDGE+SDCLR (ours) & 41.5 {\scriptsize$\pm$ 0.5} & 17.7 {\scriptsize$\pm$ 0.4} & 1.3 {\scriptsize$\pm$ 0.3} & 2.4 {\scriptsize$\pm$ 0.7} & 12.1 {\scriptsize$\pm$ 0.8} & 10.5 {\scriptsize$\pm$ 1.9} & 20.7 {\scriptsize$\pm$ 1.0} & 15.2 {\scriptsize$\pm$ 0.8} \\
+\midrule
+CIFAR-10-LT & SimCLR & 67.8 {\scriptsize$\pm$ 0.2} & 38.0 {\scriptsize$\pm$ 1.0} & 6.5 {\scriptsize$\pm$ 0.4} & 16.0 {\scriptsize$\pm$ 0.9} & 19.2 {\scriptsize$\pm$ 1.6} & 24.0 {\scriptsize$\pm$ 1.3} & 32.0 {\scriptsize$\pm$ 0.7} & 29.1 {\scriptsize$\pm$ 0.9} \\
+ & TS & 68.5 {\scriptsize$\pm$ 1.3} & 36.0 {\scriptsize$\pm$ 1.7} & 4.3 {\scriptsize$\pm$ 0.2} & 10.3 {\scriptsize$\pm$ 0.1} & 13.1 {\scriptsize$\pm$ 2.0} & 19.7 {\scriptsize$\pm$ 2.3} & 31.5 {\scriptsize$\pm$ 1.2} & 26.2 {\scriptsize$\pm$ 1.3} \\
+ & SDCLR & 39.6 {\scriptsize$\pm$ 1.1} & 15.6 {\scriptsize$\pm$ 0.2} & 1.1 {\scriptsize$\pm$ 0.1} & 2.4 {\scriptsize$\pm$ 0.9} & 12.0 {\scriptsize$\pm$ 1.6} & 9.1 {\scriptsize$\pm$ 1.8} & 16.5 {\scriptsize$\pm$ 1.6} & 13.8 {\scriptsize$\pm$ 1.1} \\
+ & BRIDGE (ours) & 70.7 {\scriptsize$\pm$ 2.1} & 41.5 {\scriptsize$\pm$ 0.6} & \textbf{8.6 {\scriptsize$\pm$ 0.4}} & \textbf{17.0 {\scriptsize$\pm$ 0.9}} & \textbf{24.0 {\scriptsize$\pm$ 3.2}} & \textbf{29.4 {\scriptsize$\pm$ 2.1}} & \textbf{34.4 {\scriptsize$\pm$ 1.5}} & \textbf{32.2 {\scriptsize$\pm$ 1.6}} \\
+ & BRIDGE+TS (ours) & \textbf{73.1 {\scriptsize$\pm$ 1.0}} & \textbf{42.0 {\scriptsize$\pm$ 0.3}} & 4.4 {\scriptsize$\pm$ 0.8} & 12.4 {\scriptsize$\pm$ 0.5} & 10.2 {\scriptsize$\pm$ 1.6} & 23.2 {\scriptsize$\pm$ 1.2} & 34.2 {\scriptsize$\pm$ 1.1} & 28.5 {\scriptsize$\pm$ 0.9} \\
+ & BRIDGE+SDCLR (ours) & 39.1 {\scriptsize$\pm$ 0.2} & 15.3 {\scriptsize$\pm$ 1.0} & 1.1 {\scriptsize$\pm$ 0.3} & 2.1 {\scriptsize$\pm$ 0.6} & 8.9 {\scriptsize$\pm$ 2.6} & 9.5 {\scriptsize$\pm$ 1.1} & 16.8 {\scriptsize$\pm$ 0.7} & 13.3 {\scriptsize$\pm$ 0.9} \\
+\midrule
+CIFAR-100-LT & SimCLR & 59.0 {\scriptsize$\pm$ 1.5} & 31.1 {\scriptsize$\pm$ 1.6} & 4.1 {\scriptsize$\pm$ 0.3} & 11.2 {\scriptsize$\pm$ 1.0} & 12.6 {\scriptsize$\pm$ 3.4} & 20.1 {\scriptsize$\pm$ 1.0} & 28.7 {\scriptsize$\pm$ 1.3} & 23.8 {\scriptsize$\pm$ 1.4} \\
+ & TS & 56.3 {\scriptsize$\pm$ 0.2} & 28.0 {\scriptsize$\pm$ 0.1} & 2.8 {\scriptsize$\pm$ 0.6} & 8.5 {\scriptsize$\pm$ 0.2} & 15.5 {\scriptsize$\pm$ 2.5} & 16.2 {\scriptsize$\pm$ 3.1} & 26.2 {\scriptsize$\pm$ 1.8} & 21.9 {\scriptsize$\pm$ 1.2} \\
+ & SDCLR & 37.1 {\scriptsize$\pm$ 0.8} & 15.7 {\scriptsize$\pm$ 0.2} & 1.9 {\scriptsize$\pm$ 0.1} & 2.4 {\scriptsize$\pm$ 0.7} & 9.4 {\scriptsize$\pm$ 1.0} & 9.9 {\scriptsize$\pm$ 1.7} & 16.2 {\scriptsize$\pm$ 0.3} & 13.2 {\scriptsize$\pm$ 0.7} \\
+ & BRIDGE (ours) & \textbf{66.8 {\scriptsize$\pm$ 3.1}} & \textbf{38.3 {\scriptsize$\pm$ 2.2}} & \textbf{6.2 {\scriptsize$\pm$ 1.8}} & \textbf{14.6 {\scriptsize$\pm$ 1.6}} & \textbf{19.8 {\scriptsize$\pm$ 0.4}} & \textbf{22.7 {\scriptsize$\pm$ 2.3}} & \textbf{32.6 {\scriptsize$\pm$ 1.4}} & \textbf{28.7 {\scriptsize$\pm$ 1.8}} \\
+ & BRIDGE+TS (ours) & 66.4 {\scriptsize$\pm$ 3.3} & 38.0 {\scriptsize$\pm$ 3.7} & 4.2 {\scriptsize$\pm$ 1.0} & 10.9 {\scriptsize$\pm$ 0.7} & 17.2 {\scriptsize$\pm$ 3.6} & 21.6 {\scriptsize$\pm$ 3.3} & 31.4 {\scriptsize$\pm$ 2.3} & 27.1 {\scriptsize$\pm$ 2.6} \\
+ & BRIDGE+SDCLR (ours) & 39.1 {\scriptsize$\pm$ 1.9} & 14.9 {\scriptsize$\pm$ 0.9} & 0.9 {\scriptsize$\pm$ 0.2} & 3.0 {\scriptsize$\pm$ 0.4} & 10.9 {\scriptsize$\pm$ 2.5} & 7.9 {\scriptsize$\pm$ 0.7} & 16.0 {\scriptsize$\pm$ 0.3} & 13.2 {\scriptsize$\pm$ 1.0} \\
+\midrule
+PASS-10k & SimCLR & 72.3 {\scriptsize$\pm$ 0.2} & 45.5 {\scriptsize$\pm$ 0.5} & 11.0 {\scriptsize$\pm$ 0.2} & 17.5 {\scriptsize$\pm$ 1.4} & 33.3 {\scriptsize$\pm$ 1.3} & 33.3 {\scriptsize$\pm$ 0.9} & 44.7 {\scriptsize$\pm$ 0.9} & 36.8 {\scriptsize$\pm$ 0.8} \\
+ & TS & 71.5 {\scriptsize$\pm$ 0.2} & 43.5 {\scriptsize$\pm$ 0.4} & 10.2 {\scriptsize$\pm$ 1.2} & 17.2 {\scriptsize$\pm$ 0.2} & 33.1 {\scriptsize$\pm$ 2.1} & \textbf{36.4 {\scriptsize$\pm$ 1.8}} & 49.4 {\scriptsize$\pm$ 0.4} & 37.3 {\scriptsize$\pm$ 0.9} \\
+ & SDCLR & 42.2 {\scriptsize$\pm$ 1.1} & 17.7 {\scriptsize$\pm$ 0.8} & 1.8 {\scriptsize$\pm$ 0.3} & 2.2 {\scriptsize$\pm$ 0.8} & 10.6 {\scriptsize$\pm$ 1.3} & 8.2 {\scriptsize$\pm$ 1.6} & 20.8 {\scriptsize$\pm$ 0.4} & 14.8 {\scriptsize$\pm$ 0.9} \\
+ & BRIDGE (ours) & \textbf{74.2 {\scriptsize$\pm$ 0.2}} & \textbf{47.4 {\scriptsize$\pm$ 0.7}} & \textbf{13.0 {\scriptsize$\pm$ 1.2}} & \textbf{20.4 {\scriptsize$\pm$ 0.4}} & \textbf{39.4 {\scriptsize$\pm$ 3.4}} & 35.8 {\scriptsize$\pm$ 0.1} & 49.5 {\scriptsize$\pm$ 1.0} & \textbf{40.0 {\scriptsize$\pm$ 1.0}} \\
+ & BRIDGE+TS (ours) & 69.1 {\scriptsize$\pm$ 0.4} & 40.5 {\scriptsize$\pm$ 0.8} & 12.1 {\scriptsize$\pm$ 0.5} & 14.3 {\scriptsize$\pm$ 0.3} & 32.7 {\scriptsize$\pm$ 4.1} & 30.8 {\scriptsize$\pm$ 1.0} & \textbf{52.6 {\scriptsize$\pm$ 0.5}} & 36.0 {\scriptsize$\pm$ 1.1} \\
+ & BRIDGE+SDCLR (ours) & 45.5 {\scriptsize$\pm$ 1.0} & 19.3 {\scriptsize$\pm$ 0.2} & 1.5 {\scriptsize$\pm$ 0.7} & 3.3 {\scriptsize$\pm$ 0.2} & 11.0 {\scriptsize$\pm$ 1.6} & 11.3 {\scriptsize$\pm$ 1.2} & 20.9 {\scriptsize$\pm$ 0.9} & 16.1 {\scriptsize$\pm$ 0.8} \\
+\midrule
+DiffusionDB-10k & SimCLR & 74.4 {\scriptsize$\pm$ 0.5} & 48.6 {\scriptsize$\pm$ 0.2} & 10.9 {\scriptsize$\pm$ 0.7} & 17.6 {\scriptsize$\pm$ 0.8} & 31.2 {\scriptsize$\pm$ 2.4} & 36.1 {\scriptsize$\pm$ 1.3} & 45.3 {\scriptsize$\pm$ 0.5} & 37.7 {\scriptsize$\pm$ 0.9} \\
+ & TS & 72.3 {\scriptsize$\pm$ 0.3} & 44.4 {\scriptsize$\pm$ 0.3} & 10.7 {\scriptsize$\pm$ 0.6} & 15.4 {\scriptsize$\pm$ 0.6} & 33.1 {\scriptsize$\pm$ 1.1} & \textbf{39.9 {\scriptsize$\pm$ 2.7}} & 48.8 {\scriptsize$\pm$ 0.2} & 37.8 {\scriptsize$\pm$ 0.8} \\
+ & SDCLR & 42.4 {\scriptsize$\pm$ 0.2} & 18.4 {\scriptsize$\pm$ 0.2} & 1.1 {\scriptsize$\pm$ 0.2} & 2.4 {\scriptsize$\pm$ 0.1} & 13.0 {\scriptsize$\pm$ 3.7} & 8.2 {\scriptsize$\pm$ 1.4} & 21.0 {\scriptsize$\pm$ 0.6} & 15.2 {\scriptsize$\pm$ 0.9} \\
+ & BRIDGE (ours) & \textbf{76.2 {\scriptsize$\pm$ 0.1}} & \textbf{49.8 {\scriptsize$\pm$ 0.1}} & \textbf{12.4 {\scriptsize$\pm$ 1.0}} & \textbf{20.4 {\scriptsize$\pm$ 0.2}} & \textbf{36.1 {\scriptsize$\pm$ 2.7}} & 38.0 {\scriptsize$\pm$ 3.2} & 48.9 {\scriptsize$\pm$ 0.8} & \textbf{40.3 {\scriptsize$\pm$ 1.2}} \\
+ & BRIDGE+TS (ours) & 68.8 {\scriptsize$\pm$ 0.1} & 40.2 {\scriptsize$\pm$ 0.4} & 9.2 {\scriptsize$\pm$ 1.1} & 12.8 {\scriptsize$\pm$ 0.5} & 31.2 {\scriptsize$\pm$ 2.4} & 34.8 {\scriptsize$\pm$ 1.6} & \textbf{51.0 {\scriptsize$\pm$ 0.6}} & 35.4 {\scriptsize$\pm$ 1.0} \\
+ & BRIDGE+SDCLR (ours) & 42.2 {\scriptsize$\pm$ 0.7} & 17.6 {\scriptsize$\pm$ 0.3} & 1.1 {\scriptsize$\pm$ 0.6} & 2.4 {\scriptsize$\pm$ 0.1} & 11.9 {\scriptsize$\pm$ 3.6} & 11.7 {\scriptsize$\pm$ 1.3} & 21.3 {\scriptsize$\pm$ 0.8} & 15.5 {\scriptsize$\pm$ 1.1} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

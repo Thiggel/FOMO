@@ -1,11 +1,12 @@
 #!/bin/sh
-#PBS -q rt_HG
-#PBS -l select=1
-#PBS -l walltime=140:00:00
-#PBS -P gag51492
+#SBATCH --job-name=install-environment
+#SBATCH --output=job_logs/install_environment_%A.out
+#SBATCH --partition=a100
+#SBATCH --gres=gpu:a100:2 -C a100_80
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
 
-cd $HOME/FOMO
+set -eu
 
-mkdir -p job_logs
-
-conda env create -f environment.yml >& job_logs/install_environment.out
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+"$SCRIPT_DIR/setup_uv_environment.sh"

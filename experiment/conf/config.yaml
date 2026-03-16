@@ -65,13 +65,13 @@ use_bfloat16: false
 ema: [0.996, 1.0]
 
 # Run configuration
-# default to three runs so every PBS job reuses the same setting without
-# specifying it explicitly
+# default to three seeds; SLURM job arrays run one seed per task
 num_runs: 3
-max_hours_per_run: 18
 seeds: [0, 1, 2, 3, 4]
+seed: null
 checkpoint: null
 checkpoint_list: null
+aggregate_only: false
 calc_novelty_score: false
 
 # Visualization
@@ -87,9 +87,11 @@ remove_diffusion: false
 ood_augmentation: false
 log_tsne: false
 log_class_dist: false
-log_generated_samples: true
+log_generated_samples: false
 log_every_n_classes: 1
 max_wandb_augmentation_pairs: 8
+enable_media_logging: false
+save_visualization_data: false
 
 # Optional paths
 additional_data_path: null

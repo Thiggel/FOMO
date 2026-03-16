@@ -1,23 +1,27 @@
 #!/bin/sh
-#PBS -q rt_HG
-#PBS -l select=1
-#PBS -l walltime=140:00:00
-#PBS -P gag51492
+#SBATCH --job-name=ablations-generation-stable-diffusion-3
+#SBATCH --output=job_logs/ablations/generation/stable_diffusion_3_%A_%a.out
+#SBATCH --partition=a100
+#SBATCH --gres=gpu:a100:2 -C a100_80
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --array=0-2
 
 cd $HOME/FOMO
 
 . jobs/environment.sh
 
-mkdir -p job_logs/ablations
+mkdir -p job_logs/ablations/generation
 
-torchrun --standalone --nproc_per_node=1 -m experiment \
+torchrun --standalone --nproc_per_node=${NPROC_PER_NODE} -m experiment \
     model=resnet50 \
     ssl=simclr \
     dataset=imagenet100_imbalanced \
     generation_model=stable_diffusion_3 \
     max_cycles=5 \
-    n_epochs_per_cycle=100 \
+    n_epochs_per_cycle=80 \
     ood_augmentation=true \
     experiment_name=ablations_generation_stable-diffusion-3 \
     num_runs=3 \
-    train_batch_size=512 >& job_logs/ablations/generation_stable-diffusion-3.out
+    train_batch_size=512 \
+    sd3_batch_size=12

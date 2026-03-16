@@ -11,7 +11,7 @@ transformers
 albumentations
 psutil
 pytest
-datasets
+datasets<4
 diffusers
 flake8
 black
@@ -22,7 +22,7 @@ wandb
 mypy
 python-dotenv
 accelerate
-huggingface_hub
+huggingface_hub==1.4.1
 h5py
 filelock
 hydra-core

@@ -1,24 +1,25 @@
-import os
 from torch.utils.data import DataLoader
 from torchvision.datasets import Flowers102
 from .BaseKNNClassifier import BaseKNNClassifier
+from .DatasetRoots import get_data_root, allow_data_downloads
 
 
 class FlowersKNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
-        base_path = os.getenv("BASE_CACHE_DIR")
+        data_root = get_data_root()
+        allow_downloads = allow_data_downloads()
         if stage == "fit" or stage is None:
             self.train_dataset = Flowers102(
-                root=base_path + "/data",
+                root=data_root,
                 split="train",
-                download=True,
+                download=allow_downloads,
                 transform=self.transform,
             )
         if stage == "test" or stage is None:
             self.test_dataset = Flowers102(
-                root=base_path + "/data",
+                root=data_root,
                 split="test",
-                download=True,
+                download=allow_downloads,
                 transform=self.transform,
             )
 
