@@ -1,109 +1,90 @@
 # FOMO
-Self-Supervised Pre-Training on Imbalanced Datasets using OOD Detection and Diffusion-Based Augmentation
 
-# How to work with this repo
+Anonymous code release for the paper:
 
-## How to run the experiment
+`BRIDGE: Balancing Representations by Identifying and Generating Underrepresented Data`
 
-```
-python experiment [... arguments]
-```
+This repository contains the training code, experiment configurations, job scripts, and paper assets used for the BRIDGE experiments.
 
-*Options*:
+## Overview
 
-```
---root_dir
+BRIDGE is a self-supervised learning pipeline that alternates between:
 
---model_name {ResNet18,ResNet50,ViTSmall,ViTBase}
---ssl_method {SimCLR,SDCLR}
+1. SSL pretraining on the current source dataset
+2. sparsity scoring in representation space with mean $k$NN distance
+3. targeted image-to-image augmentation of underrepresented regions
 
---lr
---temperature
---use-temperature-schedule
---temperature-min
---temperature-max
---t-max
- 
-Use `--use-temperature-schedule` to enable a cosine schedule for the temperature. When enabled, adjust it with `--temperature-min`, `--temperature-max`, and `--t-max`.
---weight_decay
---max_epochs
+The repository supports:
 
---splits
---batch_size
---early_stopping_patience
---checkpoint
---num_runs
---seed
---aggregate_only
+- baseline runs on balanced and imbalanced sources
+- BRIDGE runs with SimCLR, TS, and SDCLR
+- ablations over SSL objective, generation method, selection rule, cycle count, and architecture
+- source-regime sweeps on ImageNet-100-LT, CIFAR-10-LT, CIFAR-100-LT, PASS, and DiffusionDB
 
---logger, --no-logger
+## Repository Structure
 
---pretrain, --no-pretrain
---finetune, --no-finetune
+```text
+experiment/                  Core training, datasets, models, and evaluation code
+experiment/conf/             Hydra configuration files
+jobs/                        SLURM job scripts for baselines, ablations, and source-regime sweeps
+scripts/                     Utility scripts for log checking, result export, and paper table generation
+paper_work/                  Manuscript sources, generated tables, and figures
+job_logs/                    Collected SLURM logs from completed runs
+outputs/                     Experiment outputs and checkpoints
+visualizations/              Auxiliary visualizations
 ```
 
-For SLURM arrays, each task runs one seed (`SLURM_ARRAY_TASK_ID` selects from `seeds[:num_runs]`).
-After all seed jobs finish, aggregate with `python -m experiment aggregate_only=true ...` using the same `experiment_name`, dataset, and run settings.
+## Environment
 
-## File Structure
+The project expects a Python environment with the packages in:
 
-```
-├── experiment
-│   ├── __main__.py                             # Main file that runs SSL and finetuning
-│   ├── dataset                                 # SSL datasets
-│   │   ├── ContrastiveTransformations.py       # Helper for SimCLR transformations
-│   │   ├── ImbalancedDataModule.py             # Imbalanced datasets (ImageNet, CIFAR, ...)
-│   ├── loggers                                 # Tensorboard loggers (e.g. image loggers)
-│   ├── models
-│   │   ├── FinetuningBenchmarks                # Contains all finetuning benchmarks
-│   │   │                                       # (e.g. CIFAR-10 module that loads
-│   │   │                                       # dataset and defines the train/val/test loop)
-│   │   │
-│   │   ├── ModelTypes.py                       # Here, all different models are defined
-│   │   │                                       # (e.g. resnet-18, resnet-50, ViT)
-│   │   │
-│   │   ├── SSLMethods                          # Self-supervised training methods
-│   │   │                                       # (e.g. SimCLR, SDCLR)
-│   │   │
-│   │   ├── SSLTypes.py                         # This file defines all SSL methods
-│   │   │                                       # that can be selected in the main script
-│   │   │
-│   │   ├── backbones                           # All backbones (e.g. ViT)
-│   │   │
-│   │   ├── losses                              # Define losses (e.g. contrastive) here
-│   │   │
-│   │   └── metrics                             # Metrics such as OOD-metric
-│   │  
-│   ├── tests                                   # All tests go here
-│   │  
-│   └── utils                                   # small utility functions
-│                                               # (one function per file)
-│
-├── job_logs                                    # Write your job scripts so that
-│                                               # all logs are saved here
-│
-├── jobs                                        # All job scripts go here
-│   ├── environment.sh                          # Use this script to load env
-│                                               # in an interactive session
+- `requirements.txt`
+- `environment.yml`
+
+The codebase uses Hydra for configuration management and is designed to run both locally and through SLURM job arrays.
+
+## Running Experiments
+
+The main entry point is:
+
+```bash
+python -m experiment
 ```
 
-## How do I make changes to this repo?
+Typical arguments include:
 
-1. Check out and pull the latest changes from main
-2. Create a new branch with a meaningful name (`git checkout -b branchname`). This name should reflect a task in Jira
-3. After the feature is complete, create a pull request
-4. Check whether all tests pass
-5. Wait for (or ask) Filipe to review your code (possible back and forth)
-6. Filipe merges your branch into main
+```text
+model_name={ResNet18,ResNet50,ViTSmall,ViTBase}
+ssl_method={SimCLR,SDCLR,MoCo,DINO}
+dataset=...
+pretrain=true
+finetune=true
+logger=true
+num_runs=3
+seed=...
+```
 
-## Rules
+For SLURM arrays, each task runs one seed through `SLURM_ARRAY_TASK_ID`. After all seed jobs finish, aggregate with:
 
-- Never work directly on main (should not be possible anyways)
-- Each piece of functionality should have a test script in `experiment/tests`
-    - Refer to the Pytest docs for help
-    - Each test-file/directory/function needs to start with 'test_', otherwise Pytest will ignore it
-    - One test function per file
-    - Multiple tests that belong together should be grouped in a sub-directory
-- Always commit small chunks, i.e., only one new function or piece of functionality per commit
-- Always do proper work, do not write dirty code because you want to get something done
-- Please don't be mad if I ask you to do changes to your pull-request. I need to have an overview of how all features fit together and might therefore ask you to restructure your code according to common design patterns (i.e. one function has only one purpose, don't repeat yourself, etc.)
+```bash
+python -m experiment aggregate_only=true ...
+```
+
+using the same experiment name and configuration.
+
+## Reproducing Paper Results
+
+The repository includes:
+
+- experiment configs under `experiment/conf/`
+- job scripts under `jobs/`
+- log summaries under `job_logs/`
+- result-export and paper-table utilities under `scripts/`
+
+The manuscript in `paper_work/neurips_bridge_paper/` is generated from the completed three-seed runs reported in the paper.
+
+## Notes
+
+- PASS and DiffusionDB source-regime comparisons use aligned 10k source subsets.
+- The main reported BRIDGE configuration uses ResNet-50, 5 cycles, 500 selected samples per cycle, and 5 generated images per selected sample.
+- The DINO ablation uses four GPUs and two local crops.

@@ -194,23 +194,26 @@ We find that long-tailed SSL is not only an optimization problem. It is also a d
 \section{Implementation and Reproducibility}
 \label{app:implementation}
 \paragraph{Core training configuration.}
-The completed main runs use ResNet-50 encoders. Most baseline, \method, and source-regime comparisons use 5 cycles with 100 epochs per cycle. The default \method\ configuration uses mean $k$NN distance with $k = 100$, selects 500 samples per cycle, and generates 5 images per selected sample. The default optimizer is AdamW with weight decay $10^{-4}$, and method-specific learning rates and temperatures follow the completed job configurations.
+The main experiments use ResNet-50 encoders. Most baseline, \method, and source-regime comparisons use 5 cycles with 100 epochs per cycle. The default \method\ configuration uses mean $k$NN distance with $k = 100$, selects 500 samples per cycle, and generates 5 images per selected sample. The default optimizer is AdamW with weight decay $10^{-4}$, and method-specific learning rates and temperatures follow the settings used in each experiment.
 
 \paragraph{OOD scoring and selection.}
 We extract features without feature normalization and compute nearest-neighbor distances with FAISS using squared $\ell_2$ distance. The mode-window selector clips the empirical OOD distribution to the 1st to 99th percentile range, builds a histogram with the code-level auto-bin heuristic, and selects the examples closest to the modal bin center.
 
 \paragraph{Generators.}
-The main method uses Stable Diffusion 3 in image-to-image mode. The generation ablation replaces it with FLUX or with a no-generation re-population baseline. In the completed PASS and DiffusionDB runs we increase the SD3 batch size to 12 to fit the 24-hour Slurm limit.
+The main method uses Stable Diffusion 3 in image-to-image mode. The generation ablation replaces it with FLUX or with a no-generation re-population baseline. In the PASS and DiffusionDB experiments, we increase the SD3 batch size to 12 to fit the 24-hour wall-time limit.
 
 \paragraph{Source data specifics.}
-PASS and DiffusionDB use \texttt{train[:10000]} with pretraining split override \texttt{[1.0, 0.0, 0.0]}. This keeps the source data budget aligned across methods while avoiding unnecessary pretraining validation overhead. The long-tailed ImageNet-100, CIFAR-10, and CIFAR-100 regimes follow the completed job configurations used in the final sweep.
+PASS and DiffusionDB use \texttt{train[:10000]} with pretraining split override \texttt{[1.0, 0.0, 0.0]}. This keeps the source data budget aligned across methods while avoiding unnecessary pretraining validation overhead. The long-tailed ImageNet-100, CIFAR-10, and CIFAR-100 source regimes use their standard long-tailed source configurations, without the 10k subset restriction used for PASS and DiffusionDB.
 
 \paragraph{Seeds and reporting.}
-All main claims are supported by three seed averages. Tables report mean $\pm$ standard deviation over those seeds. The exact table values are generated from the completed job logs by the local export scripts in \texttt{scripts/export\_paper\_results.py} and \texttt{scripts/generate\_neurips\_paper\_tables.py}.
+All main claims are supported by three seed averages. Tables report mean $\pm$ standard deviation over those seeds. The exact table values are computed directly from the three runs corresponding to each reported setting.
+
+\paragraph{Code availability.}
+An anonymous code release accompanying this submission is available at \url{https://anonymous.4open.science/status/FOMO-0488}.
 
 \section{Compute Resources and Runtime}
 \label{app:compute}
-Most completed experiments use one node with two NVIDIA A100 80GB GPUs and a 24-hour wall-time limit. The successful DINO ablation uses four A100 80GB GPUs after reducing the number of local crops from six to two. Across the successful experiments we report, the aggregate training time is approximately 3022 wall-clock hours, or about 6142 GPU hours. This excludes failed runs, timeout runs, cache migration jobs, and other debugging or pilot jobs, so the full project required more compute than the successful totals alone.
+Most reported experiments use one node with two NVIDIA A100 80GB GPUs and a 24-hour wall-time limit. The DINO ablation uses four A100 80GB GPUs after reducing the number of local crops from six to two. Across the successful experiments we report, the aggregate training time is approximately 3022 wall-clock hours, or about 6142 GPU hours. This excludes failed runs, timeout runs, cache migration jobs, and other debugging or pilot jobs, so the full project required more compute than the successful totals alone.
 
 Representative mean wall-clock times over three seeds are as follows. On ImageNet-100-LT source pretraining, SimCLR takes 16.9 hours and BRIDGE takes 21.8 hours. On PASS, SimCLR takes 10.2 hours and BRIDGE takes 14.9 hours. On DiffusionDB, SimCLR takes 11.6 hours and BRIDGE takes 16.4 hours. The successful DINO ablation takes 16.3 hours on four GPUs after reducing the number of local crops from six to two.
 
@@ -334,8 +337,8 @@ A method that improves representation quality under biased source data can reduc
 
 \item {\bf Open access to data and code}
     \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?
-    \item[] Answer: \answerNo{}
-    \item[] Justification: The submission includes detailed experimental instructions in the appendix, but it does not attach an anonymized public code or data release. We rely only on existing public datasets and model releases under their original terms.
+    \item[] Answer: \answerYes{}
+    \item[] Justification: An anonymous code release is available at \url{https://anonymous.4open.science/status/FOMO-0488}. The manuscript and appendix describe the source datasets, training protocol, ablations, and reporting procedure, while the public repository contains the implementation and experiment configuration needed to reproduce the reported runs.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer NA means that paper does not include experiments requiring code.
