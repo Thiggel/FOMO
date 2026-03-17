@@ -1,0 +1,194 @@
+\begin{thebibliography}{19}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Asano et~al.(2021)Asano, Rupprecht, Zisserman, and Vedaldi]{pass}
+Yuki Asano, Christian Rupprecht, Andrew Zisserman, and Andrea Vedaldi.
+\newblock {PASS}: An {ImageNet} replacement for self-supervised pretraining
+  without humans.
+\newblock In Joaquin Vanschoren and Serena Yeung, editors, \emph{Proceedings of
+  the Neural Information Processing Systems Track on Datasets and Benchmarks},
+  volume~1, 2021.
+\newblock URL
+  \url{https://datasets-benchmarks-proceedings.neurips.cc/paper_files/paper/2021/file/0777d5c17d4066b82ab86dff8a46af6f-Paper-round1.pdf}.
+
+\bibitem[Bai et~al.(2023)Bai, Liu, Wang, Hao, Feng, Chu, and Hu]{colt}
+Jianhong Bai, Zuozhu Liu, Hualiang Wang, Jin Hao, Yan Feng, Huanpeng Chu, and
+  Haoji Hu.
+\newblock On the effectiveness of out-of-distribution data in self-supervised
+  long-tail learning.
+\newblock In \emph{The Eleventh International Conference on Learning
+  Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=v8JIQdiN9Sh}.
+\newblock Published as a conference paper at ICLR 2023.
+
+\bibitem[Caron et~al.(2021)Caron, Touvron, Misra, J{\'e}gou, Mairal,
+  Bojanowski, and Joulin]{DINO}
+Mathilde Caron, Hugo Touvron, Ishan Misra, Herv{\'e} J{\'e}gou, Julien Mairal,
+  Piotr Bojanowski, and Armand Joulin.
+\newblock Emerging properties in self-supervised vision transformers.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
+  Computer Vision (ICCV)}, pages 9650--9660. IEEE, October 2021.
+\newblock \doi{10.1109/ICCV48922.2021.00951}.
+\newblock URL
+  \url{https://openaccess.thecvf.com/content/ICCV2021/html/Caron_Emerging_Properties_in_Self-Supervised_Vision_Transformers_ICCV_2021_paper.html}.
+
+\bibitem[Chen et~al.(2020)Chen, Kornblith, Norouzi, and Hinton]{chen2020simple}
+Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton.
+\newblock A simple framework for contrastive learning of visual
+  representations.
+\newblock In Hal Daum{\'e}~III and Aarti Singh, editors, \emph{Proceedings of
+  the 37th International Conference on Machine Learning}, volume 119 of
+  \emph{Proceedings of Machine Learning Research}, pages 1597--1607. PMLR,
+  13--18 Jul 2020.
+\newblock URL \url{https://proceedings.mlr.press/v119/chen20j.html}.
+
+\bibitem[He et~al.(2020)He, Fan, Wu, Xie, and Girshick]{he2020momentum}
+Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and Ross Girshick.
+\newblock Momentum contrast for unsupervised visual representation learning.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition (CVPR)}, pages 9729--9738. IEEE, June 2020.
+\newblock \doi{10.1109/CVPR42600.2020.00975}.
+\newblock URL
+  \url{https://openaccess.thecvf.com/content_CVPR_2020/html/He_Momentum_Contrast_for_Unsupervised_Visual_Representation_Learning_CVPR_2020_paper.html}.
+
+\bibitem[He et~al.(2022)He, Chen, Xie, Li, Doll{\'a}r, and
+  Girshick]{he2022masked}
+Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll{\'a}r, and Ross
+  Girshick.
+\newblock Masked autoencoders are scalable vision learners.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition (CVPR)}, pages 16000--16009. IEEE, June 2022.
+\newblock URL
+  \url{https://openaccess.thecvf.com/content/CVPR2022/html/He_Masked_Autoencoders_Are_Scalable_Vision_Learners_CVPR_2022_paper.html}.
+
+\bibitem[Ho et~al.(2020)Ho, Jain, and Abbeel]{ho2020denoising}
+Jonathan Ho, Ajay Jain, and Pieter Abbeel.
+\newblock Denoising diffusion probabilistic models.
+\newblock In Hugo Larochelle, Marc'Aurelio Ranzato, Raia Hadsell, Maria-Florina
+  Balcan, and Hsuan-Tien Lin, editors, \emph{Advances in Neural Information
+  Processing Systems}, volume~33, pages 6840--6851. Curran Associates, Inc.,
+  2020.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper_files/paper/2020/file/4c5bcfec8584af0d967f1ab10179ca4b-Paper.pdf}.
+
+\bibitem[Jiang et~al.(2021)Jiang, Chen, Mortazavi, and Wang]{sdclr}
+Ziyu Jiang, Tianlong Chen, Bobak~J. Mortazavi, and Zhangyang Wang.
+\newblock Self-damaging contrastive learning.
+\newblock In Marina Meila and Tong Zhang, editors, \emph{Proceedings of the
+  38th International Conference on Machine Learning}, volume 139 of
+  \emph{Proceedings of Machine Learning Research}, pages 4927--4939. PMLR,
+  18--24 Jul 2021.
+\newblock URL \url{https://proceedings.mlr.press/v139/jiang21a.html}.
+
+\bibitem[Krause et~al.(2013)Krause, Stark, Deng, and Fei-Fei]{cars}
+Jonathan Krause, Michael Stark, Jia Deng, and Li~Fei-Fei.
+\newblock 3d object representations for fine-grained categorization.
+\newblock In \emph{2013 IEEE International Conference on Computer Vision
+  Workshops}, pages 554--561. IEEE, 2013.
+\newblock \doi{10.1109/ICCVW.2013.77}.
+\newblock URL \url{https://doi.org/10.1109/ICCVW.2013.77}.
+
+\bibitem[Kukleva et~al.(2023)Kukleva, B{\"o}hle, Schiele, Kuehne, and
+  Rupprecht]{ts}
+Anna Kukleva, Moritz B{\"o}hle, Bernt Schiele, Hilde Kuehne, and Christian
+  Rupprecht.
+\newblock Temperature schedules for self-supervised contrastive methods on
+  long-tail data.
+\newblock In \emph{The Eleventh International Conference on Learning
+  Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=ejHUr4nfHhD}.
+\newblock Published as a conference paper at ICLR 2023.
+
+\bibitem[Lin et~al.(2023)Lin, Chen, and Wang]{fassl}
+Ci-Siang Lin, Min-Hung Chen, and Yu-Chiang~Frank Wang.
+\newblock Frequency-aware self-supervised long-tailed learning.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
+  Computer Vision (ICCV) Workshops}, pages 963--972. IEEE, October 2023.
+\newblock \doi{10.1109/ICCVW60793.2023.00103}.
+\newblock URL
+  \url{https://openaccess.thecvf.com/content/ICCV2023W/LIMIT/html/Lin_Frequency-Aware_Self-Supervised_Long-Tailed_Learning_ICCVW_2023_paper.html}.
+
+\bibitem[Maji et~al.(2013)Maji, Rahtu, Kannala, Blaschko, and
+  Vedaldi]{aircraft}
+Subhransu Maji, Esa Rahtu, Juho Kannala, Matthew~B. Blaschko, and Andrea
+  Vedaldi.
+\newblock Fine-grained visual classification of aircraft, 2013.
+\newblock URL \url{https://arxiv.org/abs/1306.5151}.
+
+\bibitem[Nilsback and Zisserman(2008)]{flowers}
+Maria-Elena Nilsback and Andrew Zisserman.
+\newblock Automated flower classification over a large number of classes.
+\newblock In \emph{2008 Sixth Indian Conference on Computer Vision, Graphics \&
+  Image Processing}, pages 722--729. IEEE, 2008.
+\newblock \doi{10.1109/ICVGIP.2008.47}.
+\newblock URL \url{https://doi.org/10.1109/ICVGIP.2008.47}.
+
+\bibitem[Oquab et~al.(2024)Oquab, Darcet, Moutakanni, Vo, Szafraniec, Khalidov,
+  Fernandez, Haziza, Massa, El-Nouby, Assran, Ballas, Galuba, Howes, Huang, Li,
+  Misra, Rabbat, Sharma, Synnaeve, Xu, J{\'e}gou, Mairal, Labatut, Joulin, and
+  Bojanowski]{oquab2023dinov2}
+Maxime Oquab, Timoth{\'e}e Darcet, Th{\'e}o Moutakanni, Huy Vo, Marc
+  Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa,
+  Alaaeldin El-Nouby, Mahmoud Assran, Nicolas Ballas, Wojciech Galuba, Russell
+  Howes, Po-Yao Huang, Shang-Wen Li, Ishan Misra, Michael Rabbat, Vasu Sharma,
+  Gabriel Synnaeve, Hu~Xu, Herv{\'e} J{\'e}gou, Julien Mairal, Patrick Labatut,
+  Armand Joulin, and Piotr Bojanowski.
+\newblock {DINO}v2: Learning robust visual features without supervision.
+\newblock \emph{Transactions on Machine Learning Research}, 2024.
+\newblock URL \url{https://openreview.net/forum?id=a68SUt6zFt}.
+\newblock Published 05/2024.
+
+\bibitem[Parkhi et~al.(2012)Parkhi, Vedaldi, Zisserman, and Jawahar]{pets}
+Omkar~M. Parkhi, Andrea Vedaldi, Andrew Zisserman, and C.~V. Jawahar.
+\newblock Cats and dogs.
+\newblock In \emph{2012 IEEE Conference on Computer Vision and Pattern
+  Recognition}, pages 3498--3505. IEEE, 2012.
+\newblock \doi{10.1109/CVPR.2012.6248092}.
+\newblock URL \url{https://doi.org/10.1109/CVPR.2012.6248092}.
+
+\bibitem[Rombach et~al.(2022)Rombach, Blattmann, Lorenz, Esser, and
+  Ommer]{rombach2022highresolution}
+Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj{\"o}rn
+  Ommer.
+\newblock High-resolution image synthesis with latent diffusion models.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition (CVPR)}, pages 10684--10695. IEEE, June 2022.
+\newblock URL
+  \url{https://openaccess.thecvf.com/content/CVPR2022/html/Rombach_High-Resolution_Image_Synthesis_With_Latent_Diffusion_Models_CVPR_2022_paper.html}.
+
+\bibitem[Sun et~al.(2022)Sun, Ming, Zhu, and Li]{sun2022out}
+Yiyou Sun, Yifei Ming, Xiaojin Zhu, and Yixuan Li.
+\newblock Out-of-distribution detection with deep nearest neighbors.
+\newblock In Kamalika Chaudhuri, Stefanie Jegelka, Le~Song, Csaba
+  Szepesv{\'a}ri, Gang Niu, and Sivan Sabato, editors, \emph{Proceedings of the
+  39th International Conference on Machine Learning}, volume 162 of
+  \emph{Proceedings of Machine Learning Research}, pages 20827--20840. PMLR,
+  17--23 Jul 2022.
+\newblock URL \url{https://proceedings.mlr.press/v162/sun22d.html}.
+
+\bibitem[Wang et~al.(2023)Wang, Montoya, Munechika, Yang, Hoover, and
+  Chau]{diffusiondb}
+Zijie~J. Wang, Evan Montoya, David Munechika, Haoyang Yang, Benjamin Hoover,
+  and Duen~Horng Chau.
+\newblock Diffusion{DB}: A large-scale prompt gallery dataset for text-to-image
+  generative models.
+\newblock In Anna Rogers, Jordan Boyd-Graber, and Naoaki Okazaki, editors,
+  \emph{Proceedings of the 61st Annual Meeting of the Association for
+  Computational Linguistics (Volume 1: Long Papers)}, pages 893--911, Toronto,
+  Canada, July 2023. Association for Computational Linguistics.
+\newblock \doi{10.18653/v1/2023.acl-long.51}.
+\newblock URL \url{https://aclanthology.org/2023.acl-long.51/}.
+
+\bibitem[Whang et~al.(2023)Whang, Roh, Song, and Lee]{whang2023data}
+Steven~Euijong Whang, Yuji Roh, Hwanjun Song, and Jae-Gil Lee.
+\newblock Data collection and quality challenges in deep learning: A
+  data-centric {AI} perspective.
+\newblock \emph{The VLDB Journal}, 32\penalty0 (4):\penalty0 791--813, 2023.
+\newblock \doi{10.1007/s00778-022-00775-9}.
+\newblock URL \url{https://doi.org/10.1007/s00778-022-00775-9}.
+
+\end{thebibliography}

@@ -92,7 +92,7 @@ ABLATION_GROUPS = OrderedDict(
                 [
                     ("ablations/generation/stable_diffusion_3", "Stable Diffusion 3"),
                     ("ablations/generation/flux", "FLUX"),
-                    ("ablations/generation/repopulation", "Re-population"),
+                    ("ablations/generation/repopulation", "No-generation re-population"),
                 ]
             ),
         ),
@@ -100,8 +100,8 @@ ABLATION_GROUPS = OrderedDict(
             "selection",
             OrderedDict(
                 [
-                    ("ablations/sample_selection/mode_window", "Mode window"),
-                    ("ablations/sample_selection/ood_top", "Top tail"),
+                    ("ablations/sample_selection/mode_window", "Mode-window"),
+                    ("ablations/sample_selection/ood_top", "Top-tail"),
                     ("ablations/sample_selection/uniform", "Uniform"),
                 ]
             ),
@@ -178,7 +178,16 @@ def write(path, text):
         handle.write(text)
 
 
-def render_table(caption, label, headers, body_lines, colspec, position="t", size="\\scriptsize"):
+def render_table(
+    caption,
+    label,
+    headers,
+    body_lines,
+    colspec,
+    position="t",
+    size="\\scriptsize",
+    adjustbox_spec="max width=\\textwidth",
+):
     lines = [
         "\\begin{table}[%s]" % position,
         "\\centering",
@@ -186,7 +195,7 @@ def render_table(caption, label, headers, body_lines, colspec, position="t", siz
         "\\setlength{\\tabcolsep}{3.5pt}",
         "\\caption{%s}" % caption,
         "\\label{%s}" % label,
-        "\\begin{adjustbox}{max width=\\textwidth}",
+        "\\begin{adjustbox}{%s}" % adjustbox_spec,
         "\\begin{tabular}{%s}" % colspec,
         "\\toprule",
         " & ".join(headers) + " \\\\",
@@ -205,7 +214,43 @@ def render_table(caption, label, headers, body_lines, colspec, position="t", siz
     return "\n".join(lines)
 
 
-def baseline_table(by_exp, metrics, filename, caption, label):
+def render_table_star(
+    caption,
+    label,
+    headers,
+    body_lines,
+    colspec,
+    position="t",
+    size="\\scriptsize",
+    adjustbox_spec="max width=\\textwidth",
+):
+    lines = [
+        "\\begin{table*}[%s]" % position,
+        "\\centering",
+        size,
+        "\\setlength{\\tabcolsep}{3.0pt}",
+        "\\caption{%s}" % caption,
+        "\\label{%s}" % label,
+        "\\begin{adjustbox}{%s}" % adjustbox_spec,
+        "\\begin{tabular}{%s}" % colspec,
+        "\\toprule",
+        " & ".join(headers) + " \\\\",
+        "\\midrule",
+    ]
+    lines.extend(body_lines)
+    lines.extend(
+        [
+            "\\bottomrule",
+            "\\end{tabular}",
+            "\\end{adjustbox}",
+            "\\end{table*}",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def baseline_table(by_exp, metrics, filename, caption, label, star=False, size="\\scriptsize"):
     headers = ["Method"] + [name for _, name in metrics] + ["Avg."]
     metric_names = default_average_metric_names(metrics)
     body = []
@@ -224,7 +269,19 @@ def baseline_table(by_exp, metrics, filename, caption, label):
         row.append(fmt(avg_mean, avg_std, abs(avg_mean - best_avg) < 1e-9))
         body.append(" & ".join(row) + " \\\\")
 
-    text = render_table(caption, label, headers, body, build_column_spec(len(headers)))
+    renderer = render_table_star if star else render_table
+    position = "H" if filename.startswith("app_") else "t"
+    adjustbox_spec = "width=\\textwidth" if filename.startswith("app_") else "max width=\\textwidth"
+    text = renderer(
+        caption,
+        label,
+        headers,
+        body,
+        build_column_spec(len(headers)),
+        position=position,
+        size=size,
+        adjustbox_spec=adjustbox_spec,
+    )
     write(os.path.join(OUTPUT_DIR, filename), text)
 
 
@@ -259,14 +316,15 @@ def sota_table(by_exp, metrics, filename, caption, label):
         headers,
         body,
         build_column_spec(len(headers), leading="l l"),
-        position="t",
+        position="H" if filename.startswith("app_") else "t",
         size="\\tiny",
+        adjustbox_spec="width=\\textwidth" if filename.startswith("app_") else "max width=\\textwidth",
     )
     write(os.path.join(OUTPUT_DIR, filename), text)
 
 
 def sota_average_table(by_exp):
-    headers = ["Source", "SimCLR", "TS", "SDCLR", "BRIDGE", "BRIDGE+TS", "BRIDGE+SDCLR"]
+    headers = ["Source", "SimCLR", "TS", "SDCLR", "BRIDGE (ours)", "BRIDGE+TS (ours)", "BRIDGE+SDCLR (ours)"]
     body = []
     metric_names = [m for m, _ in LINEAR_ALL]
 
@@ -293,6 +351,44 @@ def sota_average_table(by_exp):
     write(os.path.join(OUTPUT_DIR, "main_sota_average.tex"), text)
 
 
+def sota_subset_table(by_exp, group_names, metrics, filename, caption, label, size="\\tiny"):
+    headers = ["Source", "Method"] + [name for _, name in metrics] + ["Avg."]
+    body = []
+    metric_names = default_average_metric_names(metrics)
+
+    for group_name in group_names:
+        prefix = SOTA_GROUPS[group_name]
+        group_exps = ["%s/%s" % (prefix, key) for key in SOTA_METHODS]
+        best_by_metric = {}
+        for metric, _ in metrics:
+            best_by_metric[metric] = max(by_exp[exp][metric][0] for exp in group_exps)
+        best_avg = max(avg_for_metrics(by_exp[exp], metric_names) for exp in group_exps)
+
+        for idx, (method_key, method_name) in enumerate(SOTA_METHODS.items()):
+            exp = "%s/%s" % (prefix, method_key)
+            row = [group_name if idx == 0 else "", method_name]
+            for metric, _ in metrics:
+                mean, std, _ = by_exp[exp][metric]
+                row.append(fmt(mean, std, abs(mean - best_by_metric[metric]) < 1e-9))
+            avg_mean = avg_for_metrics(by_exp[exp], metric_names)
+            avg_std = avg_std_for_metrics(by_exp[exp], metric_names)
+            row.append(fmt(avg_mean, avg_std, abs(avg_mean - best_avg) < 1e-9))
+            body.append(" & ".join(row) + " \\\\")
+        if group_name != group_names[-1]:
+            body.append("\\midrule")
+
+    text = render_table_star(
+        caption,
+        label,
+        headers,
+        body,
+        build_column_spec(len(headers), leading="l l"),
+        position="t",
+        size=size,
+    )
+    write(os.path.join(OUTPUT_DIR, filename), text)
+
+
 def ablation_table(by_exp, group_key, metrics, filename, caption, label):
     group = ABLATION_GROUPS[group_key]
     headers = ["Setting"] + [name for _, name in metrics] + ["Avg."]
@@ -313,12 +409,20 @@ def ablation_table(by_exp, group_key, metrics, filename, caption, label):
         row.append(fmt(avg_mean, avg_std, abs(avg_mean - best_avg) < 1e-9))
         body.append(" & ".join(row) + " \\\\")
 
-    text = render_table(caption, label, headers, body, build_column_spec(len(headers)))
+    text = render_table(
+        caption,
+        label,
+        headers,
+        body,
+        build_column_spec(len(headers)),
+        position="H" if filename.startswith("app_") else "t",
+        adjustbox_spec="width=\\textwidth" if filename.startswith("app_") else "max width=\\textwidth",
+    )
     write(os.path.join(OUTPUT_DIR, filename), text)
 
 
 def main_ablation_summary(by_exp):
-    headers = ["Group", "Setting", "Avg. Lin.", "Avg. kNN", "Flowers", "Pets", "IN100-LT"]
+    headers = ["Group", "Setting", "Avg. Lin.", "Avg. $k$NN", "Flowers", "Pets", "IN100-LT"]
     linear_metric_names = [m for m, _ in LINEAR_ALL]
     knn_metric_names = [m for m, _ in KNN_ALL]
     body = []
@@ -369,6 +473,96 @@ def main_ablation_summary(by_exp):
     write(os.path.join(OUTPUT_DIR, "main_ablation_summary.tex"), text)
 
 
+def main_ablation_combined(by_exp):
+    headers = ["Group", "Setting"] + [name for _, name in LINEAR_ALL] + ["Avg."]
+    displayed_metrics = LINEAR_ALL
+    avg_metric_names = [m for m, _ in LINEAR_ALL]
+    body = []
+    group_titles = {
+        "pretraining": "SSL objective",
+        "generation": "Generation",
+        "selection": "Selection",
+        "cycles": "Cycles",
+        "architecture": "Architecture",
+    }
+
+    ordered_groups = ["pretraining", "generation", "selection", "cycles", "architecture"]
+    for group_key in ordered_groups:
+        group = ABLATION_GROUPS[group_key]
+        best_by_metric = {}
+        for metric, _ in displayed_metrics:
+            best_by_metric[metric] = max(by_exp[exp][metric][0] for exp in group)
+        best_avg = max(avg_for_metrics(by_exp[exp], avg_metric_names) for exp in group)
+
+        for idx, (exp, display) in enumerate(group.items()):
+            row = [group_titles[group_key] if idx == 0 else "", display]
+            for metric, _ in displayed_metrics:
+                mean, std, _ = by_exp[exp][metric]
+                row.append(fmt(mean, std, abs(mean - best_by_metric[metric]) < 1e-9))
+            avg_mean = avg_for_metrics(by_exp[exp], avg_metric_names)
+            avg_std = avg_std_for_metrics(by_exp[exp], avg_metric_names)
+            row.append(fmt(avg_mean, avg_std, abs(avg_mean - best_avg) < 1e-9))
+            body.append(" & ".join(row) + " \\\\")
+        if group_key != ordered_groups[-1]:
+            body.append("\\midrule")
+
+    text = render_table_star(
+        "Main ablations on ImageNet-100-LT. Each block changes one component while holding the remaining pipeline fixed. The average is computed over all seven downstream linear-probe tasks.",
+        "tab:main_ablation_combined",
+        headers,
+        body,
+        build_column_spec(len(headers), leading="l l"),
+        position="t",
+        size="\\tiny",
+    )
+    write(os.path.join(OUTPUT_DIR, "main_ablation_combined.tex"), text)
+
+
+def main_ablation_combined_knn(by_exp):
+    headers = ["Group", "Setting"] + [name for _, name in KNN_ALL] + ["Avg."]
+    displayed_metrics = KNN_ALL
+    avg_metric_names = [m for m, _ in KNN_ALL]
+    body = []
+    group_titles = {
+        "pretraining": "SSL objective",
+        "generation": "Generation",
+        "selection": "Selection",
+        "cycles": "Cycles",
+        "architecture": "Architecture",
+    }
+
+    ordered_groups = ["pretraining", "generation", "selection", "cycles", "architecture"]
+    for group_key in ordered_groups:
+        group = ABLATION_GROUPS[group_key]
+        best_by_metric = {}
+        for metric, _ in displayed_metrics:
+            best_by_metric[metric] = max(by_exp[exp][metric][0] for exp in group)
+        best_avg = max(avg_for_metrics(by_exp[exp], avg_metric_names) for exp in group)
+
+        for idx, (exp, display) in enumerate(group.items()):
+            row = [group_titles[group_key] if idx == 0 else "", display]
+            for metric, _ in displayed_metrics:
+                mean, std, _ = by_exp[exp][metric]
+                row.append(fmt(mean, std, abs(mean - best_by_metric[metric]) < 1e-9))
+            avg_mean = avg_for_metrics(by_exp[exp], avg_metric_names)
+            avg_std = avg_std_for_metrics(by_exp[exp], avg_metric_names)
+            row.append(fmt(avg_mean, avg_std, abs(avg_mean - best_avg) < 1e-9))
+            body.append(" & ".join(row) + " \\\\")
+        if group_key != ordered_groups[-1]:
+            body.append("\\midrule")
+
+    text = render_table_star(
+        "Main $k$NN ablations on ImageNet-100-LT. Each block changes one component while holding the remaining pipeline fixed. The average is computed over all seven downstream $k$NN tasks.",
+        "tab:main_ablation_combined_knn",
+        headers,
+        body,
+        build_column_spec(len(headers), leading="l l"),
+        position="t",
+        size="\\tiny",
+    )
+    write(os.path.join(OUTPUT_DIR, "main_ablation_combined_knn.tex"), text)
+
+
 def main():
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
@@ -377,10 +571,12 @@ def main():
 
     baseline_table(
         by_exp,
-        LINEAR_MAIN,
+        LINEAR_ALL,
         "main_baselines_linear.tex",
-        "Linear probe comparison between balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT. The reported average is over all seven downstream linear-probe tasks, including Cars and Aircraft.",
+        "Linear-probe comparison between balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT. The reported average is over all seven downstream linear-probe tasks.",
         "tab:main_baselines_linear",
+        star=True,
+        size="\\tiny",
     )
     baseline_table(
         by_exp,
@@ -393,7 +589,7 @@ def main():
         by_exp,
         KNN_ALL,
         "app_baselines_knn_full.tex",
-        "Full kNN baseline comparison on ImageNet-100-LT pretraining.",
+        "Full $k$NN baseline comparison on ImageNet-100-LT pretraining.",
         "tab:app_baselines_knn_full",
     )
 
@@ -405,6 +601,42 @@ def main():
         "tab:main_sota_linear",
     )
     sota_average_table(by_exp)
+    sota_subset_table(
+        by_exp,
+        ["ImageNet-100-LT", "CIFAR-10-LT", "CIFAR-100-LT"],
+        LINEAR_ALL,
+        "main_sota_label_sources.tex",
+        "Linear-probe transfer for the three label-derived long-tailed source regimes. The average is computed over all seven downstream linear-probe tasks.",
+        "tab:main_sota_label_sources",
+        size="\\tiny",
+    )
+    sota_subset_table(
+        by_exp,
+        ["ImageNet-100-LT", "CIFAR-10-LT", "CIFAR-100-LT"],
+        KNN_ALL,
+        "main_sota_label_sources_knn.tex",
+        "$k$NN transfer for the three label-derived long-tailed source regimes. The average is computed over all seven downstream $k$NN tasks.",
+        "tab:main_sota_label_sources_knn",
+        size="\\tiny",
+    )
+    sota_subset_table(
+        by_exp,
+        ["PASS-10k", "DiffusionDB-10k"],
+        LINEAR_ALL,
+        "main_sota_web_sources.tex",
+        "Linear-probe transfer for the two web-source regimes. PASS is a natural web-image corpus, while DiffusionDB is fully synthetic. The average is computed over all seven downstream linear-probe tasks.",
+        "tab:main_sota_web_sources",
+        size="\\tiny",
+    )
+    sota_subset_table(
+        by_exp,
+        ["PASS-10k", "DiffusionDB-10k"],
+        KNN_ALL,
+        "main_sota_web_sources_knn.tex",
+        "$k$NN transfer for the two web-source regimes. PASS is a natural web-image corpus, while DiffusionDB is fully synthetic. The average is computed over all seven downstream $k$NN tasks.",
+        "tab:main_sota_web_sources_knn",
+        size="\\tiny",
+    )
     sota_table(
         by_exp,
         LINEAR_ALL,
@@ -416,7 +648,7 @@ def main():
         by_exp,
         KNN_ALL,
         "app_sota_knn_full.tex",
-        "Full kNN transfer results across all source datasets and comparison methods.",
+        "Full $k$NN transfer results across all source datasets and comparison methods.",
         "tab:app_sota_knn_full",
     )
 
@@ -441,7 +673,7 @@ def main():
         "selection",
         LINEAR_MAIN,
         "main_ablation_selection.tex",
-        "Effect of sample-selection strategy inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.",
+        "Effect of the selection rule inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.",
         "tab:main_ablation_selection",
     )
     ablation_table(
@@ -461,11 +693,13 @@ def main():
         "tab:main_ablation_architecture",
     )
     main_ablation_summary(by_exp)
+    main_ablation_combined(by_exp)
+    main_ablation_combined_knn(by_exp)
 
     for group_key, group_name in [
         ("pretraining", "Pretraining objective"),
         ("generation", "Augmentation mechanism"),
-        ("selection", "Sample-selection strategy"),
+        ("selection", "Selection rule"),
         ("cycles", "Cycle count"),
         ("architecture", "Backbone architecture"),
     ]:
@@ -482,7 +716,7 @@ def main():
             group_key,
             KNN_ALL,
             "app_%s_knn.tex" % group_key,
-            "%s ablation with full kNN results." % group_name,
+            "%s ablation with full $k$NN results." % group_name,
             "tab:app_%s_knn" % group_key,
         )
 

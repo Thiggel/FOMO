@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\centering
+\tiny
+\setlength{\tabcolsep}{3.0pt}
+\caption{$k$NN transfer for the two web-source regimes. PASS is a natural web-image corpus, while DiffusionDB is fully synthetic. The average is computed over all seven downstream $k$NN tasks.}
+\label{tab:main_sota_web_sources_knn}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{l l c c c c c c c c c}
+\toprule
+Source & Method & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+PASS-10k & SimCLR & 67.2 {\scriptsize$\pm$ 0.2} & 37.0 {\scriptsize$\pm$ 0.3} & \textbf{5.4 {\scriptsize$\pm$ 0.3}} & 10.3 {\scriptsize$\pm$ 0.5} & 30.4 {\scriptsize$\pm$ 0.0} & 16.7 {\scriptsize$\pm$ 0.5} & 38.3 {\scriptsize$\pm$ 0.3} & 29.3 {\scriptsize$\pm$ 0.3} \\
+ & TS & 65.2 {\scriptsize$\pm$ 0.7} & 34.6 {\scriptsize$\pm$ 0.3} & 4.4 {\scriptsize$\pm$ 0.2} & 7.9 {\scriptsize$\pm$ 0.2} & 24.5 {\scriptsize$\pm$ 0.1} & 14.4 {\scriptsize$\pm$ 0.4} & 39.3 {\scriptsize$\pm$ 0.4} & 27.2 {\scriptsize$\pm$ 0.3} \\
+ & SDCLR & 32.4 {\scriptsize$\pm$ 1.5} & 11.5 {\scriptsize$\pm$ 0.8} & 1.3 {\scriptsize$\pm$ 0.2} & 2.0 {\scriptsize$\pm$ 0.1} & 8.6 {\scriptsize$\pm$ 0.7} & 5.2 {\scriptsize$\pm$ 0.2} & 11.1 {\scriptsize$\pm$ 0.8} & 10.3 {\scriptsize$\pm$ 0.6} \\
+ & BRIDGE (ours) & \textbf{67.8 {\scriptsize$\pm$ 0.6}} & \textbf{37.1 {\scriptsize$\pm$ 0.5}} & 5.2 {\scriptsize$\pm$ 0.4} & \textbf{10.8 {\scriptsize$\pm$ 0.3}} & \textbf{33.7 {\scriptsize$\pm$ 0.6}} & \textbf{17.9 {\scriptsize$\pm$ 0.3}} & \textbf{41.9 {\scriptsize$\pm$ 0.4}} & \textbf{30.6 {\scriptsize$\pm$ 0.5}} \\
+ & BRIDGE+TS (ours) & 59.0 {\scriptsize$\pm$ 0.4} & 27.8 {\scriptsize$\pm$ 0.5} & 3.3 {\scriptsize$\pm$ 0.4} & 6.6 {\scriptsize$\pm$ 0.0} & 23.3 {\scriptsize$\pm$ 0.4} & 13.9 {\scriptsize$\pm$ 0.3} & 39.2 {\scriptsize$\pm$ 0.3} & 24.7 {\scriptsize$\pm$ 0.3} \\
+ & BRIDGE+SDCLR (ours) & 37.9 {\scriptsize$\pm$ 0.7} & 13.6 {\scriptsize$\pm$ 0.0} & 1.2 {\scriptsize$\pm$ 0.2} & 2.7 {\scriptsize$\pm$ 0.1} & 8.9 {\scriptsize$\pm$ 1.3} & 6.3 {\scriptsize$\pm$ 0.1} & 13.9 {\scriptsize$\pm$ 1.1} & 12.1 {\scriptsize$\pm$ 0.5} \\
+\midrule
+DiffusionDB-10k & SimCLR & 67.3 {\scriptsize$\pm$ 0.1} & 36.2 {\scriptsize$\pm$ 0.4} & 4.3 {\scriptsize$\pm$ 0.2} & 8.8 {\scriptsize$\pm$ 0.1} & 26.8 {\scriptsize$\pm$ 0.4} & 17.3 {\scriptsize$\pm$ 0.1} & 36.7 {\scriptsize$\pm$ 0.8} & 28.2 {\scriptsize$\pm$ 0.3} \\
+ & TS & 64.7 {\scriptsize$\pm$ 0.4} & 33.6 {\scriptsize$\pm$ 0.3} & 3.1 {\scriptsize$\pm$ 0.5} & 7.3 {\scriptsize$\pm$ 0.3} & 23.2 {\scriptsize$\pm$ 0.4} & 17.0 {\scriptsize$\pm$ 0.0} & 37.8 {\scriptsize$\pm$ 0.6} & 26.7 {\scriptsize$\pm$ 0.4} \\
+ & SDCLR & 32.6 {\scriptsize$\pm$ 1.2} & 10.0 {\scriptsize$\pm$ 0.3} & 1.3 {\scriptsize$\pm$ 0.1} & 2.2 {\scriptsize$\pm$ 0.2} & 6.1 {\scriptsize$\pm$ 0.7} & 4.8 {\scriptsize$\pm$ 0.4} & 10.6 {\scriptsize$\pm$ 0.5} & 9.7 {\scriptsize$\pm$ 0.5} \\
+ & BRIDGE (ours) & \textbf{68.1 {\scriptsize$\pm$ 0.3}} & \textbf{37.0 {\scriptsize$\pm$ 0.2}} & \textbf{5.4 {\scriptsize$\pm$ 0.5}} & \textbf{9.5 {\scriptsize$\pm$ 0.1}} & \textbf{30.4 {\scriptsize$\pm$ 0.4}} & \textbf{18.5 {\scriptsize$\pm$ 0.1}} & \textbf{39.9 {\scriptsize$\pm$ 0.6}} & \textbf{29.8 {\scriptsize$\pm$ 0.3}} \\
+ & BRIDGE+TS (ours) & 57.2 {\scriptsize$\pm$ 0.7} & 25.6 {\scriptsize$\pm$ 1.0} & 2.8 {\scriptsize$\pm$ 0.3} & 6.8 {\scriptsize$\pm$ 0.1} & 22.3 {\scriptsize$\pm$ 0.5} & 15.4 {\scriptsize$\pm$ 0.6} & 37.3 {\scriptsize$\pm$ 0.6} & 23.9 {\scriptsize$\pm$ 0.6} \\
+ & BRIDGE+SDCLR (ours) & 37.1 {\scriptsize$\pm$ 1.3} & 11.8 {\scriptsize$\pm$ 0.9} & 1.3 {\scriptsize$\pm$ 0.1} & 2.2 {\scriptsize$\pm$ 0.2} & 6.8 {\scriptsize$\pm$ 0.5} & 5.9 {\scriptsize$\pm$ 0.7} & 12.5 {\scriptsize$\pm$ 0.7} & 11.1 {\scriptsize$\pm$ 0.6} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}
