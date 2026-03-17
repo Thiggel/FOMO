@@ -1,4 +1,4 @@
-# FOMO
+# Balancing Representations by Identifying and Generating Underrepresented Data
 
 Anonymous code release for the paper:
 
