@@ -29,21 +29,21 @@ baseline/imbalanced,jobs/baseline/imbalanced.sh,imagenet100ltknn_knn_test_accura
 baseline/imbalanced,jobs/baseline/imbalanced.sh,pets_test_accuracy,Pets Lin.,0.2835144997,0.0134045649,3,True
 baseline/imbalanced,jobs/baseline/imbalanced.sh,petsknn_knn_test_accuracy,Pets kNN,0.1684382707,0.0017020961,3,True
 baseline/imbalanced,jobs/baseline/imbalanced.sh,training_time,Training time (h),14.7802991867,0.4173993170,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,aircraft_test_accuracy,Aircraft Lin.,0.2239552091,0.0042015432,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.1168766270,0.0022086311,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cars_test_accuracy,Cars Lin.,0.1519607852,0.0115395820,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,carsknn_knn_test_accuracy,Cars kNN,0.0674846619,0.0026506101,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3782666723,0.0026081121,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4914333324,0.0017931923,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6898666819,0.0053168487,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7597333392,0.0029465443,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,flowers_test_accuracy,Flowers Lin.,0.3679653704,0.0186197468,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.3646612565,0.0035854352,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.5379774173,0.0011065645,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.4806857606,0.0058553494,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,pets_test_accuracy,Pets Lin.,0.4293478231,0.0096712614,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,petsknn_knn_test_accuracy,Pets kNN,0.2530426929,0.0097392181,3,True
-baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,training_time,Training time (h),20.9823436737,0.3865749386,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,aircraft_test_accuracy,Aircraft Lin.,0.1635163426,0.0087934919,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.0980097950,0.0017060437,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cars_test_accuracy,Cars Lin.,0.0985685065,0.0147919366,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,carsknn_knn_test_accuracy,Cars kNN,0.0495191328,0.0041785501,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3503999710,0.0085539492,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4329999983,0.0058591808,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6604333520,0.0088928798,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7073333263,0.0171336792,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,flowers_test_accuracy,Flowers Lin.,0.2657952309,0.0272113271,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.2482788563,0.0035081443,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.4195439816,0.0120653026,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.3557003438,0.0115807205,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,pets_test_accuracy,Pets Lin.,0.3115942180,0.0370934680,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,petsknn_knn_test_accuracy,Pets kNN,0.1797946692,0.0054123309,3,True
+baseline/newmethod_imbalanced,jobs/baseline/newmethod_imbalanced.sh,training_time,Training time (h),31.8907833099,4.9615201950,3,True
 ablations/architecture/resnet18,jobs/ablations/architecture/resnet18.sh,aircraft_test_accuracy,Aircraft Lin.,0.1536153555,0.0028621075,3,True
 ablations/architecture/resnet18,jobs/ablations/architecture/resnet18.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.0955095515,0.0040290481,3,True
 ablations/architecture/resnet18,jobs/ablations/architecture/resnet18.sh,cars_test_accuracy,Cars Lin.,0.1055214778,0.0068316143,3,True
@@ -59,21 +59,21 @@ ablations/architecture/resnet18,jobs/ablations/architecture/resnet18.sh,imagenet
 ablations/architecture/resnet18,jobs/ablations/architecture/resnet18.sh,pets_test_accuracy,Pets Lin.,0.2952898741,0.0266710743,3,True
 ablations/architecture/resnet18,jobs/ablations/architecture/resnet18.sh,petsknn_knn_test_accuracy,Pets kNN,0.1660761386,0.0030391107,3,True
 ablations/architecture/resnet18,jobs/ablations/architecture/resnet18.sh,training_time,Training time (h),30.6075458527,3.6304926872,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,aircraft_test_accuracy,Aircraft Lin.,0.2239552091,0.0042015432,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.1168766270,0.0022086311,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cars_test_accuracy,Cars Lin.,0.1519607852,0.0115395820,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,carsknn_knn_test_accuracy,Cars kNN,0.0674846619,0.0026506101,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3782666723,0.0026081121,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4914333324,0.0017931923,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6898666819,0.0053168487,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7597333392,0.0029465443,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,flowers_test_accuracy,Flowers Lin.,0.3679653704,0.0186197468,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.3646612565,0.0035854352,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.5379774173,0.0011065645,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.4806857606,0.0058553494,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,pets_test_accuracy,Pets Lin.,0.4293478231,0.0096712614,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,petsknn_knn_test_accuracy,Pets kNN,0.2530426929,0.0097392181,3,True
-ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,training_time,Training time (h),20.9823436737,0.3865749386,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,aircraft_test_accuracy,Aircraft Lin.,0.1735173464,0.0069483537,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.0950095057,0.0011358967,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cars_test_accuracy,Cars Lin.,0.0903885439,0.0049588354,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,carsknn_knn_test_accuracy,Cars kNN,0.0507468767,0.0070617702,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3525333405,0.0038279579,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4404666722,0.0108149555,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6632999778,0.0080205966,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7173666954,0.0101672765,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,flowers_test_accuracy,Flowers Lin.,0.2875817120,0.0172924921,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.2479535937,0.0062571247,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.4171552658,0.0127049750,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.3674267232,0.0073416461,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,pets_test_accuracy,Pets Lin.,0.3197464049,0.0159224644,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,petsknn_knn_test_accuracy,Pets kNN,0.1886072606,0.0101725021,3,True
+ablations/architecture/resnet50,jobs/ablations/architecture/resnet50.sh,training_time,Training time (h),29.0928039551,3.6600980759,3,True
 ablations/architecture/vit_b,jobs/ablations/architecture/vit_b.sh,aircraft_test_accuracy,Aircraft Lin.,0.1428142786,0.0080001727,3,True
 ablations/architecture/vit_b,jobs/ablations/architecture/vit_b.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.0832083225,0.0024982472,3,True
 ablations/architecture/vit_b,jobs/ablations/architecture/vit_b.sh,cars_test_accuracy,Cars Lin.,0.0826175883,0.0049588340,3,True
@@ -224,36 +224,36 @@ ablations/pretraining/moco,jobs/ablations/pretraining/moco.sh,imagenet100ltknn_k
 ablations/pretraining/moco,jobs/ablations/pretraining/moco.sh,pets_test_accuracy,Pets Lin.,0.1503623227,0.0184747108,3,True
 ablations/pretraining/moco,jobs/ablations/pretraining/moco.sh,petsknn_knn_test_accuracy,Pets kNN,0.1224341517,0.0068980323,3,True
 ablations/pretraining/moco,jobs/ablations/pretraining/moco.sh,training_time,Training time (h),13.0696430206,1.1073857473,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,aircraft_test_accuracy,Aircraft Lin.,0.2239552091,0.0042015432,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.1168766270,0.0022086311,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cars_test_accuracy,Cars Lin.,0.1519607852,0.0115395820,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,carsknn_knn_test_accuracy,Cars kNN,0.0674846619,0.0026506101,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3782666723,0.0026081121,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4914333324,0.0017931923,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6898666819,0.0053168487,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7597333392,0.0029465443,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,flowers_test_accuracy,Flowers Lin.,0.3679653704,0.0186197468,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.3646612565,0.0035854352,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.5379774173,0.0011065645,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.4806857606,0.0058553494,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,pets_test_accuracy,Pets Lin.,0.4293478231,0.0096712614,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,petsknn_knn_test_accuracy,Pets kNN,0.2530426929,0.0097392181,3,True
-ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,training_time,Training time (h),20.9823436737,0.3865749386,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,aircraft_test_accuracy,Aircraft Lin.,0.2239552091,0.0042015432,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.1168766270,0.0022086311,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cars_test_accuracy,Cars Lin.,0.1519607852,0.0115395820,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,carsknn_knn_test_accuracy,Cars kNN,0.0674846619,0.0026506101,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3782666723,0.0026081121,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4914333324,0.0017931923,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6898666819,0.0053168487,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7597333392,0.0029465443,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,flowers_test_accuracy,Flowers Lin.,0.3679653704,0.0186197468,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.3646612565,0.0035854352,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.5379774173,0.0011065645,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.4806857606,0.0058553494,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,pets_test_accuracy,Pets Lin.,0.4293478231,0.0096712614,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,petsknn_knn_test_accuracy,Pets kNN,0.2530426929,0.0097392181,3,True
-ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,training_time,Training time (h),20.9823436737,0.3865749386,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,aircraft_test_accuracy,Aircraft Lin.,0.1686168760,0.0026667290,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.0950095057,0.0011358967,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cars_test_accuracy,Cars Lin.,0.0903885439,0.0049588354,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,carsknn_knn_test_accuracy,Cars kNN,0.0507468767,0.0070617702,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3525666893,0.0038135604,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4346333444,0.0054857363,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6633333564,0.0080108223,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7176666260,0.0119738700,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,flowers_test_accuracy,Flowers Lin.,0.2723311484,0.0150941238,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.2479535937,0.0062571247,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.4171552658,0.0127049750,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.3674267232,0.0073416461,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,pets_test_accuracy,Pets Lin.,0.3315217495,0.0333918631,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,petsknn_knn_test_accuracy,Pets kNN,0.1886072606,0.0101725021,3,True
+ablations/pretraining/simclr,jobs/ablations/pretraining/simclr.sh,training_time,Training time (h),32.9472084045,4.2303595543,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,aircraft_test_accuracy,Aircraft Lin.,0.1689168960,0.0023433131,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.0950095057,0.0011358967,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cars_test_accuracy,Cars Lin.,0.0903885439,0.0049588354,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,carsknn_knn_test_accuracy,Cars kNN,0.0507468767,0.0070617702,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar100knn_knn_test_accuracy,CIFAR-100-LT kNN,0.3525333405,0.0038279579,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar100r_test_accuracy,CIFAR-100-LT Lin.,0.4340333045,0.0065850792,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar10knn_knn_test_accuracy,CIFAR-10-LT kNN,0.6632999778,0.0079567451,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,cifar10r_test_accuracy,CIFAR-10-LT Lin.,0.7187333107,0.0027428735,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,flowers_test_accuracy,Flowers Lin.,0.2788671255,0.0308876820,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,flowersknn_knn_test_accuracy,Flowers kNN,0.2479535937,0.0062571247,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,imagenet100lt_test_accuracy,ImageNet-100-LT Lin.,0.4171552658,0.0127049750,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,imagenet100ltknn_knn_test_accuracy,ImageNet-100-LT kNN,0.3674267232,0.0073416461,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,pets_test_accuracy,Pets Lin.,0.3161231577,0.0326464213,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,petsknn_knn_test_accuracy,Pets kNN,0.1886072606,0.0101725021,3,True
+ablations/sample_selection/mode_window,jobs/ablations/sample_selection/mode_window.sh,training_time,Training time (h),32.8098754883,4.1636276245,3,True
 ablations/sample_selection/mode_window_q75_diverse,jobs/ablations/sample_selection/mode_window_q75_diverse.sh,aircraft_test_accuracy,Aircraft Lin.,0.2239552091,0.0042015432,3,True
 ablations/sample_selection/mode_window_q75_diverse,jobs/ablations/sample_selection/mode_window_q75_diverse.sh,aircraftknn_knn_test_accuracy,Aircraft kNN,0.1168766270,0.0022086311,3,True
 ablations/sample_selection/mode_window_q75_diverse,jobs/ablations/sample_selection/mode_window_q75_diverse.sh,cars_test_accuracy,Cars Lin.,0.1519607852,0.0115395820,3,True

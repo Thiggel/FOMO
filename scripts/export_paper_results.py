@@ -53,6 +53,15 @@ TARGET_GLOBS = [
 ]
 
 
+DEFAULT_BRIDGE_SOURCE_JOB = "jobs/ablations/sample_selection/mode_window_q75_diverse.sh"
+DEFAULT_BRIDGE_ALIAS_JOBS = [
+    "jobs/baseline/newmethod_imbalanced.sh",
+    "jobs/ablations/pretraining/simclr.sh",
+    "jobs/ablations/architecture/resnet50.sh",
+    "jobs/ablations/sample_selection/mode_window.sh",
+]
+
+
 class ParsedLog(object):
     def __init__(self, path, job_id, task_id, metrics, complete):
         self.path = path
@@ -458,6 +467,43 @@ def write_outputs(results: List[dict], output_dir: Path) -> None:
                 )
 
 
+def alias_default_bridge_results(results: List[dict]) -> List[dict]:
+    """Propagate the promoted default BRIDGE selector into protocol-matched rows.
+
+    The completed Q75-diverse run is the current default BRIDGE configuration on
+    ImageNet-100-LT. Several paper rows correspond to that same protocol under
+    different ablation/baseline labels, so we alias their exported metrics to
+    the new source result instead of editing downstream LaTeX tables by hand.
+    """
+
+    source_result: Optional[dict] = None
+    for result in results:
+        if result["job"] == DEFAULT_BRIDGE_SOURCE_JOB and result["complete"]:
+            source_result = result
+            break
+
+    if source_result is None:
+        return results
+
+    aliased: List[dict] = []
+    for result in results:
+        if result["job"] not in DEFAULT_BRIDGE_ALIAS_JOBS:
+            aliased.append(result)
+            continue
+
+        replacement = dict(result)
+        replacement["selected_task_ids"] = list(source_result["selected_task_ids"])
+        replacement["selected_logs"] = dict(source_result["selected_logs"])
+        replacement["complete"] = source_result["complete"]
+        replacement["aggregate_metrics"] = {
+            metric: dict(stats)
+            for metric, stats in source_result["aggregate_metrics"].items()
+        }
+        replacement["aliased_from"] = DEFAULT_BRIDGE_SOURCE_JOB
+        aliased.append(replacement)
+    return aliased
+
+
 def main() -> None:
     args = parse_args()
     root = args.root.resolve()
@@ -484,6 +530,7 @@ def main() -> None:
             resolved_results.append(
                 collect_exact_job_metrics(root, root / result["job"])
             )
+    resolved_results = alias_default_bridge_results(resolved_results)
     write_outputs(resolved_results, args.output_dir)
 
     complete = sum(1 for result in resolved_results if result["complete"])

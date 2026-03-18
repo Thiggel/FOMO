@@ -33,9 +33,40 @@ class OOD:
         self.dtype = dtype
         self.selection_strategy = getattr(args, "ood_selection_strategy", "top")
         self.mode_histogram_bins = getattr(args, "ood_mode_histogram_bins", "auto")
+        self.mode_histogram_quantile_range = self._parse_quantile_range(
+            getattr(args, "ood_mode_histogram_quantile_range", (0.01, 0.99))
+        )
+        self.mode_candidate_pool_multiplier = max(
+            1.0, float(getattr(args, "ood_mode_candidate_pool_multiplier", 1.0))
+        )
+        self.mode_diversity_sampling = bool(
+            getattr(args, "ood_mode_diversity_sampling", False)
+        )
+        self.mode_diversity_normalize_features = bool(
+            getattr(args, "ood_mode_diversity_normalize_features", True)
+        )
         self.last_results: Optional[dict] = None
         self.mode_histogram_max_bins = 512
-        self.mode_histogram_quantile_range = (0.01, 0.99)
+
+    @staticmethod
+    def _parse_quantile_range(value):
+        if isinstance(value, str):
+            cleaned = value.strip().strip("[]()")
+            parts = [part.strip() for part in cleaned.split(",") if part.strip()]
+            if len(parts) != 2:
+                raise ValueError(
+                    "ood_mode_histogram_quantile_range must contain exactly two values"
+                )
+            low, high = (float(parts[0]), float(parts[1]))
+        else:
+            low, high = (float(value[0]), float(value[1]))
+
+        if not 0.0 <= low < high <= 1.0:
+            raise ValueError(
+                "ood_mode_histogram_quantile_range must satisfy 0 <= low < high <= 1"
+            )
+
+        return (low, high)
 
     def extract_features(self):
         """Extract features from the dataset without normalization"""
@@ -126,7 +157,7 @@ class OOD:
 
         if self.selection_strategy == "mode_window":
             selected_indices, mode_details = self._select_mode_window_indices(
-                distances, num_samples
+                distances, num_samples, features
             )
         else:
             selected_indices = sorted_indices_desc[:num_samples]
@@ -180,7 +211,7 @@ class OOD:
 
         return ood_indices
 
-    def _select_mode_window_indices(self, distances, num_samples):
+    def _select_mode_window_indices(self, distances, num_samples, features=None):
         """Select indices around the mode of the distance distribution."""
         if num_samples <= 0:
             return np.array([], dtype=int), None
@@ -260,79 +291,108 @@ class OOD:
             mode_right = float(bin_edges[mode_bin_idx + 1])
             mode_center = (mode_left + mode_right) / 2
 
-        lower_target = num_samples // 2
-        upper_target = num_samples - lower_target
+        in_band_positions = np.where(
+            (sorted_distances >= clipped_low) & (sorted_distances <= clipped_high)
+        )[0]
+        if in_band_positions.size == 0:
+            in_band_positions = np.arange(total_samples, dtype=int)
 
-        lower_positions = np.where(sorted_distances < mode_center)[0]
-        upper_positions = np.where(sorted_distances >= mode_center)[0]
+        order = np.argsort(np.abs(sorted_distances[in_band_positions] - mode_center))
+        ordered_band_positions = in_band_positions[order]
 
-        selected_positions = []
+        candidate_pool_size = max(
+            num_samples, int(np.ceil(num_samples * self.mode_candidate_pool_multiplier))
+        )
+        candidate_pool_size = min(candidate_pool_size, ordered_band_positions.size)
+        candidate_positions = ordered_band_positions[:candidate_pool_size]
 
-        if lower_target > 0 and lower_positions.size > 0:
-            take_lower = min(lower_target, lower_positions.size)
-            selected_positions.extend(lower_positions[-take_lower:].tolist())
-
-        if upper_target > 0 and upper_positions.size > 0:
-            take_upper = min(upper_target, upper_positions.size)
-            selected_positions.extend(upper_positions[:take_upper].tolist())
-
-        selected_positions = np.array(selected_positions, dtype=int)
-
-        remaining = num_samples - selected_positions.size
-        if remaining > 0:
-            all_positions = np.arange(total_samples, dtype=int)
-            mask = np.ones(total_samples, dtype=bool)
-            if selected_positions.size > 0:
-                mask[selected_positions] = False
-            candidate_positions = all_positions[mask]
-            if candidate_positions.size > 0:
-                order = np.argsort(
-                    np.abs(sorted_distances[candidate_positions] - mode_center)
-                )
-                extra_positions = candidate_positions[order[:remaining]]
-                selected_positions = (
-                    np.concatenate([selected_positions, extra_positions])
-                    if selected_positions.size > 0
-                    else extra_positions
-                )
-
-        # Ensure uniqueness and exact count by prioritizing proximity to the mode
-        if selected_positions.size == 0:
-            selected_positions = np.array([np.argmin(np.abs(sorted_distances - mode_center))])
-
-        selected_positions = np.unique(selected_positions)
-        if selected_positions.size > num_samples:
-            order = np.argsort(
-                np.abs(sorted_distances[selected_positions] - mode_center)
+        if candidate_positions.size == 0:
+            candidate_positions = np.array(
+                [int(np.argmin(np.abs(sorted_distances - mode_center)))], dtype=int
             )
-            selected_positions = selected_positions[order[:num_samples]]
+
+        if (
+            self.mode_diversity_sampling
+            and features is not None
+            and candidate_positions.size > num_samples
+        ):
+            selected_positions = self._diverse_subsample_positions(
+                sorted_indices=sorted_indices,
+                sorted_positions=candidate_positions,
+                features=features,
+                num_samples=num_samples,
+            )
+        else:
+            selected_positions = candidate_positions[:num_samples]
 
         if selected_positions.size < num_samples:
             all_positions = np.arange(total_samples, dtype=int)
             mask = np.ones(total_samples, dtype=bool)
             mask[selected_positions] = False
-            candidate_positions = all_positions[mask]
-            if candidate_positions.size > 0:
-                order = np.argsort(
-                    np.abs(sorted_distances[candidate_positions] - mode_center)
+            fallback_positions = all_positions[mask]
+            if fallback_positions.size > 0:
+                fallback_order = np.argsort(
+                    np.abs(sorted_distances[fallback_positions] - mode_center)
                 )
-                needed = min(num_samples - selected_positions.size, candidate_positions.size)
+                needed = min(num_samples - selected_positions.size, fallback_positions.size)
                 selected_positions = np.concatenate(
-                    [selected_positions, candidate_positions[order[:needed]]]
+                    [selected_positions, fallback_positions[fallback_order[:needed]]]
                 )
 
-        order = np.argsort(
-            np.abs(sorted_distances[selected_positions] - mode_center)
-        )
-        selected_positions = selected_positions[order[:num_samples]]
+        selected_positions = np.array(selected_positions, dtype=int)
+        selected_positions = np.unique(selected_positions)
+        final_order = np.argsort(np.abs(sorted_distances[selected_positions] - mode_center))
+        selected_positions = selected_positions[final_order[:num_samples]]
 
         mode_details = {
             "mode_center": mode_center,
             "mode_bin_start": mode_left,
             "mode_bin_end": mode_right,
+            "quantile_range": [float(clipped_low), float(clipped_high)],
             "histogram_bins": int(len(bin_edges) - 1),
+            "candidate_pool_size": int(candidate_pool_size),
+            "diversity_sampling": bool(self.mode_diversity_sampling),
             "hist_density": hist_density.tolist(),
             "hist_bin_edges": bin_edges.tolist(),
         }
 
         return sorted_indices[selected_positions], mode_details
+
+    def _diverse_subsample_positions(
+        self, sorted_indices, sorted_positions, features, num_samples
+    ):
+        """Greedy farthest-point sampling inside a mode-centered candidate pool."""
+        candidate_dataset_indices = sorted_indices[sorted_positions]
+        candidate_features = np.asarray(features[candidate_dataset_indices], dtype=np.float32)
+
+        if self.mode_diversity_normalize_features:
+            norms = np.linalg.norm(candidate_features, axis=1, keepdims=True)
+            norms = np.clip(norms, a_min=1e-12, a_max=None)
+            candidate_features = candidate_features / norms
+
+        target_count = min(num_samples, candidate_features.shape[0])
+        if target_count <= 0:
+            return np.array([], dtype=int)
+        if target_count == 1:
+            return np.array([sorted_positions[0]], dtype=int)
+
+        selected_local = [0]
+        selected_mask = np.zeros(candidate_features.shape[0], dtype=bool)
+        selected_mask[0] = True
+
+        diff = candidate_features - candidate_features[0]
+        min_sq_dist = np.einsum("ij,ij->i", diff, diff)
+
+        for _ in range(1, target_count):
+            min_sq_dist[selected_mask] = -np.inf
+            next_idx = int(np.argmax(min_sq_dist))
+            if selected_mask[next_idx]:
+                break
+            selected_local.append(next_idx)
+            selected_mask[next_idx] = True
+
+            diff = candidate_features - candidate_features[next_idx]
+            sq_dist = np.einsum("ij,ij->i", diff, diff)
+            min_sq_dist = np.minimum(min_sq_dist, sq_dist)
+
+        return np.asarray(sorted_positions[np.asarray(selected_local, dtype=int)], dtype=int)

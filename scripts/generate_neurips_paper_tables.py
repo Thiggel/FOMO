@@ -80,7 +80,7 @@ ABLATION_GROUPS = OrderedDict(
             "pretraining",
             OrderedDict(
                 [
-                    ("ablations/pretraining/simclr", "SimCLR"),
+                    ("ablations/pretraining/simclr", "SimCLR (default)"),
                     ("ablations/pretraining/moco", "MoCo"),
                     ("ablations/pretraining/dino", "DINO"),
                 ]
@@ -90,7 +90,7 @@ ABLATION_GROUPS = OrderedDict(
             "generation",
             OrderedDict(
                 [
-                    ("ablations/generation/stable_diffusion_3", "Stable Diffusion 3"),
+                    ("ablations/generation/stable_diffusion_3", "Stable Diffusion 3 (default)"),
                     ("ablations/generation/flux", "FLUX"),
                     ("ablations/generation/repopulation", "No-generation re-population"),
                 ]
@@ -100,7 +100,7 @@ ABLATION_GROUPS = OrderedDict(
             "selection",
             OrderedDict(
                 [
-                    ("ablations/sample_selection/mode_window", "Mode-window"),
+                    ("ablations/sample_selection/mode_window", "Mode-window (default)"),
                     ("ablations/sample_selection/ood_top", "Top-tail"),
                     ("ablations/sample_selection/uniform", "Uniform"),
                 ]
@@ -111,7 +111,7 @@ ABLATION_GROUPS = OrderedDict(
             OrderedDict(
                 [
                     ("ablations/cycles/cycles_2", "2 cycles"),
-                    ("baseline/newmethod_imbalanced", "5 cycles"),
+                    ("baseline/newmethod_imbalanced", "5 cycles (default)"),
                     ("ablations/cycles/cycles_10", "10 cycles"),
                     ("ablations/cycles/cycles_20", "20 cycles"),
                 ]
@@ -122,7 +122,7 @@ ABLATION_GROUPS = OrderedDict(
             OrderedDict(
                 [
                     ("ablations/architecture/resnet18", "ResNet-18"),
-                    ("ablations/architecture/resnet50", "ResNet-50"),
+                    ("ablations/architecture/resnet50", "ResNet-50 (default)"),
                     ("ablations/architecture/vit_s", "ViT-S"),
                     ("ablations/architecture/vit_b", "ViT-B"),
                 ]
@@ -575,6 +575,15 @@ def main():
         "main_baselines_linear.tex",
         "Linear-probe comparison between balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT. The reported average is over all seven downstream linear-probe tasks.",
         "tab:main_baselines_linear",
+        star=True,
+        size="\\tiny",
+    )
+    baseline_table(
+        by_exp,
+        KNN_ALL,
+        "main_baselines_knn.tex",
+        "$k$NN comparison between balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT. The reported average is over all seven downstream $k$NN tasks.",
+        "tab:main_baselines_knn",
         star=True,
         size="\\tiny",
     )

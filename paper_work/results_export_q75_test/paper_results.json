@@ -188,89 +188,86 @@
       2
     ],
     "selected_logs": {
-      "0": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_0.out",
-      "1": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_1.out",
-      "2": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_2.out"
+      "exact": "job_logs/baseline/newmethod_imbalanced.out"
     },
     "complete": true,
     "aggregate_metrics": {
-      "aircraft_test_accuracy": {
-        "mean": 0.22395520905653635,
-        "std": 0.004201543195015482,
-        "num_seeds": 3
-      },
-      "aircraftknn_knn_test_accuracy": {
-        "mean": 0.11687662700812022,
-        "std": 0.0022086311215375894,
-        "num_seeds": 3
-      },
       "cars_test_accuracy": {
-        "mean": 0.15196078519026437,
-        "std": 0.011539581952397142,
+        "mean": 0.09856850653886795,
+        "std": 0.014791936613619328,
         "num_seeds": 3
       },
       "carsknn_knn_test_accuracy": {
-        "mean": 0.06748466193675995,
-        "std": 0.002650610148229079,
+        "mean": 0.049519132822752,
+        "std": 0.004178550094366074,
         "num_seeds": 3
       },
-      "cifar100knn_knn_test_accuracy": {
-        "mean": 0.37826667229334515,
-        "std": 0.0026081120631833462,
+      "aircraft_test_accuracy": {
+        "mean": 0.1635163426399231,
+        "std": 0.008793491870164871,
         "num_seeds": 3
       },
-      "cifar100r_test_accuracy": {
-        "mean": 0.49143333236376446,
-        "std": 0.0017931922896318542,
-        "num_seeds": 3
-      },
-      "cifar10knn_knn_test_accuracy": {
-        "mean": 0.6898666818936666,
-        "std": 0.00531684866129122,
-        "num_seeds": 3
-      },
-      "cifar10r_test_accuracy": {
-        "mean": 0.7597333391507467,
-        "std": 0.00294654432082886,
-        "num_seeds": 3
-      },
-      "flowers_test_accuracy": {
-        "mean": 0.36796537041664124,
-        "std": 0.01861974677104389,
+      "aircraftknn_knn_test_accuracy": {
+        "mean": 0.09800979495048523,
+        "std": 0.0017060437239706516,
         "num_seeds": 3
       },
       "flowersknn_knn_test_accuracy": {
-        "mean": 0.3646612564722697,
-        "std": 0.0035854351516167696,
-        "num_seeds": 3
-      },
-      "imagenet100lt_test_accuracy": {
-        "mean": 0.537977417310079,
-        "std": 0.001106564548314887,
-        "num_seeds": 3
-      },
-      "imagenet100ltknn_knn_test_accuracy": {
-        "mean": 0.4806857605775197,
-        "std": 0.005855349445147527,
-        "num_seeds": 3
-      },
-      "pets_test_accuracy": {
-        "mean": 0.42934782306353253,
-        "std": 0.00967126143558635,
+        "mean": 0.24827885627746582,
+        "std": 0.0035081442911177874,
         "num_seeds": 3
       },
       "petsknn_knn_test_accuracy": {
-        "mean": 0.25304269293944043,
-        "std": 0.009739218074724342,
+        "mean": 0.17979466915130615,
+        "std": 0.005412330850958824,
+        "num_seeds": 3
+      },
+      "cifar100knn_knn_test_accuracy": {
+        "mean": 0.3503999710083008,
+        "std": 0.008553949184715748,
+        "num_seeds": 3
+      },
+      "cifar10r_test_accuracy": {
+        "mean": 0.7073333263397217,
+        "std": 0.017133679240942,
+        "num_seeds": 3
+      },
+      "flowers_test_accuracy": {
+        "mean": 0.2657952308654785,
+        "std": 0.027211327105760574,
+        "num_seeds": 3
+      },
+      "pets_test_accuracy": {
+        "mean": 0.3115942180156708,
+        "std": 0.03709346801042557,
+        "num_seeds": 3
+      },
+      "cifar10knn_knn_test_accuracy": {
+        "mean": 0.6604333519935608,
+        "std": 0.008892879821360111,
+        "num_seeds": 3
+      },
+      "cifar100r_test_accuracy": {
+        "mean": 0.43299999833106995,
+        "std": 0.005859180819243193,
+        "num_seeds": 3
+      },
+      "imagenet100ltknn_knn_test_accuracy": {
+        "mean": 0.3557003438472748,
+        "std": 0.01158072054386139,
+        "num_seeds": 3
+      },
+      "imagenet100lt_test_accuracy": {
+        "mean": 0.419543981552124,
+        "std": 0.012065302580595016,
         "num_seeds": 3
       },
       "training_time": {
-        "mean": 20.982343673706055,
-        "std": 0.38657493864742476,
+        "mean": 31.890783309936523,
+        "std": 4.961520195007324,
         "num_seeds": 3
       }
-    },
-    "aliased_from": "jobs/ablations/sample_selection/mode_window_q75_diverse.sh"
+    }
   },
   {
     "job": "jobs/ablations/architecture/resnet18.sh",
@@ -371,89 +368,86 @@
       2
     ],
     "selected_logs": {
-      "0": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_0.out",
-      "1": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_1.out",
-      "2": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_2.out"
+      "exact": "job_logs/ablations/architecture_resnet50.out"
     },
     "complete": true,
     "aggregate_metrics": {
-      "aircraft_test_accuracy": {
-        "mean": 0.22395520905653635,
-        "std": 0.004201543195015482,
-        "num_seeds": 3
-      },
-      "aircraftknn_knn_test_accuracy": {
-        "mean": 0.11687662700812022,
-        "std": 0.0022086311215375894,
-        "num_seeds": 3
-      },
       "cars_test_accuracy": {
-        "mean": 0.15196078519026437,
-        "std": 0.011539581952397142,
+        "mean": 0.09038854390382767,
+        "std": 0.004958835430443287,
         "num_seeds": 3
       },
       "carsknn_knn_test_accuracy": {
-        "mean": 0.06748466193675995,
-        "std": 0.002650610148229079,
+        "mean": 0.05074687674641609,
+        "std": 0.007061770185828209,
         "num_seeds": 3
       },
-      "cifar100knn_knn_test_accuracy": {
-        "mean": 0.37826667229334515,
-        "std": 0.0026081120631833462,
+      "aircraft_test_accuracy": {
+        "mean": 0.1735173463821411,
+        "std": 0.006948353722691536,
         "num_seeds": 3
       },
-      "cifar100r_test_accuracy": {
-        "mean": 0.49143333236376446,
-        "std": 0.0017931922896318542,
-        "num_seeds": 3
-      },
-      "cifar10knn_knn_test_accuracy": {
-        "mean": 0.6898666818936666,
-        "std": 0.00531684866129122,
-        "num_seeds": 3
-      },
-      "cifar10r_test_accuracy": {
-        "mean": 0.7597333391507467,
-        "std": 0.00294654432082886,
-        "num_seeds": 3
-      },
-      "flowers_test_accuracy": {
-        "mean": 0.36796537041664124,
-        "std": 0.01861974677104389,
+      "aircraftknn_knn_test_accuracy": {
+        "mean": 0.09500950574874878,
+        "std": 0.0011358966585248709,
         "num_seeds": 3
       },
       "flowersknn_knn_test_accuracy": {
-        "mean": 0.3646612564722697,
-        "std": 0.0035854351516167696,
-        "num_seeds": 3
-      },
-      "imagenet100lt_test_accuracy": {
-        "mean": 0.537977417310079,
-        "std": 0.001106564548314887,
-        "num_seeds": 3
-      },
-      "imagenet100ltknn_knn_test_accuracy": {
-        "mean": 0.4806857605775197,
-        "std": 0.005855349445147527,
-        "num_seeds": 3
-      },
-      "pets_test_accuracy": {
-        "mean": 0.42934782306353253,
-        "std": 0.00967126143558635,
+        "mean": 0.2479535937309265,
+        "std": 0.006257124710828066,
         "num_seeds": 3
       },
       "petsknn_knn_test_accuracy": {
-        "mean": 0.25304269293944043,
-        "std": 0.009739218074724342,
+        "mean": 0.18860726058483124,
+        "std": 0.010172502137720585,
+        "num_seeds": 3
+      },
+      "cifar100knn_knn_test_accuracy": {
+        "mean": 0.35253334045410156,
+        "std": 0.0038279579021036625,
+        "num_seeds": 3
+      },
+      "cifar10r_test_accuracy": {
+        "mean": 0.7173666954040527,
+        "std": 0.010167276486754417,
+        "num_seeds": 3
+      },
+      "flowers_test_accuracy": {
+        "mean": 0.2875817120075226,
+        "std": 0.01729249209165573,
+        "num_seeds": 3
+      },
+      "pets_test_accuracy": {
+        "mean": 0.3197464048862457,
+        "std": 0.015922464430332184,
+        "num_seeds": 3
+      },
+      "cifar10knn_knn_test_accuracy": {
+        "mean": 0.6632999777793884,
+        "std": 0.008020596578717232,
+        "num_seeds": 3
+      },
+      "cifar100r_test_accuracy": {
+        "mean": 0.44046667218208313,
+        "std": 0.010814955458045006,
+        "num_seeds": 3
+      },
+      "imagenet100ltknn_knn_test_accuracy": {
+        "mean": 0.36742672324180603,
+        "std": 0.007341646123677492,
+        "num_seeds": 3
+      },
+      "imagenet100lt_test_accuracy": {
+        "mean": 0.41715526580810547,
+        "std": 0.012704974971711636,
         "num_seeds": 3
       },
       "training_time": {
-        "mean": 20.982343673706055,
-        "std": 0.38657493864742476,
+        "mean": 29.092803955078125,
+        "std": 3.660098075866699,
         "num_seeds": 3
       }
-    },
-    "aliased_from": "jobs/ablations/sample_selection/mode_window_q75_diverse.sh"
+    }
   },
   {
     "job": "jobs/ablations/architecture/vit_b.sh",
@@ -1378,89 +1372,86 @@
       2
     ],
     "selected_logs": {
-      "0": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_0.out",
-      "1": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_1.out",
-      "2": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_2.out"
+      "exact": "job_logs/ablations/pretraining_simclr.out"
     },
     "complete": true,
     "aggregate_metrics": {
-      "aircraft_test_accuracy": {
-        "mean": 0.22395520905653635,
-        "std": 0.004201543195015482,
-        "num_seeds": 3
-      },
-      "aircraftknn_knn_test_accuracy": {
-        "mean": 0.11687662700812022,
-        "std": 0.0022086311215375894,
-        "num_seeds": 3
-      },
       "cars_test_accuracy": {
-        "mean": 0.15196078519026437,
-        "std": 0.011539581952397142,
+        "mean": 0.09038854390382767,
+        "std": 0.004958835430443287,
         "num_seeds": 3
       },
       "carsknn_knn_test_accuracy": {
-        "mean": 0.06748466193675995,
-        "std": 0.002650610148229079,
+        "mean": 0.05074687674641609,
+        "std": 0.007061770185828209,
         "num_seeds": 3
       },
-      "cifar100knn_knn_test_accuracy": {
-        "mean": 0.37826667229334515,
-        "std": 0.0026081120631833462,
+      "aircraft_test_accuracy": {
+        "mean": 0.1686168760061264,
+        "std": 0.002666729036718607,
         "num_seeds": 3
       },
-      "cifar100r_test_accuracy": {
-        "mean": 0.49143333236376446,
-        "std": 0.0017931922896318542,
-        "num_seeds": 3
-      },
-      "cifar10knn_knn_test_accuracy": {
-        "mean": 0.6898666818936666,
-        "std": 0.00531684866129122,
-        "num_seeds": 3
-      },
-      "cifar10r_test_accuracy": {
-        "mean": 0.7597333391507467,
-        "std": 0.00294654432082886,
-        "num_seeds": 3
-      },
-      "flowers_test_accuracy": {
-        "mean": 0.36796537041664124,
-        "std": 0.01861974677104389,
+      "aircraftknn_knn_test_accuracy": {
+        "mean": 0.09500950574874878,
+        "std": 0.0011358966585248709,
         "num_seeds": 3
       },
       "flowersknn_knn_test_accuracy": {
-        "mean": 0.3646612564722697,
-        "std": 0.0035854351516167696,
-        "num_seeds": 3
-      },
-      "imagenet100lt_test_accuracy": {
-        "mean": 0.537977417310079,
-        "std": 0.001106564548314887,
-        "num_seeds": 3
-      },
-      "imagenet100ltknn_knn_test_accuracy": {
-        "mean": 0.4806857605775197,
-        "std": 0.005855349445147527,
-        "num_seeds": 3
-      },
-      "pets_test_accuracy": {
-        "mean": 0.42934782306353253,
-        "std": 0.00967126143558635,
+        "mean": 0.2479535937309265,
+        "std": 0.006257124710828066,
         "num_seeds": 3
       },
       "petsknn_knn_test_accuracy": {
-        "mean": 0.25304269293944043,
-        "std": 0.009739218074724342,
+        "mean": 0.18860726058483124,
+        "std": 0.010172502137720585,
+        "num_seeds": 3
+      },
+      "cifar100knn_knn_test_accuracy": {
+        "mean": 0.3525666892528534,
+        "std": 0.003813560353592038,
+        "num_seeds": 3
+      },
+      "cifar10r_test_accuracy": {
+        "mean": 0.7176666259765625,
+        "std": 0.011973869986832142,
+        "num_seeds": 3
+      },
+      "flowers_test_accuracy": {
+        "mean": 0.2723311483860016,
+        "std": 0.015094123780727386,
+        "num_seeds": 3
+      },
+      "pets_test_accuracy": {
+        "mean": 0.33152174949645996,
+        "std": 0.033391863107681274,
+        "num_seeds": 3
+      },
+      "cifar10knn_knn_test_accuracy": {
+        "mean": 0.6633333563804626,
+        "std": 0.008010822348296642,
+        "num_seeds": 3
+      },
+      "cifar100r_test_accuracy": {
+        "mean": 0.43463334441185,
+        "std": 0.005485736299306154,
+        "num_seeds": 3
+      },
+      "imagenet100ltknn_knn_test_accuracy": {
+        "mean": 0.36742672324180603,
+        "std": 0.007341646123677492,
+        "num_seeds": 3
+      },
+      "imagenet100lt_test_accuracy": {
+        "mean": 0.41715526580810547,
+        "std": 0.012704974971711636,
         "num_seeds": 3
       },
       "training_time": {
-        "mean": 20.982343673706055,
-        "std": 0.38657493864742476,
+        "mean": 32.947208404541016,
+        "std": 4.2303595542907715,
         "num_seeds": 3
       }
-    },
-    "aliased_from": "jobs/ablations/sample_selection/mode_window_q75_diverse.sh"
+    }
   },
   {
     "job": "jobs/ablations/sample_selection/mode_window.sh",
@@ -1471,89 +1462,86 @@
       2
     ],
     "selected_logs": {
-      "0": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_0.out",
-      "1": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_1.out",
-      "2": "job_logs/ablations/sample_selection/mode_window_q75_diverse_3445155_2.out"
+      "exact": "job_logs/ablations/sample-selection_mode-window.out"
     },
     "complete": true,
     "aggregate_metrics": {
-      "aircraft_test_accuracy": {
-        "mean": 0.22395520905653635,
-        "std": 0.004201543195015482,
-        "num_seeds": 3
-      },
-      "aircraftknn_knn_test_accuracy": {
-        "mean": 0.11687662700812022,
-        "std": 0.0022086311215375894,
-        "num_seeds": 3
-      },
       "cars_test_accuracy": {
-        "mean": 0.15196078519026437,
-        "std": 0.011539581952397142,
+        "mean": 0.09038854390382767,
+        "std": 0.004958835430443287,
         "num_seeds": 3
       },
       "carsknn_knn_test_accuracy": {
-        "mean": 0.06748466193675995,
-        "std": 0.002650610148229079,
+        "mean": 0.05074687674641609,
+        "std": 0.007061770185828209,
         "num_seeds": 3
       },
-      "cifar100knn_knn_test_accuracy": {
-        "mean": 0.37826667229334515,
-        "std": 0.0026081120631833462,
+      "aircraft_test_accuracy": {
+        "mean": 0.16891689598560333,
+        "std": 0.002343313070014119,
         "num_seeds": 3
       },
-      "cifar100r_test_accuracy": {
-        "mean": 0.49143333236376446,
-        "std": 0.0017931922896318542,
-        "num_seeds": 3
-      },
-      "cifar10knn_knn_test_accuracy": {
-        "mean": 0.6898666818936666,
-        "std": 0.00531684866129122,
-        "num_seeds": 3
-      },
-      "cifar10r_test_accuracy": {
-        "mean": 0.7597333391507467,
-        "std": 0.00294654432082886,
-        "num_seeds": 3
-      },
-      "flowers_test_accuracy": {
-        "mean": 0.36796537041664124,
-        "std": 0.01861974677104389,
+      "aircraftknn_knn_test_accuracy": {
+        "mean": 0.09500950574874878,
+        "std": 0.0011358966585248709,
         "num_seeds": 3
       },
       "flowersknn_knn_test_accuracy": {
-        "mean": 0.3646612564722697,
-        "std": 0.0035854351516167696,
-        "num_seeds": 3
-      },
-      "imagenet100lt_test_accuracy": {
-        "mean": 0.537977417310079,
-        "std": 0.001106564548314887,
-        "num_seeds": 3
-      },
-      "imagenet100ltknn_knn_test_accuracy": {
-        "mean": 0.4806857605775197,
-        "std": 0.005855349445147527,
-        "num_seeds": 3
-      },
-      "pets_test_accuracy": {
-        "mean": 0.42934782306353253,
-        "std": 0.00967126143558635,
+        "mean": 0.2479535937309265,
+        "std": 0.006257124710828066,
         "num_seeds": 3
       },
       "petsknn_knn_test_accuracy": {
-        "mean": 0.25304269293944043,
-        "std": 0.009739218074724342,
+        "mean": 0.18860726058483124,
+        "std": 0.010172502137720585,
+        "num_seeds": 3
+      },
+      "cifar100knn_knn_test_accuracy": {
+        "mean": 0.35253334045410156,
+        "std": 0.0038279579021036625,
+        "num_seeds": 3
+      },
+      "cifar10r_test_accuracy": {
+        "mean": 0.7187333106994629,
+        "std": 0.002742873504757881,
+        "num_seeds": 3
+      },
+      "flowers_test_accuracy": {
+        "mean": 0.27886712551116943,
+        "std": 0.030887681990861893,
+        "num_seeds": 3
+      },
+      "pets_test_accuracy": {
+        "mean": 0.3161231577396393,
+        "std": 0.03264642134308815,
+        "num_seeds": 3
+      },
+      "cifar10knn_knn_test_accuracy": {
+        "mean": 0.6632999777793884,
+        "std": 0.007956745103001595,
+        "num_seeds": 3
+      },
+      "cifar100r_test_accuracy": {
+        "mean": 0.4340333044528961,
+        "std": 0.0065850792452692986,
+        "num_seeds": 3
+      },
+      "imagenet100ltknn_knn_test_accuracy": {
+        "mean": 0.36742672324180603,
+        "std": 0.007341646123677492,
+        "num_seeds": 3
+      },
+      "imagenet100lt_test_accuracy": {
+        "mean": 0.41715526580810547,
+        "std": 0.012704974971711636,
         "num_seeds": 3
       },
       "training_time": {
-        "mean": 20.982343673706055,
-        "std": 0.38657493864742476,
+        "mean": 32.80987548828125,
+        "std": 4.163627624511719,
         "num_seeds": 3
       }
-    },
-    "aliased_from": "jobs/ablations/sample_selection/mode_window_q75_diverse.sh"
+    }
   },
   {
     "job": "jobs/ablations/sample_selection/mode_window_q75_diverse.sh",

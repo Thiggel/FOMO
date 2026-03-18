@@ -40,6 +40,10 @@ every_nth_ood_sample: 1
 num_generations_per_ood_sample: 5
 ood_selection_strategy: mode_window  # options: top, mode_window
 ood_mode_histogram_bins: auto
+ood_mode_histogram_quantile_range: [0.75, 0.99]
+ood_mode_candidate_pool_multiplier: 4.0
+ood_mode_diversity_sampling: true
+ood_mode_diversity_normalize_features: true
 save_class_distribution: false
 
 # Masking settings

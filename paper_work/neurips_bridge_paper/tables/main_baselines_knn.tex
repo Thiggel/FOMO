@@ -1,10 +1,10 @@
-\begin{table}[H]
+\begin{table*}[t]
 \centering
-\scriptsize
-\setlength{\tabcolsep}{3.5pt}
-\caption{Full $k$NN baseline comparison on ImageNet-100-LT pretraining.}
-\label{tab:app_baselines_knn_full}
-\begin{adjustbox}{width=\textwidth}
+\tiny
+\setlength{\tabcolsep}{3.0pt}
+\caption{$k$NN comparison between balanced pretraining, imbalanced pretraining, and BRIDGE on ImageNet-100-LT. The reported average is over all seven downstream $k$NN tasks.}
+\label{tab:main_baselines_knn}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{l c c c c c c c c}
 \toprule
 Method & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
@@ -15,4 +15,4 @@ BRIDGE (ours) & \textbf{69.0 {\scriptsize$\pm$ 0.5}} & \textbf{37.8 {\scriptsize
 \bottomrule
 \end{tabular}
 \end{adjustbox}
-\end{table}
+\end{table*}
