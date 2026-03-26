@@ -75,6 +75,9 @@ seeds: [0, 1, 2, 3, 4]
 seed: null
 checkpoint: null
 checkpoint_list: null
+resume_trainer_state: false
+start_cycle: 0
+stop_after_cycle: null
 aggregate_only: false
 calc_novelty_score: false
 

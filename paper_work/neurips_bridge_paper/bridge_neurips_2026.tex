@@ -158,7 +158,7 @@ We now examine each design choice separately on ImageNet-100-LT source pretraini
 \begin{figure*}[t]
     \centering
     \includegraphics[width=0.96\textwidth]{figures/cycle_histories_example.pdf}
-    \caption{Representative OOD histograms across BRIDGE cycles from a successful ImageNet-100-LT run. The modal shoulder of the distribution moves as training and repair progress, while the extreme tail remains sparse. This supports selecting around the modal sparse band rather than repeatedly taking the farthest tail samples.}
+    \caption{Representative OOD histograms across BRIDGE cycles from a successful ImageNet-100-LT run. Solid blue lines mark the mean distance and dashed orange lines mark the 99th percentile. The modal shoulder of the distribution moves as training and repair progress, while the extreme tail remains sparse. This supports selecting around the modal sparse band rather than repeatedly taking the farthest tail samples.}
     \label{fig:cycle-histories}
 \end{figure*}
 

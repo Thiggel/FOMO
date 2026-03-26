@@ -403,15 +403,24 @@ def plot_cycle_histories():
     plot_high = max(float(np.quantile(d, 0.99)) for d in combined)
     bins = np.linspace(plot_low, plot_high, 42)
 
-    for ax, item, distances in zip(axes, history, combined):
+    for idx, (ax, item, distances) in enumerate(zip(axes, history, combined)):
         ax.hist(distances, bins=bins, density=True, color="#cbd5e1", edgecolor="#475569", linewidth=0.7)
-        ax.axvline(float(np.mean(distances)), color="#1d4ed8", linewidth=1.4)
-        ax.axvline(float(np.quantile(distances, 0.99)), color="#e76f51", linestyle="--", linewidth=1.2)
+        mean_label = "Mean distance" if idx == 0 else None
+        q99_label = "99th percentile" if idx == 0 else None
+        ax.axvline(float(np.mean(distances)), color="#1d4ed8", linewidth=1.4, label=mean_label)
+        ax.axvline(
+            float(np.quantile(distances, 0.99)),
+            color="#e76f51",
+            linestyle="--",
+            linewidth=1.2,
+            label=q99_label,
+        )
         ax.set_title("Cycle %d" % int(item["cycle"]))
         ax.set_xlabel("Mean kNN distance")
     axes[0].set_ylabel("Density")
-    fig.suptitle("Representative OOD histograms shift across cycles")
-    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.02))
+    fig.tight_layout(rect=[0, 0, 1, 0.92])
     save_figure(fig, "cycle_histories_example")
 
 

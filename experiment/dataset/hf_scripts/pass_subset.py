@@ -43,7 +43,9 @@ def _download_dir() -> str:
         os.environ.get("FOMO_DATASET_TMPDIR")
         or os.environ.get("TMPDIR")
         or os.environ.get("HF_DATASETS_CACHE")
+        or os.environ.get("HF_HOME")
         or os.environ.get("BASE_CACHE_DIR")
+        or (os.path.join(os.environ["WORK"], "FOMO2") if os.environ.get("WORK") else None)
     )
     if not base_dir:
         base_dir = os.path.join(os.path.expanduser("~"), ".cache")

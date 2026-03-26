@@ -260,7 +260,7 @@ def run(
     checkpoints_dir = checkpoint_seed_dir(args, seed)
     os.makedirs(checkpoints_dir, exist_ok=True)
 
-    if args.checkpoint is not None:
+    if args.checkpoint is not None and not bool(args.get("resume_trainer_state", False)):
         print("Loading checkpoint:", args.checkpoint)
         checkpoint = torch.load(args.checkpoint, weights_only=False)
         state_dict = (
@@ -362,7 +362,8 @@ def run(
         )
         if world_size > 1:
             ssl_method_name = str(args.ssl.ssl_method).lower()
-            if ssl_method_name == "moco":
+            model_name = str(args.model.model_name).lower()
+            if ssl_method_name == "moco" or model_name.startswith("vit"):
                 trainer_args["strategy"] = "ddp_find_unused_parameters_true"
             else:
                 trainer_args["strategy"] = "ddp"

@@ -18,6 +18,7 @@ torchrun --standalone --nproc_per_node=${NPROC_PER_NODE} -m experiment \
     ssl=simclr \
     dataset=imagenet100_imbalanced \
     generation_model=flux \
+    flux_batch_size=2 \
     max_cycles=5 \
     n_epochs_per_cycle=100 \
     ood_augmentation=true \

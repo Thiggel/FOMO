@@ -1,6 +1,8 @@
 module purge
 module load gcc/default
-module load cuda/12.1/12.1.1
+if ! module load cuda/12.1/12.1.1 2>/dev/null; then
+    module load cuda/12.8.1
+fi
 
 export http_proxy="http://proxy:80"
 export https_proxy="http://proxy:80"

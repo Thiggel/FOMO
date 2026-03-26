@@ -104,7 +104,9 @@ class ImbalancedDataModule(L.LightningDataModule):
             batch_size=self.train_batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            # Persistent workers have been unstable when resumed Lightning runs
+            # tear down combined loaders after checkpoint restore.
+            persistent_workers=False,
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -116,7 +118,7 @@ class ImbalancedDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=False,
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -127,7 +129,7 @@ class ImbalancedDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=False,
             collate_fn=self.collate_fn,
             drop_last=True,
         )

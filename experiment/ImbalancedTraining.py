@@ -601,7 +601,7 @@ class ImbalancedTraining:
             dataloader = DataLoader(
                 dataset,
                 batch_size=self.args.val_batch_size,
-                num_workers=4,
+                num_workers=attempt_workers,
                 pin_memory=pin_memory,
             )
 
@@ -689,11 +689,20 @@ class ImbalancedTraining:
                 cycle_trainer_args["num_sanity_val_steps"] = 0
 
             trainer = L.Trainer(**cycle_trainer_args)
+            fit_kwargs = {
+                "model": self.ssl_method,
+                "datamodule": self.datamodule,
+            }
+            start_cycle = int(getattr(self.args, "start_cycle", 0) or 0)
+            if (
+                bool(getattr(self.args, "resume_trainer_state", False))
+                and cycle_idx == start_cycle
+                and self.args.checkpoint is not None
+            ):
+                fit_kwargs["ckpt_path"] = self.args.checkpoint
+                fit_kwargs["weights_only"] = False
 
-            trainer.fit(
-                model=self.ssl_method,
-                datamodule=self.datamodule,
-            )
+            trainer.fit(**fit_kwargs)
 
             wandb_logger = self.trainer_args.get("logger", None)
             has_wandb = (
@@ -1088,7 +1097,9 @@ class ImbalancedTraining:
         vis_dir = f"{os.environ['BASE_CACHE_DIR']}/visualizations/tsne/{self.checkpoint_filename}"
         os.makedirs(vis_dir, exist_ok=True)
         png_path = f"{vis_dir}/tsne_cycle_{cycle_label}.png"
+        pdf_path = f"{vis_dir}/tsne_cycle_{cycle_label}.pdf"
         fig.savefig(png_path, dpi=100, bbox_inches="tight")
+        fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
         plt.close(fig)
 
         # 5. Log to Wandb
@@ -1404,7 +1415,16 @@ class ImbalancedTraining:
             )
             os.makedirs(visualization_dir, exist_ok=True)
 
-        for cycle_idx in range(self.num_cycles):
+        start_cycle = int(getattr(self.args, "start_cycle", 0) or 0)
+        stop_after_cycle = getattr(self.args, "stop_after_cycle", None)
+        if stop_after_cycle is None:
+            stop_after_cycle = self.num_cycles
+        else:
+            stop_after_cycle = min(self.num_cycles, int(stop_after_cycle))
+
+        self.completed_cycles = start_cycle
+
+        for cycle_idx in range(start_cycle, stop_after_cycle):
             print(f"Run {self.run_idx + 1}/{self.args.num_runs}")
             print(f"Pretraining cycle {cycle_idx + 1}/{self.num_cycles}")
 
@@ -2434,45 +2454,71 @@ class ImbalancedTraining:
                     original_image.save(save_path_original, "PNG")
 
         if self.args.generation_model == "flux":
+            flux_batch_size = max(1, getattr(self.args, "flux_batch_size", 1))
             flux_guidance = getattr(self.args, "flux_guidance", 2.5)
             flux_num_steps = getattr(self.args, "flux_num_steps", 6)
+            dataloader = DataLoader(
+                local_samples,
+                batch_size=flux_batch_size,
+                num_workers=0,
+                pin_memory=True,
+                shuffle=False,
+            )
 
-            for idx, (image, label) in enumerate(
-                tqdm(
-                    local_samples,
-                    desc=f"Generating New Data with Flux... (rank {rank})",
-                    disable=not is_primary_rank,
-                )
+            processed = 0
+            for images, labels in tqdm(
+                dataloader,
+                desc=f"Generating New Data with Flux... (rank {rank})",
+                disable=not is_primary_rank,
             ):
-                image_pil = (
-                    ToPILImage()(denorm(image)) if torch.is_tensor(image) else image
-                )
+                batch = [ToPILImage()(denorm(image)) for image in images]
 
-                generated_images = pipe.augment(
-                    [image_pil],
-                    num_generations_per_image=generations_per_sample,
-                    num_steps=flux_num_steps,
-                    guidance=flux_guidance,
-                )
-
-                expected = generations_per_sample
-                if len(generated_images) != expected:
+                expected = len(batch) * generations_per_sample
+                generated_images = []
+                max_flux_attempts = 3
+                for attempt in range(max_flux_attempts):
+                    if len(generated_images) >= expected:
+                        break
+                    chunk = pipe.augment(
+                        batch,
+                        num_generations_per_image=generations_per_sample,
+                        num_steps=flux_num_steps,
+                        guidance=flux_guidance,
+                    )
+                    generated_images.extend(chunk)
+                if len(generated_images) < expected:
                     raise RuntimeError(
                         "Flux generation returned an unexpected number of images "
-                        f"(expected {expected}, got {len(generated_images)})."
+                        f"(expected {expected}, got {len(generated_images)}) even after {max_flux_attempts} attempts."
+                    )
+                generated_images = generated_images[:expected]
+
+
+                for sample_idx, (image, label) in enumerate(zip(images, labels)):
+                    label_int = int(label.item() if torch.is_tensor(label) else label)
+                    class_name = dataset_obj.get_class_name(label_int)
+                    start = sample_idx * generations_per_sample
+                    end = start + generations_per_sample
+                    sample_generated_images = generated_images[start:end]
+
+                    _log_sample_outputs(
+                        image,
+                        sample_generated_images,
+                        label_int,
+                        class_name,
                     )
 
-                label_int = int(label.item() if torch.is_tensor(label) else label)
-                class_name = dataset_obj.get_class_name(label_int)
-                _log_sample_outputs(image, generated_images, label_int, class_name)
+                    _save_images_with_lock(
+                        sample_generated_images,
+                        next_storage_index,
+                    )
+                    next_storage_index += len(sample_generated_images)
+                    local_images_saved += len(sample_generated_images)
 
-                _save_images_with_lock(generated_images, next_storage_index)
-                next_storage_index += len(generated_images)
-                local_images_saved += len(generated_images)
-
-                if idx % 10 == 0 and is_primary_rank:
+                processed += len(batch)
+                if processed % 10 == 0 and is_primary_rank:
                     print(
-                        f"Processed {idx}/{len(local_samples)} images on rank {rank}, generated {local_images_saved} augmentations"
+                        f"Processed {processed}/{len(local_samples)} images on rank {rank}, generated {local_images_saved} augmentations"
                     )
         elif self.args.generation_model == "stable_diffusion_3":
             sd3_batch_size = max(1, getattr(self.args, "sd3_batch_size", 1))

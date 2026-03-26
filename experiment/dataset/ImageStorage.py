@@ -3,10 +3,13 @@ import numpy as np
 from PIL import Image
 import os
 import io
+import time
 from typing import Optional, Tuple
 
 
 class ImageStorage:
+    _RETRYABLE_ERRNOS = {16, 23}
+
     def __init__(self, base_path: str, max_images_per_file: int = 1000):
         """
         Initialize the image storage system using HDF5 files.
@@ -105,17 +108,39 @@ class ImageStorage:
                 f"Image file '{h5_path}' does not exist for index {global_idx}"
             )
 
-        with h5py.File(h5_path, "r") as f:
-            if "images" not in f or local_idx >= len(f["images"]):
-                stored_indices = list(f.get("indices", []))
-                raise IndexError(
-                    "Image not found in HDF5 storage: "
-                    f"file='{h5_path}', local_idx={local_idx}, "
-                    f"available={len(f['images'])}, stored_indices={stored_indices}"
-                )
+        retry_delays = [0.1, 0.25, 0.5, 1.0, 2.0]
+        last_error: Optional[OSError] = None
 
-            img_bytes = f["images"][local_idx]
-            return Image.open(io.BytesIO(img_bytes.tobytes()))
+        for attempt_idx, retry_delay in enumerate([0.0] + retry_delays):
+            if retry_delay > 0:
+                time.sleep(retry_delay)
+
+            try:
+                with h5py.File(h5_path, "r") as f:
+                    if "images" not in f or local_idx >= len(f["images"]):
+                        stored_indices = list(f.get("indices", []))
+                        raise IndexError(
+                            "Image not found in HDF5 storage: "
+                            f"file='{h5_path}', local_idx={local_idx}, "
+                            f"available={len(f['images'])}, stored_indices={stored_indices}"
+                        )
+
+                    img_bytes = f["images"][local_idx]
+                    with Image.open(io.BytesIO(img_bytes.tobytes())) as image:
+                        return image.copy()
+            except OSError as exc:
+                if exc.errno not in self._RETRYABLE_ERRNOS:
+                    raise
+                last_error = exc
+                if attempt_idx == len(retry_delays):
+                    break
+
+        if last_error is not None:
+            raise last_error
+
+        raise RuntimeError(
+            f"Failed to load image from '{h5_path}' after retrying transient HDF5 errors."
+        )
 
     def save_batch(
         self, images: list[Image.Image], cycle_idx: int, start_idx: int
