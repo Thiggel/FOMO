@@ -7,20 +7,13 @@ import pickle
 import sys
 import zipfile
 from collections import OrderedDict, defaultdict
-from pathlib import Path
-
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 from matplotlib import patches
 from matplotlib.gridspec import GridSpec
-
-from experiment.dataset.ImbalancedDataModule import ImbalancedDataModule
-from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
-from experiment.utils.set_seed import set_seed
 
 RESULTS_CSV = "paper_work/results_export/paper_results_metrics.csv"
 OUTPUT_DIR = "paper_work/neurips_bridge_paper/figures"
@@ -33,38 +26,6 @@ CYCLE_HISTORY_PATH = (
     "visualizations/data/"
     "sota_imagenet-100-lt_ts_clane9_imagenet-100_2026-02-16_10-31-59.405111/"
     "run_2/ood_distance_distribution/history.pt"
-)
-IMAGENET_SIMCLR_LOGS = [
-    "job_logs/sota/imagenet-100-lt/simclr_3359769_0.out",
-    "job_logs/sota/imagenet-100-lt/simclr_3359769_1.out",
-    "job_logs/sota/imagenet-100-lt/simclr_3359769_2.out",
-]
-IMAGENET_BRIDGE_LOGS = [
-    "job_logs/sota/imagenet-100-lt/bridge_3355927_0.out",
-    "job_logs/sota/imagenet-100-lt/bridge_3355927_1.out",
-    "job_logs/sota/imagenet-100-lt/bridge_3355927_2.out",
-]
-TSNE_SELECTION_PATHS = OrderedDict(
-    [
-        (
-            "BRIDGE q75-diverse",
-            "/home/atuin/c107fa/c107fa12/FOMO2/visualizations/tsne/"
-            "paper_figures_selection_mode_window_q75_diverse_clane9_imagenet-100_2026-03-20_02-21-49.203384/"
-            "tsne_cycle_end.png",
-        ),
-        (
-            "Top-tail",
-            "/home/atuin/c107fa/c107fa12/FOMO2/visualizations/tsne/"
-            "paper_figures_selection_top_tail_clane9_imagenet-100_2026-03-20_03-55-12.228958/"
-            "tsne_cycle_end.png",
-        ),
-        (
-            "Uniform",
-            "/home/atuin/c107fa/c107fa12/FOMO2/visualizations/tsne/"
-            "paper_figures_selection_uniform_clane9_imagenet-100_2026-03-20_03-55-12.688448/"
-            "tsne_cycle_end.png",
-        ),
-    ]
 )
 
 LINEAR_ALL = [
@@ -228,35 +189,6 @@ def save_figure(fig, stem):
     fig.savefig(png_path, dpi=220, bbox_inches="tight")
     fig.savefig(pdf_path, bbox_inches="tight")
     plt.close(fig)
-
-
-def parse_per_class_metrics(log_path, prefix):
-    pattern = rf"^{prefix}_(\d{{3}})\s+([0-9.eE+-]+)$"
-    values = {}
-    with open(log_path, "r") as handle:
-        for line in handle:
-            stripped = line.strip()
-            match = __import__("re").match(pattern, stripped)
-            if match:
-                values[int(match.group(1))] = float(match.group(2))
-    if len(values) != 100:
-        raise ValueError(f"Expected 100 per-class metrics in {log_path}, got {len(values)}")
-    return values
-
-
-def imagenet_lt_class_counts(seed):
-    set_seed(seed)
-    dm = ImbalancedDataModule(
-        dataset_path="clane9/imagenet-100",
-        imbalance_method=ImbalanceMethods.PowerLawImbalance,
-    )
-    base_dataset = dm.train_dataset.dataset
-    subset_positions = torch.tensor(dm.train_dataset.indices, dtype=torch.long)
-    kept_dataset_indices = torch.tensor(base_dataset.indices, dtype=torch.long)[
-        subset_positions
-    ]
-    labels = base_dataset.label_tensor[kept_dataset_indices]
-    return torch.bincount(labels, minlength=100).cpu().numpy()
 
 
 def draw_rounded_box(ax, x, y, w, h, text, facecolor, edgecolor="#2f3e46"):
@@ -491,85 +423,6 @@ def plot_cycle_histories():
     save_figure(fig, "cycle_histories_example")
 
 
-def plot_imagenet_frequency_binned_gain():
-    linear_simclr = [
-        parse_per_class_metrics(path, "imagenet100lt_test_accuracy_class")
-        for path in IMAGENET_SIMCLR_LOGS
-    ]
-    linear_bridge = [
-        parse_per_class_metrics(path, "imagenet100lt_test_accuracy_class")
-        for path in IMAGENET_BRIDGE_LOGS
-    ]
-    knn_simclr = [
-        parse_per_class_metrics(path, "imagenet100ltknn_knn_test_accuracy_class")
-        for path in IMAGENET_SIMCLR_LOGS
-    ]
-    knn_bridge = [
-        parse_per_class_metrics(path, "imagenet100ltknn_knn_test_accuracy_class")
-        for path in IMAGENET_BRIDGE_LOGS
-    ]
-
-    linear_quartiles = []
-    knn_quartiles = []
-    for seed in range(3):
-        counts = imagenet_lt_class_counts(seed)
-        order = np.argsort(counts)
-        quartiles = np.array_split(order, 4)
-        linear_gain = np.array(
-            [linear_bridge[seed][idx] - linear_simclr[seed][idx] for idx in range(100)]
-        )
-        knn_gain = np.array(
-            [knn_bridge[seed][idx] - knn_simclr[seed][idx] for idx in range(100)]
-        )
-        linear_quartiles.append([100.0 * linear_gain[group].mean() for group in quartiles])
-        knn_quartiles.append([100.0 * knn_gain[group].mean() for group in quartiles])
-
-    linear_quartiles = np.asarray(linear_quartiles)
-    knn_quartiles = np.asarray(knn_quartiles)
-    labels = ["Q1 rarest", "Q2", "Q3", "Q4 most freq."]
-    x = np.arange(len(labels))
-    width = 0.34
-
-    fig, ax = plt.subplots(figsize=(7.4, 3.7))
-    ax.bar(
-        x - width / 2.0,
-        linear_quartiles.mean(axis=0),
-        width,
-        yerr=linear_quartiles.std(axis=0),
-        color="#1d4ed8",
-        capsize=3,
-        label="Linear",
-    )
-    ax.bar(
-        x + width / 2.0,
-        knn_quartiles.mean(axis=0),
-        width,
-        yerr=knn_quartiles.std(axis=0),
-        color="#94a3b8",
-        capsize=3,
-        label=r"$k$NN",
-    )
-    ax.axhline(0.0, color="#64748b", linewidth=1.0)
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels)
-    ax.set_ylabel("BRIDGE minus SimCLR on ImageNet-100-LT")
-    ax.set_title("Lower-frequency classes benefit more on average under linear probing")
-    ax.legend(frameon=False, ncol=2, loc="upper right")
-    ax.grid(axis="y", linestyle=":", alpha=0.35)
-    save_figure(fig, "imagenet100lt_frequency_binned_gain")
-
-
-def plot_selection_tsne_appendix():
-    fig, axes = plt.subplots(1, 3, figsize=(11.4, 3.6))
-    for ax, (title, image_path) in zip(axes, TSNE_SELECTION_PATHS.items()):
-        image = plt.imread(image_path)
-        ax.imshow(image)
-        ax.set_title(title)
-        ax.axis("off")
-    fig.tight_layout()
-    save_figure(fig, "selection_tsne_qualitative")
-
-
 def main():
     ensure_output_dir()
     by_exp = load_results()
@@ -577,8 +430,6 @@ def main():
     plot_source_regime_gain(by_exp)
     plot_ablation_tradeoffs(by_exp)
     plot_cycle_histories()
-    plot_imagenet_frequency_binned_gain()
-    plot_selection_tsne_appendix()
 
 
 if __name__ == "__main__":

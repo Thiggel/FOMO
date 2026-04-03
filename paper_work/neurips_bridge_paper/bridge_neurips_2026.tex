@@ -140,7 +140,6 @@ Table~\ref{tab:main_sota_label_sources} reports the three label-derived long-tai
 
 Table~\ref{tab:main_sota_label_sources_knn} shows that this ranking is not specific to linear probing. Under $k$NN transfer, \method\ remains the strongest average method in all three label-derived regimes, improving over SimCLR from 31.8 to 33.6 on ImageNet-100-LT source pretraining, from 24.0 to 28.7 on CIFAR-10-LT, and from 20.9 to 27.0 on CIFAR-100-LT. This matters because $k$NN removes the learned linear head from the evaluation. The gains therefore reflect changes in feature geometry itself, not only easier linear readout.
 
-For the ImageNet-100-LT target in particular, the gains are not confined to a handful of head classes. Appendix Figure~\ref{fig:imagenet100lt-frequency-bins} bins the target classes by the frequency they had in the long-tailed source construction and compares BRIDGE against SimCLR within each bin. Under linear probing, the largest average gain appears in the rarest quartile of classes, while the $k$NN gains remain positive but are more diffuse across quartiles. We therefore treat this as supporting evidence that BRIDGE helps lower-frequency regions of the source distribution, without claiming a perfectly monotone tail-only effect.
 
 \input{tables/main_sota_label_sources_knn}
 
@@ -237,22 +236,6 @@ Stable Diffusion 3 Medium is used under the Stability AI Community License. FLUX
 \section{Broader Impact}
 \label{app:impact}
 A method that improves representation quality under biased source data can reduce the need for manual relabeling and can make SSL more useful in domains where balanced data are difficult to collect. That is a positive outcome. At the same time, our method relies on large image generators and on web-sourced datasets. These carry familiar risks related to license compliance, privacy, and unintended memorization or harmful content. Our experiments stay within existing dataset and model release terms and do not release new generators or scraped image collections. Any future deployment would still require a task-specific review of fairness, privacy, and content safety.
-
-\section{Additional Analysis}
-\label{app:additional-analysis}
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=0.72\textwidth]{figures/imagenet100lt_frequency_binned_gain.pdf}
-    \caption{ImageNet-100-LT per-class gains grouped by source-frequency quartile. For each seed, we reconstruct the exact seeded power-law class counts used by the ImageNet-100-LT benchmark, sort classes by those counts, and average BRIDGE-minus-SimCLR accuracy within each quartile. Bars show the three-seed mean and error bars show standard deviation across seeds. The linear-probe gain is largest in the rarest quartile, while the $k$NN gain remains positive but is less concentrated on the tail.}
-    \label{fig:imagenet100lt-frequency-bins}
-\end{figure*}
-
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/selection_tsne_qualitative.pdf}
-    \caption{Qualitative final-cycle t-SNE snapshots for the three selector variants on ImageNet-100-LT source pretraining. These plots are included only as a visual diagnostic. We do not use them as quantitative evidence, and the selector conclusions in the paper continue to rest on transfer performance and the class-distribution / OOD-distribution analyses.}
-    \label{fig:selection-tsne-qualitative}
-\end{figure*}
 
 \section{Full Results}
 \label{app:full-results}
