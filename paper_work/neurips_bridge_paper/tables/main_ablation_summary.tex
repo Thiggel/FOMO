@@ -10,14 +10,16 @@
 Group & Setting & Avg. Lin. & Avg. $k$NN & Flowers & Pets & IN100-LT \\
 \midrule
 SSL objective & SimCLR (default) & \textbf{42.3 {\scriptsize$\pm$ 0.7}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} & \textbf{36.8 {\scriptsize$\pm$ 1.9}} & \textbf{42.9 {\scriptsize$\pm$ 1.0}} & \textbf{53.8 {\scriptsize$\pm$ 0.1}} \\
- & MoCo & 17.8 {\scriptsize$\pm$ 1.9} & 20.5 {\scriptsize$\pm$ 0.8} & 10.4 {\scriptsize$\pm$ 3.2} & 15.0 {\scriptsize$\pm$ 1.8} & 26.6 {\scriptsize$\pm$ 1.9} \\
- & DINO & 15.2 {\scriptsize$\pm$ 1.3} & 10.4 {\scriptsize$\pm$ 0.4} & 12.6 {\scriptsize$\pm$ 4.4} & 8.7 {\scriptsize$\pm$ 1.6} & 20.6 {\scriptsize$\pm$ 1.1} \\
+ & MoCo & 19.3 {\scriptsize$\pm$ 1.2} & 21.0 {\scriptsize$\pm$ 0.5} & 11.5 {\scriptsize$\pm$ 3.0} & 15.3 {\scriptsize$\pm$ 0.3} & 28.2 {\scriptsize$\pm$ 0.7} \\
+ & DINO & 15.3 {\scriptsize$\pm$ 1.2} & 10.7 {\scriptsize$\pm$ 0.3} & 12.4 {\scriptsize$\pm$ 3.6} & 9.1 {\scriptsize$\pm$ 1.1} & 20.3 {\scriptsize$\pm$ 0.6} \\
 \midrule
-Generation & Stable Diffusion 3 (default) & \textbf{41.4 {\scriptsize$\pm$ 0.8}} & \textbf{32.7 {\scriptsize$\pm$ 0.4}} & \textbf{37.4 {\scriptsize$\pm$ 2.0}} & \textbf{41.2 {\scriptsize$\pm$ 0.7}} & \textbf{51.8 {\scriptsize$\pm$ 1.1}} \\
+Generation & Stable Diffusion 3 (default) & \textbf{41.5 {\scriptsize$\pm$ 0.6}} & \textbf{32.9 {\scriptsize$\pm$ 0.4}} & 35.7 {\scriptsize$\pm$ 0.9} & \textbf{41.8 {\scriptsize$\pm$ 0.8}} & \textbf{52.4 {\scriptsize$\pm$ 0.7}} \\
  & FLUX & 35.0 {\scriptsize$\pm$ 1.9} & 28.8 {\scriptsize$\pm$ 1.0} & 29.4 {\scriptsize$\pm$ 4.6} & 31.5 {\scriptsize$\pm$ 2.9} & 43.7 {\scriptsize$\pm$ 1.4} \\
- & No-generation re-population & 32.6 {\scriptsize$\pm$ 1.7} & 26.5 {\scriptsize$\pm$ 0.5} & 25.7 {\scriptsize$\pm$ 1.4} & 31.7 {\scriptsize$\pm$ 3.8} & 40.6 {\scriptsize$\pm$ 0.5} \\
+ & No-generation re-population & 40.7 {\scriptsize$\pm$ 1.4} & 32.2 {\scriptsize$\pm$ 0.4} & \textbf{40.3 {\scriptsize$\pm$ 6.1}} & 38.1 {\scriptsize$\pm$ 1.5} & 50.3 {\scriptsize$\pm$ 0.4} \\
 \midrule
-Selection & Mode-window (default) & \textbf{42.3 {\scriptsize$\pm$ 0.7}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} & \textbf{36.8 {\scriptsize$\pm$ 1.9}} & \textbf{42.9 {\scriptsize$\pm$ 1.0}} & \textbf{53.8 {\scriptsize$\pm$ 0.1}} \\
+Selection & Mode-window q1-99 + diversity & 42.1 {\scriptsize$\pm$ 0.7} & 33.4 {\scriptsize$\pm$ 0.3} & 34.6 {\scriptsize$\pm$ 2.9} & 43.5 {\scriptsize$\pm$ 0.7} & 52.8 {\scriptsize$\pm$ 0.1} \\
+ & Mode-window q50-99 + diversity & 42.2 {\scriptsize$\pm$ 0.9} & 33.6 {\scriptsize$\pm$ 0.3} & 35.5 {\scriptsize$\pm$ 1.1} & \textbf{43.8 {\scriptsize$\pm$ 3.1}} & 53.4 {\scriptsize$\pm$ 0.9} \\
+ & Mode-window q75-99 + diversity (default) & \textbf{42.3 {\scriptsize$\pm$ 0.7}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} & \textbf{36.8 {\scriptsize$\pm$ 1.9}} & 42.9 {\scriptsize$\pm$ 1.0} & \textbf{53.8 {\scriptsize$\pm$ 0.1}} \\
  & Top-tail & 34.3 {\scriptsize$\pm$ 1.2} & 27.3 {\scriptsize$\pm$ 0.6} & 27.7 {\scriptsize$\pm$ 1.0} & 30.5 {\scriptsize$\pm$ 1.2} & 42.2 {\scriptsize$\pm$ 1.4} \\
  & Uniform & 35.5 {\scriptsize$\pm$ 1.2} & 28.4 {\scriptsize$\pm$ 0.6} & 32.9 {\scriptsize$\pm$ 0.4} & 31.7 {\scriptsize$\pm$ 3.9} & 42.0 {\scriptsize$\pm$ 0.9} \\
 \bottomrule

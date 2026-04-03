@@ -137,3 +137,34 @@ These use explicit cycle segmentation plus Slurm `afterok` dependencies so later
   - ViT-S: 3496701-3496708
   - ViT-B: 3496709-3496715
   - FLUX: 3496716-3496725
+
+## 2026-03-30 remaining cleanups
+- Queue was cleaned of stale `DependencyNeverSatisfied` jobs for PASS BRIDGE+TS and `cycles-20`.
+- PASS BRIDGE+TS resume issue identified: the checkpoints live under `experiment_dataset_hf_scripts_pass_subset.py`, not `mlfoundations_PASS`.
+- Added `CHECKPOINT_DATASET_ID` support to `jobs/segment_resume_generic.sh` so future segmented resumes can target a different checkpoint subdirectory than the logical dataset identifier.
+- Resubmitted only the remaining unfinished jobs:
+  - PASS BRIDGE+TS seed `0`: `3504094 -> 3504095`
+  - PASS BRIDGE+TS seed `1`: `3504096 -> 3504097 -> 3504098`
+  - cycles-20 seed `0`: `3504099 -> 3504100 -> 3504101 -> 3504102 -> 3504103 -> 3504104`
+  - cycles-20 seed `2`: `3504105 -> 3504106 -> 3504107 -> 3504108 -> 3504109 -> 3504110`
+  - cycles-20 seed `1`: `3504111 -> 3504112 -> 3504113 -> 3504114 -> 3504115 -> 3504116 -> 3504117 -> 3504118 -> 3504119`
+
+## 2026-04-01 final remaining retries
+- Cancelled dead dependency jobs:
+  - `3504457`, `3504460`, `3505607`, `3505608`
+- Resubmitted PASS BRIDGE+TS with finer remaining split:
+  - seed `0`: `3->4`, `4->5`, finetune
+  - seed `1`: `3->4`, `4->5`, finetune
+- Resubmitted `cycles-20` seed `0` from `17->19`, `19->20`, finetune.
+- Excluded node `a0633` for the `cycles-20` seed `0` retry because the previous `17->19` failure was an NCCL watchdog abort on that node, not a walltime or quota failure.
+- 2026-04-01: cancelled dead cycles-20 seed-0 continuation jobs `3506853`, `3506854`.
+- Moved corrupted cycle-17 cache aside: `/home/atuin/c107fa/c107fa12/FOMO2/ablations_cycles_20_seed_0/17_corrupt_20260401_140710`.
+- Resubmitted cycles-20 seed-0 as `3507695` -> `3507696` -> `3507697`.
+- 2026-04-01: cycles-20 seed-0 r7 failed due to missing HDF5 shard in cycle 17.
+- Cancelled dead jobs: 3507696, 3507697.
+- Moved missing cycle-17 dir aside: /home/atuin/c107fa/c107fa12/FOMO2/ablations_cycles_20_seed_0/17_missing_20260401_150657
+- Resubmitted seed-0 with regeneration step: 16->17 -> 17->19 -> 19->20 -> finetune (jobs 3507801 -> 3507802 -> 3507803 -> 3507804).
+- 2026-04-02: cycles-20 seed-0 r8 failed due to stale cycle-17 entry in image_counts.
+- Removed cycle 17 from /home/atuin/c107fa/c107fa12/FOMO2/ablations_cycles_20_seed_0_image_counts.pkl.
+- Ensured cycle-17 dir absent to regenerate.
+- Resubmitted seed-0 as r9: 3510295 -> 3510296 -> 3510297 -> 3510298.

@@ -100,7 +100,9 @@ ABLATION_GROUPS = OrderedDict(
             "selection",
             OrderedDict(
                 [
-                    ("ablations/sample_selection/mode_window", "Mode-window (default)"),
+                    ("ablations/sample_selection/mode_window_q1_diverse", "Mode-window q1-99 + diversity"),
+                    ("ablations/sample_selection/mode_window_q50_diverse", "Mode-window q50-99 + diversity"),
+                    ("ablations/sample_selection/mode_window_q75_diverse", "Mode-window q75-99 + diversity (default)"),
                     ("ablations/sample_selection/ood_top", "Top-tail"),
                     ("ablations/sample_selection/uniform", "Uniform"),
                 ]
@@ -113,7 +115,6 @@ ABLATION_GROUPS = OrderedDict(
                     ("ablations/cycles/cycles_2", "2 cycles"),
                     ("baseline/newmethod_imbalanced", "5 cycles (default)"),
                     ("ablations/cycles/cycles_10", "10 cycles"),
-                    ("ablations/cycles/cycles_20", "20 cycles"),
                 ]
             ),
         ),
