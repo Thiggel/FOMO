@@ -107,14 +107,14 @@ Given the selected set $S^{(c)}$, we generate $G$ synthetic variants per selecte
     \end{aligned}
 \end{equation}
 where $[G] = \{1, \dots, G\}$.
-The random noise input $\epsilon_j$ indexes independent translations of the same anchor, so multiple generated images can preserve coarse visual structure while changing texture, pose, color, or local composition. We do not apply an additional generated-image filter in the main pipeline. Figure~\ref{fig:generation-pairs-sd3} shows paired examples from the saved ImageNet-100-LT paper-figure run.
+The random noise input $\epsilon_j$ indexes independent translations of the same anchor, so multiple generated images can preserve coarse visual structure while changing texture, pose, color, or local composition. We do not apply an additional generated-image filter in the main pipeline. Figure~\ref{fig:generation-pairs-sd3} shows representative SD3 translations using the same denoising strength, guidance, and step count as the main pipeline, rendered at higher resolution for readability.
 
-\begin{figure}[t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.72\linewidth]{figures/generation_pairs_sd3.png}
-    \caption{Examples of image-to-image repair. Each selected anchor conditions Stable Diffusion 3, which produces a translated variant that is appended to the next-cycle source set.}
+    \includegraphics[width=0.96\textwidth]{figures/generation_pairs_sd3.pdf}
+    \caption{Paired image-to-image repair examples. The input anchor image conditions Stable Diffusion 3, producing a translated variant that preserves the coarse visual concept while changing appearance and local composition.}
     \label{fig:generation-pairs-sd3}
-\end{figure}
+\end{figure*}
 
 \subsection{Design rationale}
 The central design choice is that we do not treat all sparse points as equally useful repair targets. The extreme tail is often too unstable for reliable image-to-image generation, whereas fully uniform sampling spends too much budget on regions that already have adequate support. We therefore separate two decisions: where to allocate budget and how to cover that region efficiently. The upper-tail histogram mode identifies a sparse region that remains semantically recoverable, and farthest-point sampling spreads anchors across that region instead of duplicating nearly identical examples. In the selection ablation, this combination improves the seven-task average over both top-tail selection and uniform sampling under linear-probe and $k$NN evaluation.
