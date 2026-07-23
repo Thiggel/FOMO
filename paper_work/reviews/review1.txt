@@ -1,0 +1,39 @@
+Official Review of Submission441 by Reviewer 2x5B
+Official Reviewby Reviewer 2x5B26 Jun 2026 at 08:16 (modified: 23 Jul 2026 at 15:06)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer 2x5BRevisions
+Summary:
+The paper proposes BRIDGE, a data-centric self-supervised learning loop that alternates between SSL pretraining, kNN-based OOD scoring of the learned embedding space, and targeted image-to-image diffusion augmentation of sparse ("underrepresented") regions. Rather than sampling the extreme OOD tail, the method restricts selection to the 75th-99th percentile band, identifies the modal sparsity region within it, and applies farthest-point sampling for diversity before generating replacement images using a frozen Stable Diffusion 3. The authors evaluate across five source regimes (three long-tailed datasets, plus PASS and DiffusionDB) and seven downstream linear-probe/kNN tasks, reporting consistent improvements over SimCLR, Temperature Schedules, and SDCLR baselines, and provide five ablation groups (SSL objective, generator, selection rule, cycle count, architecture).
+
+Contribution Type: General: Most submissions will fall into this type.
+Strengths And Weaknesses:
+Strengths
+
+The motivating idea, treating long-tailed SSL as a representation-geometry problem rather than purely an optimization problem, is well articulated, and the empirical pattern (balanced is roughly equal to imbalanced SimCLR, but BRIDGE clearly beats both) supports it.
+Broad evaluation: five source regimes, including the harder synthetic-on-synthetic DiffusionDB case, and seven consistent downstream tasks with three-seed averaging.
+Comprehensive ablation suite (objective, generator, selection rule, cycles, architecture) isolating each design choice.
+Weaknesses
+
+The central geometric claim is supported by a single three-cycle histogram figure (Fig. 2) with no further analysis (e.g., per-dataset histograms, embedding-space visualizations such as UMAP/t-SNE) showing how the representation space actually evolves.
+The SSL-objective ablation (SimCLR vs. MoCo vs. DINO) fixes the backbone to ResNet-50 for all three. Since MoCo and especially DINO-style self-distillation are commonly reported to pair better with ViT backbones, this comparison conflates objective choice with an architecture mismatch, and the claim that "SimCLR is the strongest objective inside the BRIDGE loop" may partly reflect this confound rather than an intrinsic property of the repair loop.
+The Limitations section (Sec. 6) discusses scope restrictions (10k subsets, single default operating point, linear-probe/kNN-only evaluation) but does not discuss limitations of the method itself, e.g., compute overhead, dependence on encoder quality for OOD scoring, or sensitivity to the diffusion model's own biases.
+Related Work is comparatively brief; in particular, the claim that "prior long-tailed work often uses generated images in supervised settings" has no supporting citation.
+Quality: 2: not good
+Clarity: 3: good
+Significance: 3: good
+Originality: 3: good
+Questions:
+The SSL-objective ablation uses ResNet-50 for SimCLR, MoCo, and DINO alike. Given that MoCo/DINO are commonly reported to underperform with ResNet relative to ViT backbones, can you disentangle the objective effect from the architecture-objective mismatch (e.g., by rerunning MoCo/DINO with their typically paired backbone)? This would directly affect my Quality score.
+Could you provide additional evidence for the "geometric" framing beyond Figure 2? For example, per-dataset OOD histograms, or a 2D projection (UMAP/t-SNE) of the embedding space before/after repair cycles, showing the sparse region actually densifying.
+The FLUX generation ablation uses 6 steps/guidance 2.5 vs. SD3's 20 steps/guidance 5.0, which is a much lighter sampling budget. Is the FLUX gap attributable to generation quality at matched settings, or partly to this budget difference?
+Do you have a hypothesis for why BRIDGE+TS sometimes outperforms BRIDGE alone (e.g., CIFAR-10-LT, Table 3) despite TS alone being a weaker baseline than BRIDGE?
+Have you considered reporting wall-clock/GPU-hour overhead of BRIDGE vs. baselines in the main text rather than only the appendix, given that the repair loop is the central practical cost of adopting the method?
+Limitations:
+The authors discuss scope-level limitations (fixed 10k subsets for PASS/DiffusionDB, a single default operating point, and transfer evaluation only via linear probe/kNN) but do not discuss limitations of the method itself. I'd suggest the authors add discussion of: 1) the added compute cost of the repair loop relative to standard SSL pretraining (data exists in the appendix but isn't framed as a limitation), 2) the method's dependence on encoder quality for OOD scoring in early cycles, and 3) reliance on a frozen diffusion model's own coverage/biases when generating repair images.
+
+Rating: 3: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.
+Confidence: 4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.
+Ethical Concerns: NO or VERY MINOR ethics concerns only
+Paper Formatting Concerns:
+No
+
+Code Of Conduct Acknowledgement: Yes
+Responsible Reviewing Acknowledgement: Yes

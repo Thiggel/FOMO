@@ -1,0 +1,100 @@
+Official Review of Submission441 by Reviewer SJHM
+Official Reviewby Reviewer SJHM21 Jun 2026 at 15:07 (modified: 23 Jul 2026 at 15:06)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer SJHMRevisions
+Summary:
+In self-supervised learning (SSL), bias in the source data can make a shift in the representation space, and this can reduce the downstream performance. Improving the objective function, for example by adding a new loss function, can improve optimization, but it still may not solve the biased geometry of the source data.
+
+This paper proposes a data-centric approach for SSL. The method consists of SSL training, out-of-distribution (OOD) identification using k-NN clustering, and targeted generative image augmentation for the identified OOD or underrepresented data.
+
+The paper shows that it is better not to target the most extreme long-tail outliers. Instead, after excluding these extreme outliers, targeting sparse upper-tail samples and augmenting them with an image-to-image generation pipeline gives better performance when the SSL model is trained again.
+
+Contribution Type: General: Most submissions will fall into this type.
+Strengths And Weaknesses:
+Strengths
+
+The main strength is that the proposed method shows good performance on various downstream tasks compared to balanced and imbalanced baselines. The method also shows better performance than general representation learning algorithms on several datasets.
+
+Weaknesses
+
+Concerns Regarding Novelty
+
+Overall, I felt that this paper is closer to an engineering report than a science paper. Using augmentation to solve imbalance in training data has been studied for a long time [a], and using generative models for this purpose has also been studied since the GAN period [b]. I think this paper does not clearly go beyond these existing works.
+
+The main method of this paper has three parts: (1) embedding-based sparse region selection, (2) SDEdit-based generative augmentation [c], and (3) training again with the augmented data. The first part is a common method in dataset selection [d]. The second part, image editing with an I2I pipeline, is also close to a generally used method in the community. Also, training a model again with the obtained data is already used in many data pipeline solutions in industry [e, f, g].
+
+Especially, the pattern where downstream performance increases as the dataset size increases and then decreases, as shown in Table 7, is similar to the behavior shown in Table 4 of [h]. However, the analysis of this part is not clear. It is not clear whether the performance improves up to 5 cycles just because more data are generated, or whether the proposed method is really effective. I think this needs more verification.
+
+Relevant missing or related references include:
+
+[a] Chawla, Nitesh V., et al. "SMOTE: synthetic minority over-sampling technique." Journal of artificial intelligence research 16 (2002).
+
+[b] Lim, Swee Kiat, et al. "Doping: Generative data augmentation for unsupervised anomaly detection with gan." ICDM 2018
+
+[c] Meng, Chenlin, et al. "SDEdit: Guided Image Synthesis and Editing with Stochastic Differential Equations." ICLR 2022
+
+[d] Kamal, Amro, et al. "Effective pruning of web-scale datasets based on complexity of concept clusters." ICLR 2024
+
+[e] Worker, Nyla and Bhumin Pathak, "Build Custom Synthetic Data Generation Pipelines with Omniverse Replicator," NVIDIA Developer, June 27, 2022, https://developer.nvidia.com/blog/build-custom-synthetic-data-generation-pipelines-with-omniverse-replicator
+
+[f] Liang, Mingfu, et al. "Aide: An automatic data engine for object detection in autonomous driving." CVPR 2024
+
+[g] Karpathy, Andrej, Keynote, Workshop on Autonomous Driving @ CVPR 2021, https://youtu.be/g6bOwQdCJrc
+
+[h] Azizi, Shekoofeh, et al. "Synthetic Data from Diffusion Models Improves ImageNet Classification." TMLR
+
+Concerns Regarding Missing Citations
+
+Another critical problem is that many citations seem to be missing. There are many previous works that use GAN-based or diffusion-based augmentation for downstream tasks. However, many of these works are missing in the related work part about diffusion-based augmentation. Because of this, it is not clear how this paper is positioned in the existing literature.
+
+Examples of relevant missing work include:
+
+[i] Fan, Lijie, et al. "Scaling laws of synthetic images for model training... for now."  CVPR 2024
+
+[j] Baradad Jurjo, Manel, et al. "Learning to see by looking at noise." NeurIPS 2021
+
+[k] He, Ruifei, et al. "Is Synthetic Data from Generative Models Ready for Image Recognition?" ICLR 2023
+
+[l] Jahanian, Ali, et al. "Generative Models as a Data Source for Multiview Representation Learning." ICLR 2022
+
+[m] Ren, Zhongzheng, and Yong Jae Lee. "Cross-domain self-supervised multi-task feature learning using synthetic imagery." CVPR 2018
+
+[n] Sarıyıldız, Mert Bülent, et al. "Fake it till you make it: Learning transferable representations from synthetic imagenet clones." CVPR 2023
+
+[o] Tian, Yonglong, et al. "Stablerep: Synthetic images from text-to-image models make strong visual representation learners." NeurIPS 2023
+
+[p] Nguyen, Dang, et al. "Do We Need All the Synthetic Data? Targeted Image Augmentation via Diffusion Models." ICLR 2025
+
+Concerns Regarding Computational Cost
+
+It is not clear whether the method uses full retraining from scratch on the repaired dataset, or uses continual pretraining. I understood it as full retraining. If this is correct, then in every cycle the model should be trained on the original dataset plus the generated dataset. Therefore, the already heavy pretraining compute becomes  times larger. In the main table, the paper reports the setting with 5 cycles. Considering the pretraining compute of models such as DINO, SimCLR, and CLIP, the computational cost of running the proposed method for more than one cycle seems quite large.
+
+Even if the authors use continual pretraining, there can be a catastrophic forgetting issue for the data and ability learned in previous cycles. Then, the paper needs a proper method to solve this issue.
+
+Concerns From a Distillation Perspective
+
+In this paper, the pretraining dataset is limited to be small, but the method uses an image generation model trained on large external data to solve the long-tail problem. The original dataset is augmented by this external generator and then used for training again. This looks similar to distillation from a strong external teacher. I wonder what result would be obtained if this external teacher is directly distilled.
+
+Works such as REPA [q] show that a well-trained representation model like DINO can help image generator training. The opposite direction also seems possible. Then, the performance improvement in this paper may not come from the specialized generation method itself, but from using a strong external teacher and doing a kind of knowledge distillation. I think this point needs to be verified.
+
+[q] Yu, Sihyun, et al. "Representation Alignment for Generation: Training Diffusion Transformers Is Easier Than You Think." ICLR 2025
+
+Quality: 1: poor
+Clarity: 2: not good
+Significance: 3: good
+Originality: 2: not good
+Questions:
+The method uses  for k-NN. How was this value chosen? I have also tried synthetic data generation and clustering-based sampling, and in my experience the sampling result changes a lot depending on . The performance also changes a lot. Therefore, this value seems very dataset-dependent. Is there any optimal or principled way to choose this value?
+I also have a question about the generation process. The method uses an empty prompt, but the guidance scale is 5.0. How much does this affect the result? In previous works, using an empty prompt does not seem to improve image quality a lot. The strength and guidance scale also look somewhat arbitrary. Since the image quality can change a lot depending on the generation setting, and the strength strongly affects how much the augmented image changes from the original image, I wonder what is the reason for this strength setting.
+FLUX.1-dev and FLUX.1-schnell are much larger than SD3-medium, and I understand that their generation quality is also better. Then why does the performance decrease in the ablation study?
+Limitations:
+The most important missing part is citation and discussion about previous generative augmentation papers in vision. The paper also needs a clearer statement about the difference from these methods. In the current version, it is hard for me to accept the novelty and difference of this method.
+
+It would also be good to compare and report the computational cost used by the iterative cycles.
+
+Rating: 2: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.
+Confidence: 4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.
+Ethical Concerns: NO or VERY MINOR ethics concerns only
+Paper Formatting Concerns:
+None.
+
+Code Of Conduct Acknowledgement: Yes
+Responsible Reviewing Acknowledgement: Yes

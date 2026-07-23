@@ -1,0 +1,60 @@
+Official Review of Submission441 by Reviewer QPxu
+Official Reviewby Reviewer QPxu24 Jun 2026 at 14:55 (modified: 23 Jul 2026 at 15:06)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer QPxuRevisions
+Summary:
+This paper proposes BRIDGE, a data-centric method for self-supervised learning on imbalanced datasets to address the challenge of poor representation coverage caused by long-tailed or skewed data. The method iteratively trains an SSL encoder, identifies sparse regions in the representation space using kNN distance, and generates new samples using a diffusion model. The paper introduces selecting a “mode-window” region in the upper OOD tail instead of using extreme outliers. The generated samples are added to the dataset, and the process is repeated in multiple cycles. The method is evaluated on several datasets across five source regimes ,and results show consistent improvements in linear-probe and kNN performance compared to baseline methods
+
+Contribution Type: General: Most submissions will fall into this type.
+Strengths And Weaknesses:
+While the idea is intuitive and empirically promising, the technical novelty is limited. The method primarily integrates existing components (kNN scoring, diffusion augmentation, diversity sampling) with heuristic design choices rather than introducing fundamentally new algorithms. The claims of the paper rely heavily on empirical gains, but the causal mechanism behind representation improvement remains insufficiently justified. In particular, the small benefit of diffusion over simple re-population raises concerns about whether generative modeling is essential to the contribution. Overall, I find this submission technically well motivated but lacking deeper theoretical or algorithmic innovation.
+
+Strengths;
+
+The core idea of iteratively “repairing” sparse regions of the representation space using diffusion models is intuitive. Compared to conventional model-centric approaches, the method introduces a closed-loop interaction between representation learning and data augmentation, which is a meaningful contribution.
+
+The mode-window selection mechanism is particularly interesting, as it addresses extreme-tail noise in naive OOD sampling. The ablation results convincingly show that this design choice is important for performance.
+
+The pipeline is well-defined and modular. scoring (kNN-based), selection (mode-window + diversity), and repair (diffusion generation). Using a frozen generator ensures stability and decouples the learning dynamics.
+
+The experimental protocol is comprehensive. The method shows consistent gains across multiple datasets. The ablation studies help understand the effect of each component.
+
+Weaknesses:
+
+The main limitation is the lack of technical novelty. The method combines several existing ideas: kNN distance for OOD scoring, diffusion models for data augmentation, and farthest-point sampling for diversity. There is limited new algorithmic contribution. The main novelty is in how these components are combined.
+
+No causal analysis between before/after “repair” and representation improvement.
+
+The mode-window selection is heuristic. It is not derived from theory or optimization. There is no clear reasoning why the 75 to 99 percentile range is optimal. This reduces the effectiveness of the contribution.
+
+The approach is mostly rule-based. The scoring, selection, and generation steps are not learned. There is no adaptive or end-to-end optimization. This makes the method less principled.
+
+The role of diffusion is not clearly justified. The ablation shows that simple re-population performs close to diffusion-based augmentation. This means most of the gain may come from data selection rather than generation. This weakens the core idea of “generative repair”.
+
+The paper does not provide any analysis of representation geometry. Therefore, the claims about improving representation geometry are not fully supported by analysis. The claims are based on intuition, i.e., sparse regions for better coverage, but there is no direct measurement of feature space structure.
+
+The evaluation is limited to linear probing and kNN. There is no evaluation on fine-tuning or other downstream tasks. It is unclear if the improvements generalize.
+
+The comparison with baselines is limited. Strong modern SSL methods such as DINOv2 or MAE are not considered. This makes it harder to judge the real impact.
+
+The method may have scalability issues. It requires repeated cycles, full dataset embedding, and diffusion generation. Experiments are done on relatively small-scale settings.
+
+Quality: 2: not good
+Clarity: 3: good
+Significance: 2: not good
+Originality: 1: poor
+Questions:
+The gain from diffusion is small compared to simple re-population. Need to clarify and provide justification for when diffusion is necessary, and provide examples where it clearly helps.
+Theoretical or empirical justification for the chosen percentile (75th to 99th) range in mode-window selection?
+Representation geometry analysis (quantitative and qualitative) focus on feature space uniformity and cluster density distribution (e.g., density, clustering, uniformity) to support the claim of improvement in representation geometry.
+Evaluate the method on fine-tuning or other downstream tasks to show broader impact
+Compare with stronger SSL methods such as DINOv2 or MAE?
+Limitations:
+No. The authors discuss some limitations, but they miss key points. They do not clearly discuss the weak reliance on heuristics. These should be explicitly addressed.
+
+Rating: 2: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.
+Confidence: 4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.
+Ethical Concerns: NO or VERY MINOR ethics concerns only
+Paper Formatting Concerns:
+No major issues observed.
+
+Code Of Conduct Acknowledgement: Yes
+Responsible Reviewing Acknowledgement: Yes
