@@ -24,17 +24,21 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
 from experiment.ood.ood import OOD
 from diffusers import (
     StableDiffusion3Img2ImgPipeline,
+    StableDiffusion3Pipeline,
     StableDiffusionImageVariationPipeline,
     FluxPriorReduxPipeline,
     FluxPipeline,
 )
+from transformers import BlipForConditionalGeneration, BlipProcessor
 from torchvision import transforms
 import copy
 import matplotlib.pyplot as plt
 
 import os
+import json
 import pickle
 import math
+from itertools import zip_longest
 from contextlib import contextmanager
 import fcntl
 import torch.distributed as dist
@@ -45,16 +49,20 @@ from experiment.utils.get_num_workers import get_num_workers
 
 class FluxAugmentor:
     def __init__(
-        self, device: Optional[str] = None, dtype: torch.dtype = torch.bfloat16
+        self,
+        device: Optional[str] = None,
+        dtype: torch.dtype = torch.bfloat16,
+        model_id: str = "black-forest-labs/FLUX.1-schnell",
+        redux_model_id: str = "black-forest-labs/FLUX.1-Redux-dev",
     ):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.dtype = dtype
         self.pipe_prior_redux = FluxPriorReduxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-Redux-dev",
+            redux_model_id,
             torch_dtype=self.dtype,
         ).to(self.device)
         self.pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-schnell",
+            model_id,
             text_encoder=None,
             text_encoder_2=None,
             torch_dtype=self.dtype,
@@ -149,6 +157,158 @@ class StableDiffusion3Augmentor:
         return output.images
 
 
+class StableDiffusion3TextAugmentor:
+    """VLM-captioned text-to-image control for image-conditioned repair.
+
+    The selected image is used only to obtain an unlabeled caption. Generation
+    then starts from noise, so this cleanly separates sparse-region allocation
+    from SDEdit-style image conditioning.
+    """
+
+    def __init__(self, device: Optional[str] = None, token: Optional[str] = None):
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.token = token or os.getenv("HF_TOKEN")
+        self.caption_processor = BlipProcessor.from_pretrained(
+            "Salesforce/blip-image-captioning-base"
+        )
+        self.caption_model = BlipForConditionalGeneration.from_pretrained(
+            "Salesforce/blip-image-captioning-base",
+            torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+        ).to(self.device)
+        self.pipe = StableDiffusion3Pipeline.from_pretrained(
+            "stabilityai/stable-diffusion-3-medium-diffusers",
+            torch_dtype=torch.float16,
+            token=self.token,
+        ).to(self.device)
+        self.pipe.set_progress_bar_config(disable=True)
+
+    @torch.inference_mode()
+    def augment(
+        self,
+        images,
+        num_generations_per_image: int = 1,
+        prompt: Optional[str] = None,
+        num_steps: int = 20,
+        guidance: float = 5.0,
+        strength: float = 0.6,
+        height: Optional[int] = None,
+        width: Optional[int] = None,
+    ):
+        del strength
+        if prompt is None:
+            inputs = self.caption_processor(images=images, return_tensors="pt").to(
+                self.device
+            )
+            captions = self.caption_model.generate(**inputs, max_new_tokens=32)
+            prompts = self.caption_processor.batch_decode(
+                captions, skip_special_tokens=True
+            )
+        elif isinstance(prompt, str):
+            prompts = [prompt] * len(images)
+        else:
+            prompts = list(prompt)
+        return self.pipe(
+            prompt=prompts,
+            num_inference_steps=num_steps,
+            guidance_scale=guidance,
+            num_images_per_prompt=num_generations_per_image,
+            height=height,
+            width=width,
+        ).images
+
+
+class StableDiffusion3CaptionedImg2ImgAugmentor:
+    """BLIP-captioned SDEdit control paired with text-to-image generation."""
+
+    def __init__(self, device: Optional[str] = None, token: Optional[str] = None):
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.token = token or os.getenv("HF_TOKEN")
+        self.caption_processor = BlipProcessor.from_pretrained(
+            "Salesforce/blip-image-captioning-base"
+        )
+        self.caption_model = BlipForConditionalGeneration.from_pretrained(
+            "Salesforce/blip-image-captioning-base",
+            torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+        ).to(self.device)
+        self.pipe = StableDiffusion3Img2ImgPipeline.from_pretrained(
+            "stabilityai/stable-diffusion-3-medium-diffusers",
+            torch_dtype=torch.float16,
+            token=self.token,
+        ).to(self.device)
+        self.pipe.set_progress_bar_config(disable=True)
+
+    @torch.inference_mode()
+    def augment(
+        self,
+        images,
+        num_generations_per_image: int = 1,
+        prompt: Optional[str] = None,
+        num_steps: int = 20,
+        guidance: float = 5.0,
+        strength: float = 0.6,
+        height: Optional[int] = None,
+        width: Optional[int] = None,
+    ):
+        if prompt is None:
+            inputs = self.caption_processor(images=images, return_tensors="pt").to(
+                self.device
+            )
+            captions = self.caption_model.generate(**inputs, max_new_tokens=32)
+            prompts = self.caption_processor.batch_decode(
+                captions, skip_special_tokens=True
+            )
+        elif isinstance(prompt, str):
+            prompts = [prompt] * len(images)
+        else:
+            prompts = list(prompt)
+        return self.pipe(
+            prompt=prompts,
+            image=images,
+            strength=strength,
+            num_inference_steps=num_steps,
+            guidance_scale=guidance,
+            num_images_per_prompt=num_generations_per_image,
+            height=height,
+            width=width,
+        ).images
+
+
+class StrongConventionalAugmentor:
+    """Offline RandAugment control with the same output cardinality as SD3."""
+
+    def __init__(
+        self,
+        size: int,
+        num_ops: int = 3,
+        magnitude: int = 9,
+    ):
+        self.transform = transforms.Compose(
+            [
+                transforms.RandomResizedCrop(
+                    size,
+                    scale=(0.7, 1.0),
+                    interpolation=transforms.InterpolationMode.BICUBIC,
+                ),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandAugment(
+                    num_ops=int(num_ops), magnitude=int(magnitude)
+                ),
+            ]
+        )
+
+    def augment(
+        self,
+        images,
+        num_generations_per_image: int = 1,
+        **kwargs,
+    ):
+        return [
+            self.transform(image)
+            for image in images
+            for _ in range(num_generations_per_image)
+        ]
+
+
 class OODDistanceEpochLogger(L.Callback):
     def __init__(self, training_ref: "ImbalancedTraining", epoch_interval: int = 100):
         super().__init__()
@@ -215,6 +375,7 @@ class ImbalancedTraining:
         self.added_indices = set()
         self.original_indices = set(range(self.initial_train_ds_size))
         self.last_ood_results: Optional[dict] = None
+        self._frozen_selection_indices: Optional[list[int]] = None
         self.visualization_history = getattr(self.args, "visualization_history", 5)
         self.ood_distance_history: list[dict[str, Any]] = []
         self.avg_ood_distance_history: list[dict[str, Any]] = []
@@ -478,12 +639,22 @@ class ImbalancedTraining:
         )
         dtype = getattr(self.ssl_method, "dtype", torch.float32)
 
+        # TADA's signal is learning difficulty, not a supervised class loss.
+        # Estimate it here with the per-example symmetric InfoNCE loss between
+        # two fresh SSL views.  The previous implementation incorrectly fed
+        # projection features to cross-entropy with ground-truth labels.
         subset = Subset(self.datamodule.train_dataset, dataset_indices)
+        base_dataset = subset.dataset
+        while isinstance(base_dataset, Subset):
+            base_dataset = base_dataset.dataset
+        old_transform = base_dataset.transform
+        base_dataset.transform = self.datamodule.transform
         loader = DataLoader(
             subset,
             batch_size=min(len(dataset_indices), self.args.val_batch_size),
-            num_workers=self.num_workers,
+            num_workers=0,
             pin_memory=torch.cuda.is_available(),
+            collate_fn=self.datamodule.collate_fn,
         )
 
         was_training = self.ssl_method.training
@@ -497,20 +668,22 @@ class ImbalancedTraining:
 
         try:
             with torch.no_grad():
-                for images, labels in loader:
-                    images = images.to(device=device, dtype=dtype)
-                    labels = labels.to(device=device)
-
-                    outputs = model(images)
-                    if isinstance(outputs, tuple):
-                        outputs = outputs[0]
-
-                    if outputs.dim() <= 1:
+                for views, _ in loader:
+                    if not isinstance(views, (tuple, list)) or len(views) < 2:
                         raise RuntimeError(
-                            "Model outputs do not provide logits for loss computation."
+                            "early_loss requires an SSL transform with two views"
                         )
-
-                    batch_losses = F.cross_entropy(outputs, labels, reduction="none")
+                    first = views[0].to(device=device, dtype=dtype)
+                    second = views[1].to(device=device, dtype=dtype)
+                    first_features = F.normalize(model(first), dim=-1)
+                    second_features = F.normalize(model(second), dim=-1)
+                    temperature = float(getattr(self.ssl_method, "temperature", lambda: 0.1)())
+                    logits = first_features @ second_features.T / max(temperature, 1e-6)
+                    targets = torch.arange(len(first_features), device=device)
+                    batch_losses = 0.5 * (
+                        F.cross_entropy(logits, targets, reduction="none")
+                        + F.cross_entropy(logits.T, targets, reduction="none")
+                    )
                     losses.append(batch_losses.detach().cpu())
         except Exception as exc:
             print(
@@ -518,6 +691,7 @@ class ImbalancedTraining:
             )
             return None
         finally:
+            base_dataset.transform = old_transform
             if was_training:
                 self.ssl_method.train()
 
@@ -525,6 +699,50 @@ class ImbalancedTraining:
             return None
 
         return torch.cat(losses)
+
+    @staticmethod
+    def _merge_bridge_tada_indices(
+        bridge_indices: list[int],
+        tada_ranked_indices: list[int],
+        budget: int,
+    ) -> list[int]:
+        """Merge BRIDGE and TADA rankings under one exact repair budget."""
+        if budget <= 0:
+            return []
+
+        bridge_quota = (budget + 1) // 2
+        tada_quota = budget // 2
+        selected: list[int] = []
+        selected_set: set[int] = set()
+
+        def append_unique(ranking: list[int], limit: int) -> None:
+            added = 0
+            for index in ranking:
+                index = int(index)
+                if index in selected_set:
+                    continue
+                selected.append(index)
+                selected_set.add(index)
+                added += 1
+                if added >= limit or len(selected) >= budget:
+                    return
+
+        append_unique(bridge_indices, bridge_quota)
+        append_unique(tada_ranked_indices, tada_quota)
+        if len(selected) >= budget:
+            return selected[:budget]
+
+        # Overlap can leave one quota under-filled. Alternate the residual
+        # rankings instead of silently reducing the requested repair volume.
+        for pair in zip_longest(bridge_indices, tada_ranked_indices):
+            for index in pair:
+                if index is None or int(index) in selected_set:
+                    continue
+                selected.append(int(index))
+                selected_set.add(int(index))
+                if len(selected) >= budget:
+                    return selected
+        return selected
 
     def get_class_indices_map(self, dataset):
         """Efficiently create a mapping of class labels to their indices"""
@@ -638,6 +856,12 @@ class ImbalancedTraining:
             print("Using OOD detection for sample selection")
             if precomputed_ood_indices is not None:
                 ood_indices = precomputed_ood_indices
+            elif (
+                getattr(self.args, "selection_reuse_policy", "adaptive")
+                == "static_first_cycle"
+                and self._frozen_selection_indices is not None
+            ):
+                ood_indices = self._frozen_selection_indices
             else:
                 ood_indices = self.get_ood_indices(
                     self.datamodule.train_dataset, cycle_idx
@@ -645,6 +869,54 @@ class ImbalancedTraining:
         elif self.args.sample_selection == "oracle":
             print("Using oracle indices for sample selection")
             ood_indices = self.get_oracle_indices()
+        elif self.args.sample_selection == "oracle_real":
+            # Real-data restoration oracle: restore previously withheld source
+            # images, never duplicate the selected anchors.
+            print("Using withheld real-source restoration oracle")
+            ood_indices = self.get_oracle_real_indices()
+        elif self.args.sample_selection == "early_loss":
+            # TADA-style SSL learning-difficulty control.  It is a closest-
+            # prior baseline rather than an unlabeled BRIDGE variant.
+            print("Using highest SSL-loss examples for the TADA-style control")
+            positions = list(range(len(self.datamodule.train_dataset)))
+            losses = self._compute_sample_losses(positions)
+            if losses is None:
+                raise RuntimeError("Could not compute losses for early-loss selection")
+            ood_indices = torch.argsort(losses, descending=True)[
+                : self.args.num_ood_samples
+            ].tolist()
+        elif self.args.sample_selection == "bridge_tada":
+            print(
+                "Using a matched-budget hybrid of BRIDGE sparsity and "
+                "TADA-style SSL difficulty"
+            )
+            bridge_indices = (
+                list(precomputed_ood_indices)
+                if precomputed_ood_indices is not None
+                else self.get_ood_indices(
+                    self.datamodule.train_dataset, cycle_idx
+                )
+            )
+            positions = list(range(len(self.datamodule.train_dataset)))
+            losses = self._compute_sample_losses(positions)
+            if losses is None:
+                raise RuntimeError(
+                    "Could not compute losses for BRIDGE-TADA selection"
+                )
+            tada_ranked_indices = torch.argsort(
+                losses, descending=True
+            ).tolist()
+            ood_indices = self._merge_bridge_tada_indices(
+                bridge_indices,
+                tada_ranked_indices,
+                int(self.args.num_ood_samples),
+            )
+            if len(ood_indices) != int(self.args.num_ood_samples):
+                raise RuntimeError(
+                    "BRIDGE-TADA hybrid could not fill the requested "
+                    f"budget: {len(ood_indices)}/"
+                    f"{self.args.num_ood_samples}"
+                )
         else:
             print("Using random selection for sample selection")
             ood_indices = self.get_random_indices(self.datamodule.train_dataset)
@@ -683,7 +955,16 @@ class ImbalancedTraining:
                     )
             cycle_trainer_args["callbacks"] = callbacks
 
-            cycle_trainer_args["max_epochs"] = self.n_epochs_per_cycle * (cycle_idx + 1)
+            # Each cycle owns exactly its configured update stage.  A new
+            # Trainer is constructed for every cycle, so multiplying by
+            # ``cycle_idx + 1`` previously produced E + 2E + ... training
+            # epochs rather than C * E and invalidated compute matching.
+            cycle_trainer_args["max_epochs"] = self.n_epochs_per_cycle
+            max_steps_per_cycle = getattr(
+                self.args, "max_steps_per_cycle", None
+            )
+            if max_steps_per_cycle is not None:
+                cycle_trainer_args["max_steps"] = int(max_steps_per_cycle)
             if len(self.datamodule.val_dataset) == 0:
                 cycle_trainer_args["limit_val_batches"] = 0
                 cycle_trainer_args["num_sanity_val_steps"] = 0
@@ -702,7 +983,30 @@ class ImbalancedTraining:
                 fit_kwargs["ckpt_path"] = self.args.checkpoint
                 fit_kwargs["weights_only"] = False
 
-            trainer.fit(**fit_kwargs)
+            skip_branch_stage = (
+                cycle_idx == 0
+                and bool(getattr(self.args, "skip_initial_training", False))
+            )
+            if skip_branch_stage:
+                if self.args.checkpoint is None:
+                    raise ValueError(
+                        "skip_initial_training requires a frozen branch checkpoint"
+                    )
+                print(
+                    "Skipping cycle-0 optimization: scoring the frozen common "
+                    "branch checkpoint before the single repair stage."
+                )
+                device = torch.device(
+                    "cuda" if torch.cuda.is_available() else "cpu"
+                )
+                self.ssl_method.to(device)
+            else:
+                trainer.fit(**fit_kwargs)
+
+            if bool(
+                getattr(self.args, "representation_diagnostics_each_cycle", False)
+            ):
+                self._save_cycle_representation_diagnostics(cycle_idx)
 
             wandb_logger = self.trainer_args.get("logger", None)
             has_wandb = (
@@ -711,9 +1015,16 @@ class ImbalancedTraining:
                 and hasattr(wandb_logger, "experiment")
             )
             should_augment = (
-                self.args.ood_augmentation and cycle_idx < self.num_cycles - 1
+                self.args.ood_augmentation
+                and cycle_idx < self.num_cycles - 1
+                and (
+                    not bool(getattr(self.args, "repair_once", False))
+                    or cycle_idx == 0
+                )
             )
-            run_ood_analysis = has_wandb or should_augment
+            run_ood_analysis = (has_wandb or should_augment) and (
+                self.args.sample_selection != "oracle_real"
+            )
 
             ssl_transform = None
             precomputed_ood_indices: Optional[list[int]] = None
@@ -724,9 +1035,16 @@ class ImbalancedTraining:
                 ssl_transform = copy.deepcopy(base_dataset.transform)
                 base_dataset.transform = self.transform
 
-                precomputed_ood_indices = self.get_ood_indices(
-                    self.datamodule.train_dataset, cycle_idx
-                )
+                if (
+                    getattr(self.args, "selection_reuse_policy", "adaptive")
+                    == "static_first_cycle"
+                    and self._frozen_selection_indices is not None
+                ):
+                    precomputed_ood_indices = self._frozen_selection_indices
+                else:
+                    precomputed_ood_indices = self.get_ood_indices(
+                        self.datamodule.train_dataset, cycle_idx
+                    )
 
                 if has_wandb:
                     self._log_ood_distance_cdf(cycle_log_idx, wandb_logger)
@@ -760,13 +1078,45 @@ class ImbalancedTraining:
                 self.datamodule.train_dataset.dataset.transform = self.transform
 
             ood_indices = self.get_outliers(cycle_idx, precomputed_ood_indices)
+            if (
+                getattr(self.args, "selection_reuse_policy", "adaptive")
+                == "static_first_cycle"
+                and self._frozen_selection_indices is None
+            ):
+                self._frozen_selection_indices = list(ood_indices)
 
-            ood_samples = [self.datamodule.train_dataset[i] for i in ood_indices]
+            anchor_dataset = (
+                self.datamodule.train_dataset.dataset
+                if self.args.sample_selection == "oracle_real"
+                else self.datamodule.train_dataset
+            )
+            raw_ood_samples = [anchor_dataset[i] for i in ood_indices]
+            # Teacher-cache runs append a stable underlying index as a third
+            # item.  Generation and all existing operators intentionally use
+            # the established (image, label) sample contract.
+            ood_samples = [(sample[0], sample[1]) for sample in raw_ood_samples]
             ood_labels = torch.tensor(
                 [label for _, label in tqdm(ood_samples, desc="Getting labels")]
             )
 
             print(f"Selected {len(ood_indices)} samples for augmentation")
+
+            self._write_repair_manifest(
+                cycle_idx=cycle_idx,
+                selected_positions=ood_indices,
+                labels=ood_labels.tolist(),
+                anchor_samples=ood_samples,
+                dataset=anchor_dataset,
+                repair_operator=(
+                    "oracle_real_restoration"
+                    if self.args.sample_selection == "oracle_real"
+                    else (
+                        "anchor_duplicate"
+                        if self.args.remove_diffusion
+                        else str(self.args.generation_model)
+                    )
+                ),
+            )
 
             if has_wandb:
                 self._log_ood_class_distribution(
@@ -774,10 +1124,23 @@ class ImbalancedTraining:
                 )
 
             if self.args.remove_diffusion:
-                # Add samples back to dataset
+                # Size-matched anchor oversampling control: duplicate each selected
+                # anchor as many times as the generative branch would add a variant.
+                repeated_indices = (
+                    ood_indices
+                    if self.args.sample_selection == "oracle_real"
+                    else [
+                        index
+                        for index in ood_indices
+                        for _ in range(self.args.num_generations_per_ood_sample)
+                    ]
+                )
                 self.added_indices.update(ood_indices)
-                self.datamodule.add_samples_by_index(ood_indices)
-                print(f"Added {len(ood_indices)} samples back to the training set")
+                self.datamodule.add_samples_by_index(repeated_indices)
+                print(
+                    f"Added {len(repeated_indices)} anchor duplicates "
+                    f"({len(ood_indices)} unique anchors) to the training set"
+                )
             else:
                 expected_new_images = (
                     len(ood_samples) * self.args.num_generations_per_ood_sample
@@ -791,13 +1154,31 @@ class ImbalancedTraining:
                 diffusion_pipe = None
                 self._offload_models_for_generation()
                 try:
-                    diffusion_pipe = (
-                        StableDiffusionAugmentor()
-                        if self.args.generation_model == "stable_diffusion"
-                        else StableDiffusion3Augmentor()
-                        if self.args.generation_model == "stable_diffusion_3"
-                        else FluxAugmentor()
-                    )
+                    if self.args.generation_model == "stable_diffusion":
+                        diffusion_pipe = StableDiffusionAugmentor()
+                    elif self.args.generation_model == "stable_diffusion_3":
+                        diffusion_pipe = StableDiffusion3Augmentor()
+                    elif self.args.generation_model == "stable_diffusion_3_t2i":
+                        diffusion_pipe = StableDiffusion3TextAugmentor()
+                    elif self.args.generation_model == "stable_diffusion_3_captioned_img2img":
+                        diffusion_pipe = StableDiffusion3CaptionedImg2ImgAugmentor()
+                    elif self.args.generation_model == "strong_augmentation":
+                        diffusion_pipe = StrongConventionalAugmentor(
+                            size=int(self.args.crop_size),
+                            num_ops=int(self.args.strong_augmentation_num_ops),
+                            magnitude=int(
+                                self.args.strong_augmentation_magnitude
+                            ),
+                        )
+                    elif self.args.generation_model == "flux":
+                        diffusion_pipe = FluxAugmentor(
+                            model_id=str(self.args.flux_model_id),
+                            redux_model_id=str(self.args.flux_redux_model_id),
+                        )
+                    else:
+                        raise ValueError(
+                            f"Unknown generation model: {self.args.generation_model}"
+                        )
 
                     self.generate_new_data(
                         ood_samples,
@@ -854,6 +1235,7 @@ class ImbalancedTraining:
             torch.cuda.empty_cache()
 
     def run(self) -> dict:
+        diagnostics = {}
         if self.args.pretrain:
             self.pretrain_imbalanced()
 
@@ -869,6 +1251,9 @@ class ImbalancedTraining:
                 )
                 self.ssl_method.load_state_dict(state_dict)
 
+            if bool(getattr(self.args, "representation_diagnostics", True)):
+                diagnostics = self.compute_representation_diagnostics()
+
         if self.datamodule is not None and self.args.logger:
             final_cycle_reference = (
                 self.completed_cycles
@@ -879,7 +1264,232 @@ class ImbalancedTraining:
                 stage_label="end", cycle_reference=final_cycle_reference
             )
 
-        return self.finetune() if self.args.finetune else {}
+        results = self.finetune() if self.args.finetune else {}
+        results.update(diagnostics)
+        return results
+
+    def _write_repair_manifest(
+        self,
+        cycle_idx: int,
+        selected_positions: list[int],
+        labels: list[int],
+        repair_operator: str,
+        anchor_samples: Optional[list[tuple[torch.Tensor, Any]]] = None,
+        dataset=None,
+    ) -> None:
+        """Record anchor ancestry for every generated/duplicated repair item."""
+        dataset = dataset if dataset is not None else self.datamodule.train_dataset
+        root = dataset
+        while isinstance(root, Subset):
+            root = root.dataset
+        original_pool_size = len(getattr(root, "indices", []))
+        variants = 1 if repair_operator == "oracle_real_restoration" else int(
+            self.args.num_generations_per_ood_sample
+        )
+        output_dir = os.path.join(str(self.args.additional_data_path), "repair_manifests")
+        anchor_dir = os.path.join(output_dir, f"cycle_{cycle_idx}_anchors")
+        os.makedirs(anchor_dir, exist_ok=True)
+        inverse_normalize = transforms.Normalize(
+            mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+            std=[1 / 0.229, 1 / 0.224, 1 / 0.225],
+        )
+        rows = []
+        for anchor_order, (position, label) in enumerate(
+            zip(selected_positions, labels)
+        ):
+            node = dataset
+            underlying = int(position)
+            while isinstance(node, Subset):
+                underlying = int(node.indices[underlying])
+                node = node.dataset
+            anchor_image_path = None
+            if anchor_samples is not None and anchor_order < len(anchor_samples):
+                image = anchor_samples[anchor_order][0]
+                if torch.is_tensor(image):
+                    image = ToPILImage()(inverse_normalize(image.detach().cpu()))
+                anchor_image_path = os.path.join(anchor_dir, f"anchor_{anchor_order}.png")
+                image.save(anchor_image_path, "PNG")
+            for variant in range(variants):
+                rows.append(
+                    {
+                        "repair_index": int(anchor_order * variants + variant),
+                        "anchor_dataset_position": int(position),
+                        "anchor_underlying_index": int(underlying),
+                        "anchor_label": int(label),
+                        "anchor_is_original": bool(
+                            underlying < original_pool_size
+                        ),
+                        "anchor_image": anchor_image_path,
+                        "variant": int(variant),
+                    }
+                )
+        payload = {
+            "cycle": int(cycle_idx),
+            "repair_operator": repair_operator,
+            "num_selected_anchors": int(len(selected_positions)),
+            "num_repair_items": int(len(rows)),
+            "generated_indexing": "repair_index matches HDF5 cycle-local index for generative operators",
+            "rows": rows,
+        }
+        output_path = os.path.join(output_dir, f"cycle_{cycle_idx}.json")
+        with open(output_path, "w") as handle:
+            json.dump(payload, handle)
+        print(f"Saved repair provenance manifest to {output_path}")
+
+    # Do not use ``inference_mode`` here.  This diagnostic constructs a
+    # multiprocessing DataLoader between training stages; workers forked while
+    # inference mode is active can return inference tensors to the following
+    # training stage, which then fail autograd with "Inference tensors cannot
+    # be saved for backward".  ``no_grad`` provides the same memory benefit for
+    # feature extraction without changing tensor provenance across stages.
+    @torch.no_grad()
+    def compute_representation_diagnostics(self) -> dict:
+        """Scale-invariant health and geometry metrics on fixed original images."""
+        import faiss
+
+        train_dataset = self.datamodule.train_dataset
+        if isinstance(train_dataset, Subset):
+            base_dataset = train_dataset.dataset
+            original_pool_size = len(getattr(base_dataset, "indices", []))
+            original_positions = [
+                position
+                for position, dataset_index in enumerate(train_dataset.indices)
+                if int(dataset_index) < original_pool_size
+            ]
+            panel_underlying_indices = np.asarray(
+                [int(train_dataset.indices[position]) for position in original_positions],
+                dtype=np.int64,
+            )
+            panel = Subset(train_dataset, original_positions)
+        else:
+            base_dataset = train_dataset
+            panel = train_dataset
+            panel_underlying_indices = np.arange(len(panel), dtype=np.int64)
+
+        max_samples = int(
+            getattr(self.args, "representation_diagnostics_max_samples", 20000)
+        )
+        if len(panel) > max_samples:
+            generator = torch.Generator().manual_seed(0)
+            chosen = torch.randperm(len(panel), generator=generator)[:max_samples]
+            panel_underlying_indices = panel_underlying_indices[chosen.numpy()]
+            panel = Subset(panel, chosen.tolist())
+
+        old_transform = getattr(base_dataset, "transform", None)
+        if hasattr(base_dataset, "transform"):
+            base_dataset.transform = self.transform
+        loader = DataLoader(
+            panel,
+            batch_size=self.args.val_batch_size,
+            shuffle=False,
+            num_workers=min(2, self.num_workers),
+            pin_memory=True,
+        )
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.ssl_method.model.to(device).eval()
+        features, labels = [], []
+        try:
+            for loaded_batch in tqdm(loader, desc="Representation diagnostics"):
+                images, targets = loaded_batch[0], loaded_batch[1]
+                embeddings = self.ssl_method.model.extract_features(
+                    images.to(device=device, dtype=self.ssl_method.dtype)
+                )
+                features.append(embeddings.float().cpu())
+                labels.append(targets.cpu())
+        finally:
+            if hasattr(base_dataset, "transform"):
+                base_dataset.transform = old_transform
+
+        x = torch.cat(features)
+        y = torch.cat(labels).numpy()
+        feature_variance = x.var(dim=0, unbiased=False)
+        normalized = F.normalize(x, dim=1).numpy().astype(np.float32)
+
+        index = faiss.IndexFlatL2(normalized.shape[1])
+        index.add(normalized)
+        k = min(int(self.args.k) + 1, len(normalized))
+        distances, neighbors = index.search(normalized, k)
+        radii = distances[:, 1:].mean(axis=1)
+        nearest_labels = y[neighbors[:, 1]]
+
+        centered = torch.nan_to_num(x - x.mean(dim=0, keepdim=True))
+        covariance = centered.T @ centered / max(1, len(centered) - 1)
+        try:
+            eigenvalues = torch.linalg.eigvalsh(covariance).clamp_min(0)
+        except torch.linalg.LinAlgError:
+            # Rank-deficient collapsed representations are precisely what this
+            # diagnostic must report.  Some CUDA eigensolvers reject their
+            # covariance matrix, so derive the same non-zero spectrum from an
+            # SVD rather than turning a completed experiment into a failure.
+            singular_values = torch.linalg.svdvals(centered.float())
+            eigenvalues = (
+                singular_values.square() / max(1, len(centered) - 1)
+            ).clamp_min(0)
+        probabilities = eigenvalues / eigenvalues.sum().clamp_min(1e-12)
+        spectral_entropy = -(
+            probabilities * probabilities.clamp_min(1e-12).log()
+        ).sum()
+        effective_rank = spectral_entropy.exp()
+
+        sorted_radii = np.sort(radii)
+        n = len(sorted_radii)
+        gini = (
+            (2 * np.arange(1, n + 1) - n - 1) @ sorted_radii
+            / max(n * sorted_radii.sum(), 1e-12)
+        )
+        prefix = "representation/"
+        metrics = {
+            prefix + "feature_variance_mean": float(feature_variance.mean()),
+            prefix + "feature_variance_min": float(feature_variance.min()),
+            prefix + "effective_rank": float(effective_rank),
+            prefix + "spectral_entropy": float(spectral_entropy),
+            prefix + "knn_1_accuracy": float(np.mean(nearest_labels == y)),
+            prefix + "normalized_radius_median": float(np.median(radii)),
+            prefix + "normalized_radius_p90": float(np.quantile(radii, 0.90)),
+            prefix + "normalized_radius_p95": float(np.quantile(radii, 0.95)),
+            prefix + "radius_gini": float(gini),
+            prefix + "num_original_samples": int(len(normalized)),
+        }
+        if bool(
+            getattr(self.args, "representation_diagnostics_save_samples", False)
+        ):
+            self._last_representation_diagnostic_samples = {
+                "underlying_indices": panel_underlying_indices,
+                "labels": y.astype(np.int64, copy=False),
+                "normalized_features": normalized.astype(np.float16, copy=False),
+                "normalized_radii": radii.astype(np.float32, copy=False),
+                "nearest_neighbor_indices": neighbors[:, 1].astype(
+                    np.int64, copy=False
+                ),
+            }
+        print("Representation diagnostics:", metrics)
+        return metrics
+
+    def _save_cycle_representation_diagnostics(self, cycle_idx: int) -> None:
+        """Persist a fixed-original-panel geometry snapshot after each stage."""
+        metrics = self.compute_representation_diagnostics()
+        metrics.update(
+            {
+                "cycle": int(cycle_idx),
+                "dataset_size_after_training": int(len(self.datamodule.train_dataset)),
+                "stage": "after_training_before_next_repair",
+            }
+        )
+        output_dir = os.path.join(
+            str(self.args.additional_data_path), "representation_diagnostics"
+        )
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, f"cycle_{cycle_idx}.json")
+        with open(output_path, "w") as handle:
+            json.dump(metrics, handle, indent=2)
+        print(f"Saved fixed-original-panel diagnostics to {output_path}")
+        samples = getattr(self, "_last_representation_diagnostic_samples", None)
+        if samples is not None and bool(
+            getattr(self.args, "representation_diagnostics_save_samples", False)
+        ):
+            sample_path = os.path.join(output_dir, f"cycle_{cycle_idx}_samples.npz")
+            np.savez_compressed(sample_path, **samples)
+            print(f"Saved fixed-panel sample diagnostics to {sample_path}")
 
     def get_random_indices(self, dataset) -> list:
         """Get random indices for augmentation"""
@@ -899,23 +1509,121 @@ class ImbalancedTraining:
         print(f"Oracle indices: {oracle_ood_indices.tolist()}")
         return oracle_ood_indices.tolist()
 
+    def get_oracle_real_indices(self) -> list:
+        subset = self.datamodule.train_dataset
+        if not isinstance(subset, Subset):
+            raise ValueError("oracle_real requires an imbalanced Subset dataset")
+        base = subset.dataset
+        original = list(range(len(base.indices)))
+        active = set(int(index) for index in subset.indices)
+        withheld = [index for index in original if index not in active]
+        requested = self.args.num_ood_samples * self.args.num_generations_per_ood_sample
+        if len(withheld) < requested:
+            raise ValueError(
+                f"oracle_real needs {requested} withheld images, found {len(withheld)}"
+            )
+        generator = torch.Generator().manual_seed(int(self.args.seed or 0))
+        chosen = torch.randperm(len(withheld), generator=generator)[:requested]
+        return [withheld[index] for index in chosen.tolist()]
+
     def get_ood_indices(self, dataset, cycle_idx) -> list:
         """Get indices of OOD samples using feature-based detection"""
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.ssl_method.to(device)
         self.ssl_method.model.to(dtype=self.ssl_method.dtype)
 
+        selection_dataset = dataset
+        candidate_positions = None
+        if bool(getattr(self.args, "selection_original_only", False)):
+            if not isinstance(dataset, Subset):
+                raise ValueError(
+                    "selection_original_only requires the training dataset Subset"
+                )
+            base_dataset = dataset.dataset
+            original_pool_size = len(getattr(base_dataset, "indices", []))
+            candidate_positions = [
+                position
+                for position, dataset_index in enumerate(dataset.indices)
+                if int(dataset_index) < original_pool_size
+            ]
+            selection_dataset = Subset(dataset, candidate_positions)
+
+        feature_extractor = self.ssl_method.model.extract_features
+        selection_dtype = self.ssl_method.dtype
+        selection_model = None
+        if str(getattr(self.args, "selection_encoder", "ssl")).lower() == "clip":
+            from transformers import CLIPVisionModelWithProjection
+
+            selection_model = CLIPVisionModelWithProjection.from_pretrained(
+                "openai/clip-vit-base-patch32",
+                cache_dir=os.environ.get("HF_HUB_CACHE"),
+                local_files_only=os.environ.get("HF_HUB_OFFLINE") == "1",
+                torch_dtype=torch.float16,
+            ).to(device).eval()
+            image_mean = torch.tensor(
+                [0.485, 0.456, 0.406], device=device
+            ).view(1, 3, 1, 1)
+            image_std = torch.tensor(
+                [0.229, 0.224, 0.225], device=device
+            ).view(1, 3, 1, 1)
+            clip_mean = torch.tensor(
+                [0.48145466, 0.4578275, 0.40821073], device=device
+            ).view(1, 3, 1, 1)
+            clip_std = torch.tensor(
+                [0.26862954, 0.26130258, 0.27577711], device=device
+            ).view(1, 3, 1, 1)
+
+            def feature_extractor(batch):
+                pixels = batch.float() * image_std + image_mean
+                pixels = (pixels - clip_mean) / clip_std
+                return selection_model(
+                    pixel_values=pixels.to(dtype=torch.float16)
+                ).image_embeds
+
+            selection_dtype = torch.float32
+
         ood = OOD(
             args=self.args,
-            dataset=dataset,  # Now takes single dataset
-            feature_extractor=self.ssl_method.model.extract_features,
+            dataset=selection_dataset,
+            feature_extractor=feature_extractor,
             cycle_idx=cycle_idx,
             device=self.ssl_method.device,
-            dtype=self.ssl_method.dtype,
+            dtype=selection_dtype,
         )
 
         ood_indices = ood.ood()
+        if candidate_positions is not None:
+            ood_indices = [candidate_positions[index] for index in ood_indices]
+            for key in (
+                "selected_dataset_indices",
+                "selected_dataset_indices_step",
+                "top_dataset_indices",
+            ):
+                if ood.last_results is not None and key in ood.last_results:
+                    ood.last_results[key] = [
+                        candidate_positions[index]
+                        for index in ood.last_results[key]
+                    ]
         self.last_ood_results = ood.last_results
+        if selection_model is not None:
+            del selection_model
+            gc.collect()
+            torch.cuda.empty_cache()
+
+        if isinstance(dataset, Subset):
+            base_dataset = dataset.dataset
+            original_pool_size = len(getattr(base_dataset, "indices", []))
+            selected_underlying = [int(dataset.indices[index]) for index in ood_indices]
+            original_count = sum(
+                index < original_pool_size for index in selected_underlying
+            )
+            fraction = original_count / max(1, len(selected_underlying))
+            print(
+                f"Selected-anchor provenance: {original_count}/"
+                f"{len(selected_underlying)} original ({fraction:.3f})"
+            )
+            if self.last_ood_results is not None:
+                self.last_ood_results["selected_original_fraction"] = fraction
 
         return ood_indices
 
@@ -949,7 +1657,8 @@ class ImbalancedTraining:
         all_labels = []
 
         with torch.no_grad():
-            for images, labels in tqdm(dataloader, desc="Collecting embeddings"):
+            for loaded_batch in tqdm(dataloader, desc="Collecting embeddings"):
+                images, labels = loaded_batch[0], loaded_batch[1]
                 images = images.to(
                     device=self.ssl_method.device, dtype=self.ssl_method.dtype
                 )
@@ -1446,6 +2155,23 @@ class ImbalancedTraining:
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
         benchmarks = FinetuningBenchmarks.benchmarks
+        requested_benchmarks = getattr(self.args, "finetune_benchmarks", None)
+        if requested_benchmarks:
+            requested_names = {str(name) for name in requested_benchmarks}
+            known_names = {benchmark.__name__ for benchmark in benchmarks}
+            unknown_names = sorted(requested_names - known_names)
+            if unknown_names:
+                raise ValueError(
+                    "Unknown finetune benchmark(s): "
+                    + ", ".join(unknown_names)
+                    + ". Available benchmarks: "
+                    + ", ".join(sorted(known_names))
+                )
+            benchmarks = [
+                benchmark
+                for benchmark in benchmarks
+                if benchmark.__name__ in requested_names
+            ]
         results = {}
 
         self.trainer_args.pop("callbacks")
@@ -1474,9 +2200,37 @@ class ImbalancedTraining:
                 lr=self.args.ssl.lr,
                 transform=transform,
                 crop_size=self.args.crop_size,
+                finetune_encoder=bool(
+                    getattr(self.args, "finetune_encoder", False)
+                ),
             )
 
-            self.trainer_args["max_epochs"] = finetuner.max_epochs
+            label_fraction = float(
+                getattr(self.args, "finetune_label_fraction", 1.0)
+            )
+            if not 0.0 < label_fraction <= 1.0:
+                raise ValueError(
+                    "finetune_label_fraction must satisfy 0 < fraction <= 1"
+                )
+            if label_fraction < 1.0:
+                finetuner.train_dataset = self._stratified_lowshot_subset(
+                    finetuner.train_dataset,
+                    label_fraction,
+                    int(getattr(self.args, "finetune_seed", 0)),
+                )
+                print(
+                    f"Using {len(finetuner.train_dataset)} examples "
+                    f"({label_fraction:.1%}) for end-to-end low-shot evaluation"
+                )
+
+            configured_max_epochs = getattr(
+                self.args, "finetune_max_epochs", None
+            )
+            self.trainer_args["max_epochs"] = (
+                int(configured_max_epochs)
+                if configured_max_epochs is not None
+                else finetuner.max_epochs
+            )
 
             early_stop_callback = EarlyStopping(
                 monitor="val_loss",
@@ -1489,7 +2243,12 @@ class ImbalancedTraining:
             self.trainer_args["callbacks"] = (
                 [early_stop_callback] if "KNN" not in benchmark.__name__ else []
             )
-            self.trainer_args["max_time"] = {"minutes": 25}
+            max_time_minutes = getattr(
+                self.args, "finetune_max_time_minutes", 25
+            )
+            self.trainer_args["max_time"] = {
+                "minutes": int(max_time_minutes)
+            }
             self.trainer_args["accumulate_grad_batches"] = 1
 
             if torch.cuda.is_available():
@@ -1507,6 +2266,46 @@ class ImbalancedTraining:
                 torch.cuda.empty_cache()
 
         return results
+
+    @staticmethod
+    def _dataset_labels(dataset) -> np.ndarray:
+        if isinstance(dataset, Subset):
+            parent = ImbalancedTraining._dataset_labels(dataset.dataset)
+            return parent[np.asarray(dataset.indices, dtype=int)]
+        # ImbalancedDataset exposes the original Hugging Face metadata through
+        # attributes such as ``labels``.  For ImageNet those are class names,
+        # not per-example integer targets, so resolve its explicit index/label
+        # tensors before considering generic dataset attributes.
+        if hasattr(dataset, "indices") and hasattr(dataset, "label_tensor"):
+            labels = np.asarray(dataset.label_tensor, dtype=int)
+            return labels[np.asarray(dataset.indices, dtype=int)]
+        if hasattr(dataset, "samples"):
+            return np.asarray([sample[1] for sample in dataset.samples], dtype=int)
+        for attribute in ("targets", "labels", "label_tensor"):
+            if hasattr(dataset, attribute):
+                values = getattr(dataset, attribute)
+                if torch.is_tensor(values):
+                    values = values.cpu().numpy()
+                values = np.asarray(values, dtype=int)
+                if len(values) == len(dataset):
+                    return values
+        return np.asarray([int(dataset[idx][1]) for idx in range(len(dataset))])
+
+    @classmethod
+    def _stratified_lowshot_subset(cls, dataset, fraction, seed):
+        labels = cls._dataset_labels(dataset)
+        rng = np.random.default_rng(seed)
+        selected = []
+        for label in np.unique(labels):
+            candidates = np.flatnonzero(labels == label)
+            count = max(1, int(round(len(candidates) * fraction)))
+            selected.extend(
+                rng.choice(candidates, size=min(count, len(candidates)), replace=False)
+                .astype(int)
+                .tolist()
+            )
+        rng.shuffle(selected)
+        return Subset(dataset, selected)
 
     def _cleanup_cycle_resources(self) -> None:
         """Clean up resources after each training cycle"""
@@ -2520,7 +3319,12 @@ class ImbalancedTraining:
                     print(
                         f"Processed {processed}/{len(local_samples)} images on rank {rank}, generated {local_images_saved} augmentations"
                     )
-        elif self.args.generation_model == "stable_diffusion_3":
+        elif self.args.generation_model in {
+            "stable_diffusion_3",
+            "stable_diffusion_3_t2i",
+            "stable_diffusion_3_captioned_img2img",
+            "strong_augmentation",
+        }:
             sd3_batch_size = max(1, getattr(self.args, "sd3_batch_size", 1))
             sd3_guidance = getattr(self.args, "sd3_guidance", 5.0)
             sd3_num_steps = getattr(self.args, "sd3_num_steps", 20)

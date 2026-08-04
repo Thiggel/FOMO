@@ -1,0 +1,20 @@
+\begin{table}[H]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Selection rule ablation with full linear-probe results.}
+\label{tab:app_selection_linear}
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{l c c c c c c c c}
+\toprule
+Setting & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+Mode-window q1-99 + diversity & 75.6 {\scriptsize$\pm$ 0.1} & 49.2 {\scriptsize$\pm$ 0.2} & \textbf{16.9 {\scriptsize$\pm$ 0.7}} & 21.9 {\scriptsize$\pm$ 0.4} & 34.6 {\scriptsize$\pm$ 2.9} & 43.5 {\scriptsize$\pm$ 0.7} & 52.8 {\scriptsize$\pm$ 0.1} & 42.1 {\scriptsize$\pm$ 0.7} \\
+Mode-window q50-99 + diversity & 75.5 {\scriptsize$\pm$ 0.1} & \textbf{49.3 {\scriptsize$\pm$ 0.4}} & 15.2 {\scriptsize$\pm$ 0.3} & \textbf{22.4 {\scriptsize$\pm$ 0.6}} & 35.5 {\scriptsize$\pm$ 1.1} & \textbf{43.8 {\scriptsize$\pm$ 3.1}} & 53.4 {\scriptsize$\pm$ 0.9} & 42.2 {\scriptsize$\pm$ 0.9} \\
+Mode-window q75-99 + diversity (default) & \textbf{76.0 {\scriptsize$\pm$ 0.3}} & 49.1 {\scriptsize$\pm$ 0.2} & 15.2 {\scriptsize$\pm$ 1.2} & 22.4 {\scriptsize$\pm$ 0.4} & \textbf{36.8 {\scriptsize$\pm$ 1.9}} & 42.9 {\scriptsize$\pm$ 1.0} & \textbf{53.8 {\scriptsize$\pm$ 0.1}} & \textbf{42.3 {\scriptsize$\pm$ 0.7}} \\
+Top-tail & 70.8 {\scriptsize$\pm$ 0.5} & 43.1 {\scriptsize$\pm$ 1.0} & 10.0 {\scriptsize$\pm$ 1.7} & 15.9 {\scriptsize$\pm$ 1.3} & 27.7 {\scriptsize$\pm$ 1.0} & 30.5 {\scriptsize$\pm$ 1.2} & 42.2 {\scriptsize$\pm$ 1.4} & 34.3 {\scriptsize$\pm$ 1.2} \\
+Uniform & 71.5 {\scriptsize$\pm$ 0.2} & 43.8 {\scriptsize$\pm$ 0.7} & 9.3 {\scriptsize$\pm$ 0.9} & 17.5 {\scriptsize$\pm$ 1.2} & 32.9 {\scriptsize$\pm$ 0.4} & 31.7 {\scriptsize$\pm$ 3.9} & 42.0 {\scriptsize$\pm$ 0.9} & 35.5 {\scriptsize$\pm$ 1.2} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

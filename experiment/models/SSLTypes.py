@@ -10,6 +10,8 @@ from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.SDCLR import SDCLR
 from experiment.models.SSLMethods.Dino import Dino
 from experiment.models.SSLMethods.MoCo import MoCo, moco_transform
+from experiment.models.SSLMethods.MAE import MAE
+from experiment.models.SSLMethods.DiffAug import DiffAug
 from experiment.models.SSLMethods.Supervised import Supervised
 from experiment.utils.collate_functions import simclr_collate, dino_collate
 
@@ -157,9 +159,35 @@ class SSLTypes(Enum):
                     size=parserargs.crop_size,
                     global_crops_scale=(0.4, 1.0),
                     local_crops_scale=(0.05, 0.4),
-                    local_crops_number=2,
+                    local_crops_number=int(parserargs.dino_local_crops),
                 ),
                 collate_fn=lambda parserargs: dino_collate,
+            ),
+            "MAE": SSLType(
+                module=lambda model, lr, weight_decay, max_epochs, parserargs, *args, **kwargs: MAE(
+                    model=model,
+                    lr=lr,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    mask_ratio=float(parserargs.ssl.mask_ratio),
+                    *args,
+                    **kwargs,
+                ),
+                transforms=lambda parserargs: transforms.Compose(
+                    [
+                        transforms.RandomResizedCrop(
+                            (parserargs.crop_size, parserargs.crop_size),
+                            scale=(0.2, 1.0),
+                        ),
+                        transforms.RandomHorizontalFlip(),
+                        transforms.ToTensor(),
+                        transforms.Normalize(
+                            mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225],
+                        ),
+                    ]
+                ),
+                collate_fn=lambda parserargs: None,
             ),
             "Supervised": SSLType(
                 module=lambda model, lr, weight_decay, max_epochs, *args, **kwargs: Supervised(
@@ -180,6 +208,21 @@ class SSLTypes(Enum):
                     ]
                 ),
                 collate_fn=lambda _: None,
+            ),
+            "DiffAug": SSLType(
+                module=lambda model, lr, temperature, weight_decay, max_epochs, use_temperature_schedule, *args, **kwargs: DiffAug(
+                    model=model, lr=lr, temperature=temperature,
+                    weight_decay=weight_decay, max_epochs=max_epochs,
+                    use_temperature_schedule=use_temperature_schedule, *args, **kwargs
+                ),
+                transforms=lambda parserargs: ContrastiveTransformations(
+                    transforms.Compose([
+                        transforms.RandomResizedCrop((parserargs.crop_size, parserargs.crop_size)),
+                        transforms.RandomHorizontalFlip(), transforms.ToTensor(),
+                        transforms.Normalize([.485,.456,.406],[.229,.224,.225]),
+                    ]), n_views=2,
+                ),
+                collate_fn=lambda parserargs: simclr_collate,
             ),
         }
 

@@ -1,0 +1,18 @@
+\begin{table}[H]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Full $k$NN baseline comparison on ImageNet-100-LT pretraining.}
+\label{tab:app_baselines_knn_full}
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{l c c c c c c c c}
+\toprule
+Method & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+Balanced & 63.6 {\scriptsize$\pm$ 0.7} & 32.8 {\scriptsize$\pm$ 0.8} & 4.4 {\scriptsize$\pm$ 0.4} & 9.0 {\scriptsize$\pm$ 0.4} & 22.3 {\scriptsize$\pm$ 0.1} & 17.2 {\scriptsize$\pm$ 0.1} & 34.0 {\scriptsize$\pm$ 1.1} & 26.2 {\scriptsize$\pm$ 0.5} \\
+Imbalanced & 63.9 {\scriptsize$\pm$ 0.2} & 33.2 {\scriptsize$\pm$ 0.3} & 4.5 {\scriptsize$\pm$ 0.6} & 9.0 {\scriptsize$\pm$ 0.3} & 22.5 {\scriptsize$\pm$ 0.3} & 16.8 {\scriptsize$\pm$ 0.2} & 34.3 {\scriptsize$\pm$ 0.3} & 26.3 {\scriptsize$\pm$ 0.3} \\
+BRIDGE (ours) & \textbf{69.0 {\scriptsize$\pm$ 0.5}} & \textbf{37.8 {\scriptsize$\pm$ 0.3}} & \textbf{6.7 {\scriptsize$\pm$ 0.3}} & \textbf{11.7 {\scriptsize$\pm$ 0.2}} & \textbf{36.5 {\scriptsize$\pm$ 0.4}} & \textbf{25.3 {\scriptsize$\pm$ 1.0}} & \textbf{48.1 {\scriptsize$\pm$ 0.6}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

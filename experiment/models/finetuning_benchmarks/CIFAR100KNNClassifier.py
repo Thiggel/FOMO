@@ -1,25 +1,24 @@
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100
 from .BaseKNNClassifier import BaseKNNClassifier
-from .DatasetRoots import get_data_root, allow_data_downloads
+from .DatasetRoots import get_data_root
+from .CIFARDatasets import get_cifar_dataset
 
 
 class CIFAR100KNNClassifier(BaseKNNClassifier):
     def setup(self, stage=None):
         data_root = get_data_root()
-        allow_downloads = allow_data_downloads()
         if stage == "fit" or stage is None:
-            self.train_dataset = CIFAR100(
+            self.train_dataset = get_cifar_dataset(
+                num_classes=100,
                 root=data_root,
                 train=True,
-                download=allow_downloads,
                 transform=self.transform,
             )
         if stage == "test" or stage is None:
-            self.test_dataset = CIFAR100(
+            self.test_dataset = get_cifar_dataset(
+                num_classes=100,
                 root=data_root,
                 train=False,
-                download=allow_downloads,
                 transform=self.transform,
             )
 

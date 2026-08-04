@@ -17,6 +17,7 @@ class TransferLearningBenchmark(L.LightningModule):
         weight_decay: float = 1e-3,
         max_epochs: int = 500,
         num_classes: int = None,
+        finetune_encoder: bool = False,
         *args,
         **kwargs,
     ):
@@ -28,8 +29,9 @@ class TransferLearningBenchmark(L.LightningModule):
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
+        self.finetune_encoder = bool(finetune_encoder)
         for param in self.model.parameters():
-            param.requires_grad = False
+            param.requires_grad = self.finetune_encoder
 
         self.num_features = self.model.num_features
         self.probe = nn.Linear(self.num_features, num_classes)
@@ -40,20 +42,30 @@ class TransferLearningBenchmark(L.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = F.normalize(x, dim=-1)
-        with torch.no_grad():
+        with torch.set_grad_enabled(self.finetune_encoder):
             features = self.model.extract_features(x)
         return features
 
     @property
     def num_workers(self) -> int:
-        return min(6, get_num_workers())
+        # The benchmark suite is run sequentially in one Lightning process.
+        # Six persistent worker pools caused intermittent worker aborts while
+        # tearing one benchmark down and constructing the next (most readily
+        # reproduced after Aircraft).  Two workers keep the input pipeline
+        # busy without accumulating enough child processes to destabilise the
+        # full seven-dataset evaluation.
+        return max(1, min(2, get_num_workers()))
 
     def configure_optimizers(self):
-        param_groups = [p for p in self.parameters() if p.requires_grad]
+        if self.finetune_encoder:
+            param_groups = [
+                {"params": self.model.parameters(), "lr": 1e-5},
+                {"params": self.probe.parameters(), "lr": 1e-3},
+            ]
+        else:
+            param_groups = [p for p in self.parameters() if p.requires_grad]
 
-        optimizer = torch.optim.AdamW(
-            param_groups, lr=1e-3
-        )
+        optimizer = torch.optim.AdamW(param_groups, lr=1e-3)
 
         lr_scheduler = optim.lr_scheduler.MultiStepLR(
             optimizer,
@@ -139,6 +151,21 @@ class TransferLearningBenchmark(L.LightningModule):
             f"{dataset_name}_test_accuracy_class_{class_idx:03d}": acc
             for class_idx, acc in enumerate(per_class_accuracy.tolist())
         }
+        valid_class_accuracy = per_class_accuracy[nonzero_mask]
+        if valid_class_accuracy.numel():
+            metric_dict[
+                f"{dataset_name}_test_balanced_accuracy"
+            ] = valid_class_accuracy.mean()
+        for group_name, attribute in (
+            ("many", "many_shot_classes"),
+            ("medium", "medium_shot_classes"),
+            ("few", "few_shot_classes"),
+        ):
+            class_ids = getattr(self, attribute, None)
+            if class_ids:
+                metric_dict[f"{dataset_name}_test_{group_name}_accuracy"] = (
+                    per_class_accuracy[torch.as_tensor(class_ids, dtype=torch.long)].mean()
+                )
         self.log_dict(metric_dict, sync_dist=True)
         self._test_predictions = []
         self._test_targets = []

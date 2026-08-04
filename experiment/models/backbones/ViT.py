@@ -13,7 +13,32 @@ class ViT(nn.Module):
         self.num_features = self.config.hidden_size
 
     def _load_model(self, model_name: str) -> nn.Module:
-        config = ViTConfig.from_pretrained(model_name)
+        try:
+            config = ViTConfig.from_pretrained(model_name)
+        except OSError:
+            # The WinKawaks repositories only provide architecture configs, and
+            # Alex compute nodes are intentionally offline.  These are the
+            # canonical DeiT/ViT Tiny, Small, and Base dimensions; constructing
+            # them locally is equivalent and removes a brittle network lookup.
+            if "vit-tiny" in model_name:
+                hidden_size, layers, heads = 192, 12, 3
+            elif "vit-small" in model_name:
+                hidden_size, layers, heads = 384, 12, 6
+            elif "vit-base" in model_name:
+                hidden_size, layers, heads = 768, 12, 12
+            else:
+                raise
+            config = ViTConfig(
+                image_size=224,
+                patch_size=16,
+                num_channels=3,
+                hidden_size=hidden_size,
+                num_hidden_layers=layers,
+                num_attention_heads=heads,
+                intermediate_size=hidden_size * 4,
+                hidden_dropout_prob=0.0,
+                attention_probs_dropout_prob=0.0,
+            )
         model = ViTModel(config)
 
         return model, config

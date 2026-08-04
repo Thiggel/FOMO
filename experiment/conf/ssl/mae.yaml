@@ -1,0 +1,4 @@
+ssl_method: MAE
+lr: 1.5e-4
+weight_decay: 0.05
+mask_ratio: 0.75

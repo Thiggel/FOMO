@@ -30,6 +30,9 @@ from experiment.models.finetuning_benchmarks.ImageNet100KNNClassifier import (
 from experiment.models.finetuning_benchmarks.ImageNet100LTKNNClassifier import (
     ImageNet100LTKNNClassifier,
 )
+from experiment.models.finetuning_benchmarks.CIFAR100LTFineTune import (
+    CIFAR100LTFineTune,
+)
 
 
 
@@ -49,6 +52,7 @@ class FinetuningBenchmarks:
         CIFAR100FineTuner,
         ImageNet100LTKNNClassifier,
         ImageNet100LTFineTune,
+        CIFAR100LTFineTune,
     ]
 
     test_benchmarks = []

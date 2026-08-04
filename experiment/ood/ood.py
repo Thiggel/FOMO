@@ -1,8 +1,9 @@
 from typing import Optional
+import json
 
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 import os
 from torchvision.utils import save_image
@@ -21,11 +22,17 @@ class OOD:
         device=torch.device("cuda"),
         dtype=torch.float32,
     ):
+        # Keep the full configuration because a few acquisition variants use
+        # optional controls that are not otherwise materialized as attributes.
+        self.args = args
         self.dataset = dataset
         self.num_workers = min(6, get_num_workers())
         self.feature_extractor = feature_extractor
         self.batch_size = args.val_batch_size
         self.K = args.k
+        self.distance_metric = str(
+            getattr(args, "ood_distance_metric", "normalized_l2")
+        ).lower()
         self.num_ood_samples = args.num_ood_samples * args.every_nth_ood_sample
         self.every_nth_ood_sample = args.every_nth_ood_sample
         self.cycle_idx = cycle_idx
@@ -44,6 +51,15 @@ class OOD:
         )
         self.mode_diversity_normalize_features = bool(
             getattr(args, "ood_mode_diversity_normalize_features", True)
+        )
+        # Keep diagnostics with each experiment run.  Writing to a shared
+        # repository-level ood_logs directory corrupts evidence when Slurm
+        # array tasks run concurrently.
+        run_dir = getattr(args, "additional_data_path", None)
+        self.diagnostics_dir = (
+            os.path.join(str(run_dir), "ood_diagnostics")
+            if run_dir
+            else "./ood_logs"
         )
         self.last_results: Optional[dict] = None
         self.mode_histogram_max_bins = 512
@@ -82,9 +98,8 @@ class OOD:
         indices = []
 
         with torch.no_grad():
-            for batch_idx, (batch, _) in enumerate(
-                tqdm(loader, desc="Extracting features")
-            ):
+            for batch_idx, loaded_batch in enumerate(tqdm(loader, desc="Extracting features")):
+                batch = loaded_batch[0]
                 start_idx = batch_idx * self.batch_size
                 end_idx = start_idx + len(batch)
                 indices.extend(range(start_idx, end_idx))
@@ -117,17 +132,37 @@ class OOD:
         print("\nComputing KNN distances...")
         n_samples = len(features)
 
+        index_features = np.asarray(features, dtype=np.float32)
+        if self.distance_metric in {
+            "normalized_l2",
+            "cosine",
+            "median_normalized",
+        }:
+            norms = np.linalg.norm(index_features, axis=1, keepdims=True)
+            index_features = index_features / np.clip(norms, 1e-12, None)
+        elif self.distance_metric != "raw_l2":
+            raise ValueError(
+                "ood_distance_metric must be one of raw_l2, normalized_l2, "
+                "cosine, or median_normalized"
+            )
+
         # Create FAISS index
-        dimension = features.shape[1]
+        dimension = index_features.shape[1]
         index = faiss.IndexFlatL2(dimension)
-        index.add(features)
+        index.add(index_features)
 
         # Find k+1 nearest neighbors (including self)
         k = min(self.K + 1, n_samples)
-        distances, neighbors = index.search(features, k)
+        distances, neighbors = index.search(index_features, k)
 
         # Remove self-distance (first column) and compute mean
         knn_distances = distances[:, 1:].mean(axis=1)
+        if self.distance_metric == "cosine":
+            # For unit vectors, squared Euclidean distance is 2(1-cosine).
+            knn_distances = knn_distances / 2.0
+        elif self.distance_metric == "median_normalized":
+            median = float(np.median(knn_distances))
+            knn_distances = knn_distances / max(median, 1e-12)
 
         print(f"\nDistance statistics:")
         print(f"Mean distance: {np.mean(knn_distances):.4f}")
@@ -155,9 +190,50 @@ class OOD:
         # Get indices ordered by distance
         sorted_indices_desc = np.argsort(distances)[::-1]
 
-        if self.selection_strategy == "mode_window":
+        percentile_bin = getattr(self.args, "ood_percentile_bin", None)
+        if percentile_bin is not None:
+            low_q, high_q = [float(value) for value in percentile_bin]
+            low, high = np.quantile(distances, [low_q, high_q])
+            candidates = np.flatnonzero((distances >= low) & (distances <= high))
+            selected_indices = self._fps_dataset_indices(
+                candidates, features, num_samples
+            )
+            mode_details = {
+                "percentile_bin": [low_q, high_q],
+                "candidate_pool_size": int(len(candidates)),
+                "diversity_sampling": True,
+            }
+        elif self.selection_strategy == "dense":
+            selected_indices = np.argsort(distances)[:num_samples]
+            mode_details = {"dense_region_placebo": True}
+        elif self.selection_strategy in {"mode_window", "mode_random"}:
+            diversity = self.mode_diversity_sampling
+            if self.selection_strategy == "mode_random":
+                self.mode_diversity_sampling = False
             selected_indices, mode_details = self._select_mode_window_indices(
                 distances, num_samples, features
+            )
+            self.mode_diversity_sampling = diversity
+        elif self.selection_strategy == "densest_window":
+            selected_indices, mode_details = self._select_densest_window_indices(
+                distances, num_samples, features
+            )
+        elif self.selection_strategy in {"band_random", "band_fps"}:
+            selected_indices, mode_details = self._select_sparse_band_indices(
+                distances,
+                num_samples,
+                features,
+                use_fps=self.selection_strategy == "band_fps",
+            )
+        elif self.selection_strategy == "all_fps":
+            positions = np.arange(len(distances), dtype=int)
+            selected_indices = self._fps_dataset_indices(
+                positions, features, num_samples
+            )
+            mode_details = {"candidate_pool_size": int(len(positions))}
+        elif self.selection_strategy == "cluster_inverse":
+            selected_indices, mode_details = self._select_inverse_cluster_indices(
+                features, num_samples
             )
         else:
             selected_indices = sorted_indices_desc[:num_samples]
@@ -191,25 +267,103 @@ class OOD:
         if mode_details is not None:
             self.last_results["mode_details"] = mode_details
 
-        # Save results and visualizations
-        if not os.path.exists(f"./ood_logs/{self.cycle_idx}"):
-            os.makedirs(f"./ood_logs/{self.cycle_idx}/images", exist_ok=True)
+        # Persist the actual policy output alongside the score distribution.
+        # This is needed for the rebuttal's score-percentile, overlap, and
+        # original-versus-synthetic provenance analyses; a histogram alone
+        # cannot establish what the selector actually acquired.
+        sorted_ascending = np.sort(distances)
+        selected_scores = distances[selected_indices]
+        selected_percentiles = np.searchsorted(
+            sorted_ascending, selected_scores, side="right"
+        ) / max(1, len(sorted_ascending))
+        selected_underlying, selected_original = self._selection_provenance(
+            selected_dataset_indices
+        )
+        self.last_results.update(
+            {
+                "selected_scores": selected_scores,
+                "selected_score_percentiles": selected_percentiles,
+                "selected_underlying_indices": selected_underlying,
+                "selected_is_original": selected_original,
+            }
+        )
 
-        np.save(f"./ood_logs/{self.cycle_idx}/distances.npy", distances)
+        # Save results and visualizations
+        cycle_dir = os.path.join(self.diagnostics_dir, str(self.cycle_idx))
+        if not os.path.exists(cycle_dir):
+            os.makedirs(os.path.join(cycle_dir, "images"), exist_ok=True)
+
+        np.save(os.path.join(cycle_dir, "distances.npy"), distances)
+        np.savez_compressed(
+            os.path.join(cycle_dir, "selection.npz"),
+            dataset_indices=np.asarray(indices, dtype=np.int64),
+            distances=np.asarray(distances, dtype=np.float32),
+            selected_positions=np.asarray(selected_indices, dtype=np.int64),
+            selected_dataset_indices=np.asarray(selected_dataset_indices, dtype=np.int64),
+            selected_underlying_indices=np.asarray(selected_underlying, dtype=np.int64),
+            selected_scores=np.asarray(selected_scores, dtype=np.float32),
+            selected_score_percentiles=np.asarray(selected_percentiles, dtype=np.float32),
+            selected_is_original=np.asarray(selected_original, dtype=bool),
+        )
+        summary = {
+            "selection_strategy": str(self.selection_strategy),
+            "distance_metric": str(self.distance_metric),
+            "k": int(self.K),
+            "n_candidates": int(len(distances)),
+            "n_selected": int(len(selected_indices)),
+            "selected_percentile_median": float(np.median(selected_percentiles)),
+            "selected_percentile_min": float(np.min(selected_percentiles)),
+            "selected_percentile_max": float(np.max(selected_percentiles)),
+            "selected_original_fraction": float(np.mean(selected_original)),
+            "mode_details": mode_details,
+        }
+        with open(os.path.join(cycle_dir, "selection.json"), "w") as handle:
+            json.dump(summary, handle, indent=2)
 
         num_vis = min(10, len(selected_dataset_indices_step))
         for i in range(num_vis):
             dataset_idx = selected_dataset_indices_step[i]
-            image, _ = self.dataset[dataset_idx]
+            image = self.dataset[dataset_idx][0]
             if isinstance(image, torch.Tensor) and len(image.shape) in [3, 4]:
                 distance = distances[selected_indices_step[i]]
-                image_path = f"./ood_logs/{self.cycle_idx}/images/ood_{i}_distance_{distance:.3f}.jpg"
+                image_path = os.path.join(
+                    cycle_dir, "images", f"ood_{i}_distance_{distance:.3f}.jpg"
+                )
                 save_image(image, image_path)
 
         # select only every nth ood sample
         ood_indices = selected_dataset_indices_step
 
         return ood_indices
+
+    def _selection_provenance(self, selected_dataset_indices):
+        """Resolve Subset nesting and mark anchors as source or synthetic."""
+        underlying = []
+        root = self.dataset
+        while isinstance(root, Subset):
+            root = root.dataset
+        original_pool_size = (
+            len(root.indices) if hasattr(root, "indices") else None
+        )
+
+        for position in selected_dataset_indices:
+            dataset = self.dataset
+            index = int(position)
+            while isinstance(dataset, Subset):
+                if not 0 <= index < len(dataset.indices):
+                    raise IndexError(
+                        f"Selection position {index} is outside a Subset of "
+                        f"length {len(dataset.indices)}"
+                    )
+                index = int(dataset.indices[index])
+                dataset = dataset.dataset
+            underlying.append(index)
+
+        if original_pool_size is None:
+            original = [True] * len(underlying)
+        else:
+            original = [index < original_pool_size for index in underlying]
+        return underlying, original
 
     def _select_mode_window_indices(self, distances, num_samples, features=None):
         """Select indices around the mode of the distance distribution."""
@@ -235,6 +389,8 @@ class OOD:
             num_samples = min(num_samples, total_samples)
 
         if np.isclose(sorted_distances[0], sorted_distances[-1]):
+            clipped_low = float(sorted_distances[0])
+            clipped_high = float(sorted_distances[-1])
             mode_left = float(sorted_distances[0])
             mode_right = float(sorted_distances[-1])
             mode_center = mode_left
@@ -357,6 +513,111 @@ class OOD:
         }
 
         return sorted_indices[selected_positions], mode_details
+
+    def _sparse_band(self, distances):
+        low_q, high_q = self.mode_histogram_quantile_range
+        low, high = np.quantile(distances, [low_q, high_q])
+        return np.flatnonzero((distances >= low) & (distances <= high)), low, high
+
+    def _fps_dataset_indices(self, candidate_indices, features, num_samples):
+        candidate_indices = np.asarray(candidate_indices, dtype=int)
+        if candidate_indices.size <= num_samples:
+            return candidate_indices
+        # _diverse_subsample_positions maps sorted positions through an index
+        # array.  An identity ordering makes it a reusable all-candidate FPS.
+        identity = np.arange(len(features), dtype=int)
+        selected_positions = self._diverse_subsample_positions(
+            identity, candidate_indices, features, num_samples
+        )
+        return identity[selected_positions]
+
+    def _select_sparse_band_indices(
+        self, distances, num_samples, features, use_fps
+    ):
+        candidates, low, high = self._sparse_band(distances)
+        if use_fps:
+            selected = self._fps_dataset_indices(candidates, features, num_samples)
+        else:
+            selected = np.random.permutation(candidates)[:num_samples]
+        return selected, {
+            "quantile_range": [float(low), float(high)],
+            "candidate_pool_size": int(len(candidates)),
+            "diversity_sampling": bool(use_fps),
+        }
+
+    def _select_densest_window_indices(self, distances, num_samples, features):
+        """Bin-free highest-mass narrow window within the trimmed sparse band."""
+        candidates, low, high = self._sparse_band(distances)
+        if candidates.size == 0:
+            return np.array([], dtype=int), None
+        ordered = candidates[np.argsort(distances[candidates])]
+        pool_size = min(
+            len(ordered),
+            max(
+                num_samples,
+                int(np.ceil(num_samples * self.mode_candidate_pool_multiplier)),
+            ),
+        )
+        if len(ordered) <= pool_size:
+            window = ordered
+            start = 0
+        else:
+            widths = (
+                distances[ordered[pool_size - 1 :]]
+                - distances[ordered[: len(ordered) - pool_size + 1]]
+            )
+            start = int(np.argmin(widths))
+            window = ordered[start : start + pool_size]
+        if self.mode_diversity_sampling:
+            selected = self._fps_dataset_indices(window, features, num_samples)
+        else:
+            selected = window[:num_samples]
+        return selected, {
+            "quantile_range": [float(low), float(high)],
+            "candidate_pool_size": int(len(window)),
+            "window_start_rank": int(start),
+            "window_score_width": float(
+                distances[window].max() - distances[window].min()
+            ),
+            "diversity_sampling": bool(self.mode_diversity_sampling),
+            "bin_free": True,
+        }
+
+    def _select_inverse_cluster_indices(self, features, num_samples):
+        """Closest-prior control: allocate samples inversely to cluster occupancy."""
+        normalized = np.asarray(features, dtype=np.float32)
+        normalized /= np.clip(
+            np.linalg.norm(normalized, axis=1, keepdims=True), 1e-12, None
+        )
+        num_clusters = max(2, min(int(np.sqrt(len(normalized))), len(normalized)))
+        kmeans = faiss.Kmeans(
+            normalized.shape[1],
+            num_clusters,
+            niter=25,
+            nredo=1,
+            seed=0,
+            spherical=True,
+            verbose=False,
+        )
+        kmeans.train(normalized)
+        _, assignments = kmeans.index.search(normalized, 1)
+        assignments = assignments[:, 0]
+        counts = np.bincount(assignments, minlength=num_clusters)
+        weights = 1.0 / np.clip(counts[assignments], 1, None)
+        weights = weights / weights.sum()
+        rng = np.random.default_rng(0)
+        selected = rng.choice(
+            len(normalized),
+            size=min(num_samples, len(normalized)),
+            replace=False,
+            p=weights,
+        )
+        return selected, {
+            "num_clusters": int(num_clusters),
+            "min_cluster_size": int(counts.min()),
+            "max_cluster_size": int(counts.max()),
+            "cluster_frequency_baseline": True,
+        }
 
     def _diverse_subsample_positions(
         self, sorted_indices, sorted_positions, features, num_samples

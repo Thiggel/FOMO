@@ -21,6 +21,7 @@ total_epochs: 500
 num_cycles: 5
 max_cycles: null
 n_epochs_per_cycle: null
+max_steps_per_cycle: null
 warmup: 10
 
 # Batch sizes and processing
@@ -39,22 +40,38 @@ num_ood_samples: 500
 every_nth_ood_sample: 1
 num_generations_per_ood_sample: 5
 ood_selection_strategy: mode_window  # options: top, mode_window
+ood_distance_metric: normalized_l2  # raw_l2, normalized_l2, cosine, median_normalized
+selection_original_only: false
 ood_mode_histogram_bins: auto
 ood_mode_histogram_quantile_range: [0.75, 0.99]
 ood_mode_candidate_pool_multiplier: 4.0
 ood_mode_diversity_sampling: true
 ood_mode_diversity_normalize_features: true
+selection_reuse_policy: adaptive  # adaptive or static_first_cycle
+selection_encoder: ssl  # ssl or clip; clip supports the VLM rare-concept control
+repair_once: false
+ood_percentile_bin: null  # [low, high], used by the percentile-utility control
+external_teacher_model: null
+external_teacher_weight: 0.0
+external_diffusion_teacher: false
+external_diffusion_teacher_cache: null
+diffaug_steps: 32
+diffaug_weight: 0.2
 save_class_distribution: false
 
 # Masking settings
 allow_overlap: false
 aspect_ratio: [0.75, 1.5]
-generation_model: stable_diffusion_3 # options: flux, stable_diffusion, stable_diffusion_3
+generation_model: stable_diffusion_3 # options: flux, stable_diffusion, stable_diffusion_3, stable_diffusion_3_t2i, stable_diffusion_3_captioned_img2img, strong_augmentation
 flux_num_steps: 6
 flux_guidance: 2.5
+flux_model_id: black-forest-labs/FLUX.1-schnell
+flux_redux_model_id: black-forest-labs/FLUX.1-Redux-dev
 sd3_num_steps: 20
 sd3_guidance: 5.0
 sd3_strength: 0.6
+strong_augmentation_num_ops: 3
+strong_augmentation_magnitude: 9
 enc_mask_scale: [0.85, 1.0]
 min_keep: 10
 num_enc_masks: 1
@@ -67,6 +84,7 @@ pred_emb_dim: 192
 ipe_scale: 1.0
 use_bfloat16: false
 ema: [0.996, 1.0]
+dino_local_crops: 6
 
 # Run configuration
 # default to three seeds; SLURM job arrays run one seed per task
@@ -76,10 +94,23 @@ seed: null
 checkpoint: null
 checkpoint_list: null
 resume_trainer_state: false
+skip_initial_training: false
 start_cycle: 0
 stop_after_cycle: null
 aggregate_only: false
 calc_novelty_score: false
+
+# Development/smoke-test controls. Null values preserve the paper protocol.
+limit_train_batches: null
+limit_val_batches: null
+limit_test_batches: null
+num_sanity_val_steps: null
+finetune_benchmarks: null
+finetune_max_epochs: null
+finetune_max_time_minutes: 25
+finetune_encoder: false
+finetune_label_fraction: 1.0
+finetune_seed: 0
 
 # Visualization
 tsne_max_samples: 10000
@@ -99,6 +130,10 @@ log_every_n_classes: 1
 max_wandb_augmentation_pairs: 8
 enable_media_logging: false
 save_visualization_data: false
+representation_diagnostics: true
+representation_diagnostics_max_samples: 20000
+representation_diagnostics_each_cycle: false
+representation_diagnostics_save_samples: false
 
 # Optional paths
 additional_data_path: null

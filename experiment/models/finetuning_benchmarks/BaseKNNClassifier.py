@@ -34,7 +34,10 @@ class BaseKNNClassifier(L.LightningModule):
 
     @property
     def num_workers(self) -> int:
-        return min(6, max(0, get_num_workers() // 2))
+        # Keep at least one worker because the dataset loaders below use
+        # persistent_workers and a spawn context.  Capping this also prevents
+        # worker-pool churn across the complete benchmark matrix.
+        return max(1, min(2, get_num_workers() // 2))
 
     def extract_features(self, dataloader):
         features = []

@@ -1,0 +1,37 @@
+\begin{table*}[t]
+\centering
+\tiny
+\setlength{\tabcolsep}{3.0pt}
+\caption{Main $k$NN ablations on ImageNet-100-LT. Each block changes one component while holding the remaining pipeline fixed. The average is computed over all seven downstream $k$NN tasks.}
+\label{tab:main_ablation_combined_knn}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{l l c c c c c c c c c}
+\toprule
+Group & Setting & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+SSL objective & SimCLR (default) & \textbf{69.0 {\scriptsize$\pm$ 0.5}} & \textbf{37.8 {\scriptsize$\pm$ 0.3}} & \textbf{6.7 {\scriptsize$\pm$ 0.3}} & \textbf{11.7 {\scriptsize$\pm$ 0.2}} & \textbf{36.5 {\scriptsize$\pm$ 0.4}} & \textbf{25.3 {\scriptsize$\pm$ 1.0}} & \textbf{48.1 {\scriptsize$\pm$ 0.6}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} \\
+ & MoCo & 58.0 {\scriptsize$\pm$ 0.4} & 26.7 {\scriptsize$\pm$ 0.5} & 3.0 {\scriptsize$\pm$ 0.2} & 5.4 {\scriptsize$\pm$ 0.2} & 16.3 {\scriptsize$\pm$ 0.9} & 12.2 {\scriptsize$\pm$ 0.6} & 25.1 {\scriptsize$\pm$ 0.5} & 21.0 {\scriptsize$\pm$ 0.5} \\
+ & DINO & 35.8 {\scriptsize$\pm$ 0.4} & 12.7 {\scriptsize$\pm$ 0.1} & 1.6 {\scriptsize$\pm$ 0.4} & 2.2 {\scriptsize$\pm$ 0.2} & 6.0 {\scriptsize$\pm$ 0.5} & 5.8 {\scriptsize$\pm$ 0.2} & 11.2 {\scriptsize$\pm$ 0.4} & 10.7 {\scriptsize$\pm$ 0.3} \\
+\midrule
+Generation & Stable Diffusion 3 (default) & 68.6 {\scriptsize$\pm$ 0.1} & 37.2 {\scriptsize$\pm$ 0.2} & 6.4 {\scriptsize$\pm$ 0.6} & \textbf{11.5 {\scriptsize$\pm$ 0.2}} & \textbf{35.2 {\scriptsize$\pm$ 0.3}} & \textbf{24.3 {\scriptsize$\pm$ 0.6}} & \textbf{46.8 {\scriptsize$\pm$ 0.7}} & \textbf{32.9 {\scriptsize$\pm$ 0.4}} \\
+ & FLUX & 65.8 {\scriptsize$\pm$ 1.0} & 35.4 {\scriptsize$\pm$ 0.8} & 5.7 {\scriptsize$\pm$ 0.7} & 9.4 {\scriptsize$\pm$ 0.9} & 27.7 {\scriptsize$\pm$ 1.0} & 18.8 {\scriptsize$\pm$ 1.3} & 38.7 {\scriptsize$\pm$ 1.2} & 28.8 {\scriptsize$\pm$ 1.0} \\
+ & No-generation re-population & \textbf{68.8 {\scriptsize$\pm$ 0.2}} & \textbf{37.7 {\scriptsize$\pm$ 0.3}} & \textbf{6.6 {\scriptsize$\pm$ 0.5}} & 11.4 {\scriptsize$\pm$ 0.5} & 32.7 {\scriptsize$\pm$ 0.1} & 23.6 {\scriptsize$\pm$ 0.6} & 44.4 {\scriptsize$\pm$ 0.4} & 32.2 {\scriptsize$\pm$ 0.4} \\
+\midrule
+Selection & Mode-window q1-99 + diversity & \textbf{69.2 {\scriptsize$\pm$ 0.3}} & 37.7 {\scriptsize$\pm$ 0.2} & 6.6 {\scriptsize$\pm$ 0.2} & 11.4 {\scriptsize$\pm$ 0.2} & 35.9 {\scriptsize$\pm$ 0.2} & 25.0 {\scriptsize$\pm$ 0.5} & 48.3 {\scriptsize$\pm$ 0.3} & 33.4 {\scriptsize$\pm$ 0.3} \\
+ & Mode-window q50-99 + diversity & 68.7 {\scriptsize$\pm$ 0.1} & \textbf{38.0 {\scriptsize$\pm$ 0.2}} & \textbf{7.3 {\scriptsize$\pm$ 0.2}} & 11.3 {\scriptsize$\pm$ 0.2} & \textbf{36.5 {\scriptsize$\pm$ 0.1}} & 24.8 {\scriptsize$\pm$ 0.8} & \textbf{48.5 {\scriptsize$\pm$ 0.4}} & 33.6 {\scriptsize$\pm$ 0.3} \\
+ & Mode-window q75-99 + diversity (default) & 69.0 {\scriptsize$\pm$ 0.5} & 37.8 {\scriptsize$\pm$ 0.3} & 6.7 {\scriptsize$\pm$ 0.3} & \textbf{11.7 {\scriptsize$\pm$ 0.2}} & 36.5 {\scriptsize$\pm$ 0.4} & \textbf{25.3 {\scriptsize$\pm$ 1.0}} & 48.1 {\scriptsize$\pm$ 0.6} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} \\
+ & Top-tail & 65.7 {\scriptsize$\pm$ 0.8} & 34.4 {\scriptsize$\pm$ 0.2} & 4.1 {\scriptsize$\pm$ 0.4} & 9.6 {\scriptsize$\pm$ 0.2} & 23.9 {\scriptsize$\pm$ 0.9} & 18.1 {\scriptsize$\pm$ 0.8} & 35.4 {\scriptsize$\pm$ 1.2} & 27.3 {\scriptsize$\pm$ 0.6} \\
+ & Uniform & 66.1 {\scriptsize$\pm$ 1.0} & 35.7 {\scriptsize$\pm$ 0.3} & 4.9 {\scriptsize$\pm$ 0.1} & 10.2 {\scriptsize$\pm$ 0.7} & 25.3 {\scriptsize$\pm$ 0.4} & 19.0 {\scriptsize$\pm$ 0.8} & 37.4 {\scriptsize$\pm$ 0.6} & 28.4 {\scriptsize$\pm$ 0.6} \\
+\midrule
+Cycles & 2 cycles & 65.3 {\scriptsize$\pm$ 0.4} & 34.2 {\scriptsize$\pm$ 0.5} & 5.0 {\scriptsize$\pm$ 0.7} & 10.0 {\scriptsize$\pm$ 0.2} & 26.1 {\scriptsize$\pm$ 0.8} & 18.7 {\scriptsize$\pm$ 0.6} & 35.9 {\scriptsize$\pm$ 0.3} & 27.9 {\scriptsize$\pm$ 0.5} \\
+ & 5 cycles (default) & \textbf{69.0 {\scriptsize$\pm$ 0.5}} & \textbf{37.8 {\scriptsize$\pm$ 0.3}} & \textbf{6.7 {\scriptsize$\pm$ 0.3}} & \textbf{11.7 {\scriptsize$\pm$ 0.2}} & \textbf{36.5 {\scriptsize$\pm$ 0.4}} & \textbf{25.3 {\scriptsize$\pm$ 1.0}} & \textbf{48.1 {\scriptsize$\pm$ 0.6}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} \\
+ & 10 cycles & 66.4 {\scriptsize$\pm$ 0.5} & 35.4 {\scriptsize$\pm$ 0.3} & 4.8 {\scriptsize$\pm$ 0.3} & 10.4 {\scriptsize$\pm$ 0.6} & 25.2 {\scriptsize$\pm$ 0.8} & 18.6 {\scriptsize$\pm$ 0.9} & 36.0 {\scriptsize$\pm$ 0.7} & 28.1 {\scriptsize$\pm$ 0.6} \\
+\midrule
+Architecture & ResNet-18 & 66.3 {\scriptsize$\pm$ 0.2} & 35.7 {\scriptsize$\pm$ 0.3} & 5.9 {\scriptsize$\pm$ 0.2} & 11.1 {\scriptsize$\pm$ 0.4} & 33.5 {\scriptsize$\pm$ 0.1} & 23.3 {\scriptsize$\pm$ 0.5} & 44.5 {\scriptsize$\pm$ 0.7} & 31.5 {\scriptsize$\pm$ 0.4} \\
+ & ResNet-50 (default) & 69.0 {\scriptsize$\pm$ 0.5} & 37.8 {\scriptsize$\pm$ 0.3} & \textbf{6.7 {\scriptsize$\pm$ 0.3}} & \textbf{11.7 {\scriptsize$\pm$ 0.2}} & 36.5 {\scriptsize$\pm$ 0.4} & \textbf{25.3 {\scriptsize$\pm$ 1.0}} & \textbf{48.1 {\scriptsize$\pm$ 0.6}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} \\
+ & ViT-S & 67.3 {\scriptsize$\pm$ 0.4} & 37.5 {\scriptsize$\pm$ 0.3} & 5.3 {\scriptsize$\pm$ 0.2} & 7.6 {\scriptsize$\pm$ 0.1} & 36.2 {\scriptsize$\pm$ 0.7} & 20.1 {\scriptsize$\pm$ 1.0} & 42.1 {\scriptsize$\pm$ 1.0} & 30.9 {\scriptsize$\pm$ 0.5} \\
+ & ViT-B & \textbf{69.3 {\scriptsize$\pm$ 0.8}} & \textbf{40.1 {\scriptsize$\pm$ 0.8}} & 6.0 {\scriptsize$\pm$ 0.2} & 8.3 {\scriptsize$\pm$ 0.2} & \textbf{39.8 {\scriptsize$\pm$ 0.8}} & 21.9 {\scriptsize$\pm$ 1.4} & 45.1 {\scriptsize$\pm$ 0.7} & 32.9 {\scriptsize$\pm$ 0.7} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

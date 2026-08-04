@@ -3,6 +3,7 @@ import scipy.io as sio
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+from datasets import load_dataset
 
 
 class StanfordCarsDataset(Dataset):
@@ -61,3 +62,29 @@ class StanfordCarsDataset(Dataset):
 
         # Always return a label even if -1
         return image, label - 1
+
+
+class HuggingFaceStanfordCarsDataset(Dataset):
+    """Stanford Cars using a maintained parquet mirror.
+
+    Torchvision no longer downloads Stanford Cars because the original
+    Stanford host is unavailable. This mirror retains the official 8,144/8,041
+    train/test split and avoids relying on a manually reconstructed devkit.
+    """
+
+    dataset_id = "tanganke/stanford_cars"
+
+    def __init__(self, split: str, transform=None):
+        self.dataset = load_dataset(self.dataset_id, split=split)
+        self.transform = transform
+        self.classes = self.dataset.features["label"].names
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        sample = self.dataset[int(idx)]
+        image = sample["image"].convert("RGB")
+        if self.transform is not None:
+            image = self.transform(image)
+        return image, int(sample["label"])

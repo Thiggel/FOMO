@@ -1,0 +1,20 @@
+\begin{table}[H]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Selection rule ablation with full $k$NN results.}
+\label{tab:app_selection_knn}
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{l c c c c c c c c}
+\toprule
+Setting & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+Mode-window q1-99 + diversity & \textbf{69.2 {\scriptsize$\pm$ 0.3}} & 37.7 {\scriptsize$\pm$ 0.2} & 6.6 {\scriptsize$\pm$ 0.2} & 11.4 {\scriptsize$\pm$ 0.2} & 35.9 {\scriptsize$\pm$ 0.2} & 25.0 {\scriptsize$\pm$ 0.5} & 48.3 {\scriptsize$\pm$ 0.3} & 33.4 {\scriptsize$\pm$ 0.3} \\
+Mode-window q50-99 + diversity & 68.7 {\scriptsize$\pm$ 0.1} & \textbf{38.0 {\scriptsize$\pm$ 0.2}} & \textbf{7.3 {\scriptsize$\pm$ 0.2}} & 11.3 {\scriptsize$\pm$ 0.2} & \textbf{36.5 {\scriptsize$\pm$ 0.1}} & 24.8 {\scriptsize$\pm$ 0.8} & \textbf{48.5 {\scriptsize$\pm$ 0.4}} & 33.6 {\scriptsize$\pm$ 0.3} \\
+Mode-window q75-99 + diversity (default) & 69.0 {\scriptsize$\pm$ 0.5} & 37.8 {\scriptsize$\pm$ 0.3} & 6.7 {\scriptsize$\pm$ 0.3} & \textbf{11.7 {\scriptsize$\pm$ 0.2}} & 36.5 {\scriptsize$\pm$ 0.4} & \textbf{25.3 {\scriptsize$\pm$ 1.0}} & 48.1 {\scriptsize$\pm$ 0.6} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} \\
+Top-tail & 65.7 {\scriptsize$\pm$ 0.8} & 34.4 {\scriptsize$\pm$ 0.2} & 4.1 {\scriptsize$\pm$ 0.4} & 9.6 {\scriptsize$\pm$ 0.2} & 23.9 {\scriptsize$\pm$ 0.9} & 18.1 {\scriptsize$\pm$ 0.8} & 35.4 {\scriptsize$\pm$ 1.2} & 27.3 {\scriptsize$\pm$ 0.6} \\
+Uniform & 66.1 {\scriptsize$\pm$ 1.0} & 35.7 {\scriptsize$\pm$ 0.3} & 4.9 {\scriptsize$\pm$ 0.1} & 10.2 {\scriptsize$\pm$ 0.7} & 25.3 {\scriptsize$\pm$ 0.4} & 19.0 {\scriptsize$\pm$ 0.8} & 37.4 {\scriptsize$\pm$ 0.6} & 28.4 {\scriptsize$\pm$ 0.6} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

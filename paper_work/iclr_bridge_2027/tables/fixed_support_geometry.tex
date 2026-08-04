@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Local support added in the frozen cycle-0 representation. Controls are matched one-to-one within class on initial $k$NN radius and are never selected. Negative radius DiD and positive purity DiD favor treated anchors.}
+\label{tab:fixed-support}
+\begin{tabular}{lrrrr}
+\toprule
+Seed & $\Delta r$ anchor & $\Delta r$ control & Radius DiD & Purity DiD \\
+\midrule
+0 & $-0.00323$ & $-0.00136$ & $-0.00186$ & $+0.0122$ \\
+1 & $-0.00294$ & $-0.00137$ & $-0.00156$ & $+0.0170$ \\
+2 & $-0.00203$ & $-0.00144$ & $-0.00059$ & $+0.0109$ \\
+\midrule
+Mean & $-0.00273$ & $-0.00139$ & $-0.00134$ & $+0.0134$ \\
+\bottomrule
+\end{tabular}
+\end{table}

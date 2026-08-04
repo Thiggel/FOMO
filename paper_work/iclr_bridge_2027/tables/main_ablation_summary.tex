@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{ImageNet-100-LT ablations. We report mean linear-probe accuracy across seven downstream tasks. Full per-task results and $k$NN evaluation are in the appendix.}
+\label{tab:main_ablation_combined}
+\begin{tabular}{lll}
+\toprule
+Group & Settings & Seven-task averages in the same order \\
+\midrule
+SSL objective & SimCLR / MoCo / DINO & $42.3\pm0.7$ / $19.3\pm1.2$ / $15.3\pm1.2$ \\
+Generator & SD3 / FLUX / oracle real restoration & $41.5\pm0.6$ / $35.0\pm1.9$ / $40.7\pm1.4$ \\
+Selector & Mode q1--99 / q50--99 / q75--99 / top tail / uniform & $42.1\pm0.7$ / $42.2\pm0.9$ / $42.3\pm0.7$ / $34.3\pm1.2$ / $35.5\pm1.2$ \\
+Cycles & 2 / 5 / 10 & $35.0\pm1.4$ / $42.3\pm0.7$ / $34.1\pm1.7$ \\
+Backbone & ResNet-18 / ResNet-50 / ViT-S / ViT-B & $38.7\pm1.1$ / $42.3\pm0.7$ / $32.7\pm1.3$ / $34.8\pm1.8$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

@@ -18,7 +18,7 @@ import wandb
 from torch import nn
 import torch.multiprocessing as mp
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
@@ -155,7 +155,7 @@ def resolve_training_schedule(args: DictConfig) -> tuple[int, int, int]:
 def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDataModule:
     ssl_method = SSLTypes.get_ssl_type(args.ssl.ssl_method)
 
-    return ImbalancedDataModule(
+    datamodule = ImbalancedDataModule(
         collate_fn=ssl_method.collate_fn(args),
         dataset_path=args.dataset.dataset_path,
         dataset_name=args.dataset.get("dataset_name"),
@@ -170,6 +170,11 @@ def init_datamodule(args: DictConfig, checkpoint_filename: str) -> L.LightningDa
         transform=ssl_method.transforms(args),
         additional_data_path=args.additional_data_path,
     )
+    if bool(args.get("external_diffusion_teacher", False)) and args.get(
+        "external_diffusion_teacher_cache"
+    ):
+        datamodule.dataset.return_index = True
+    return datamodule
 
 
 def init_model(args: DictConfig) -> nn.Module:
@@ -350,6 +355,15 @@ def run(
         "enable_checkpointing": True,
         "logger": wandb_logger if args.logger else None,
     }
+    for trainer_limit in (
+        "limit_train_batches",
+        "limit_val_batches",
+        "limit_test_batches",
+        "num_sanity_val_steps",
+    ):
+        configured_value = args.get(trainer_limit)
+        if configured_value is not None:
+            trainer_args[trainer_limit] = configured_value
 
     if torch.cuda.is_available():
         lightning_devices = world_size if world_size > 1 else 1
@@ -426,10 +440,59 @@ def run_different_seeds(args: DictConfig) -> list[dict]:
         seed_dir = checkpoint_seed_dir(args, seed)
         os.makedirs(seed_dir, exist_ok=True)
         seed_result_file = os.path.join(seed_dir, "result.json")
+        protocol_file = os.path.join(seed_dir, "protocol.json")
 
         run_args = set_checkpoint_for_run(copy.deepcopy(args), run_idx)
         if use_seed_specific_data_path:
             run_args.additional_data_path = f"{args.additional_data_path}_seed_{seed}"
+
+        # Store an exact, machine-readable protocol next to every result.
+        # This is the authoritative record for matched-update and matched-data
+        # rebuttal comparisons, rather than reconstructing commands from logs.
+        requested = OmegaConf.to_container(run_args, resolve=True)
+        resolved_cycles, resolved_epochs, resolved_stage_epochs = resolve_training_schedule(
+            run_args
+        )
+        protocol = {
+            "seed": int(seed),
+            "dataset": requested.get("dataset"),
+            "model": requested.get("model"),
+            "ssl": requested.get("ssl"),
+            "selection": {
+                key: requested.get(key)
+                for key in (
+                    "sample_selection", "ood_selection_strategy",
+                    "ood_distance_metric", "ood_mode_histogram_quantile_range",
+                    "ood_mode_candidate_pool_multiplier", "k",
+                    "selection_reuse_policy", "selection_original_only",
+                )
+            },
+            "repair": {
+                key: requested.get(key)
+                for key in (
+                    "ood_augmentation", "generation_model", "num_ood_samples",
+                    "num_generations_per_ood_sample", "remove_diffusion",
+                    "sd3_num_steps", "sd3_strength", "sd3_guidance",
+                    "flux_num_steps", "flux_guidance", "flux_model_id",
+                )
+            },
+            "schedule": {
+                "num_cycles": int(resolved_cycles),
+                "total_epochs": int(resolved_epochs),
+                "epochs_per_cycle": int(resolved_stage_epochs),
+                "max_steps_per_cycle": requested.get("max_steps_per_cycle"),
+                "nominal_total_optimizer_updates": (
+                    int(resolved_cycles) * int(requested["max_steps_per_cycle"])
+                    if requested.get("max_steps_per_cycle") is not None
+                    else None
+                ),
+                "skip_initial_training": bool(requested.get("skip_initial_training", False)),
+                "resume_trainer_state": bool(requested.get("resume_trainer_state", False)),
+            },
+            "additional_data_path": str(run_args.additional_data_path),
+        }
+        with open(protocol_file, "w") as handle:
+            json.dump(protocol, handle, indent=2)
 
         results = run(
             run_args,

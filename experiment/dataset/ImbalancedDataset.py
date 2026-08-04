@@ -74,6 +74,10 @@ class ImbalancedDataset(Dataset):
 
         # Keep track of additional images per cycle
         self.additional_image_counts = self._load_or_create_image_counts()
+        # Teacher-cache experiments need a stable underlying-image identifier.
+        # It is opt-in so ordinary SSL and downstream loaders retain their
+        # established two-item sample contract.
+        self.return_index = False
 
         print("original length:", len(self.dataset))
         print("imbalanced length:", len(self))
@@ -247,6 +251,8 @@ class ImbalancedDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
+        if getattr(self, "return_index", False):
+            return image, label, int(idx)
         return image, label
 
     def _ensure_cache_dir(self) -> Optional[str]:

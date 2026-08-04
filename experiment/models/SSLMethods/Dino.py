@@ -5,6 +5,7 @@ from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
 from typing import Tuple, List
 import copy
+import math
 
 from ._scheduling import ContinuousScheduleMixin
 
@@ -85,7 +86,12 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
     @torch.no_grad()
     def _update_teacher(self):
         """Updates teacher model using momentum update."""
-        m = self.hparams.momentum_teacher
+        max_steps = max(1, int(self.trainer.estimated_stepping_batches))
+        progress = min(1.0, float(self.global_step) / max_steps)
+        base_m = float(self.hparams.momentum_teacher)
+        m = 1.0 - (1.0 - base_m) * (
+            math.cos(math.pi * progress) + 1.0
+        ) / 2.0
         for param_student, param_teacher in zip(
             self.model.parameters(), self.teacher.parameters()
         ):
@@ -202,10 +208,9 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
             },
         ]
 
-        optimizer = SGD(
+        optimizer = torch.optim.AdamW(
             param_groups,
             lr=self.hparams.lr,
-            momentum=0.9,
         )
 
         scheduler = self.cosine_warmup_scheduler(

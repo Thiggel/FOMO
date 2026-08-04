@@ -1,52 +1,52 @@
+"""MoCo v3 training objective.
+
+This implementation follows the symmetric momentum-encoder formulation from
+the official MoCo v3 code. In particular, it does not mix the MoCo v2 queue
+with the v3 predictor, as the previous implementation did.
+"""
+
+import copy
+import math
+import random
+from PIL import ImageFilter
+
 import lightning.pytorch as L
 import torch
 import torch.distributed as dist
 from torch import nn
-from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
-import copy
-import random
-from PIL import ImageFilter
 from torchvision import transforms
 
 from ._scheduling import ContinuousScheduleMixin
 
 
 class TwoCropsTransform:
-    """Take two random crops of one image as the query and key."""
-
     def __init__(self, base_transform):
         self.base_transform = base_transform
 
-    def __call__(self, x):
-        q = self.base_transform(x)
-        k = self.base_transform(x)
-        return [q, k]
+    def __call__(self, image):
+        return [self.base_transform(image), self.base_transform(image)]
 
 
 class GaussianBlur:
-    """Gaussian blur augmentation used in MoCo v2"""
-
     def __init__(self, sigma=(0.1, 2.0)):
         self.sigma = sigma
 
-    def __call__(self, x):
-        sigma = random.uniform(self.sigma[0], self.sigma[1])
-        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
-        return x
+    def __call__(self, image):
+        return image.filter(
+            ImageFilter.GaussianBlur(radius=random.uniform(*self.sigma))
+        )
 
 
 def moco_transform(crop_size=224):
-    """Create the augmentation transforms following MoCo v2"""
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
     )
-
     augmentation = transforms.Compose(
         [
             transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
             transforms.RandomApply(
-                [transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8  # not strengthened
+                [transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8
             ),
             transforms.RandomGrayscale(p=0.2),
             transforms.RandomApply([GaussianBlur()], p=0.5),
@@ -55,8 +55,19 @@ def moco_transform(crop_size=224):
             normalize,
         ]
     )
-
     return TwoCropsTransform(augmentation)
+
+
+def _mlp(input_dim: int, hidden_dim: int, output_dim: int, layers: int) -> nn.Module:
+    modules = []
+    for layer_idx in range(layers):
+        in_dim = input_dim if layer_idx == 0 else hidden_dim
+        out_dim = output_dim if layer_idx == layers - 1 else hidden_dim
+        modules.append(nn.Linear(in_dim, out_dim, bias=False))
+        modules.append(nn.BatchNorm1d(out_dim))
+        if layer_idx < layers - 1:
+            modules.append(nn.ReLU(inplace=True))
+    return nn.Sequential(*modules)
 
 
 class MoCo(ContinuousScheduleMixin, L.LightningModule):
@@ -64,192 +75,124 @@ class MoCo(ContinuousScheduleMixin, L.LightningModule):
         self,
         model: nn.Module,
         lr: float,
-        temperature: float = 0.07,
-        weight_decay: float = 1e-6,
+        temperature: float = 1.0,
+        weight_decay: float = 0.1,
         max_epochs: int = 500,
-        momentum: float = 0.999,
-        dim: int = 128,
-        mlp: bool = True,
-        queue_size: int = 65536,
+        momentum: float = 0.99,
+        dim: int = 256,
+        mlp_dim: int = 4096,
         *args,
         **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
+        self.model = model
+        self.momentum_model = copy.deepcopy(model)
 
-        # Create encoder Q (online network)
-        self.encoder_q = model
-        self.model = self.encoder_q
-
-        # Create encoder K (momentum network)
-        self.encoder_k = copy.deepcopy(model)
-
-        # Get input dimension
         with torch.no_grad():
-            dummy_input = torch.randn(1, 3, 224, 224)
-            out = model(dummy_input)
-            dim_mlp = out.shape[1]
-
-        # Add projection head (as in MoCo v2)
-        if mlp:
-            # 3-layer MLP projection head for both networks
-            self.encoder_q.fc = nn.Sequential(
-                nn.Linear(dim_mlp, dim_mlp),
-                nn.BatchNorm1d(dim_mlp),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_mlp, dim_mlp),
-                nn.BatchNorm1d(dim_mlp),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_mlp, dim),
-                nn.BatchNorm1d(dim),
+            was_training = model.training
+            model.eval()
+            input_size = int(getattr(kwargs.get("parserargs"), "crop_size", 224))
+            output_dim = int(
+                model(torch.zeros(2, 3, input_size, input_size)).shape[-1]
             )
+            model.train(was_training)
 
-            self.encoder_k.fc = nn.Sequential(
-                nn.Linear(dim_mlp, dim_mlp),
-                nn.BatchNorm1d(dim_mlp),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_mlp, dim_mlp),
-                nn.BatchNorm1d(dim_mlp),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_mlp, dim),
-                nn.BatchNorm1d(dim),
-            )
-        else:
-            self.encoder_q.fc = nn.Sequential(
-                nn.Linear(dim_mlp, dim),
-                nn.BatchNorm1d(dim),
-            )
-            self.encoder_k.fc = nn.Sequential(
-                nn.Linear(dim_mlp, dim),
-                nn.BatchNorm1d(dim),
-            )
+        self.projector = _mlp(output_dim, mlp_dim, dim, layers=3)
+        self.momentum_projector = copy.deepcopy(self.projector)
+        self.predictor = _mlp(dim, mlp_dim, dim, layers=2)
 
-        # Add prediction head (new in MoCo v3)
-        self.predictor = nn.Sequential(
-            nn.Linear(dim, dim_mlp),
-            nn.BatchNorm1d(dim_mlp),
-            nn.ReLU(inplace=True),
-            nn.Linear(dim_mlp, dim),
-            nn.BatchNorm1d(dim),
-        )
-
-        # Initialize momentum encoder
-        for param_q, param_k in zip(
-            self.encoder_q.parameters(), self.encoder_k.parameters()
+        for online, target in zip(
+            list(self.model.parameters()) + list(self.projector.parameters()),
+            list(self.momentum_model.parameters())
+            + list(self.momentum_projector.parameters()),
         ):
-            param_k.data.copy_(param_q.data)
-            param_k.requires_grad = False
-
-        # Create the queue
-        self.register_buffer(
-            "queue",
-            F.normalize(torch.randn(dim, queue_size), dim=0),
-        )
-        self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
-
+            target.data.copy_(online.data)
+            target.requires_grad = False
 
     @torch.no_grad()
-    def _momentum_update_key_encoder(self):
-        """Momentum update of the key encoder"""
-        for param_q, param_k in zip(
-            self.encoder_q.parameters(), self.encoder_k.parameters()
+    def _momentum_update(self):
+        max_steps = max(1, int(self.trainer.estimated_stepping_batches))
+        progress = min(1.0, float(self.global_step) / max_steps)
+        base_m = float(self.hparams.momentum)
+        momentum = 1.0 - (1.0 - base_m) * (
+            math.cos(math.pi * progress) + 1.0
+        ) / 2.0
+        for online, target in zip(
+            list(self.model.parameters()) + list(self.projector.parameters()),
+            list(self.momentum_model.parameters())
+            + list(self.momentum_projector.parameters()),
         ):
-            param_k.data = param_k.data * self.hparams.momentum + param_q.data * (
-                1.0 - self.hparams.momentum
-            )
-
-    def contrastive_loss(self, q, k):
-        """Compute InfoNCE loss with a dictionary of negatives."""
-        q = F.normalize(q, dim=1)
-        k = F.normalize(k, dim=1)
-
-        # Positive logits: each query against its key
-        l_pos = torch.einsum("nc,nc->n", [q, k]).unsqueeze(-1)
-
-        # Negative logits: queries against the queue
-        l_neg = torch.einsum("nc,ck->nk", [q, self.queue.clone().detach()])
-
-        logits = torch.cat([l_pos, l_neg], dim=1)
-        logits /= self.hparams.temperature
-
-        labels = torch.zeros(logits.shape[0], dtype=torch.long, device=logits.device)
-        return F.cross_entropy(logits, labels)
+            target.data.mul_(momentum).add_(online.data, alpha=1.0 - momentum)
 
     @torch.no_grad()
-    def _concat_all_gather(self, tensor: torch.Tensor) -> torch.Tensor:
-        if dist.is_available() and dist.is_initialized():
-            tensors = [torch.zeros_like(tensor) for _ in range(dist.get_world_size())]
-            dist.all_gather(tensors, tensor)
-            tensor = torch.cat(tensors, dim=0)
-        return tensor
+    def _gather(self, tensor: torch.Tensor) -> torch.Tensor:
+        if not (dist.is_available() and dist.is_initialized()):
+            return tensor
+        gathered = [torch.empty_like(tensor) for _ in range(dist.get_world_size())]
+        dist.all_gather(gathered, tensor)
+        return torch.cat(gathered, dim=0)
 
-    def _dequeue_and_enqueue(self, keys):
-        # gather keys before updating queue if using distributed training
-        keys = self._concat_all_gather(keys)
-
-        keys = F.normalize(keys, dim=1)
-
-        batch_size = keys.shape[0]
-        ptr = int(self.queue_ptr)
-        queue_size = self.queue.shape[1]
-
-        if batch_size > queue_size:
-            keys = keys[:queue_size]
-            batch_size = queue_size
-
-        # replace the keys at ptr (dequeue and enqueue)
-        end = ptr + batch_size
-        if end <= queue_size:
-            self.queue[:, ptr:end] = keys.T
-        else:
-            first_part = queue_size - ptr
-            self.queue[:, ptr:] = keys[:first_part].T
-            self.queue[:, : batch_size - first_part] = keys[first_part:].T
-
-        ptr = (ptr + batch_size) % queue_size
-        self.queue_ptr[0] = ptr
-
-    def forward(self, im_q, im_k):
-        """Forward computation during training"""
-        # Compute query features
-        q = self.encoder_q(im_q)
-        q = self.predictor(q)
-
-        # Compute key features with momentum encoder
-        with torch.no_grad():
-            self._momentum_update_key_encoder()
-            k = self.encoder_k(im_k)
-
-        return q, k
+    def _contrastive_loss(self, query: torch.Tensor, key: torch.Tensor):
+        query = F.normalize(query, dim=1)
+        key = F.normalize(key, dim=1)
+        gathered_key = self._gather(key)
+        logits = query @ gathered_key.T / float(self.hparams.temperature)
+        rank = dist.get_rank() if dist.is_available() and dist.is_initialized() else 0
+        labels = (
+            torch.arange(query.shape[0], device=query.device)
+            + rank * query.shape[0]
+        )
+        return F.cross_entropy(logits, labels) * (2.0 * self.hparams.temperature)
 
     def training_step(self, batch, batch_idx):
-        imgs, _ = batch
-        im_q, im_k = imgs
-
-        q, k = self(im_q, im_k)
-        loss = self.contrastive_loss(q, k)
+        (view1, view2), _ = batch
+        query1 = self.predictor(self.projector(self.model(view1)))
+        query2 = self.predictor(self.projector(self.model(view2)))
 
         with torch.no_grad():
-            self._dequeue_and_enqueue(k)
+            self._momentum_update()
+            key1 = self.momentum_projector(self.momentum_model(view1))
+            key2 = self.momentum_projector(self.momentum_model(view2))
 
-        # Log metrics
+        loss = self._contrastive_loss(query1, key2)
+        loss = loss + self._contrastive_loss(query2, key1)
         self.log("train_loss", loss, sync_dist=True)
-
+        self.log(
+            "feature_std",
+            F.normalize(query1.detach(), dim=-1).std(dim=0).mean(),
+            sync_dist=True,
+        )
         return loss
 
     def configure_optimizers(self):
-        # Define optimizer
-        optimizer = SGD(
-            list(self.encoder_q.parameters()) + list(self.predictor.parameters()),
-            lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay,
-            momentum=0.9,
+        parserargs = self.hparams.get("parserargs")
+        model_name = (
+            str(parserargs.model.model_name).lower()
+            if parserargs is not None
+            else ""
         )
-
+        parameters = (
+            list(self.model.parameters())
+            + list(self.projector.parameters())
+            + list(self.predictor.parameters())
+        )
+        if "vit" in model_name:
+            optimizer = torch.optim.AdamW(
+                parameters,
+                lr=self.hparams.lr,
+                weight_decay=self.hparams.weight_decay,
+            )
+        else:
+            optimizer = torch.optim.SGD(
+                parameters,
+                lr=self.hparams.lr,
+                momentum=0.9,
+                weight_decay=self.hparams.weight_decay,
+            )
         scheduler = self.cosine_warmup_scheduler(
             optimizer,
             warmup_epochs=10,
             max_epochs=self.hparams.max_epochs,
         )
-
         return [optimizer], [scheduler]

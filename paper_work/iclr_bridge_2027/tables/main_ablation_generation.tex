@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Effect of the augmentation mechanism inside BRIDGE on ImageNet-100-LT. For space, Cars and Aircraft are omitted from the displayed columns and are deferred to the appendix.}
+\label{tab:main_ablation_generation}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{l c c c c c c}
+\toprule
+Setting & C10 & C100 & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+Stable Diffusion 3 (default) & \textbf{75.0 {\scriptsize$\pm$ 0.3}} & \textbf{48.5 {\scriptsize$\pm$ 0.2}} & 35.7 {\scriptsize$\pm$ 0.9} & \textbf{41.8 {\scriptsize$\pm$ 0.8}} & \textbf{52.4 {\scriptsize$\pm$ 0.7}} & \textbf{41.5 {\scriptsize$\pm$ 0.6}} \\
+FLUX & 70.7 {\scriptsize$\pm$ 0.4} & 42.1 {\scriptsize$\pm$ 1.4} & 29.4 {\scriptsize$\pm$ 4.6} & 31.5 {\scriptsize$\pm$ 2.9} & 43.7 {\scriptsize$\pm$ 1.4} & 35.0 {\scriptsize$\pm$ 1.9} \\
+No-generation re-population & 74.8 {\scriptsize$\pm$ 0.4} & 47.8 {\scriptsize$\pm$ 0.7} & \textbf{40.3 {\scriptsize$\pm$ 6.1}} & 38.1 {\scriptsize$\pm$ 1.5} & 50.3 {\scriptsize$\pm$ 0.4} & 40.7 {\scriptsize$\pm$ 1.4} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

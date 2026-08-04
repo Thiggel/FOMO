@@ -15,7 +15,9 @@ def simclr_collate(batch: list) -> tuple[list[Tensor], Tensor]:
     labels = [item[1] for item in batch]
 
     stacked_labels = torch.tensor(labels)
-
+    if len(batch[0]) >= 3:
+        indices = torch.tensor([item[2] for item in batch], dtype=torch.long)
+        return data, (stacked_labels, indices)
     return data, stacked_labels
 
 

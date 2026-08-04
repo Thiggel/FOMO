@@ -1,0 +1,1530 @@
+[
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      25.41547529399395,
+      23.92862606793642,
+      25.002821534872055
+    ],
+    "treatment_values": [
+      26.234457828104496,
+      26.33678037673235,
+      25.92357061803341
+    ],
+    "difference_values": [
+      0.8189825341105461,
+      2.408154308795929,
+      0.9207490831613541
+    ],
+    "control_mean": 24.782307632267475,
+    "treatment_mean": 26.164936274290085,
+    "difference_mean": 1.3826286420226097,
+    "control_sd": 0.7675610341779963,
+    "treatment_sd": 0.21519877091792755,
+    "difference_sd": 0.8895877008674149,
+    "ci95_low": -0.8272297135840221,
+    "ci95_high": 3.5924869976292415,
+    "paired_t": 2.692014574446148,
+    "paired_t_p_two_sided": 0.11472473704306953,
+    "cohen_dz": 1.5542353392188795,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.24080206847302088
+  },
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "Cars accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      7.984081655740738,
+      7.424449920654297,
+      7.834846526384354
+    ],
+    "treatment_values": [
+      9.426688402891159,
+      8.929237723350525,
+      9.513741731643677
+    ],
+    "difference_values": [
+      1.4426067471504211,
+      1.504787802696228,
+      1.6788952052593231
+    ],
+    "control_mean": 7.747792700926463,
+    "treatment_mean": 9.289889285961786,
+    "difference_mean": 1.542096585035324,
+    "control_sd": 0.2897942306604892,
+    "treatment_sd": 0.31535176029662854,
+    "difference_sd": 0.12248272444957337,
+    "ci95_low": 1.2378326301959852,
+    "ci95_high": 1.846360539874663,
+    "paired_t": 21.80707236439126,
+    "paired_t_p_two_sided": 0.002096225642912095,
+    "cohen_dz": 12.590319099818942,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.012577353857472568
+  },
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "Aircraft accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      9.840983897447586,
+      10.201019793748856,
+      11.401139944791794
+    ],
+    "treatment_values": [
+      12.601260840892792,
+      11.341134458780289,
+      14.851485192775726
+    ],
+    "difference_values": [
+      2.7602769434452057,
+      1.140114665031433,
+      3.4503452479839325
+    ],
+    "control_mean": 10.481047878662745,
+    "treatment_mean": 12.931293497482935,
+    "difference_mean": 2.4502456188201904,
+    "control_sd": 0.816904841013677,
+    "treatment_sd": 1.778294614153554,
+    "difference_sd": 1.1859093149515343,
+    "ci95_low": -0.49571643313040825,
+    "ci95_high": 5.396207670770789,
+    "paired_t": 3.5786462331591142,
+    "paired_t_p_two_sided": 0.0699859710369108,
+    "cohen_dz": 2.0661323660488553,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.24080206847302088
+  },
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "Flowers accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      37.9084974527359,
+      33.33333432674408,
+      35.94771325588226
+    ],
+    "treatment_values": [
+      33.33333432674408,
+      38.56209218502045,
+      32.679739594459534
+    ],
+    "difference_values": [
+      -4.575163125991821,
+      5.228757858276367,
+      -3.2679736614227295
+    ],
+    "control_mean": 35.72984834512075,
+    "treatment_mean": 34.858388702074684,
+    "difference_mean": -0.8714596430460612,
+    "control_sd": 2.2953492646794857,
+    "treatment_sd": 3.224106253786612,
+    "difference_sd": 5.323220476990452,
+    "ci95_low": -14.09507237773575,
+    "ci95_high": 12.352153091643629,
+    "paired_t": -0.2835524820033343,
+    "paired_t_p_two_sided": 0.8034107251268039,
+    "cohen_dz": -0.16370910181401158,
+    "wilcoxon_p_two_sided": 1.0,
+    "holm_p": 0.8034107251268039
+  },
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "ImageNet 100 LT accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      45.928338170051575,
+      44.75570023059845,
+      44.82758641242981
+    ],
+    "treatment_values": [
+      49.576547741889954,
+      46.51465713977814,
+      46.6493159532547
+    ],
+    "difference_values": [
+      3.648209571838379,
+      1.7589569091796875,
+      1.8217295408248901
+    ],
+    "control_mean": 45.17054160435995,
+    "treatment_mean": 47.58017361164093,
+    "difference_mean": 2.4096320072809854,
+    "control_sd": 0.6572546173402622,
+    "treatment_sd": 1.7302212286171348,
+    "difference_sd": 1.073098731892648,
+    "ci95_low": -0.25609302101196363,
+    "ci95_high": 5.075357035573934,
+    "paired_t": 3.8893020186444223,
+    "paired_t_p_two_sided": 0.06020051711825522,
+    "cohen_dz": 2.245489567424112,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.24080206847302088
+  },
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "effective rank",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      64.16185760498047,
+      61.320350646972656,
+      66.05567169189453
+    ],
+    "treatment_values": [
+      84.3957748413086,
+      83.68207550048828,
+      89.37570190429688
+    ],
+    "difference_values": [
+      20.233917236328125,
+      22.361724853515625,
+      23.320030212402344
+    ],
+    "control_mean": 63.845959981282554,
+    "treatment_mean": 85.81785074869792,
+    "difference_mean": 21.971890767415363,
+    "control_sd": 2.383413483035097,
+    "treatment_sd": 3.101785021776891,
+    "difference_sd": 1.579557307060316,
+    "ci95_low": 18.048052893124662,
+    "ci95_high": 25.895728641706064,
+    "paired_t": 24.09309936234162,
+    "paired_t_p_two_sided": 0.001718280942491143,
+    "cohen_dz": 13.910157402460333,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.012027966597438001
+  },
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "spectral entropy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      4.1614089012146,
+      4.116111755371094,
+      4.190497875213623
+    ],
+    "treatment_values": [
+      4.435517311096191,
+      4.427024841308594,
+      4.492848873138428
+    ],
+    "difference_values": [
+      0.2741084098815918,
+      0.3109130859375,
+      0.3023509979248047
+    ],
+    "control_mean": 4.1560061772664385,
+    "treatment_mean": 4.451797008514404,
+    "difference_mean": 0.2957908312479655,
+    "control_sd": 0.037486207808363405,
+    "treatment_sd": 0.035804639400574545,
+    "difference_sd": 0.019259358374982778,
+    "ci95_low": 0.24794793280514912,
+    "ci95_high": 0.3436337296907819,
+    "paired_t": 26.601340406023073,
+    "paired_t_p_two_sided": 0.0014101767633560383,
+    "cohen_dz": 15.358291044222288,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.011281414106848306
+  },
+  {
+    "family": "full MoCo v3 ViT S",
+    "comparison": "BRIDGE minus MoCo v3",
+    "metric": "1 NN accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      47.101683937823836,
+      42.475865985235664,
+      44.90786442908852
+    ],
+    "treatment_values": [
+      51.05246113989638,
+      46.986290257159084,
+      47.836459361632116
+    ],
+    "difference_values": [
+      3.950777202072544,
+      4.510424271923419,
+      2.9285949325435965
+    ],
+    "control_mean": 44.828471450716016,
+    "treatment_mean": 48.62507025289586,
+    "difference_mean": 3.796598802179853,
+    "control_sd": 2.313930717714534,
+    "treatment_sd": 2.1447299982212207,
+    "difference_sd": 0.8021061332366213,
+    "ci95_low": 1.8040567078052197,
+    "ci95_high": 5.789140896554486,
+    "paired_t": 8.19829415191712,
+    "paired_t_p_two_sided": 0.014554269296506715,
+    "cohen_dz": 4.733287335505084,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.07277134648253357
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      23.472913168370724,
+      22.65662755817175,
+      21.592469327151775
+    ],
+    "treatment_values": [
+      25.441863760352135,
+      23.749757930636406,
+      24.539021030068398
+    ],
+    "difference_values": [
+      1.968950591981411,
+      1.0931303724646568,
+      2.946551702916622
+    ],
+    "control_mean": 22.574003351231415,
+    "treatment_mean": 24.576880907018978,
+    "difference_mean": 2.0028775557875633,
+    "control_sd": 0.9429407879999452,
+    "treatment_sd": 0.8466879959297425,
+    "difference_sd": 0.9271763242223192,
+    "ci95_low": -0.3003561166266082,
+    "ci95_high": 4.306111228201734,
+    "paired_t": 3.7415598277632545,
+    "paired_t_p_two_sided": 0.0645887021299343,
+    "cohen_dz": 2.160190573748205,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.3229435106496715
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "Cars accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      7.387141138315201,
+      7.101106643676758,
+      7.312523573637009
+    ],
+    "treatment_values": [
+      8.24524313211441,
+      7.113543152809143,
+      7.921900600194931
+    ],
+    "difference_values": [
+      0.8581019937992096,
+      0.012436509132385254,
+      0.6093770265579224
+    ],
+    "control_mean": 7.266923785209656,
+    "treatment_mean": 7.7602289617061615,
+    "difference_mean": 0.49330517649650574,
+    "control_sd": 0.14836926419994095,
+    "treatment_sd": 0.5829146591128226,
+    "difference_sd": 0.4346171116876367,
+    "ci95_low": -0.5863435808053783,
+    "ci95_high": 1.5729539337983898,
+    "paired_t": 1.9659364676436548,
+    "paired_t_p_two_sided": 0.1882188852671779,
+    "cohen_dz": 1.135033948803766,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.33615054597780236
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "Aircraft accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      10.561056435108185,
+      11.041104048490524,
+      10.171017050743103
+    ],
+    "treatment_values": [
+      12.301230430603027,
+      11.551155149936676,
+      11.941193789243698
+    ],
+    "difference_values": [
+      1.7401739954948425,
+      0.5100511014461517,
+      1.770176738500595
+    ],
+    "control_mean": 10.591059178113937,
+    "treatment_mean": 11.931193123261133,
+    "difference_mean": 1.3401339451471965,
+    "control_sd": 0.435818734513768,
+    "treatment_sd": 0.3751376302862025,
+    "difference_sd": 0.7190293364683231,
+    "ci95_low": -0.4460339454064468,
+    "ci95_high": 3.12630183570084,
+    "paired_t": 3.2282133206743326,
+    "paired_t_p_two_sided": 0.08403763649445059,
+    "cohen_dz": 1.8638098296928616,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.33615054597780236
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "Flowers accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      34.64052379131317,
+      32.679739594459534,
+      28.104576468467712
+    ],
+    "treatment_values": [
+      37.254902720451355,
+      34.64052379131317,
+      35.94771325588226
+    ],
+    "difference_values": [
+      2.6143789291381836,
+      1.9607841968536377,
+      7.843136787414551
+    ],
+    "control_mean": 31.80827995141347,
+    "treatment_mean": 35.94771325588226,
+    "difference_mean": 4.139433304468791,
+    "control_sd": 3.3539876690062767,
+    "treatment_sd": 1.3071894645690918,
+    "difference_sd": 3.224106253786612,
+    "ci95_low": -3.8696906271533615,
+    "ci95_high": 12.148557236090944,
+    "paired_t": 2.223781796726481,
+    "paired_t_p_two_sided": 0.15618037579977764,
+    "cohen_dz": 1.2839010189590234,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.33615054597780236
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "ImageNet 100 LT accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      41.30293130874634,
+      39.80455994606018,
+      40.78176021575928
+    ],
+    "treatment_values": [
+      43.966078758239746,
+      41.69380962848663,
+      42.3452764749527
+    ],
+    "difference_values": [
+      2.663147449493408,
+      1.8892496824264526,
+      1.5635162591934204
+    ],
+    "control_mean": 40.6297504901886,
+    "treatment_mean": 42.66838828722636,
+    "difference_mean": 2.0386377970377603,
+    "control_sd": 0.7606637907975821,
+    "treatment_sd": 1.1700866130036354,
+    "difference_sd": 0.564831652141134,
+    "ci95_low": 0.6355181891811132,
+    "ci95_high": 3.4417574048944073,
+    "paired_t": 6.251463120585523,
+    "paired_t_p_two_sided": 0.024645989458945052,
+    "cohen_dz": 3.6092839154990695,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.1478759367536703
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "effective rank",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      101.16738891601562,
+      98.59425354003906,
+      99.12306213378906
+    ],
+    "treatment_values": [
+      94.73062133789062,
+      91.68241119384766,
+      91.6367416381836
+    ],
+    "difference_values": [
+      -6.436767578125,
+      -6.911842346191406,
+      -7.486320495605469
+    ],
+    "control_mean": 99.62823486328125,
+    "treatment_mean": 92.68325805664062,
+    "difference_mean": -6.944976806640625,
+    "control_sd": 1.358917227333016,
+    "treatment_sd": 1.773215647104636,
+    "difference_sd": 0.5255604161272865,
+    "ci95_low": -8.250541256129434,
+    "ci95_high": -5.639412357151815,
+    "paired_t": -22.888049246798065,
+    "paired_t_p_two_sided": 0.0019034482643844497,
+    "cohen_dz": -13.214421393864273,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.015227586115075598
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "spectral entropy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      4.616776466369629,
+      4.591012954711914,
+      4.596362113952637
+    ],
+    "treatment_values": [
+      4.551037311553955,
+      4.5183305740356445,
+      4.517832279205322
+    ],
+    "difference_values": [
+      -0.06573915481567383,
+      -0.07268238067626953,
+      -0.07852983474731445
+    ],
+    "control_mean": 4.6013838450113935,
+    "treatment_mean": 4.529066721598308,
+    "difference_mean": -0.07231712341308594,
+    "control_sd": 0.013596064517137376,
+    "treatment_sd": 0.019028720179872585,
+    "difference_sd": 0.006403158043469631,
+    "ci95_low": -0.08822344978296918,
+    "ci95_high": -0.05641079704320269,
+    "paired_t": -19.56174299593293,
+    "paired_t_p_two_sided": 0.0026030743419547717,
+    "cohen_dz": -11.293977584520155,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.018221520393683403
+  },
+  {
+    "family": "full SimCLR ViT S",
+    "comparison": "BRIDGE minus SimCLR ViT S",
+    "metric": "1 NN accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      40.94073834196891,
+      37.14610205240529,
+      38.63004740886055
+    ],
+    "treatment_values": [
+      42.61193425633552,
+      37.70584894946054,
+      39.37387608304724
+    ],
+    "difference_values": [
+      1.6711959143666135,
+      0.5597468970552484,
+      0.7438286741866946
+    ],
+    "control_mean": 38.90562926774492,
+    "treatment_mean": 39.89721976294777,
+    "difference_mean": 0.9915904952028521,
+    "control_sd": 1.9122696366433034,
+    "treatment_sd": 2.4945610265240097,
+    "difference_sd": 0.595708963744488,
+    "ci95_low": -0.4882326068442021,
+    "ci95_high": 2.4714135972499065,
+    "paired_t": 2.883094300273763,
+    "paired_t_p_two_sided": 0.10219401881373623,
+    "cohen_dz": 1.6645552703621327,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.33615054597780236
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      14.821993559598923,
+      14.26568441092968
+    ],
+    "treatment_values": [
+      13.634485844522715,
+      13.886084780097008
+    ],
+    "difference_values": [
+      -1.1875077150762081,
+      -0.3795996308326721
+    ],
+    "control_mean": 14.543838985264301,
+    "treatment_mean": 13.760285312309861,
+    "difference_mean": -0.7835536729544401,
+    "control_sd": 0.39336997146013686,
+    "treatment_sd": 0.17790731348389996,
+    "difference_sd": 0.5712772849440368,
+    "ci95_low": -5.9162764362629385,
+    "ci95_high": 4.349169090354058,
+    "paired_t": -1.939709945316615,
+    "paired_t_p_two_sided": 0.3030329014394931,
+    "cohen_dz": -1.3715820558683656,
+    "wilcoxon_p_two_sided": 0.5,
+    "holm_p": 1.0
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "Cars accuracy",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      3.2334286719560623,
+      3.954732045531273
+    ],
+    "treatment_values": [
+      3.258301317691803,
+      3.395099937915802
+    ],
+    "difference_values": [
+      0.02487264573574066,
+      -0.5596321076154709
+    ],
+    "control_mean": 3.5940803587436676,
+    "treatment_mean": 3.3267006278038025,
+    "difference_mean": -0.2673797309398651,
+    "control_sd": 0.510038506747765,
+    "treatment_sd": 0.0967312320173529,
+    "difference_sd": 0.41330727473041207,
+    "ci95_low": -3.980798263688984,
+    "ci95_high": 3.446038801809254,
+    "paired_t": -0.9148932644494837,
+    "paired_t_p_two_sided": 0.5282757264033293,
+    "cohen_dz": -0.6469272313541272,
+    "wilcoxon_p_two_sided": 1.0,
+    "holm_p": 1.0
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "Aircraft accuracy",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      5.430543050169945,
+      5.100509896874428
+    ],
+    "treatment_values": [
+      5.100509896874428,
+      4.860486090183258
+    ],
+    "difference_values": [
+      -0.33003315329551697,
+      -0.24002380669116974
+    ],
+    "control_mean": 5.265526473522186,
+    "treatment_mean": 4.980497993528843,
+    "difference_mean": -0.28502847999334335,
+    "control_sd": 0.2333686807116394,
+    "treatment_sd": 0.16972246135753513,
+    "difference_sd": 0.06364621935410426,
+    "ci95_low": -0.8568670730670007,
+    "ci95_high": 0.286810113080314,
+    "paired_t": -6.3333085006435805,
+    "paired_t_p_two_sided": 0.099696235820886,
+    "cohen_dz": -4.478325388151482,
+    "wilcoxon_p_two_sided": 0.5,
+    "holm_p": 0.697873650746202
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "Flowers accuracy",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      21.568627655506134,
+      18.300653994083405
+    ],
+    "treatment_values": [
+      16.993464529514313,
+      17.64705926179886
+    ],
+    "difference_values": [
+      -4.575163125991821,
+      -0.6535947322845459
+    ],
+    "control_mean": 19.93464082479477,
+    "treatment_mean": 17.320261895656586,
+    "difference_mean": -2.6143789291381836,
+    "control_sd": 2.3108063367310425,
+    "treatment_sd": 0.4621612673462085,
+    "difference_sd": 2.772967604077251,
+    "ci95_low": -27.528504378321074,
+    "ci95_high": 22.299746520044707,
+    "paired_t": -1.3333333333333333,
+    "paired_t_p_two_sided": 0.40966552939826667,
+    "cohen_dz": -0.9428090415820635,
+    "wilcoxon_p_two_sided": 0.5,
+    "holm_p": 1.0
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "ImageNet 100 LT accuracy",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      29.05537486076355,
+      29.706841707229614
+    ],
+    "treatment_values": [
+      29.185667634010315,
+      29.641693830490112
+    ],
+    "difference_values": [
+      0.13029277324676514,
+      -0.06514787673950195
+    ],
+    "control_mean": 29.381108283996582,
+    "treatment_mean": 29.413680732250214,
+    "difference_mean": 0.03257244825363159,
+    "control_sd": 0.4606566248543696,
+    "treatment_sd": 0.3224592159295736,
+    "difference_sd": 0.13819740892479598,
+    "ci95_low": -1.2090820080198053,
+    "ci95_high": 1.2742269045270684,
+    "paired_t": 0.33332316747739366,
+    "paired_t_p_two_sided": 0.795173059925035,
+    "cohen_dz": 0.23569507204984436,
+    "wilcoxon_p_two_sided": 1.0,
+    "holm_p": 1.0
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "effective rank",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      70.36386108398438,
+      70.65121459960938
+    ],
+    "treatment_values": [
+      61.98291015625,
+      68.83988952636719
+    ],
+    "difference_values": [
+      -8.380950927734375,
+      -1.8113250732421875
+    ],
+    "control_mean": 70.50753784179688,
+    "treatment_mean": 65.4113998413086,
+    "difference_mean": -5.096138000488281,
+    "control_sd": 0.20318961949623204,
+    "treatment_sd": 4.848616611066125,
+    "difference_sd": 4.6454269915698925,
+    "ci95_low": -46.83364357495597,
+    "ci95_high": 36.64136757397941,
+    "paired_t": -1.551424118621196,
+    "paired_t_p_two_sided": 0.3644952906029224,
+    "cohen_dz": -1.0970225147734103,
+    "wilcoxon_p_two_sided": 0.5,
+    "holm_p": 1.0
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "spectral entropy",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      4.2536797523498535,
+      4.257755279541016
+    ],
+    "treatment_values": [
+      4.126858711242676,
+      4.231783390045166
+    ],
+    "difference_values": [
+      -0.12682104110717773,
+      -0.02597188949584961
+    ],
+    "control_mean": 4.255717515945435,
+    "treatment_mean": 4.179321050643921,
+    "difference_mean": -0.07639646530151367,
+    "control_sd": 0.0028818329137808903,
+    "treatment_sd": 0.07419295189506124,
+    "difference_sd": 0.07131111898128036,
+    "ci95_low": -0.7171014492360216,
+    "ci95_high": 0.5643085186329942,
+    "paired_t": -1.5150641146877482,
+    "paired_t_p_two_sided": 0.3714036745441705,
+    "cohen_dz": -1.0713121094281,
+    "wilcoxon_p_two_sided": 0.5,
+    "holm_p": 1.0
+  },
+  {
+    "family": "full DINO ViT S",
+    "comparison": "BRIDGE minus DINO ViT S",
+    "metric": "1 NN accuracy",
+    "seeds": [
+      0,
+      1
+    ],
+    "n": 2,
+    "control_values": [
+      36.70660621761658,
+      32.749249614666994
+    ],
+    "treatment_values": [
+      37.82383419689119,
+      33.836294313296015
+    ],
+    "difference_values": [
+      1.1172279792746096,
+      1.0870446986290219
+    ],
+    "control_mean": 34.72792791614179,
+    "treatment_mean": 35.8300642550936,
+    "difference_mean": 1.1021363389518157,
+    "control_sd": 2.798273689519013,
+    "treatment_sd": 2.819616491941965,
+    "difference_sd": 0.021342802422951758,
+    "ci95_low": 0.9103788672018027,
+    "ci95_high": 1.2938938107018287,
+    "paired_t": 73.02959223638462,
+    "paired_t_p_two_sided": 0.008716740276427942,
+    "cohen_dz": 51.639719897636,
+    "wilcoxon_p_two_sided": 0.5,
+    "holm_p": 0.06973392221142354
+  },
+  {
+    "family": "short ViT diagnostics",
+    "comparison": "one cycle MoCo BRIDGE minus base",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      16.031742561608553,
+      15.17817722633481,
+      13.363700453191996
+    ],
+    "treatment_values": [
+      16.11074022948742,
+      15.661184024065733,
+      14.390284288674593
+    ],
+    "difference_values": [
+      0.0789976678788662,
+      0.4830067977309227,
+      1.0265838354825974
+    ],
+    "control_mean": 14.857873413711786,
+    "treatment_mean": 15.387402847409248,
+    "difference_mean": 0.5295294336974621,
+    "control_sd": 1.3625557134871957,
+    "treatment_sd": 0.8923055869981391,
+    "difference_sd": 0.4755030525679493,
+    "ci95_low": -0.6516856312243422,
+    "ci95_high": 1.7107444986192664,
+    "paired_t": 1.9288454160577986,
+    "paired_t_p_two_sided": 0.19354056023134605,
+    "cohen_dz": 1.1136194201861458,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.5806216806940382
+  },
+  {
+    "family": "short ViT diagnostics",
+    "comparison": "three cycle MoCo BRIDGE minus base",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      21.949770487844944,
+      23.003612831234932,
+      21.424547024071217
+    ],
+    "treatment_values": [
+      21.918584033846855,
+      23.034092783927917,
+      21.78649753332138
+    ],
+    "difference_values": [
+      -0.031186453998088837,
+      0.030479952692985535,
+      0.36195050925016403
+    ],
+    "control_mean": 22.125976781050365,
+    "treatment_mean": 22.246391450365383,
+    "difference_mean": 0.12041466931502025,
+    "control_sd": 0.8041447003881173,
+    "treatment_sd": 0.6853588505866188,
+    "difference_sd": 0.21143641575761918,
+    "ci95_low": -0.4048225046992943,
+    "ci95_high": 0.6456518433293348,
+    "paired_t": 0.986416292022792,
+    "paired_t_p_two_sided": 0.4279137193602277,
+    "cohen_dz": 0.5695077117323915,
+    "wilcoxon_p_two_sided": 0.75,
+    "holm_p": 0.8558274387204554
+  },
+  {
+    "family": "short ViT diagnostics",
+    "comparison": "MAE BRIDGE minus base",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      7.743147714063525,
+      6.617437023669481,
+      5.601200484670699
+    ],
+    "treatment_values": [
+      5.712546827271581,
+      6.754848058335483,
+      6.1763746198266745
+    ],
+    "difference_values": [
+      -2.0306008867919445,
+      0.1374110346660018,
+      0.5751741351559758
+    ],
+    "control_mean": 6.653928407467902,
+    "treatment_mean": 6.214589835144579,
+    "difference_mean": -0.4393385723233223,
+    "control_sd": 1.0714397786131258,
+    "treatment_sd": 0.5222004079667852,
+    "difference_sd": 1.39534796668203,
+    "ci95_low": -3.9055750773293414,
+    "ci95_high": 3.026897932682697,
+    "paired_t": -0.5453526626754126,
+    "paired_t_p_two_sided": 0.6402024273354614,
+    "cohen_dz": -0.31485950659892864,
+    "wilcoxon_p_two_sided": 1.0,
+    "holm_p": 0.8558274387204554
+  },
+  {
+    "family": "low label fine tuning",
+    "comparison": "BRIDGE minus base at 1 percent labels",
+    "metric": "ImageNet 100 LT accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      14.638906717300415,
+      13.9882892370224,
+      14.313597977161407
+    ],
+    "treatment_values": [
+      17.436565458774567,
+      15.224462747573853,
+      16.200390458106995
+    ],
+    "difference_values": [
+      2.7976587414741516,
+      1.2361735105514526,
+      1.8867924809455872
+    ],
+    "control_mean": 14.313597977161407,
+    "treatment_mean": 16.28713955481847,
+    "difference_mean": 1.9735415776570637,
+    "control_sd": 0.32530874013900757,
+    "treatment_sd": 1.1085998626919364,
+    "difference_sd": 0.78434882924157,
+    "ci95_low": 0.02511107179500538,
+    "ci95_high": 3.921972083519122,
+    "paired_t": 4.358104654350018,
+    "paired_t_p_two_sided": 0.048826780311035885,
+    "cohen_dz": 2.5161528953455434,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.09765356062207177
+  },
+  {
+    "family": "low label fine tuning",
+    "comparison": "BRIDGE minus base at 10 percent labels",
+    "metric": "ImageNet 100 LT accuracy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      22.31620103120804,
+      21.53545916080475,
+      20.819778740406036
+    ],
+    "treatment_values": [
+      24.39817786216736,
+      26.610279083251953,
+      23.162004351615906
+    ],
+    "difference_values": [
+      2.08197683095932,
+      5.074819922447205,
+      2.3422256112098694
+    ],
+    "control_mean": 21.557146310806274,
+    "treatment_mean": 24.723487099011738,
+    "difference_mean": 3.166340788205465,
+    "control_sd": 0.7484468367617498,
+    "treatment_sd": 1.7470029281292343,
+    "difference_sd": 1.6579058511515516,
+    "ci95_low": -0.9521256591205964,
+    "ci95_high": 7.284807235531526,
+    "paired_t": 3.307946054620822,
+    "paired_t_p_two_sided": 0.0805053374822866,
+    "cohen_dz": 1.909843545100092,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.09765356062207177
+  },
+  {
+    "family": "TS factorial",
+    "comparison": "BRIDGE minus base",
+    "metric": "CIFAR 10 transfer",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      60.829997062683105,
+      59.369999170303345,
+      58.93999934196472
+    ],
+    "treatment_values": [
+      64.48000073432922,
+      64.91000056266785,
+      64.42999839782715
+    ],
+    "difference_values": [
+      3.650003671646118,
+      5.540001392364502,
+      5.489999055862427
+    ],
+    "control_mean": 59.713331858317055,
+    "treatment_mean": 64.6066665649414,
+    "difference_mean": 4.893334706624349,
+    "control_sd": 0.9906719169706045,
+    "treatment_sd": 0.2638819699154242,
+    "difference_sd": 1.0770464731472573,
+    "ci95_low": 2.217802945404714,
+    "ci95_high": 7.568866467843984,
+    "paired_t": 7.869209492462374,
+    "paired_t_p_two_sided": 0.015767776037456802,
+    "cohen_dz": 4.54329021878271,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.09460665622474082
+  },
+  {
+    "family": "TS factorial",
+    "comparison": "BRIDGE plus TS minus TS",
+    "metric": "CIFAR 10 transfer",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      53.75000238418579,
+      56.01999759674072,
+      55.03000020980835
+    ],
+    "treatment_values": [
+      64.34999704360962,
+      62.550002336502075,
+      65.49999713897705
+    ],
+    "difference_values": [
+      10.599994659423828,
+      6.5300047397613525,
+      10.469996929168701
+    ],
+    "control_mean": 54.93333339691162,
+    "treatment_mean": 64.13333217302959,
+    "difference_mean": 9.19999877611796,
+    "control_sd": 1.1380808059150658,
+    "treatment_sd": 1.4868843543682004,
+    "difference_sd": 2.3131960505116638,
+    "ci95_low": 3.453701232441225,
+    "ci95_high": 14.946296319794694,
+    "paired_t": 6.888679109703264,
+    "paired_t_p_two_sided": 0.02042953515090472,
+    "cohen_dz": 3.9771807383481312,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.1021476757545236
+  },
+  {
+    "family": "TS factorial",
+    "comparison": "BRIDGE plus TS minus BRIDGE",
+    "metric": "CIFAR 10 transfer",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      64.48000073432922,
+      64.91000056266785,
+      64.42999839782715
+    ],
+    "treatment_values": [
+      64.34999704360962,
+      62.550002336502075,
+      65.49999713897705
+    ],
+    "difference_values": [
+      -0.1300036907196045,
+      -2.3599982261657715,
+      1.0699987411499023
+    ],
+    "control_mean": 64.6066665649414,
+    "treatment_mean": 64.13333217302959,
+    "difference_mean": -0.4733343919118245,
+    "control_sd": 0.2638819699154242,
+    "treatment_sd": 1.4868843543682004,
+    "difference_sd": 1.7405823096695359,
+    "ci95_low": -4.797180547713827,
+    "ci95_high": 3.8505117638901782,
+    "paired_t": -0.4710143330806645,
+    "paired_t_p_two_sided": 0.684007834512921,
+    "cohen_dz": -0.27194025199629374,
+    "wilcoxon_p_two_sided": 0.75,
+    "holm_p": 0.684007834512921
+  },
+  {
+    "family": "TS factorial",
+    "comparison": "BRIDGE minus base",
+    "metric": "CIFAR 100 transfer",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      31.630000472068787,
+      30.739998817443848,
+      28.200000524520874
+    ],
+    "treatment_values": [
+      31.760001182556152,
+      32.92999863624573,
+      33.43999981880188
+    ],
+    "difference_values": [
+      0.13000071048736572,
+      2.18999981880188,
+      5.239999294281006
+    ],
+    "control_mean": 30.18999993801117,
+    "treatment_mean": 32.709999879201256,
+    "difference_mean": 2.519999941190084,
+    "control_sd": 1.7799154433785813,
+    "treatment_sd": 0.8613352682159899,
+    "difference_sd": 2.570932990603883,
+    "ci95_low": -3.8665516550729344,
+    "ci95_high": 8.906551537453103,
+    "paired_t": 1.6977369496458847,
+    "paired_t_p_two_sided": 0.23165248367030106,
+    "cohen_dz": 0.9801888848912257,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.48966436414082665
+  },
+  {
+    "family": "TS factorial",
+    "comparison": "BRIDGE plus TS minus TS",
+    "metric": "CIFAR 100 transfer",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      26.170000433921814,
+      26.559999585151672,
+      25.33000111579895
+    ],
+    "treatment_values": [
+      31.380000710487366,
+      31.16999864578247,
+      32.82000124454498
+    ],
+    "difference_values": [
+      5.210000276565552,
+      4.609999060630798,
+      7.490000128746033
+    ],
+    "control_mean": 26.020000378290813,
+    "treatment_mean": 31.790000200271606,
+    "difference_mean": 5.769999821980794,
+    "control_sd": 0.6285690663479134,
+    "treatment_sd": 0.8981658144230742,
+    "difference_sd": 1.519473973530044,
+    "ci95_low": 1.9954172223584647,
+    "ci95_high": 9.544582421603124,
+    "paired_t": 6.57723200622923,
+    "paired_t_p_two_sided": 0.02234420584625991,
+    "cohen_dz": 3.797366669319069,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.1021476757545236
+  },
+  {
+    "family": "TS factorial",
+    "comparison": "BRIDGE plus TS minus BRIDGE",
+    "metric": "CIFAR 100 transfer",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      31.760001182556152,
+      32.92999863624573,
+      33.43999981880188
+    ],
+    "treatment_values": [
+      31.380000710487366,
+      31.16999864578247,
+      32.82000124454498
+    ],
+    "difference_values": [
+      -0.3800004720687866,
+      -1.7599999904632568,
+      -0.619998574256897
+    ],
+    "control_mean": 32.709999879201256,
+    "treatment_mean": 31.790000200271606,
+    "difference_mean": -0.9199996789296468,
+    "control_sd": 0.8613352682159899,
+    "treatment_sd": 0.8981658144230742,
+    "difference_sd": 0.7372924554041599,
+    "ci95_low": -2.7515356719654216,
+    "ci95_high": 0.911536314106128,
+    "paired_t": -2.1612674525195095,
+    "paired_t_p_two_sided": 0.16322145471360888,
+    "cohen_dz": -1.2478083455029154,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.48966436414082665
+  },
+  {
+    "family": "generator settings",
+    "comparison": "FLUX dev 20 minus 6 steps",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      19.356525130569935,
+      17.758936807513237,
+      17.57477167993784
+    ],
+    "treatment_values": [
+      19.94171068072319,
+      17.189253866672516,
+      19.208800978958607
+    ],
+    "difference_values": [
+      0.5851855501532555,
+      -0.5696829408407211,
+      1.6340292990207672
+    ],
+    "control_mean": 18.23007787267367,
+    "treatment_mean": 18.779921842118103,
+    "difference_mean": 0.5498439694444338,
+    "control_sd": 0.9798682396986982,
+    "treatment_sd": 1.425467507106454,
+    "difference_sd": 1.1022811254503468,
+    "ci95_low": -2.1883741432034367,
+    "ci95_high": 3.288062082092304,
+    "paired_t": 0.8639880238573572,
+    "paired_t_p_two_sided": 0.47866140963513204,
+    "cohen_dz": 0.4988237181506579,
+    "wilcoxon_p_two_sided": 0.5,
+    "holm_p": 0.47866140963513204
+  },
+  {
+    "family": "generator settings",
+    "comparison": "FLUX schnell guidance 3 minus guidance 1",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      19.059855677187443,
+      19.470325112342834,
+      18.20477321743965
+    ],
+    "treatment_values": [
+      19.790075905621052,
+      20.416992343962193,
+      18.818852491676807
+    ],
+    "difference_values": [
+      0.730220228433609,
+      0.9466672316193581,
+      0.6140792742371559
+    ],
+    "control_mean": 18.911651335656643,
+    "treatment_mean": 19.67530691375335,
+    "difference_mean": 0.7636555780967077,
+    "control_sd": 0.6456615172129223,
+    "treatment_sd": 0.8052277243031529,
+    "difference_sd": 0.16879611756268753,
+    "ci95_low": 0.3443427768673897,
+    "ci95_high": 1.1829683793260257,
+    "paired_t": 7.836023007197777,
+    "paired_t_p_two_sided": 0.01589844073238395,
+    "cohen_dz": 4.524129992581738,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.0317968814647679
+  },
+  {
+    "family": "adaptive acquisition",
+    "comparison": "top tail minus adaptive mode window",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      18.6202609911561,
+      20.62286175787449,
+      20.156137831509113
+    ],
+    "treatment_values": [
+      20.032969675958157,
+      22.20232132822275,
+      20.70308830589056
+    ],
+    "difference_values": [
+      1.4127086848020554,
+      1.5794595703482628,
+      0.5469504743814468
+    ],
+    "control_mean": 19.79975352684657,
+    "treatment_mean": 20.979459770023823,
+    "difference_mean": 1.179706243177255,
+    "control_sd": 1.0477880449654993,
+    "treatment_sd": 1.110768894701393,
+    "difference_sd": 0.5542890596664268,
+    "ci95_low": -0.19722411313368138,
+    "ci95_high": 2.556636599488191,
+    "paired_t": 3.686363848528569,
+    "paired_t_p_two_sided": 0.06634765661594316,
+    "cohen_dz": 2.128323160278874,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.13269531323188632
+  },
+  {
+    "family": "adaptive acquisition",
+    "comparison": "dense placebo minus adaptive mode window",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      18.6202609911561,
+      20.62286175787449,
+      20.156137831509113
+    ],
+    "treatment_values": [
+      20.29994484037161,
+      20.24115603417158,
+      19.90656517446041
+    ],
+    "difference_values": [
+      1.6796838492155075,
+      -0.38170572370290756,
+      -0.24957265704870224
+    ],
+    "control_mean": 19.79975352684657,
+    "treatment_mean": 20.149222016334534,
+    "difference_mean": 0.3494684894879659,
+    "control_sd": 1.0477880449654993,
+    "treatment_sd": 0.21219280881982855,
+    "difference_sd": 1.1538931771473326,
+    "ci95_low": -2.5169610671596057,
+    "ci95_high": 3.2158980461355378,
+    "paired_t": 0.524569510787757,
+    "paired_t_p_two_sided": 0.6522270367831204,
+    "cohen_dz": 0.3028603482619818,
+    "wilcoxon_p_two_sided": 1.0,
+    "holm_p": 0.6522270367831204
+  },
+  {
+    "family": "TADA controls",
+    "comparison": "BRIDGE plus TADA minus TADA",
+    "metric": "four task average",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n": 3,
+    "control_values": [
+      22.498360462486744,
+      20.715992897748947,
+      20.608569495379925
+    ],
+    "treatment_values": [
+      20.20381949841976,
+      20.30926700681448,
+      20.377391949295998
+    ],
+    "difference_values": [
+      -2.2945409640669823,
+      -0.4067258909344673,
+      -0.23117754608392715
+    ],
+    "control_mean": 21.27430761853854,
+    "treatment_mean": 20.29682615151008,
+    "difference_mean": -0.977481467028459,
+    "control_sd": 1.0614207320508684,
+    "treatment_sd": 0.08745244471325317,
+    "difference_sd": 1.143979280581369,
+    "ci95_low": -3.8192835393464333,
+    "ci95_high": 1.8643206052895152,
+    "paired_t": -1.4799634863053186,
+    "paired_t_p_two_sided": 0.2770157093838311,
+    "cohen_dz": -0.8544573172091927,
+    "wilcoxon_p_two_sided": 0.25,
+    "holm_p": 0.2770157093838311
+  }
+]
