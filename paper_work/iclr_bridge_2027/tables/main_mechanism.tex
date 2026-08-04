@@ -1,0 +1,22 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Selection and cycle ablations on ImageNet-100-LT. This matched ablation family is independent of the source-regime runs in Table~\ref{tab:main_sota_label_sources}. Values average all seven downstream tasks over three seeds. The nearby mode-window results show that the exact lower percentile is not critical. Uniform and top-tail selection test the dense-allocation and extreme-sparsity alternatives.}
+\label{tab:main_mechanism}
+\begin{tabular}{llcc}
+\toprule
+Group & Setting & Linear probe & $k$NN \\
+\midrule
+Selection & Mode-window q1--99 & $42.1\pm0.7$ & $33.4\pm0.3$ \\
+ & Mode-window q50--99 & $42.2\pm0.9$ & $33.6\pm0.3$ \\
+ & Mode-window q75--99 & $42.3\pm0.7$ & $33.6\pm0.5$ \\
+ & Uniform & $35.5\pm1.2$ & $28.4\pm0.6$ \\
+ & Top-tail & $34.3\pm1.2$ & $27.3\pm0.6$ \\
+\midrule
+Schedule & 2 cycles & $35.0\pm1.4$ & $27.9\pm0.5$ \\
+ & 5 cycles & $42.3\pm0.7$ & $33.6\pm0.5$ \\
+ & 10 cycles & $34.1\pm1.7$ & $28.1\pm0.6$ \\
+\bottomrule
+\end{tabular}
+\end{table}

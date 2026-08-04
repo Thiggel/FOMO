@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{Evaluation beyond the default SimCLR/ResNet-50 linear-probe setting. ViT-S results average Cars, Aircraft, Flowers, and ImageNet-100-LT over three paired runs. Fine-tuning uses the full encoder for 100 epochs over three paired runs. VOC segmentation is a single paired run and is reported without an uncertainty estimate.}
+\label{tab:main_generalization}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{llccc}
+\toprule
+Evaluation & Setting & SSL baseline & With BRIDGE & Difference \\
+\midrule
+Frozen transfer & SimCLR, ViT-S & $22.57\pm0.94$ & $24.58\pm0.85$ & $+2.00\pm0.93$ \\
+Frozen transfer & MoCo v3, ViT-S & $24.78\pm0.77$ & $26.16\pm0.21$ & $+1.38\pm0.89$ \\
+\midrule
+Full fine-tuning & IN100-LT, 1\% labels & $14.31\pm0.33$ & $16.29\pm1.11$ & $+1.97\pm0.78$ \\
+Full fine-tuning & IN100-LT, 10\% labels & $21.56\pm0.75$ & $24.72\pm1.75$ & $+3.17\pm1.66$ \\
+Segmentation & PASCAL VOC, mIoU & $10.56$ & $12.32$ & $+1.76$ \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
