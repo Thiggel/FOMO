@@ -37,7 +37,7 @@
 \maketitle
 
 \begin{abstract}
-Self-supervised learning inherits gaps in its source data. We study whether these gaps can be repaired while representation learning is in progress. We introduce \method, a label-free feedback loop in which the current SSL representation scores local support, a budgeted acquisition policy selects sparse but recoverable regions, and a frozen generator adds local variants before continued pretraining. The resulting intervention changes the representation that determines the next intervention. Across five long-tailed and web-source regimes, \method\ improves average linear-probe and $k$NN transfer over source-matched SSL baselines. Paired full-schedule experiments further show gains with both ResNet-50 and ViT-S, while low-label fine-tuning and semantic segmentation extend the evidence beyond frozen-feature evaluation. Matched controls separate targeted repair from continued training, uniform generation, ordinary augmentation, oracle real-data restoration, and direct diffusion-feature distillation. We formalize the acquisition problem through recoverability-weighted marginal support utility. The analysis predicts an interior repair region when the value of added support grows with sparsity but generator reliability falls in the extreme tail. This does not derive a universal percentile, but explains the tested policy class and motivates the adaptive and tail-selection experiments. Overall, the results show that allocating a limited data budget from an evolving representation can improve learning from skewed unlabeled data.
+Self-supervised learning inherits gaps in its source data. We study whether these gaps can be repaired while representation learning is in progress. We introduce \method, a label-free feedback loop in which the current SSL representation scores local support, a budgeted acquisition policy selects sparse but recoverable regions, and a frozen generator adds local variants before continued pretraining. The resulting intervention changes the representation that determines the next intervention. Across five long-tailed and web-source regimes, \method\ improves average linear-probe and $k$NN transfer over source-matched SSL baselines. Paired full-schedule experiments further show gains with both ResNet-50 and ViT-S, while low-label fine-tuning and semantic segmentation extend the evidence beyond frozen-feature evaluation. Matched controls separate targeted repair from continued training, uniform generation, ordinary augmentation, oracle real-data restoration, and direct diffusion-feature distillation. We formalize the acquisition problem through recoverability-weighted marginal support utility. The analysis favors an interior repair region when the value of added support grows with sparsity but generator reliability falls in the extreme tail, and it favors adaptive reallocation when regional gains diminish after repair. Overall, the results show that allocating a limited data budget from an evolving representation can improve learning from skewed unlabeled data.
 \end{abstract}
 
 \begin{center}
@@ -55,18 +55,18 @@ We study the complementary direction and ask whether we can repair the source da
 
 Two aspects of \method\ are central. First, BRIDGE restricts attention to the upper sparse band of the OOD distribution, finds the mode within that band, and then selects a diverse set of anchors around that mode. This avoids the super-OOD tail, which often contains noisy or weakly useful images, while retaining the underrepresented region that is most amenable to repair. In the ablations, we compare this selector against top-tail and uniform alternatives. Second, we evaluate BRIDGE across five distinct source regimes. In addition to ImageNet-100-LT, CIFAR-10-LT, and CIFAR-100-LT, we study web-source unlabeled data drawn from PASS and DiffusionDB. Across these five regimes, \method\ is best on the seven-task average and remains strong under both linear-probe and $k$NN transfer.
 
-We make three contributions. First, we introduce a data-centric SSL loop that repairs sparse representation regions with frozen diffusion augmentation instead of modifying the SSL loss. Second, we introduce an upper-tail mode-window rule with diversity-aware subsampling, which targets semantically recoverable sparse regions without drifting into the extreme OOD tail or wasting budget on near-duplicates. Third, we provide a broad empirical study across five source regimes, seven downstream tasks, three seeds, competitive long-tailed SSL baselines, and five targeted ablation groups.
+We make three contributions. First, we formulate data repair as recoverability-weighted support allocation and derive when a finite budget should favor sparse interior regions and adaptive reallocation. BRIDGE gives this formulation a label-free cyclic implementation. Second, we introduce an upper-tail mode-window rule with diversity-aware subsampling, which targets semantically recoverable sparse regions without drifting into the extreme OOD tail or wasting budget on near-duplicates. Third, we provide a broad empirical study across five source regimes, seven downstream tasks, three seeds, competitive long-tailed SSL baselines, and five targeted ablation groups.
 
 \section{Background and Related Work}
 \label{sec:background}
 \paragraph{Self-supervised learning on skewed data.}
-Contrastive learning, momentum encoders, self-distillation, and masked prediction have established several distinct routes to transferable visual features~\citep{chen2020simple,he2020momentum,DINO,oquab2023dinov2,dinov3,he2022masked}. They generally optimize over a source set whose composition remains fixed. Long-tailed SSL work instead asks how source imbalance changes learning. SDCLR emphasizes samples that remain difficult for a self-competitor, while Temperature Schedules changes the contrastive temperature over training~\citep{sdclr,ts}. Related analyses study hidden class imbalance and representation bias without requiring the learner to observe class frequencies~\citep{tian2021divide,assran2210hidden}. BRIDGE is complementary to loss and schedule changes because it changes the empirical source support while retaining the underlying SSL objective.
+Contrastive learning, momentum encoders, self-distillation, and masked prediction have established several routes to transferable visual features~\citep{chen2020simple,he2020momentum,DINO,oquab2023dinov2,dinov3,he2022masked}. They generally optimize over a source set whose composition remains fixed. Long-tailed SSL work instead asks how source imbalance changes learning. SDCLR emphasizes samples that remain difficult for a self-competitor, while Temperature Schedules changes the contrastive temperature over training~\citep{sdclr,ts}. Related work studies hidden class imbalance, frequency-aware learning, OOD data, and representation bias without requiring observed class frequencies~\citep{tian2021divide,assran2210hidden,fassl,colt}. BRIDGE changes empirical source support while retaining the underlying SSL objective.
 
 \paragraph{Oversampling, rare-region generation, and data curation.}
 Classical imbalance methods such as SMOTE synthesize minority examples using labeled neighborhood interpolation~\citep{chawla2002smote}. DOPING is closer to our geometric motivation because it maps normal data to a latent space and oversamples low-probability edge regions for unsupervised anomaly detection~\citep{lim2018doping}. BRIDGE differs in objective and feedback. It learns a general-purpose SSL representation, acquires anchors in that evolving representation, uses local image generation rather than latent interpolation, and repeats acquisition after the intervention. Representation-driven pruning, coresets, and concept-based data curation also use embeddings to decide which data receive compute~\citep{whang2023data,sorscher2022beyond,abbas2024effective}. These methods usually remove redundant data or retain a training subset. BRIDGE adds support under a fixed acquisition budget.
 
 \paragraph{Diffusion editing and supervised generative augmentation.}
-SDEdit established the add-noise-and-denoise construction that trades faithfulness to an input against realism~\citep{meng2022sdedit}. DA-Fusion applies pretrained text-to-image diffusion to image-conditioned augmentation in few-shot supervised recognition~\citep{trabucco2023effective}. Large class-conditional studies show that diffusion samples can improve ImageNet classifiers, while broader recognition and scaling studies demonstrate sensitivity to prompt design, filtering, classifier-free guidance, generator choice, diversity, and domain gap~\citep{azizi2023synthetic,he2023synthetic,fan2024scaling}. TADA is the closest targeted supervised method. It selects slow-learned examples and generates faithful diffusion variants, with theoretical analysis of supervised feature-learning speed~\citep{nguyen2026tada}. BRIDGE neither receives classes nor measures supervised learning speed. Its acquisition signal is local support in the current unlabeled representation, and its main question is where repeated SSL data acquisition should spend a finite budget.
+Denoising diffusion and latent diffusion models provide the generative basis for modern image editing~\citep{ho2020denoising,rombach2022highresolution}. SDEdit established the add-noise-and-denoise construction that trades faithfulness to an input against realism~\citep{meng2022sdedit}. DA-Fusion applies pretrained text-to-image diffusion to image-conditioned augmentation in few-shot supervised recognition~\citep{trabucco2023effective}. Large class-conditional studies show that diffusion samples can improve ImageNet classifiers, while broader recognition and scaling studies demonstrate sensitivity to prompt design, filtering, classifier-free guidance, generator choice, diversity, and domain gap~\citep{azizi2023synthetic,he2023synthetic,fan2024scaling}. TADA selects slow-learned examples and generates faithful diffusion variants, with theoretical analysis of supervised feature-learning speed~\citep{nguyen2026tada}. BRIDGE neither receives classes nor measures supervised learning speed. Its acquisition signal is local support in the current unlabeled representation, and its main question is where repeated SSL data acquisition should spend a finite budget.
 
 \paragraph{Synthetic data for representation learning.}
 Generative models have also been used as complete or substantial sources for representation learning. GenRep constructs contrastive views from nearby latent samples of a black-box generator~\citep{jahanian2022generative}. Synthetic ImageNet clones can yield transferable classifiers, and StableRep treats images produced from one prompt as multi-positive contrastive views~\citep{sariyildiz2023fake,tian2023stablerep}. Earlier work learns transferable features from rendered synthetic imagery, while random and procedural image processes provide routes to representation learning without natural-image collection~\citep{ren2018crossdomain,baradad2021noise,baradad2022procedural}. These methods study how to learn from a globally synthesized corpus. BRIDGE begins with a real or web-source corpus and asks which local parts of that corpus should receive additional mass.
@@ -77,16 +77,33 @@ DiffAug alternates an unsupervised semantic encoder with a learned conditional d
 \paragraph{Generative models as representation teachers.}
 The frozen generator imports an external-data prior. DreamTeacher distills internal generative features into discriminative backbones, while DIFT shows that intermediate diffusion activations support semantic correspondence~\citep{li2023dreamteacher,tang2023dift}. REPA transfers representations in the opposite direction by aligning a diffusion transformer to features from a pretrained visual encoder~\citep{yu2025repa}. These results make direct diffusion-feature transfer a necessary control. We therefore compare continued SSL, feature distillation, uniform generation, and targeted generation. Distillation changes the student geometry on existing inputs. Data repair additionally changes the inputs, local variations, and training mass encountered by SSL. The comparison measures whether the latter contributes beyond generic teacher transfer without claiming that BRIDGE removes dependence on the generator's pretraining data.
 
-\section{A Recoverable-Support View of Data Repair}
+Taken together, prior work provides strong SSL objectives, synthetic training sources, targeted supervised augmentation, and iterative data engines. These threads lead to the question studied here. Given an unlabeled source set and a limited repair budget, where should new samples be added, and how should that decision change as the representation learns from earlier additions? We next formulate this problem as support allocation.
+
+\section{Theoretical Framework}
 \label{sec:theory}
-We first state what the theory is intended to explain. It does not guarantee that adding arbitrary generated images improves a deep SSL model, nor does it derive the numerical $75$th and $99$th percentiles. It formalizes three testable design claims. Added local samples reduce a support deficit, useful repair can lie inside rather than at the end of a sparsity ranking, and the best allocation can change after each intervention.
+We formulate targeted data repair as a budgeted allocation problem over coherent regions of representation space. A region is valuable when additional support can reduce its contribution to downstream risk, while a repair is useful only when the generator preserves the semantic content of its anchor. The acquisition policy must therefore balance support deficit, repairability, and redundancy.
 
 Let $r_k(z;Z)$ be the distance from $z$ to its $k$th neighbor in representation set $Z$. Let $A$ be a set of valid generated variants associated with $z$.
 
 \begin{proposition}[Local support monotonicity]
+\label{prop:local-support}
 For any $A$, $r_k(z;Z\cup A)\leq r_k(z;Z)$. The inequality is strict whenever an added point enters the first $k$ neighbors and displaces a point at strictly larger distance.
 \end{proposition}
-The statement follows directly because enlarging the candidate set cannot increase its $k$th order statistic. It connects local generation to the measured support quantity, but not yet to learned representation quality. For that connection, partition the source into coherent regions $j$ with current effective support $n_j$. Let $R_j(n_j)$ denote downstream risk attributable to region $j$ and assume $R_j$ is decreasing and convex. Then the marginal value $b_j(n_j)=R_j(n_j)-R_j(n_j+1)$ is positive and decreases as support accumulates. This is the familiar diminishing-return condition under which scarce data should be allocated away from already dense regions.
+The statement follows because enlarging the candidate set cannot increase its $k$th order statistic. To connect support to learning, partition representation space into coherent regions $j$ with current effective support $n_j$. We model a regional learning curve by
+\begin{equation}
+\mathcal B(\mathbf m)=\sum_j p_j a_j(n_j+m_j+\kappa)^{-\gamma},
+\label{eq:regional-bound}
+\end{equation}
+where $p_j$ is the transfer-relevant mass of region $j$, $a_j$ is its difficulty, $m_j$ is the number of valid repairs allocated to it, $\kappa>0$, and $\gamma>0$. The marginal reduction from one valid repair is
+\begin{equation}
+\Delta_j(m_j)=p_j a_j\left[(n_j+m_j+\kappa)^{-\gamma}-(n_j+m_j+1+\kappa)^{-\gamma}\right].
+\end{equation}
+
+\begin{proposition}[Sparse-region marginal value]
+\label{prop:sparse-value}
+$\Delta_j(m_j)$ is positive and strictly decreases with $n_j+m_j$. When two regions have equal transfer mass and difficulty, the region with less effective support has the larger marginal value.
+\end{proposition}
+This follows from strict monotonicity and convexity of $x\mapsto x^{-\gamma}$. It provides a direct reason to allocate a limited budget away from regions that are already well supported.
 
 Generation can fail, especially for corrupt or semantically incoherent anchors. Write $d$ for a sparsity score, $b(d)$ for marginal value conditional on valid repair, $\rho(d)$ for the probability of a faithful and useful variant, and $\lambda(d)\geq0$ for the cost of an invalid variant. Expected repair utility is
 \begin{equation}
@@ -95,14 +112,25 @@ u(d)=\rho(d)b(d)-\bigl(1-\rho(d)\bigr)\lambda(d).
 \end{equation}
 
 \begin{proposition}[Interior recoverable-support optimum]
+\label{prop:interior}
 Suppose $u$ is continuous on a bounded sparsity interval $[d_{\min},d_{\max}]$. If dense regions have negligible marginal value, $u(d_{\min})\leq0$, extreme regions have sufficiently low repairability, $u(d_{\max})\leq0$, and some coherent sparse region has positive utility, then every global maximizer with positive utility lies in the interior.
 \end{proposition}
-The proof is the extreme-value theorem followed by exclusion of both endpoints. The proposition is deliberately modest. It says that selecting only maximal outliers is not generally justified when repairability deteriorates in the tail. It does not identify a universal quantile. We consequently treat the percentile window as a robust operating range and test lower and upper cutoffs, $k$, distance normalization, candidate-pool size, and diversity sampling empirically.
+The proof follows from the extreme-value theorem and exclusion of both endpoints. Thus, maximal sparsity is not the correct acquisition rule when repairability deteriorates in the tail. The maximizing score depends on the source distribution and generator through $b$, $\rho$, and $\lambda$. We therefore estimate a stable operating range empirically and test lower and upper cutoffs, $k$, distance normalization, candidate-pool size, and diversity sampling.
 
-Finally, consider a separable budget objective $U(\mathbf m)=\sum_j U_j(n_j+m_j)$, where each $U_j$ is increasing and concave and $\sum_jm_j=B$. Greedily assigning each repair to the largest current marginal gain is optimal for integer allocations under these assumptions. After assigning a repair, that region's marginal gain decreases. A policy that recomputes scores can track this change, whereas repeating the initial allocation can continue spending on a region whose marginal value has fallen below others. This gives a formal reason to test adaptive re-selection against one-shot and frozen policies. It remains an abstraction of the SSL loop, so the matched policy experiment is the deciding evidence.
+Finally, consider a separable budget objective $U(\mathbf m)=\sum_j U_j(n_j+m_j)$, where each $U_j$ is increasing and discretely concave and $\sum_jm_j=B$.
 
-\section{Method}
-\subsection{Setting and repair loop}
+\begin{proposition}[Adaptive allocation under diminishing returns]
+\label{prop:adaptive}
+For integer allocations, repeatedly assigning one repair to the region with the largest current marginal gain maximizes $U(\mathbf m)$. A fixed allocation can become suboptimal after a region's marginal gain falls below that of another region.
+\end{proposition}
+The result follows by selecting the $B$ largest elements from the nonincreasing marginal-gain sequences of all regions. Recomputing the acquisition signal lets the policy follow these changing values, whereas a frozen policy continues to spend according to its initial ordering. Within a candidate region, farthest-first traversal gives a factor-two approximation to metric $k$-center coverage~\citep{gonzalez1985clustering}, providing a coverage interpretation for diversity-aware selection.
+
+The analysis yields four requirements for a practical acquisition policy. It should estimate local support, avoid sparse regions whose samples cannot be repaired faithfully, cover the chosen region without redundant anchors, and recompute its allocation after learning from each intervention. The next section turns these requirements into a label-free algorithm.
+
+\section{BRIDGE}
+\subsection{Cyclic acquisition and continued pretraining}
+BRIDGE instantiates each requirement using quantities available without labels. Mean $k$NN distance estimates local support. An upper-tail mode window seeks a sparse region while excluding the most extreme scores, where faithful repair is less reliable. Farthest-point sampling limits redundancy within this region, and image-to-image diffusion supplies local variants. Continued SSL changes the representation, after which BRIDGE estimates support and allocates the next budget again.
+
 Let $D^{(0)} = \{x_i\}_{i=1}^{N_0}$ denote an unlabeled source dataset and let $f_{\theta}$ be an SSL encoder trained with objective $\mathcal{L}_{\mathrm{ssl}}$. \method\ alternates between pretraining and dataset repair over $C$ cycles. At cycle $c$, the current encoder is $f_{\theta^{(c)}}$, the current source set is $D^{(c)} = \{x_i\}_{i=1}^{N^{(c)}}$, and the corresponding embedding set is $Z^{(c)} = \{z_i^{(c)}\}_{i=1}^{N^{(c)}}$.
 
 The loop applies three operators after each SSL training stage, which score the data, select anchors, and repair the source set. The score operator embeds all current source images and assigns an unlabeled sparsity score. The select operator converts that score distribution into a finite anchor set under a generation budget. The repair operator uses those anchors as image-to-image conditioning inputs and appends the generated variants to the next-cycle source set. The SSL encoder is the only learned component in this loop. The OOD scoring rule is nonparametric, the selection rule has no trainable parameters, and the image generator is frozen. This interface keeps \method\ independent of class labels and makes it compatible with any SSL objective that can provide image embeddings.
@@ -115,9 +143,9 @@ After training on $D^{(c)}$, we embed every image and compute a nonparametric OO
     \bigl\lVert z_i^{(c)} - z \bigr\rVert_2^2,
 \end{aligned}
 \end{equation}
-where $\mathcal{N}_k(z; Z)$ denotes the set of the $k$ nearest neighbors of $z$ in $Z$. Large values of $d_i^{(c)}$ indicate that an image lies in a sparse part of the learned representation space.
+where $\mathcal{N}_k(z; Z)$ denotes the set of the $k$ nearest neighbors of $z$ in $Z$. Deep nearest-neighbor distance is also effective for OOD detection~\citep{sun2022out}. Here, large $d_i^{(c)}$ indicates that an image lies in a sparse part of the learned representation space.
 
-\subsection{Mode-window OOD selection}
+\subsection{Sparse and recoverable anchor selection}
 \label{sec:mode-window}
 A natural alternative is to select the largest OOD scores directly. In practice, that rule is unstable. The farthest samples are often artifacts, degenerate crops, or semantically incoherent outliers. Uniform sampling instead spreads budget across the whole dataset, including regions that are already well covered. We target a sparse region that is still internally coherent.
 
@@ -132,7 +160,7 @@ where $U^{(c)} = \{i : q_{0.75}^{(c)} \le d_i^{(c)} \le q_{0.99}^{(c)}\}$ and $[
 \end{equation}
 This keeps selection inside a stable sparse regime while discouraging near-duplicate anchors. In our implementation we use $\alpha = 4$, so the final anchors are chosen from a candidate pool that is both mode-centered and genuinely sparse. Appendix Figure~\ref{fig:cycle-histories} reports how the acquisition distribution changes across repair cycles.
 
-\subsection{Image-to-image diffusion repair}
+\subsection{Local generative repair}
 Given the selected set $S^{(c)}$, we generate $G$ synthetic variants per selected image with a frozen image-to-image diffusion model $g_{\phi}$. Each selected source image is converted back to image space and used as the conditioning image. We use an empty text prompt so that the repair signal comes from the selected anchor rather than from class names or hand-written prompts. In the main method we use Stable Diffusion 3 Medium in image-to-image mode with 20 denoising steps, guidance scale 5.0, strength 0.6, and output resolution equal to the training crop size. The generation ablation replaces this operator with FLUX, using six steps and guidance scale 2.5, or with a no-generation re-population baseline that re-adds the originally removed source images without diffusion. We first form the generated set
 \begin{equation}
     \begin{aligned}
@@ -143,12 +171,11 @@ Given the selected set $S^{(c)}$, we generate $G$ synthetic variants per selecte
 where $[G] = \{1, \dots, G\}$.
 The random noise input $\epsilon_j$ indexes independent translations of the same anchor, so multiple generated images can preserve coarse visual structure while changing texture, pose, color, or local composition. We do not apply an additional generated-image filter in the main pipeline.
 
-\subsection{Design rationale}
-The central design choice is that we do not treat all sparse points as equally useful repair targets. The extreme tail is often too unstable for reliable image-to-image generation, whereas fully uniform sampling spends too much budget on regions that already have adequate support. We decide both where to allocate the budget and how to cover that region efficiently. The upper-tail histogram mode identifies a sparse region that remains semantically recoverable, and farthest-point sampling spreads anchors across that region instead of duplicating nearly identical examples. In the selection ablation, this combination improves the seven-task average over both top-tail selection and uniform sampling under linear-probe and $k$NN evaluation.
+Together, these components implement the allocation principle from Section~\ref{sec:theory}. The score estimates support deficit, the mode window provides a practical recoverability constraint, FPS approximates coverage under the finite anchor budget, and cyclic re-estimation updates the allocation after every intervention. The following experiments test these choices against uniform and extreme-tail selection, alternative repair operators, frozen acquisition, and continued training.
 
 \section{Experimental Setup}
 \paragraph{Source datasets.}
-We pretrain on five unlabeled source regimes. Three are long-tailed image classification datasets, namely ImageNet-100-LT, CIFAR-10-LT, and CIFAR-100-LT. Two are web-source unlabeled corpora, namely PASS~\citep{pass} and DiffusionDB~\citep{diffusiondb}. For PASS and DiffusionDB we use 10k example subsets.
+We pretrain on five unlabeled source regimes. Three are long-tailed image classification datasets, namely ImageNet-100-LT~\citep{imagenet-lt}, CIFAR-10-LT, and CIFAR-100-LT~\citep{krizhevsky2009learning}. Two are web-source unlabeled corpora, namely PASS~\citep{pass} and DiffusionDB~\citep{diffusiondb}. For PASS and DiffusionDB we use 10k example subsets.
 
 \paragraph{Downstream evaluation.}
 We evaluate transfer on seven benchmarks, comprising CIFAR-10-LT, CIFAR-100-LT, Stanford Cars~\citep{cars}, FGVC Aircraft~\citep{aircraft}, Oxford Flowers~\citep{flowers}, Oxford-IIIT Pets~\citep{pets}, and ImageNet-100-LT. In the main text, we report full linear-probe comparisons, together with $k$NN corroboration for the source-regime comparisons and the combined ablation table. The appendix provides the complete expanded linear-probe and $k$NN tables for every setting.
@@ -184,22 +211,22 @@ The same conclusion holds under the appendix's nonparametric evaluation. On PASS
 We now examine each design choice separately on ImageNet-100-LT source pretraining. Each ablation changes one component of \method\ while holding the rest of the pipeline fixed. We summarize the principal findings below and provide complete per-task linear-probe and $k$NN tables in the appendix. The goal is to identify which parts of the repair loop matter most, and whether the strongest configuration is driven by one isolated choice or by a coherent combination of choices.
 
 \paragraph{SSL objective and backbone.}
-The original ResNet-50 objective swap changes both the learner and its optimization recipe and therefore cannot establish an intrinsic objective ranking. We retain it as an implementation ablation in the appendix, but not as evidence that SimCLR is generally stronger. Our paired full-schedule ViT-S experiment instead branches each method and its BRIDGE variant from the same source checkpoint and matches all post-branch optimizer updates. BRIDGE improves the four-task average for SimCLR by $2.00$ points and for MoCo v3 by $1.38$ points over three paired runs. DINO does not improve in the completed runs. The effect therefore transfers beyond the ResNet-50 and SimCLR pairing, although its magnitude depends on the learner and recipe. We claim compatibility rather than objective-agnostic improvement.
+The ResNet-50 objective swap in the appendix changes both learner and optimization recipe, so we use a paired full-schedule ViT-S experiment for the controlled comparison. Each method and its BRIDGE variant branch from the same source checkpoint with matched post-branch updates. BRIDGE improves the four-task average for SimCLR by $2.00$ points and for MoCo v3 by $1.38$ points over three paired runs, while DINO does not improve. The effect therefore extends beyond ResNet-50 and SimCLR, although its magnitude depends on the learner and recipe.
 
 \paragraph{Generation mechanism.}
-The submitted generator table combines different FLUX and SD3 sampling recipes and therefore does not identify a generator-quality effect. Under matched settings, FLUX.1-schnell and SD3 obtain four-task averages of $19.68$ and $19.70$. We consequently treat the generator as an interchangeable repair operator rather than a contribution and retain the original table only as evidence about those exact recipes. The condition previously called ``re-population'' restores real images removed when constructing the long tail. It is therefore an oracle real-restoration baseline, not duplication. Its strong result supports the broader acquisition claim because targeted addition is also useful when missing real support is available. Separate duplicate and conventional-augmentation controls test whether merely reweighting anchors is sufficient.
+Under matched sampling settings, FLUX.1-schnell and SD3 obtain four-task averages of $19.68$ and $19.70$, so generator identity has little effect once the sampling recipe is controlled. The real-restoration condition returns images removed when constructing the long tail and serves as an oracle rather than a duplication baseline. Its strong result shows that targeted addition remains useful when missing real support is available. Separate duplicate and conventional-augmentation controls test whether reweighting anchors is sufficient.
 
 \paragraph{Sample selection.}
-The selection block isolates the main design change in the final method. We compare three upper-tail mode-window variants with different percentile ranges, together with a top-tail rule that spends all budget on the most extreme OOD examples and a uniform rule that ignores sparsity entirely. All three diversity-aware mode-window variants are much stronger than top-tail and uniform. The default q75--99 variant reaches a seven-task average of 42.3 for linear probing and 33.6 for $k$NN, compared with 35.5 and 28.4 for uniform and 34.3 and 27.3 for top-tail. The q50--99 and q1--99 variants remain close, which shows that the gain is not brittle to one exact cutoff once selection is restricted to a sparse band and diversified within that band. We therefore use q75--99 as the default because it is the strongest linear-probe setting and tied for the strongest $k$NN average.
+We compare three upper-tail mode-window variants with a top-tail rule and uniform sampling. All three diversity-aware mode-window variants are much stronger. The default q75--99 variant reaches seven-task averages of 42.3 for linear probing and 33.6 for $k$NN, compared with 35.5 and 28.4 for uniform and 34.3 and 27.3 for top-tail. The q50--99 and q1--99 variants remain close, showing robustness to the lower cutoff once selection is restricted to a sparse band and diversified within it. We use q75--99 because it gives the strongest linear-probe result and ties the strongest $k$NN average.
 
 \paragraph{Cycle count.}
-Performance improves sharply once the repair loop is allowed to run for several rounds, but the best setting in this sweep is 5 cycles rather than the longer alternative that completed reliably. Relative to 2 cycles, the 5-cycle configuration improves the seven-task averages by 7.36 points for linear probing and 5.70 points for $k$NN. It also remains stronger than the 10-cycle setting on every downstream target in the main table. Longer repair schedules therefore do not help monotonically in this regime. Five cycles appear to strike the best balance between repeated source repair and preserving the quality of the pretraining distribution.
+Performance improves sharply over several repair rounds. Relative to 2 cycles, 5 cycles improve the seven-task averages by 7.36 points for linear probing and 5.70 points for $k$NN, while remaining stronger than 10 cycles on every target. Longer schedules therefore do not help monotonically in this regime.
 
 \paragraph{Encoder architecture.}
-ResNet-50 is the strongest linear-probe backbone overall. It gives the best seven-task average, at 42.3, and leads on six of the seven downstream targets. ViT-B remains best on Flowers, but its overall average is 34.8, far below ResNet-50. The backbone choice still shifts emphasis across targets, yet the repaired-data setting clearly favors ResNet-50 as the default architecture in the main sweep.
+ResNet-50 gives the strongest seven-task linear-probe average at 42.3 and leads on six targets. ViT-B is best on Flowers but averages 34.8, making ResNet-50 the preferred backbone in this sweep.
 
 \paragraph{$k$NN corroboration.}
-The expanded appendix gives the corresponding nonparametric transfer measurements for every ablation. The mode-window variants remain much stronger than top-tail and uniform selection over five cycles, and five cycles remain stronger than the shorter schedules in that experiment. The objective and generator rows should be read with the protocol qualifications above. The paired ViT experiment and matched FLUX rerun are the controlled tests of those questions.
+The appendix reports nonparametric transfer for every ablation. Mode-window selection remains stronger than top-tail and uniform selection over five cycles, and five cycles remains stronger than shorter schedules. Paired ViT and matched FLUX experiments provide the controlled objective and generator comparisons.
 
 \subsection{Local support and learned geometry}
 The fixed-space effect of adding samples and the learned-space effect of subsequent SSL training need not agree. To measure the former, we freeze the cycle-0 encoder and query the same original images before and after inserting all generated samples. First-cycle anchors are compared with original images that are matched one-to-one within class on initial $k$NN radius and never selected in any cycle. Table~\ref{tab:fixed-support} shows that the radius decreases more at treated anchors in all three seeds. Neighborhood purity also changes more favorably relative to controls. Thus, the finite generation budget adds support near the selected regions rather than distributing it uniformly. The corresponding difference-in-differences after SSL training is not consistent across seeds. Global effective rank also falls for SimCLR/ResNet-50 but rises for MoCo v3/ViT-S. We therefore restrict the geometric conclusion to localized support injection in a fixed representation. The transfer experiments measure whether retraining on that intervention is useful.
@@ -210,17 +237,17 @@ The fixed-space effect of adding samples and the learned-space effect of subsequ
 
 
 \section{Limitations}
-BRIDGE can reinforce a poor early representation because the learner supplies its own acquisition signal. A generator can also import bias from external pretraining, drift semantically, or fail on precisely the most unusual inputs. Direct feature distillation does not fully explain the observed effect, but it does not remove this external-data dependence. The percentile band, $k$, and repair budget are operating choices rather than universal optima, and a different source distribution may require different values. Normalized-distance and multi-$k$ variants reduce scale sensitivity but do not eliminate policy selection. Repeated scoring requires a full embedding pass and generation adds substantial cost. Measured wall-clock overhead is $29$--$46\%$ in our current regimes. A fixed budget becomes a smaller fraction of a large corpus, but may also become too small to matter, so million-scale effectiveness is not established by complexity arithmetic alone. PASS and DiffusionDB use aligned 10k subsets rather than the complete corpora. Evidence is strongest for SimCLR with ResNet-50 and ViT-S and for MoCo v3 with ViT-S. DINO is inconclusive. Finally, the generator and image sources carry licensing, privacy, memorization, and harmful-content risks that require deployment-specific review.
+BRIDGE can reinforce a poor early representation because the learner supplies its own acquisition signal. The generator imports an external-data prior and may introduce bias, semantic drift, or failures on unusual inputs. The percentile band, $k$, and repair budget are empirical operating choices, while normalized-distance and multi-$k$ variants only reduce their sensitivity. Repeated scoring requires a full embedding pass and generation adds $29$--$46\%$ measured wall-clock overhead. A fixed budget becomes a smaller fraction of a large corpus but may then be too small to matter, so million-scale effectiveness remains untested. PASS and DiffusionDB use aligned 10k subsets rather than the complete corpora. Evidence is strongest for SimCLR with ResNet-50 and ViT-S and for MoCo v3 with ViT-S, while DINO is inconclusive. Generator and image sources also carry licensing, privacy, memorization, and harmful-content risks.
 
 \section{Conclusion}
-We formulate skewed-data SSL as a feedback problem in which the learner can allocate a finite budget to change its future source distribution. Across the regimes studied here, targeted repeated acquisition improves transfer more reliably than uniform addition and maximal-outlier generation. The theoretical framework explains why useful repair can occur in an interior sparse region and why recomputing an allocation can matter under diminishing returns, while the experiments determine whether those assumptions hold in practice. Diffusion, the precise percentile values, and any one SSL objective are not the contribution in isolation. The contribution is the label-free acquisition loop and its empirical characterization, including the cases in which cheaper repair operators or different learners behave similarly.
+We formulate skewed-data SSL as a feedback problem in which the learner allocates a finite budget to change its future source distribution. Recoverability-weighted support utility links sparse-region repair, interior acquisition, diversity, and adaptive reallocation. BRIDGE realizes these principles through a label-free loop that improves transfer more reliably than uniform addition and maximal-outlier generation across the regimes studied here. Adaptive source repair offers a practical complement to improving the SSL objective alone.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
 
 \appendix
 
-\section{Expanded Prior-Art Positioning}
+\section{Comparison with Related Acquisition Methods}
 \label{app:prior-art}
 Table~\ref{tab:prior-art} makes the comparison axes explicit. Classical oversampling and TADA receive labels or supervised learning signals. DOPING uses latent rarity but targets anomaly detection and does not close the loop through a changing SSL representation. GenRep and StableRep make synthetic images or latent neighborhoods the source of contrastive views without allocating a repair budget over an observed skewed corpus. DiffAug is the closest iterative SSL antecedent, but it jointly learns a generator for generic positive views rather than asking where a frozen generator should intervene. AIDE and industrial data-engine systems establish the broader model--data feedback pattern, while using supervised task failures, VLM/LLM reasoning, annotation, and domain-specific verification. BRIDGE studies the label-free special case in which local support in the current SSL representation is both the diagnostic and acquisition signal. Our VLM rare-concept baseline adapts the AIDE idea by clustering frozen CLIP features, selecting inversely to cluster occupancy, captioning the selected images, and generating from text. The paired text-to-image and captioned SDEdit controls separately test whether retaining the selected image as a local condition matters.
 
@@ -228,28 +255,43 @@ Table~\ref{tab:prior-art} makes the comparison axes explicit. Classical oversamp
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
-\caption{Closest method families and the dimensions on which BRIDGE is positioned. ``Feedback'' means that the learner or task model changes the next acquisition decision.}
+\caption{Closest methods and the dimensions relevant to the acquisition problem. ``Feedback'' means that the learner or task model changes the next acquisition decision.}
 \label{tab:prior-art}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{llllll}
 \toprule
-Method family & Labels or task loss & Acquisition signal & Data action & Feedback & Primary goal \\
+Method & Labels or task loss & Acquisition signal & Data action & Feedback & Primary goal \\
 \midrule
-SMOTE & class labels & class minority & interpolate examples & no & supervised imbalance \\
-DOPING & no labels & latent edge density & latent oversampling & no & anomaly detection \\
-Concept pruning & optional concepts & cluster complexity & remove examples & usually no & efficient pretraining \\
-DA-Fusion & labels / few-shot set & class and exemplar & image-conditioned diffusion & no & supervised recognition \\
-TADA & supervised loss dynamics & slow-learned examples & faithful diffusion variants & limited & supervised recognition \\
-GenRep / StableRep & prompts or generator latent & global sampling & synthetic SSL views & no & representation learning \\
-DiffAug & no labels & learned positive-view objective & jointly learned diffusion views & yes & contrastive learning \\
-AIDE & task labels and failures & VLM/LLM failure analysis & curate, generate, annotate & yes & driving detection \\
+SMOTE~\citep{chawla2002smote} & class labels & class minority & interpolate examples & no & supervised imbalance \\
+DOPING~\citep{lim2018doping} & no labels & latent edge density & latent oversampling & no & anomaly detection \\
+Concept pruning~\citep{abbas2024effective} & no task labels & cluster complexity & remove examples & no & efficient pretraining \\
+DA-Fusion~\citep{trabucco2023effective} & labels / few-shot set & class and exemplar & image-conditioned diffusion & no & supervised recognition \\
+TADA~\citep{nguyen2026tada} & supervised loss dynamics & slow-learned examples & faithful diffusion variants & no & supervised recognition \\
+GenRep / StableRep~\citep{jahanian2022generative,tian2023stablerep} & prompts or generator latent & global sampling & synthetic SSL views & no & representation learning \\
+DiffAug~\citep{zang2024diffaug} & no labels & learned positive-view objective & jointly learned diffusion views & yes & contrastive learning \\
+AIDE~\citep{liang2024aide} & task labels and failures & VLM/LLM failure analysis & curate, generate, annotate & yes & driving detection \\
 BRIDGE & no labels & local support in current SSL space & budgeted local variants & yes & source-support repair \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{table*}
 
-The generator literature also clarifies what BRIDGE does not claim. SDEdit supplies the image-editing mechanism. Broad synthetic-recognition studies establish the importance of prompts, filtering, diversity, and domain gap. DreamTeacher and DIFT motivate a direct generator-feature control, while REPA studies the reverse direction from a visual encoder into a diffusion model. Omniverse Replicator is valuable systems context but is not treated as a peer-reviewed algorithmic baseline. We therefore locate novelty in the combination of label-free local acquisition, a finite intervention budget, and repeated re-estimation, rather than in diffusion, $k$NN, or farthest-point sampling individually.
+The generator literature also identifies the origins of the repair operator and its controls. SDEdit supplies the image-editing mechanism, while synthetic-recognition studies establish the importance of prompts, filtering, diversity, and domain gap. DreamTeacher and DIFT motivate direct generator-feature transfer, and REPA studies the reverse direction from a visual encoder into a diffusion model. Omniverse Replicator provides non-archival systems context for iterative synthetic-data pipelines. BRIDGE brings these tools into a label-free local acquisition problem with a finite intervention budget and repeated re-estimation.
+
+\section{Proofs for the Support-Allocation Framework}
+\label{app:proofs}
+
+\paragraph{Proof of Proposition~\ref{prop:local-support}.}
+Sort the distances from $z$ to points in $Z$ and denote their $k$th order statistic by $r_k(z;Z)$. Adding $A$ preserves every old candidate distance and may introduce smaller ones. The $k$th order statistic can therefore only decrease. It decreases strictly when an added distance enters the first $k$ positions and displaces a strictly larger distance.
+
+\paragraph{Proof of Proposition~\ref{prop:sparse-value}.}
+Let $x=n_j+m_j+\kappa$. Since $f(x)=x^{-\gamma}$ is positive, strictly decreasing, and strictly convex for $x>0$, the forward difference $f(x)-f(x+1)$ is positive and strictly decreases with $x$. Multiplication by $p_ja_j>0$ preserves both properties. Equal $p_ja_j$ therefore leaves effective support as the sole determinant of the marginal ordering.
+
+\paragraph{Proof of Proposition~\ref{prop:interior}.}
+Continuity of $u$ on the compact interval implies that a global maximizer exists. Some interior point has positive utility, while both endpoints have nonpositive utility. Neither endpoint can therefore maximize $u$, and every positive global maximum lies in $(d_{\min},d_{\max})$.
+
+\paragraph{Proof of Proposition~\ref{prop:adaptive}.}
+For region $j$, define the marginal sequence $\delta_{j,t}=U_j(n_j+t)-U_j(n_j+t-1)$ for $t\geq1$. Discrete concavity makes each sequence nonincreasing. Any feasible allocation of $B$ repairs selects a prefix of length $m_j$ from each sequence. Greedy allocation repeatedly chooses the largest available next element. After $B$ steps it has selected the $B$ largest prefix-feasible marginals. If another allocation had larger utility, it would contain a selected marginal smaller than an available unselected marginal, and exchanging them would improve that allocation. This contradicts optimality. A frozen allocation can fail this rule because it preserves the initial ordering after selected regions move to smaller marginals.
 
 \section{Implementation and Reproducibility}
 \label{app:implementation}
