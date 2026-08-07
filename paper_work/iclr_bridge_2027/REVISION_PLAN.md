@@ -19,11 +19,11 @@
 
 | Priority | Experiment | Main question | Status on 4 August 2026 |
 |---|---|---|---|
-| 1 | Anchor versus matched-control geometry | Do treated local regions change more than equally sparse untreated regions? | Three post-hoc seed analyses running |
-| 1 | Adaptive versus frozen versus one-shot repair | Does recomputing the acquisition policy matter under matched updates and repair volume? | Three seeds per arm running |
-| 1 | Conventional augmentation control | Is targeted non-generative augmentation sufficient? | Three seeds running |
-| 1 | VLM-captioned text-to-image versus SDEdit | Does image conditioning add value beyond generation from a description of the same sparse region? | Smoke test running; full paired suite prepared |
-| 1 | VLM rare-concept data engine | Can a frozen VLM replace BRIDGE's learner-driven acquisition and text-to-image replace local editing? | Implemented; launch after the text-to-image smoke test |
+| 1 | Anchor versus matched-control geometry | Do treated local regions change more than equally sparse untreated regions? | Fixed-space analysis complete over three seeds; learned-space result is mixed |
+| 1 | Adaptive versus frozen versus one-shot repair | Does recomputing the acquisition policy matter under matched updates and repair volume? | Complete over three seeds; adaptive beats one-shot consistently but not frozen selection in every seed |
+| 1 | Conventional augmentation control | Is targeted non-generative augmentation sufficient? | Complete over three seeds; below adaptive BRIDGE in every paired seed |
+| 1 | VLM-captioned text-to-image versus SDEdit | Does image conditioning add value beyond generation from a description of the same sparse region? | Complete over three seeds; adaptive BRIDGE has the stronger average |
+| 1 | VLM rare-concept data engine | Can a frozen VLM replace BRIDGE's learner-driven acquisition and text-to-image replace local editing? | Complete over three seeds; below adaptive BRIDGE in every paired seed |
 | 2 | Full-cycle TADA-style and extreme-tail comparison | How does mode-window acquisition compare with learning-difficulty and edge acquisition? | Existing short/full partial runs require one unified rerun or careful protocol selection |
 | 2 | Distance and selector robustness | Are results stable across normalized L2, cosine, multiscale k, percentiles, pool size, and FPS? | Several sweeps complete; consolidate and fill only missing cells |
 | 2 | Repairability by score quantile | Does fidelity fall in the extreme tail while marginal support value rises before it? | Existing percentile and fidelity jobs require aggregation and possible completion |

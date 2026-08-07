@@ -37,7 +37,7 @@
 \maketitle
 
 \begin{abstract}
-Self-supervised learning inherits gaps in its source data. We study whether these gaps can be repaired while representation learning is in progress. We introduce \method, a label-free feedback loop in which the current SSL representation scores local support, a budgeted acquisition policy selects sparse but recoverable regions, and a frozen generator adds local variants before continued pretraining. The resulting intervention changes the representation that determines the next intervention. Across five long-tailed and web-source regimes, \method\ improves average linear-probe and $k$NN transfer over source-matched SSL baselines. Paired full-schedule experiments further show gains with both ResNet-50 and ViT-S, while low-label fine-tuning and semantic segmentation extend the evidence beyond frozen-feature evaluation. Selection and repair controls compare mode-window acquisition with uniform sampling, extreme-tail selection, real-data restoration, and matched generator settings. We formalize the acquisition problem through recoverability-weighted marginal support utility. The analysis favors an interior repair region when the value of added support grows with sparsity but generator reliability falls in the extreme tail, and it favors adaptive reallocation when regional gains diminish after repair. Overall, the results show that allocating a limited data budget from an evolving representation can improve learning from skewed unlabeled data.
+Self-supervised learning inherits gaps in its source data. We study whether these gaps can be repaired while representation learning is in progress. We introduce \method, a label-free feedback loop in which the current SSL representation scores local support, a budgeted acquisition policy selects sparse but recoverable regions, and a frozen generator adds local variants before continued pretraining. The resulting intervention changes the representation used for later acquisition. Across five long-tailed and web-source regimes, \method\ improves average linear-probe and $k$NN transfer over source-matched SSL baselines. Paired full-schedule experiments further show gains with both ResNet-50 and ViT-S, while low-label fine-tuning and semantic segmentation extend the evidence beyond frozen-feature evaluation. Matched controls compare adaptive repair with one-shot and frozen policies, conventional augmentation, VLM-guided text-to-image generation, and an AIDE-style acquisition pipeline. We formalize the acquisition problem through recoverability-weighted marginal support utility. The analysis gives conditions for an interior repair region and explains why allocation priorities can change after an intervention. Overall, the results show that repeatedly allocating a limited data budget from an evolving representation can improve learning from skewed unlabeled data.
 \end{abstract}
 
 \begin{center}
@@ -55,7 +55,7 @@ We study the complementary direction and ask whether we can repair the source da
 
 Two aspects of \method\ are central. First, BRIDGE restricts attention to the upper sparse band of the OOD distribution, finds the mode within that band, and then selects a diverse set of anchors around that mode. This avoids the super-OOD tail, which often contains noisy or weakly useful images, while retaining the underrepresented region that is most amenable to repair. In the ablations, we compare this selector against top-tail and uniform alternatives. Second, we evaluate BRIDGE across five distinct source regimes. In addition to ImageNet-100-LT, CIFAR-10-LT, and CIFAR-100-LT, we study web-source unlabeled data drawn from PASS and DiffusionDB. Across these five regimes, \method\ is best on the seven-task average and remains strong under both linear-probe and $k$NN transfer.
 
-We make three contributions. First, we formulate data repair as recoverability-weighted support allocation and derive when a finite budget should favor sparse interior regions and adaptive reallocation. BRIDGE gives this formulation a label-free cyclic implementation. Second, we introduce an upper-tail mode-window rule with diversity-aware subsampling, which targets semantically recoverable sparse regions without drifting into the extreme OOD tail or wasting budget on near-duplicates. Third, we evaluate five source regimes and seven transfer tasks, with paired ViT-S experiments and downstream tests that include full fine-tuning and semantic segmentation.
+We make three contributions. First, we formulate data repair as recoverability-weighted support allocation and derive conditions under which a finite budget should favor sparse interior regions and update its allocation after repair. BRIDGE gives this formulation a label-free cyclic implementation. Second, we introduce an upper-tail mode-window rule with diversity-aware subsampling, which targets semantically recoverable sparse regions without drifting into the extreme OOD tail or wasting budget on near-duplicates. Third, we evaluate five source regimes and seven transfer tasks, with paired ViT-S experiments, full fine-tuning, semantic segmentation, and matched controls for alternative feedback and generation pipelines.
 
 \section{Background and Related Work}
 \label{sec:background}
@@ -207,9 +207,6 @@ The same source representations improve after end-to-end adaptation. With 1 and 
 
 \input{tables/main_generalization}
 
-\FloatBarrier
-
-
 \subsection{Ablations}
 We now examine each design choice separately on ImageNet-100-LT source pretraining. Each ablation changes one component of \method\ while holding the rest of the pipeline fixed. We summarize the principal findings below and provide complete per-task linear-probe and $k$NN tables in the appendix. The goal is to identify which parts of the repair loop matter most, and whether the strongest configuration is driven by one isolated choice or by a coherent combination of choices.
 
@@ -218,6 +215,11 @@ The ResNet-50 objective swap in the appendix changes both learner and optimizati
 
 \paragraph{Generation mechanism.}
 Under matched sampling settings, FLUX.1-schnell and SD3 obtain four-task averages of $19.68$ and $19.70$, so generator identity has little effect once the sampling recipe is controlled. The real-restoration condition returns images removed when constructing the long tail and serves as an oracle rather than a duplication baseline. Its strong result shows that targeted addition remains useful when missing real support is available. Separate duplicate and conventional-augmentation controls test whether reweighting anchors is sufficient.
+
+\paragraph{Feedback and alternative repair pipelines.}
+Table~\ref{tab:policy-repair-controls} uses a separate matched three-stage protocol to isolate how the budget is allocated and how selected regions are repaired. Adaptive BRIDGE has the strongest four-task average. It exceeds one-shot repair in every paired seed by $1.14$ points on average, and it also exceeds conventional augmentation, VLM-guided text-to-image generation, and the AIDE-style pipeline in every paired seed. The comparison with a frozen first-cycle selector is less decisive. Adaptive selection is $0.45$ points higher on average, but the paired difference changes sign in one seed. The evidence therefore supports repeated repair over one-shot generation and local image conditioning over the tested language-mediated alternatives. It does not establish that recomputing the selector is always better than retaining the first-cycle policy.
+
+\input{tables/main_policy_repair_controls}
 
 \paragraph{Sample selection.}
 Table~\ref{tab:main_mechanism} compares three upper-tail mode-window variants with top-tail and uniform sampling. All three diversity-aware mode-window variants are much stronger. The q50--99 and q1--99 variants remain close to the default, showing that the exact lower cutoff is not critical once selection is restricted to a sparse band and diversified within it. We use q75--99 as a fixed default rather than claiming it is universally optimal.
@@ -241,13 +243,11 @@ We separately test the local intervention in the frozen cycle-0 representation. 
 \FloatBarrier
 
 
-\section{Limitations}
-BRIDGE relies on two capabilities. The encoder must provide neighborhoods that are informative enough to guide acquisition, and the generator must produce faithful local variants. Failures in either component can direct later cycles toward artifacts. The frozen generator also imports biases from its pretraining data. The score band, neighborhood size, and repair budget are operating choices whose robustness we study empirically rather than universal constants.
-
-Each cycle adds a full embedding pass and a fixed amount of generation. This increases measured wall-clock time by 29--46 percent in our settings. A fixed generation budget has lower relative cost on a larger source, though its effectiveness may eventually require the budget to grow. Our web-source experiments use controlled 10k subsets, so corpus-scale behavior remains an open empirical question.
+\section{Scope and Limitations}
+BRIDGE depends on informative encoder neighborhoods and faithful local generation. Errors in either component can feed artifacts into later stages, while the frozen generator imports biases from its pretraining data. Its score band, neighborhood size, and budget are operating choices rather than universal constants. SimCLR and MoCo v3 support cross-learner compatibility, but the DINO result is inconclusive. Repeated repair consistently beats one-shot generation, although the adaptive and frozen-selector comparison is mixed. The fixed-space analysis verifies where support is inserted, not how every learned neighborhood must evolve. Finally, a cycle adds an embedding pass and generation, raising measured wall-clock time by 29--46 percent. Corpus-scale effectiveness beyond our controlled 10k web subsets remains open and may require a growing repair budget.
 
 \section{Conclusion}
-We formulate skewed-data SSL as a feedback problem in which the learner allocates a finite budget to change its future source distribution. Recoverability-weighted support utility links sparse-region repair, interior acquisition, diversity, and adaptive reallocation. BRIDGE realizes these principles through a label-free loop that improves transfer more reliably than uniform addition and maximal-outlier generation across the regimes studied here. Adaptive source repair offers a practical complement to improving the SSL objective alone.
+We formulate skewed-data SSL as a feedback problem in which the learner allocates a finite budget to change its future source distribution. Recoverability-weighted support utility links sparse-region repair, interior acquisition, diversity, and changing marginal value after intervention. BRIDGE realizes these principles through a label-free loop that improves transfer more reliably than uniform addition, maximal-outlier generation, one-shot generation, and the tested language-mediated alternatives. Repeated source repair offers a practical complement to improving the SSL objective alone.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

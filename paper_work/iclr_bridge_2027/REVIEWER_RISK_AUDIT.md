@@ -33,19 +33,16 @@ The paired MoCo v3 and SimCLR ViT-S experiments remove the objective-backbone co
 
 ### Reviewer QPxu
 
-The revision no longer relies on the claim that a particular combination of known components is itself the learning principle. The theoretical framework defines recoverability-weighted support allocation, proves an interior optimum under explicit conditions, and explains why repeated allocation can differ from a frozen policy. Table 4 shows that the exact lower percentile is not critical and that non-extreme sparse acquisition is much stronger than uniform and top-tail acquisition over five cycles. The paired ViT-S results and uncertainty estimates improve the stronger-learner evidence. The largest remaining risk is empirical validation of adaptive reallocation. The running adaptive, static, and one-shot experiment is therefore essential.
+The revision no longer relies on the claim that a particular combination of known components is itself the learning principle. The theoretical framework defines recoverability-weighted support allocation, proves an interior optimum under explicit conditions, and explains why repeated allocation can differ from a frozen policy. Table 4 shows that the exact lower percentile is not critical and that non-extreme sparse acquisition is much stronger than uniform and top-tail acquisition over five cycles. The paired ViT-S results and uncertainty estimates improve the stronger-learner evidence. The matched policy experiment is now complete. Adaptive BRIDGE beats one-shot repair in all three paired seeds and has the strongest four-task average, but its comparison with a frozen first-cycle selector is mixed. The paper therefore uses this as evidence for repeated repair rather than proof that recomputation always improves over a frozen selector.
 
 ### Reviewer SJHM
 
-The main text now covers the missing literature families and the appendix gives a direct comparison matrix. Claims about SD3 superiority and universal TS synergy are removed. The remaining high-risk issue is the need for alternatives to image-conditioned sparse repair. The running AIDE-style VLM acquisition, sparse-region text-to-image generation, and captioned image-to-image controls directly answer this criticism. They must be integrated under a single matched protocol before submission. If they are omitted, this reviewer could repeat the prior rejection.
+The main text now covers the missing literature families and the appendix gives a direct comparison matrix. Claims about SD3 superiority and universal TS synergy are removed. AIDE-style VLM acquisition, sparse-region text-to-image generation, captioned image-to-image, and conventional augmentation are now complete under one matched protocol. Adaptive BRIDGE has the strongest average and beats the AIDE, text-to-image, and conventional alternatives in every paired seed. These comparisons appear in the main paper.
 
 ## Remaining experiments that affect acceptance
 
-1. Adaptive mode-window versus frozen first-cycle selection and one-shot repair under matched updates and total generated volume.
-2. Mode-window conventional augmentation under the same protocol.
-3. Sparse-region text-to-image versus captioned image-to-image generation.
-4. AIDE-style CLIP cluster acquisition with captioning and text-to-image generation.
-5. A consolidated selector robustness table across distance metric, k, percentile range, candidate multiplier, and FPS.
-6. Quantile-wise repairability diagnostics if the current fidelity metrics can be validated. Unreliable automatic fidelity scores should not be used.
+1. A consolidated selector robustness table across distance metric, k, percentile range, candidate multiplier, and FPS.
+2. Quantile-wise repairability diagnostics if the current fidelity metrics can be validated. Unreliable automatic fidelity scores should not be used.
+3. A measured 100k scaling experiment.
 
 Measured 100k scaling and a domain-adapted LoRA generator are useful secondary additions. They should not displace the matched policy and generation controls above.

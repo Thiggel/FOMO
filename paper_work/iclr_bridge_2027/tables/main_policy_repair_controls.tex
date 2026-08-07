@@ -1,0 +1,22 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\caption{Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Values are linear-probe accuracy over three seeds. The average gives equal weight to the four transfer datasets.}
+\label{tab:policy-repair-controls}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccc}
+\toprule
+Method & Cars & Aircraft & Flowers & IN100-LT & Avg. \\
+\midrule
+Adaptive BRIDGE & $12.76\pm0.76$ & $\mathbf{18.39\pm0.42}$ & $\mathbf{29.63\pm3.22}$ & $42.30\pm0.33$ & $\mathbf{25.77\pm1.06}$ \\
+Frozen first-cycle selector & $12.42\pm0.65$ & $17.66\pm0.67$ & $28.54\pm6.55$ & $42.67\pm0.41$ & $25.32\pm1.82$ \\
+One-shot repair & $\mathbf{13.19\pm0.63}$ & $17.30\pm0.41$ & $25.27\pm2.00$ & $42.74\pm0.28$ & $24.63\pm0.51$ \\
+Mode-window conventional augmentation & $12.71\pm0.24$ & $18.25\pm0.67$ & $24.84\pm1.73$ & $42.71\pm0.09$ & $24.63\pm0.30$ \\
+AIDE-style VLM acquisition and text-to-image & $12.43\pm0.37$ & $18.05\pm1.13$ & $24.62\pm1.00$ & $43.39\pm0.96$ & $24.62\pm0.03$ \\
+Mode-window caption and text-to-image & $12.42\pm1.13$ & $17.51\pm1.47$ & $25.05\pm3.72$ & $\mathbf{43.64\pm0.79}$ & $24.66\pm1.31$ \\
+Mode-window captioned image-to-image & $12.84\pm0.25$ & $17.55\pm0.26$ & $25.27\pm2.95$ & $42.37\pm0.70$ & $24.51\pm0.90$ \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}
