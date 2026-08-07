@@ -9,7 +9,7 @@
 ## Claims to remove or narrow
 
 - Do not claim that SimCLR is intrinsically the strongest SSL objective. Paired ViT-S results support SimCLR and MoCo v3, while DINO is inconclusive or negative.
-- Do not claim that SD3 is intrinsically stronger than FLUX. Their matched four-task averages are 19.70 and 19.68.
+- Do not claim that SD3 is intrinsically stronger than FLUX. The matched three-seed comparison does not support a generator ranking. Report individual downstream results rather than a four-task average when this analysis enters a table.
 - Do not claim general BRIDGE and TS synergy. The interaction is target dependent and BRIDGE alone is usually stronger.
 - Do not call 75--99 optimal. It is a default inside a robust policy family.
 - Do not call oracle real restoration duplication or ordinary re-population.
@@ -20,10 +20,10 @@
 | Priority | Experiment | Main question | Status on 4 August 2026 |
 |---|---|---|---|
 | 1 | Anchor versus matched-control geometry | Do treated local regions change more than equally sparse untreated regions? | Fixed-space analysis complete over three seeds; learned-space result is mixed |
-| 1 | Adaptive versus frozen versus one-shot repair | Does recomputing the acquisition policy matter under matched updates and repair volume? | Complete over three seeds; adaptive beats one-shot consistently but not frozen selection in every seed |
-| 1 | Conventional augmentation control | Is targeted non-generative augmentation sufficient? | Complete over three seeds; below adaptive BRIDGE in every paired seed |
-| 1 | VLM-captioned text-to-image versus SDEdit | Does image conditioning add value beyond generation from a description of the same sparse region? | Complete over three seeds; adaptive BRIDGE has the stronger average |
-| 1 | VLM rare-concept data engine | Can a frozen VLM replace BRIDGE's learner-driven acquisition and text-to-image replace local editing? | Complete over three seeds; below adaptive BRIDGE in every paired seed |
+| 1 | Adaptive versus frozen versus one-shot repair | Does recomputing the acquisition policy matter under matched updates and repair volume? | Complete over three seeds; effects differ across downstream datasets and are reported separately |
+| 1 | Conventional augmentation control | Is targeted non-generative augmentation sufficient? | Complete over three seeds with per-dataset mean and standard deviation |
+| 1 | VLM-captioned text-to-image versus SDEdit | Does image conditioning add value beyond generation from a description of the same sparse region? | Complete over three seeds with per-dataset mean and standard deviation |
+| 1 | VLM rare-concept data engine | Can a frozen VLM replace BRIDGE's learner-driven acquisition and text-to-image replace local editing? | Complete over three seeds with per-dataset mean and standard deviation |
 | 2 | Full-cycle TADA-style and extreme-tail comparison | How does mode-window acquisition compare with learning-difficulty and edge acquisition? | Existing short/full partial runs require one unified rerun or careful protocol selection |
 | 2 | Distance and selector robustness | Are results stable across normalized L2, cosine, multiscale k, percentiles, pool size, and FPS? | Several sweeps complete; consolidate and fill only missing cells |
 | 2 | Repairability by score quantile | Does fidelity fall in the extreme tail while marginal support value rises before it? | Existing percentile and fidelity jobs require aggregation and possible completion |
