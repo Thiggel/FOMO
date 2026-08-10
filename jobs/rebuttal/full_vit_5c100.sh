@@ -15,6 +15,7 @@ conditions=(
   mocov3_base_2 mocov3_bridge_2
   dino_base_0 dino_bridge_0
   dino_base_1 dino_bridge_1
+  dino_base_2 dino_bridge_2
 )
 
 task="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
