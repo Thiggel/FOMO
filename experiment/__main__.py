@@ -502,6 +502,10 @@ def run_different_seeds(args: DictConfig) -> list[dict]:
             "evaluation": {
                 "benchmark_suite": requested.get("finetune_benchmark_suite"),
                 "benchmarks": requested.get("finetune_benchmarks"),
+                "result_contract": requested.get("result_benchmark_contract"),
+                "merge_existing_result": bool(
+                    requested.get("merge_existing_result", False)
+                ),
             },
         }
         with open(protocol_file, "w") as handle:
