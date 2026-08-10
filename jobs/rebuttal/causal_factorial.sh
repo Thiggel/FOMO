@@ -22,8 +22,7 @@ conditions=(
 task="${SLURM_ARRAY_TASK_ID}"
 seed="$((task % 3))"
 condition="${conditions[$((task / 3))]}"
-checkpoint_file="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt"
-checkpoint="$(cat "$checkpoint_file")"
+checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 
 selection=ood
 strategy=mode_window
@@ -58,4 +57,3 @@ python -m experiment \
     generation_model="$generator" \
     additional_data_path="$run_root/generated" \
     experiment_name="rebuttal_factorial_${condition}"
-

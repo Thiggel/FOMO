@@ -9,7 +9,7 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 . jobs/rebuttal/load_cluster_environment.sh
 export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
 seed="${SLURM_ARRAY_TASK_ID}"
-base="$(cat "$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt")"
+base="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 bridge="$(find "$CHECKPOINT_ROOT_DIR/rebuttal_factorial_mode_sd3/clane9_imagenet-100/seed_$seed" -maxdepth 1 -name '*.ckpt' -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
 test -n "$base" && test -n "$bridge"
 suffix="${FOMO_RUN_SUFFIX:-}"

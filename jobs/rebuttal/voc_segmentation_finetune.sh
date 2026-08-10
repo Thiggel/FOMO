@@ -13,7 +13,7 @@ task="${SLURM_ARRAY_TASK_ID}"
 seed="$((task % 3))"
 variant=$([[ "$task" -lt 3 ]] && echo base || echo bridge)
 if [[ "$variant" == base ]]; then
-  checkpoint="$(cat "$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt")"
+  checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 else
   checkpoint="$(find "$CHECKPOINT_ROOT_DIR/rebuttal_factorial_mode_sd3/clane9_imagenet-100/seed_$seed" -maxdepth 1 -name '*.ckpt' -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
 fi

@@ -17,7 +17,7 @@ case "$condition" in
  q85_90) range='[0.85,0.90]' ;; q90_95) range='[0.90,0.95]' ;; q95_97) range='[0.95,0.97]' ;;
  q97_99) range='[0.97,0.99]' ;; q99_100) range='[0.99,1.0]' ;;
 esac
-checkpoint="$(cat "$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt")"
+checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 run_suffix="${FOMO_RUN_SUFFIX:-}"
 run_root="$BASE_CACHE_DIR/rebuttal_runs/percentile_utility/$condition/seed_${seed}${run_suffix}"; mkdir -p "$run_root"
 result="$CHECKPOINT_ROOT_DIR/rebuttal_percentile_${condition}${run_suffix}/clane9_imagenet-100/seed_${seed}/result.json"

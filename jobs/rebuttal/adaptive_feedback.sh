@@ -13,7 +13,7 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 conditions=(adaptive static one_shot dense_placebo top_tail)
 task="${SLURM_ARRAY_TASK_ID}"; seed="$((task % 3))"; condition="${conditions[$((task / 3))]}"
 run_suffix="${FOMO_RUN_SUFFIX:-}"
-checkpoint="$(cat "$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt")"
+checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 selection=ood; strategy=mode_window; reuse=adaptive; once=false
 case "$condition" in
   static) reuse=static_first_cycle ;;

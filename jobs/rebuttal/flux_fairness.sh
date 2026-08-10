@@ -19,7 +19,7 @@ task="${SLURM_ARRAY_TASK_ID}"
 run_suffix="${FOMO_RUN_SUFFIX:-}"
 seed="$((task % 3))"
 condition="${conditions[$((task / 3))]}"
-checkpoint="$(cat "$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt")"
+checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 
 model_id="black-forest-labs/FLUX.1-schnell"
 steps=6

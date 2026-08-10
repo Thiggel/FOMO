@@ -12,7 +12,7 @@ cd "${FOMO_REPO_DIR:-$PWD}"; . jobs/rebuttal/load_cluster_environment.sh
 # after every training stage for the causal density plots.
 conditions=(no_repair uniform_sd3 mode_sd3 top_sd3)
 task="$SLURM_ARRAY_TASK_ID"; seed="$((task % 3))"; condition="${conditions[$((task / 3))]}"
-checkpoint="$(cat "$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt")"
+checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 selection=ood; strategy=mode_window; augment=true
 case "$condition" in
   no_repair) augment=false ;;

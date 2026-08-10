@@ -16,9 +16,7 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 # experiment already compares TADA-style and BRIDGE selection with matched SD3.
 seed="${SLURM_ARRAY_TASK_ID}"
 run_suffix="${FOMO_RUN_SUFFIX:-}"
-checkpoint="$(
-    cat "$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/branch_checkpoint.txt"
-)"
+checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_$seed/last.ckpt"
 run_root="$BASE_CACHE_DIR/rebuttal_runs/adaptive_tada/seed_${seed}${run_suffix}"
 mkdir -p "$run_root"
 
