@@ -18,5 +18,5 @@ suffix="${FOMO_RUN_SUFFIX:-}"
 python -m experiment dataset=imagenet100_imbalanced model=vit_small ssl=moco logger=false \
   pretrain=false finetune=true checkpoint="$checkpoint" finetune_encoder=true \
   finetune_label_fraction=0.10 finetune_seed="$seed" finetune_max_epochs=100 \
-  finetune_benchmarks='[CarsFineTune,ImageNet100LTFineTune]' num_runs=1 seed="$seed" \
+  finetune_benchmark_suite=paper_full num_runs=1 seed="$seed" \
   experiment_name="rebuttal_lowshot_mocov3_vit_${variant}${suffix}"

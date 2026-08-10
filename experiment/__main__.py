@@ -3,6 +3,7 @@ import copy
 import torch
 import os
 import json
+import numbers
 import re
 
 from dotenv import load_dotenv
@@ -440,7 +441,15 @@ def run_different_seeds(args: DictConfig) -> list[dict]:
         seed_dir = checkpoint_seed_dir(args, seed)
         os.makedirs(seed_dir, exist_ok=True)
         seed_result_file = os.path.join(seed_dir, "result.json")
-        protocol_file = os.path.join(seed_dir, "protocol.json")
+        merge_existing_result = bool(
+            getattr(args, "merge_existing_result", False)
+        )
+        protocol_file = os.path.join(
+            seed_dir,
+            "metric_backfill_protocol.json"
+            if merge_existing_result
+            else "protocol.json",
+        )
 
         run_args = set_checkpoint_for_run(copy.deepcopy(args), run_idx)
         if use_seed_specific_data_path:
@@ -490,6 +499,10 @@ def run_different_seeds(args: DictConfig) -> list[dict]:
                 "resume_trainer_state": bool(requested.get("resume_trainer_state", False)),
             },
             "additional_data_path": str(run_args.additional_data_path),
+            "evaluation": {
+                "benchmark_suite": requested.get("finetune_benchmark_suite"),
+                "benchmarks": requested.get("finetune_benchmarks"),
+            },
         }
         with open(protocol_file, "w") as handle:
             json.dump(protocol, handle, indent=2)
@@ -503,7 +516,40 @@ def run_different_seeds(args: DictConfig) -> list[dict]:
         end_time = time.time()
         seconds_to_hours = 3600
         training_time = (end_time - start_time) / seconds_to_hours
-        results.update({"training_time": training_time})
+        if merge_existing_result:
+            if not os.path.exists(seed_result_file):
+                raise FileNotFoundError(
+                    "Cannot merge a metric backfill because the source result "
+                    f"does not exist: {seed_result_file}"
+                )
+            with open(seed_result_file, "r") as handle:
+                existing_results = json.load(handle)
+            existing_results.update(results)
+            existing_results["metric_backfill_time"] = training_time
+            results = existing_results
+        else:
+            results.update({"training_time": training_time})
+
+        benchmark_suite = getattr(run_args, "result_benchmark_contract", None)
+        if not benchmark_suite:
+            benchmark_suite = getattr(run_args, "finetune_benchmark_suite", None)
+        if run_args.finetune and benchmark_suite:
+            required_metrics = (
+                FinetuningBenchmarks.get_benchmark_suite_result_metrics(
+                    str(benchmark_suite)
+                )
+            )
+            missing_metrics = [
+                metric
+                for metric in required_metrics
+                if metric not in results
+                or not isinstance(results[metric], numbers.Number)
+            ]
+            if missing_metrics:
+                raise RuntimeError(
+                    f"Incomplete {benchmark_suite} evaluation. Missing result "
+                    "metrics: " + ", ".join(missing_metrics)
+                )
 
         print(results)
 

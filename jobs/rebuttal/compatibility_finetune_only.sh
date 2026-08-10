@@ -30,6 +30,6 @@ test -n "$checkpoint"
 suffix="${FOMO_RUN_SUFFIX:-}"
 python -m experiment dataset=imagenet100_imbalanced model="$model" ssl="$ssl" logger=false \
   pretrain=false finetune=true checkpoint="$checkpoint" \
-  finetune_benchmarks='[CarsFineTune,AircraftFineTune,FlowersFineTune,PetsFineTune,CIFAR10FineTuner,CIFAR100FineTuner,ImageNet100LTFineTune]' \
+  finetune_benchmark_suite=paper_full \
   num_runs=1 seed="$seed" \
   experiment_name="rebuttal_compat_finetune_${condition}${suffix}"

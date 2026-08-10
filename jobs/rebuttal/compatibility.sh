@@ -47,7 +47,7 @@ mkdir -p "$run_root"
 python -m experiment \
     dataset=imagenet100_imbalanced model="$model" ssl="$ssl" \
     logger=false pretrain=true finetune=true \
-    finetune_benchmarks='[CarsFineTune,AircraftFineTune,FlowersFineTune,PetsFineTune,CIFAR10FineTuner,CIFAR100FineTuner,ImageNet100LTFineTune]' \
+    finetune_benchmark_suite=paper_full \
     num_runs=1 seed="$seed" \
     train_batch_size="$batch" grad_acc_steps="$accum" val_batch_size=256 \
     max_cycles="$cycles" n_epochs_per_cycle="$((100 / cycles))" \

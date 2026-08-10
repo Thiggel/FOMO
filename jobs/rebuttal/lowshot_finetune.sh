@@ -31,6 +31,6 @@ python -m experiment \
     logger=false pretrain=false finetune=true checkpoint="$checkpoint" \
     finetune_encoder=true finetune_label_fraction="$fraction" \
     finetune_seed="$seed" finetune_max_epochs=100 \
-    finetune_benchmarks='[ImageNet100LTFineTune,CarsFineTune,AircraftFineTune]' \
+    finetune_benchmark_suite=paper_full \
     num_runs=1 seed="$seed" \
     experiment_name="rebuttal_lowshot_${variant}_${fraction}${run_suffix}"

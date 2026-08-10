@@ -8,6 +8,7 @@
 set -euo pipefail
 cd "${FOMO_REPO_DIR:?FOMO_REPO_DIR must point at the staged repository}"
 . jobs/rebuttal/load_cluster_environment.sh
+. jobs/rebuttal/full_metric_suite.sh
 
 conditions=(
     metric_raw metric_normalized metric_cosine metric_median
@@ -54,14 +55,14 @@ esac
 run_root="$BASE_CACHE_DIR/rebuttal_runs/selector/$condition/seed_${seed}${run_suffix}"
 mkdir -p "$run_root"
 result="$CHECKPOINT_ROOT_DIR/rebuttal_selector_${condition}${run_suffix}/clane9_imagenet-100/seed_${seed}/result.json"
-if [[ -s "$result" ]] && jq -e '(.cars_test_accuracy|numbers) and (.aircraft_test_accuracy|numbers) and (.flowers_test_accuracy|numbers) and (.imagenet100lt_test_accuracy|numbers)' "$result" >/dev/null; then
+if fomo_has_full_metric_suite "$result"; then
     echo "Complete result already exists at $result; skipping."
     exit 0
 fi
 python -m experiment \
     dataset=imagenet100_imbalanced model=resnet50 ssl=simclr \
     logger=false pretrain=true finetune=true \
-    finetune_benchmarks='[CarsFineTune,AircraftFineTune,FlowersFineTune,ImageNet100LTFineTune]' \
+    finetune_benchmark_suite=paper_full \
     num_runs=1 seed="$seed" checkpoint="$checkpoint" \
     skip_initial_training=true max_cycles=2 n_epochs_per_cycle=100 \
     max_steps_per_cycle=4850 train_batch_size=128 val_batch_size=256 \

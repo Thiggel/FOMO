@@ -23,7 +23,7 @@ case "$condition" in
 esac
 run_root="$BASE_CACHE_DIR/rebuttal_runs/adaptive_feedback/$condition/seed_${seed}${run_suffix}"; mkdir -p "$run_root"
 python -m experiment dataset=imagenet100_imbalanced model=resnet50 ssl=simclr logger=false pretrain=true finetune=true \
-  finetune_benchmarks='[CarsFineTune,AircraftFineTune,FlowersFineTune,ImageNet100LTFineTune]' \
+  finetune_benchmark_suite=paper_full \
   num_runs=1 seed="$seed" checkpoint="$checkpoint" skip_initial_training=true max_cycles=6 n_epochs_per_cycle=100 max_steps_per_cycle=1616 \
   train_batch_size=128 val_batch_size=256 num_ood_samples=100 num_generations_per_ood_sample=5 \
   sample_selection="$selection" ood_selection_strategy="$strategy" selection_reuse_policy="$reuse" repair_once="$once" \

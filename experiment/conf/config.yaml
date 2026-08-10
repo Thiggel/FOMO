@@ -106,6 +106,13 @@ limit_val_batches: null
 limit_test_batches: null
 num_sanity_val_steps: null
 finetune_benchmarks: null
+# Named benchmark contracts. ``paper_full`` evaluates linear probing and kNN
+# on Cars, Aircraft, Flowers, Pets, CIFAR-10, CIFAR-100, and ImageNet-100-LT.
+finetune_benchmark_suite: null
+# Evaluation-only backfills can request just missing benchmarks, merge them
+# into an existing result, and still require the complete paper contract.
+result_benchmark_contract: null
+merge_existing_result: false
 finetune_max_epochs: null
 finetune_max_time_minutes: 25
 finetune_encoder: false

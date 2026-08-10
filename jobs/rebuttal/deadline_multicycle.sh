@@ -110,7 +110,7 @@ fi
 python -m experiment \
   dataset=imagenet100_imbalanced model="$model" ssl="$ssl" \
   logger=false pretrain=true finetune=true \
-  finetune_benchmarks='[CarsFineTune,AircraftFineTune,FlowersFineTune,ImageNet100LTFineTune]' \
+  finetune_benchmark_suite=paper_full \
   num_runs=1 seed="$seed" checkpoint="$checkpoint" \
   skip_initial_training="$skip_initial" \
   max_cycles="$cycles" n_epochs_per_cycle="$epochs" max_steps_per_cycle=4850 \

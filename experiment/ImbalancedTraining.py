@@ -1002,6 +1002,7 @@ class ImbalancedTraining:
                 self.ssl_method.to(device)
             else:
                 trainer.fit(**fit_kwargs)
+                self._persist_latest_checkpoint(trainer, cycle_idx)
 
             if bool(
                 getattr(self.args, "representation_diagnostics_each_cycle", False)
@@ -1267,6 +1268,26 @@ class ImbalancedTraining:
         results = self.finetune() if self.args.finetune else {}
         results.update(diagnostics)
         return results
+
+    def _persist_latest_checkpoint(self, trainer: L.Trainer, cycle_idx: int) -> None:
+        """Overwrite ``last.ckpt`` with the model from the latest repair stage.
+
+        BRIDGE constructs a fresh Lightning Trainer for every cycle. Reusing a
+        ModelCheckpoint callback across those trainers can leave ``last.ckpt``
+        pointing at an earlier stage. An explicit save after every completed
+        fit makes post-hoc evaluation use the same final model that in-process
+        evaluation sees.
+        """
+        checkpoint_dir = getattr(self.checkpoint_callback, "dirpath", None)
+        if not checkpoint_dir:
+            raise RuntimeError("Checkpoint callback does not define dirpath")
+        checkpoint_path = os.path.join(str(checkpoint_dir), "last.ckpt")
+        trainer.save_checkpoint(checkpoint_path)
+        if self._is_primary_process():
+            print(
+                f"Saved completed cycle {cycle_idx + 1} checkpoint to "
+                f"{checkpoint_path}"
+            )
 
     def _write_repair_manifest(
         self,
@@ -2155,7 +2176,19 @@ class ImbalancedTraining:
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
         benchmarks = FinetuningBenchmarks.benchmarks
+        requested_suite = getattr(self.args, "finetune_benchmark_suite", None)
         requested_benchmarks = getattr(self.args, "finetune_benchmarks", None)
+        if requested_suite and requested_benchmarks:
+            raise ValueError(
+                "Set either finetune_benchmark_suite or finetune_benchmarks, "
+                "not both"
+            )
+        if requested_suite:
+            requested_benchmarks = (
+                FinetuningBenchmarks.get_benchmark_suite_names(
+                    str(requested_suite)
+                )
+            )
         if requested_benchmarks:
             requested_names = {str(name) for name in requested_benchmarks}
             known_names = {benchmark.__name__ for benchmark in benchmarks}

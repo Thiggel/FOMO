@@ -12,7 +12,7 @@ seed="$((SLURM_ARRAY_TASK_ID % 3))"; bridge=false; [[ "$SLURM_ARRAY_TASK_ID" -ge
 cycles=1; steps=9700; [[ "$bridge" == true ]] && { cycles=2; steps=4850; }
 root="$BASE_CACHE_DIR/rebuttal_runs/diffaug_embedding/$bridge/seed_$seed"; mkdir -p "$root"
 python -m experiment dataset=imagenet100_imbalanced model=resnet50 ssl=diffaug logger=false pretrain=true finetune=true \
-  finetune_benchmarks='[CarsFineTune,AircraftFineTune,FlowersFineTune,ImageNet100LTFineTune]' \
+  finetune_benchmark_suite=paper_full \
   num_runs=1 seed="$seed" max_cycles="$cycles" n_epochs_per_cycle=100 max_steps_per_cycle="$steps" \
   train_batch_size=128 val_batch_size=256 ood_augmentation="$bridge" generation_model=stable_diffusion_3 \
   ood_distance_metric=normalized_l2 additional_data_path="$root/generated" experiment_name="rebuttal_diffaug_embedding_$bridge"

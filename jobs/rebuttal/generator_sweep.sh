@@ -55,7 +55,7 @@ mkdir -p "$run_root"
 python -m experiment \
     dataset=imagenet100_imbalanced model=resnet50 ssl=simclr \
     logger=false pretrain=true finetune=true \
-    finetune_benchmarks='[CarsFineTune,AircraftFineTune,FlowersFineTune,ImageNet100LTFineTune]' \
+    finetune_benchmark_suite=paper_full \
     num_runs=1 seed="$seed" checkpoint="$checkpoint" \
     skip_initial_training=true max_cycles=2 n_epochs_per_cycle=100 \
     max_steps_per_cycle=4850 train_batch_size=128 val_batch_size=256 \
