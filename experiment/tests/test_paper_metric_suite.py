@@ -4,6 +4,7 @@ from experiment.ImbalancedTraining import ImbalancedTraining
 from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
     FinetuningBenchmarks,
 )
+from scripts.report_full_metric_suite import summarize
 
 
 EXPECTED_PAPER_BENCHMARKS = {
@@ -65,3 +66,7 @@ def test_latest_checkpoint_is_overwritten_after_each_cycle(tmp_path):
 
     assert saved_paths == [str(tmp_path / "last.ckpt")]
     assert (tmp_path / "last.ckpt").read_text() == "latest"
+
+
+def test_full_metric_report_uses_percent_mean_and_population_std():
+    assert summarize([0.10, 0.12, 0.14]) == "12.00 ± 1.63"
