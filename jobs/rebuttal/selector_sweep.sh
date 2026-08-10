@@ -53,6 +53,11 @@ esac
 
 run_root="$BASE_CACHE_DIR/rebuttal_runs/selector/$condition/seed_${seed}${run_suffix}"
 mkdir -p "$run_root"
+result="$CHECKPOINT_ROOT_DIR/rebuttal_selector_${condition}${run_suffix}/clane9_imagenet-100/seed_${seed}/result.json"
+if [[ -s "$result" ]] && jq -e '(.cars_test_accuracy|numbers) and (.aircraft_test_accuracy|numbers) and (.flowers_test_accuracy|numbers) and (.imagenet100lt_test_accuracy|numbers)' "$result" >/dev/null; then
+    echo "Complete result already exists at $result; skipping."
+    exit 0
+fi
 python -m experiment \
     dataset=imagenet100_imbalanced model=resnet50 ssl=simclr \
     logger=false pretrain=true finetune=true \

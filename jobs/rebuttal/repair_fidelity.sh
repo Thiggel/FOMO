@@ -6,6 +6,11 @@
 set -euo pipefail
 cd "${FOMO_REPO_DIR:-$PWD}"; . jobs/rebuttal/load_cluster_environment.sh
 run_suffix="${FOMO_RUN_SUFFIX:-}"
+summary="$BASE_CACHE_DIR/rebuttal_analysis/repair_fidelity${run_suffix}/repair_fidelity_summary.json"
+if [[ -s "$summary" ]]; then
+  echo "Complete repair-fidelity summary already exists at $summary; skipping."
+  exit 0
+fi
 python paper_work/analysis/repair_fidelity_report.py \
   --manifests "$BASE_CACHE_DIR/rebuttal_runs/**/repair_manifests/cycle_*.json" \
   --output "$BASE_CACHE_DIR/rebuttal_analysis/repair_fidelity${run_suffix}"
