@@ -2191,6 +2191,12 @@ class ImbalancedTraining:
         trainer_args.pop("num_nodes", None)
         trainer_args["accelerator"] = "cuda"
         trainer_args["devices"] = 1
+        # Downstream benchmarks are scored by trainer.test() immediately after
+        # fit, using the in-memory weights.  Left enabled, Lightning writes a
+        # default checkpoint per benchmark into lightning_logs -- roughly
+        # 260 MB each, and nothing ever reads them back.  That had grown to
+        # 206 GB of pure waste.
+        trainer_args["enable_checkpointing"] = False
         return trainer_args
 
     def finetune(self) -> dict:

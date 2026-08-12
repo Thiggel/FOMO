@@ -96,6 +96,8 @@ def test_benchmark_trainer_never_spans_multiple_devices():
     assert "num_nodes" not in configured
     assert configured["accelerator"] == "cuda"
     assert configured["max_epochs"] == 7
+    # Benchmark checkpoints are never read back and filled 206 GB of disk.
+    assert configured["enable_checkpointing"] is False
 
 
 def test_full_metric_report_uses_percent_mean_and_sample_std():
