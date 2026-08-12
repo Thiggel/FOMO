@@ -34,8 +34,13 @@ def load_results(experiment_dir: Path, expected_seeds: int) -> list[dict]:
 
 
 def summarize(values: list[float]) -> str:
+    # Sample standard deviation (ddof=1): these are a handful of seeds drawn
+    # from the run-to-run distribution, not that whole population.  This also
+    # matches the spread already reported in the manuscript tables, so figures
+    # regenerated here stay comparable with the published ones.
     percentages = np.asarray(values, dtype=float) * 100.0
-    return f"{percentages.mean():.2f} ± {percentages.std():.2f}"
+    spread = percentages.std(ddof=1) if percentages.size > 1 else 0.0
+    return f"{percentages.mean():.2f} ± {spread:.2f}"
 
 
 def main() -> None:

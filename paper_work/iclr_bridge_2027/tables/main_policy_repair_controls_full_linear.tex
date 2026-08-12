@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Each entry is mean $\pm$ standard deviation over three seeds. Linear-probe accuracy.}
+\label{tab:policy-repair-controls-full-linear}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccccc}
+\toprule
+Method & Cars & Aircraft & Flowers & Pets & CIFAR-10 & CIFAR-100 & IN100-LT \\
+\midrule
+Adaptive \method & $12.76\pm0.76$ & $18.39\pm0.42$ & $29.63\pm3.22$ & -- & -- & -- & $42.30\pm0.33$ \\
+Frozen first-cycle selector & $12.42\pm0.65$ & $17.66\pm0.67$ & $28.54\pm6.55$ & -- & -- & -- & $42.67\pm0.41$ \\
+One-shot repair & $13.19\pm0.63$ & $17.30\pm0.41$ & $25.27\pm2.00$ & -- & -- & -- & $42.74\pm0.28$ \\
+Mode-window conventional augmentation & $12.71\pm0.24$ & $18.25\pm0.67$ & $24.84\pm1.73$ & -- & -- & -- & $42.71\pm0.09$ \\
+Uniform acquisition & $12.46\pm1.16$ & $16.28\pm2.37$ & $26.80\pm3.64$ & -- & -- & -- & $41.90\pm0.34$ \\
+Top-tail acquisition & $12.13\pm0.28$ & $17.68\pm0.54$ & $27.89\pm2.72$ & -- & -- & -- & $41.96\pm0.96$ \\
+AIDE-style VLM acquisition and text-to-image & $12.43\pm0.37$ & $18.05\pm1.13$ & $24.62\pm1.00$ & -- & -- & -- & $43.39\pm0.96$ \\
+Mode-window caption and text-to-image & $12.42\pm1.13$ & $17.51\pm1.47$ & $25.05\pm3.72$ & -- & -- & -- & $43.64\pm0.79$ \\
+Mode-window captioned image-to-image & $12.84\pm0.25$ & $17.55\pm0.26$ & $25.27\pm2.95$ & -- & -- & -- & $42.37\pm0.70$ \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

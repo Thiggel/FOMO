@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Each entry is mean $\pm$ standard deviation over three seeds. $k$NN accuracy.}
+\label{tab:policy-repair-controls-full-knn}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccccc}
+\toprule
+Method & Cars & Aircraft & Flowers & Pets & CIFAR-10 & CIFAR-100 & IN100-LT \\
+\midrule
+Adaptive \method & -- & -- & -- & -- & -- & -- & -- \\
+Frozen first-cycle selector & -- & -- & -- & -- & -- & -- & -- \\
+One-shot repair & -- & -- & -- & -- & -- & -- & -- \\
+Mode-window conventional augmentation & -- & -- & -- & -- & -- & -- & -- \\
+Uniform acquisition & -- & -- & -- & -- & -- & -- & -- \\
+Top-tail acquisition & -- & -- & -- & -- & -- & -- & -- \\
+AIDE-style VLM acquisition and text-to-image & -- & -- & -- & -- & -- & -- & -- \\
+Mode-window caption and text-to-image & -- & -- & -- & -- & -- & -- & -- \\
+Mode-window captioned image-to-image & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

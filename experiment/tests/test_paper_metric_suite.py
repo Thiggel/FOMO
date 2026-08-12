@@ -98,5 +98,10 @@ def test_benchmark_trainer_never_spans_multiple_devices():
     assert configured["max_epochs"] == 7
 
 
-def test_full_metric_report_uses_percent_mean_and_population_std():
-    assert summarize([0.10, 0.12, 0.14]) == "12.00 ± 1.63"
+def test_full_metric_report_uses_percent_mean_and_sample_std():
+    # ddof=1, matching the spread reported in the manuscript tables.
+    assert summarize([0.10, 0.12, 0.14]) == "12.00 ± 2.00"
+
+
+def test_full_metric_report_handles_a_single_seed():
+    assert summarize([0.10]) == "10.00 ± 0.00"
