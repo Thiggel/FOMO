@@ -2173,6 +2173,26 @@ class ImbalancedTraining:
 
             self.completed_cycles = cycle_idx + 1
 
+    @staticmethod
+    def _use_single_device_for_benchmarks(trainer_args: dict) -> dict:
+        """Pin the downstream benchmark trainer to exactly one GPU.
+
+        ``devices="auto"`` picks up every GPU visible on the node, even when
+        the batch job was only allocated one.  Lightning then starts a second
+        generation of DDP workers for the benchmark trainer; those workers
+        re-execute the experiment from the top and collide with the rank that
+        is already evaluating, so the job dies with a parameter-count mismatch
+        ("Rank 0 has 2 params, rank 1 has inconsistent 161 params") *after* the
+        full training cost has been paid.  Evaluating on one device also
+        matches the configuration that produced every completed result so far,
+        which keeps old and new numbers comparable.
+        """
+        trainer_args.pop("strategy", None)
+        trainer_args.pop("num_nodes", None)
+        trainer_args["accelerator"] = "cuda"
+        trainer_args["devices"] = 1
+        return trainer_args
+
     def finetune(self) -> dict:
         """Run finetuning on benchmark datasets"""
         benchmarks = FinetuningBenchmarks.benchmarks
@@ -2285,9 +2305,7 @@ class ImbalancedTraining:
             self.trainer_args["accumulate_grad_batches"] = 1
 
             if torch.cuda.is_available():
-                self.trainer_args.pop("strategy", None)
-                self.trainer_args["accelerator"] = "cuda"
-                self.trainer_args["devices"] = "auto"
+                self._use_single_device_for_benchmarks(self.trainer_args)
 
             trainer = L.Trainer(**self.trainer_args)
             trainer.fit(model=finetuner)

@@ -68,5 +68,35 @@ def test_latest_checkpoint_is_overwritten_after_each_cycle(tmp_path):
     assert (tmp_path / "last.ckpt").read_text() == "latest"
 
 
+def test_inventory_metrics_match_the_paper_suite():
+    # scripts/experiment_inventory.py duplicates the metric list so it can run
+    # on login nodes without torch.  The duplicate must not drift.
+    from scripts.experiment_inventory import PAPER_METRICS
+
+    assert set(PAPER_METRICS) == EXPECTED_PAPER_METRICS
+    assert len(PAPER_METRICS) == len(EXPECTED_PAPER_METRICS)
+
+
+def test_benchmark_trainer_never_spans_multiple_devices():
+    # A multi-device benchmark trainer makes Lightning spawn a second
+    # generation of DDP workers, which kills the job after training has
+    # already completed.  See _use_single_device_for_benchmarks.
+    trainer_args = {
+        "strategy": "ddp",
+        "num_nodes": 2,
+        "accelerator": "cpu",
+        "devices": "auto",
+        "max_epochs": 7,
+    }
+
+    configured = ImbalancedTraining._use_single_device_for_benchmarks(trainer_args)
+
+    assert configured["devices"] == 1
+    assert "strategy" not in configured
+    assert "num_nodes" not in configured
+    assert configured["accelerator"] == "cuda"
+    assert configured["max_epochs"] == 7
+
+
 def test_full_metric_report_uses_percent_mean_and_population_std():
     assert summarize([0.10, 0.12, 0.14]) == "12.00 ± 1.63"
