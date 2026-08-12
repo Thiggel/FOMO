@@ -5,6 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=4-00:00:00
+#SBATCH --exclude=gruenau7
 #SBATCH --output=/vol/home-vol2/ml/laitenbf/FOMO_runtime/logs/full_metric_queue/longgpu_%A_%a.out
 #
 # Second pool of workers on the same shared queue.
@@ -17,6 +18,13 @@
 #
 # Workers claim from the queue atomically, so this pool and the wbimlgpu pool
 # can run concurrently without coordinating.
+#
+# gruenau7 is excluded: every cell placed there died with a DataLoader worker
+# timeout during feature extraction (12 failures, 0 completions across four
+# workers), while the same cells succeed elsewhere.  It is not a memory or
+# shared-memory limit -- /dev/shm was 1% used and the node has 1 TB of RAM --
+# so it looks like a sick node rather than a resource ceiling.  The node had
+# also been in a "down" Slurm state earlier in the day.
 
 set -uo pipefail
 
