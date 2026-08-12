@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm$ standard deviation over three seeds. $k$NN accuracy.}
+\label{tab:percentile-utility-full-knn}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccccc}
+\toprule
+Method & Cars & Aircraft & Flowers & Pets & CIFAR-10 & CIFAR-100 & IN100-LT \\
+\midrule
+q0--25 (densest) & $4.97\pm0.07$ & $8.33\pm0.72$ & $20.00\pm0.65$ & $14.48\pm0.27$ & $62.04\pm0.84$ & $31.45\pm0.05$ & $31.88\pm0.91$ \\
+q25--50 & $5.16\pm0.14$ & $8.52\pm0.37$ & $19.58\pm0.49$ & $14.82\pm0.73$ & $62.95\pm0.79$ & $31.54\pm0.09$ & $32.88\pm0.78$ \\
+q50--75 & -- & -- & -- & -- & -- & -- & -- \\
+q75--85 & $4.97\pm0.08$ & $8.78\pm0.45$ & $19.54\pm0.14$ & $15.39\pm0.20$ & $62.52\pm0.56$ & $31.31\pm0.43$ & $32.23\pm1.17$ \\
+q85--90 & -- & -- & -- & -- & -- & -- & -- \\
+q90--95 & -- & -- & -- & -- & -- & -- & -- \\
+q95--97 & -- & -- & -- & -- & -- & -- & -- \\
+q97--99 & -- & -- & -- & -- & -- & -- & -- \\
+q99--100 (extreme tail) & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

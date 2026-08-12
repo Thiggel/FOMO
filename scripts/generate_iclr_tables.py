@@ -122,7 +122,37 @@ GENERALIZATION_ROWS = [
     ),
 ]
 
+# Sparsity bands, from the densest quarter of the score distribution to the
+# extreme tail.  Proposition 3 predicts utility peaks at an interior band
+# rather than at either end, so the ordering across these rows is the
+# empirical test of the interior-optimum claim.  Each band is one experiment
+# directory holding all three seeds.
+PERCENTILE_BANDS = [
+    ("q0--25 (densest)", "rebuttal_percentile_q00_25_iclr2027_full_v2"),
+    ("q25--50", "rebuttal_percentile_q25_50_iclr2027_full_v2"),
+    ("q50--75", "rebuttal_percentile_q50_75_iclr2027_full_v2"),
+    ("q75--85", "rebuttal_percentile_q75_85_iclr2027_full_v2"),
+    ("q85--90", "rebuttal_percentile_q85_90_iclr2027_full_v2"),
+    ("q90--95", "rebuttal_percentile_q90_95_iclr2027_full_v2"),
+    ("q95--97", "rebuttal_percentile_q95_97_iclr2027_full_v2"),
+    ("q97--99", "rebuttal_percentile_q97_99_iclr2027_full_v2"),
+    ("q99--100 (extreme tail)", "rebuttal_percentile_q99_100_iclr2027_full_v2"),
+]
+
+PERCENTILE_ROWS = [(label, [name] * 3) for label, name in PERCENTILE_BANDS]
+
 TABLES = {
+    "main_percentile_utility_full": {
+        "rows": PERCENTILE_ROWS,
+        "caption": (
+            "Repair utility by sparsity band on ImageNet-100-LT. Each row "
+            "spends the identical acquisition budget on a different quantile "
+            "range of the $k$NN score distribution, holding every other part "
+            "of the loop fixed. Mean $\\pm$ standard deviation over three "
+            "seeds."
+        ),
+        "label": "tab:percentile-utility-full",
+    },
     "main_generalization_vits_full": {
         "rows": GENERALIZATION_ROWS,
         "caption": (

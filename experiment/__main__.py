@@ -474,6 +474,10 @@ def run_different_seeds(args: DictConfig) -> list[dict]:
                     "ood_distance_metric", "ood_mode_histogram_quantile_range",
                     "ood_mode_candidate_pool_multiplier", "k",
                     "selection_reuse_policy", "selection_original_only",
+                    # Overrides the strategy above when set, so omitting it
+                    # made the nine percentile-sweep bands appear to have run
+                    # the identical configuration.
+                    "ood_percentile_bin",
                 )
             },
             "repair": {
