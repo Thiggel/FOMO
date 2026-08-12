@@ -14,7 +14,14 @@ case "${FOMO_CLUSTER:-}" in
         . jobs/clusters/gruenau_environment.sh
         # Gruenau nodes expose only a small shared /tmp.  Concurrent dataset
         # workers previously filled it and killed otherwise healthy runs.
-        fomo_tmp_gpu="${CUDA_VISIBLE_DEVICES:-cpu}"
+        #
+        # Key the directory on the queue worker when there is one.  Slurm gives
+        # every job CUDA_VISIBLE_DEVICES=0 for its single allocated card, so
+        # keying on the device made every worker on a node share one temp
+        # directory.  Concurrent torch shm sockets then collided there, which
+        # kills a run with "torch_shm_manager: could not generate a random
+        # directory for manager socket" or a DataLoader worker timeout.
+        fomo_tmp_gpu="${FOMO_WORKER_NAME:-${CUDA_VISIBLE_DEVICES:-cpu}}"
         export TMPDIR="/dev/shm/fomo_${USER:-user}_gpu_${fomo_tmp_gpu}"
         export TEMP="$TMPDIR"
         export TMP="$TMPDIR"
