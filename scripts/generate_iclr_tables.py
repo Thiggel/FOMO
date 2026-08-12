@@ -261,6 +261,29 @@ def render(checkpoint_root: Path, spec: dict, protocol: str) -> tuple[str, int, 
     return "\n".join(lines), complete_rows, len(spec["rows"])
 
 
+def duplicate_rows(checkpoint_root: Path, spec: dict, protocol: str) -> list[str]:
+    """Report rows whose numbers are identical across every dataset.
+
+    Two conditions that agree to the last digit on all seven datasets did not
+    merely perform similarly, they are the same model: this is how the frozen
+    first-cycle selector was found to produce an encoder bit-identical to
+    adaptive selection, which made the paper's adaptive-versus-frozen
+    comparison a model compared against itself.
+    """
+    index = 1 if protocol == "linear" else 2
+    fingerprints: dict[tuple, list[str]] = {}
+    for label, experiments in spec["rows"]:
+        values = tuple(
+            tuple(collect(checkpoint_root, experiments, dataset[index]))
+            for dataset in DATASETS
+        )
+        if all(values):
+            fingerprints.setdefault(values, []).append(label)
+    return [
+        " == ".join(labels) for labels in fingerprints.values() if len(labels) > 1
+    ]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint-root", type=Path, required=True)
@@ -278,6 +301,8 @@ def main() -> None:
             path = args.tables_dir / f"{name}_{protocol}.tex"
             path.write_text(body)
             print(f"{path.name}: {complete}/{total} rows complete")
+            for collision in duplicate_rows(args.checkpoint_root, spec, protocol):
+                print(f"  WARNING identical on every dataset: {collision}")
 
 
 if __name__ == "__main__":
