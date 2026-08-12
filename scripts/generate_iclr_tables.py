@@ -83,7 +83,56 @@ POLICY_REPAIR_ROWS = [
     ),
 ]
 
+# Paired full-schedule ViT-S runs.  mocov3_bridge seed 1 was attempted three
+# times; retry1 stopped before writing a result and retry2 produced nothing,
+# so retry3 is the only completed run and is the one reported here.
+GENERALIZATION_ROWS = [
+    (
+        "SimCLR, SSL baseline",
+        [f"rebuttal_full5e100_simclr_vits_base_{s}_gruenau_retry1" for s in (0, 1, 2)],
+    ),
+    (
+        "SimCLR, with \\method",
+        [
+            f"rebuttal_full5e100_simclr_vits_bridge_{s}_gruenau_retry1"
+            for s in (0, 1, 2)
+        ],
+    ),
+    (
+        "MoCo v3, SSL baseline",
+        [f"rebuttal_full5e100_mocov3_base_{s}_gruenau_retry1" for s in (0, 1, 2)],
+    ),
+    (
+        "MoCo v3, with \\method",
+        [
+            "rebuttal_full5e100_mocov3_bridge_0_gruenau_retry1",
+            "rebuttal_full5e100_mocov3_bridge_1_gruenau_retry3",
+            "rebuttal_full5e100_mocov3_bridge_2_gruenau_retry1",
+        ],
+    ),
+    # DINO completed only two seeds and the paper reports it as inconclusive
+    # rather than as evidence for or against the method.
+    (
+        "DINO, SSL baseline",
+        [f"rebuttal_full5e100_dino_base_{s}_gruenau_retry1" for s in (0, 1)],
+    ),
+    (
+        "DINO, with \\method",
+        [f"rebuttal_full5e100_dino_bridge_{s}_gruenau_retry1" for s in (0, 1)],
+    ),
+]
+
 TABLES = {
+    "main_generalization_vits_full": {
+        "rows": GENERALIZATION_ROWS,
+        "caption": (
+            "Paired full-schedule ViT-S transfer on ImageNet-100-LT, with "
+            "every downstream dataset reported separately. Both arms of each "
+            "pair start from the same source checkpoint and receive the same "
+            "number of post-branch optimizer updates."
+        ),
+        "label": "tab:generalization-vits-full",
+    },
     "main_policy_repair_controls_full": {
         "rows": POLICY_REPAIR_ROWS,
         "caption": (
@@ -166,7 +215,11 @@ def render(checkpoint_root: Path, spec: dict, protocol: str) -> tuple[str, int, 
         ]
         if all(value != "--" for value in cells):
             complete_rows += 1
-        lines.append(f"{label} & " + " & ".join(cells) + " \\\\")
+        # Never let a row with fewer seeds pass as one of the standard three.
+        shown = label if len(experiments) == 3 else (
+            f"{label} ({len(experiments)} seeds)"
+        )
+        lines.append(f"{shown} & " + " & ".join(cells) + " \\\\")
 
     lines += [
         "\\bottomrule",

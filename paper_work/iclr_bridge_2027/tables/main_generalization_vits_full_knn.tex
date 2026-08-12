@@ -1,0 +1,21 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. $k$NN accuracy.}
+\label{tab:generalization-vits-full-knn}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccccc}
+\toprule
+Method & Cars & Aircraft & Flowers & Pets & CIFAR-10 & CIFAR-100 & IN100-LT \\
+\midrule
+SimCLR, SSL baseline & -- & -- & -- & -- & -- & -- & -- \\
+SimCLR, with \method & -- & -- & -- & -- & -- & -- & -- \\
+MoCo v3, SSL baseline & -- & -- & -- & -- & -- & -- & -- \\
+MoCo v3, with \method & -- & -- & -- & -- & -- & -- & -- \\
+DINO, SSL baseline (2 seeds) & -- & -- & -- & -- & -- & -- & -- \\
+DINO, with \method (2 seeds) & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

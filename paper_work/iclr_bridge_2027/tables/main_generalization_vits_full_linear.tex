@@ -1,0 +1,21 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Linear-probe accuracy.}
+\label{tab:generalization-vits-full-linear}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccccc}
+\toprule
+Method & Cars & Aircraft & Flowers & Pets & CIFAR-10 & CIFAR-100 & IN100-LT \\
+\midrule
+SimCLR, SSL baseline & $7.27\pm0.15$ & $10.59\pm0.44$ & $31.81\pm3.35$ & -- & -- & -- & $40.63\pm0.76$ \\
+SimCLR, with \method & $7.76\pm0.58$ & $11.93\pm0.38$ & $35.95\pm1.31$ & -- & -- & -- & $42.67\pm1.17$ \\
+MoCo v3, SSL baseline & $7.75\pm0.29$ & $10.48\pm0.82$ & $35.73\pm2.30$ & -- & -- & -- & $45.17\pm0.66$ \\
+MoCo v3, with \method & $9.29\pm0.32$ & $12.93\pm1.78$ & $34.86\pm3.22$ & -- & -- & -- & $47.58\pm1.73$ \\
+DINO, SSL baseline (2 seeds) & $3.59\pm0.51$ & $5.27\pm0.23$ & $19.93\pm2.31$ & -- & -- & -- & $29.38\pm0.46$ \\
+DINO, with \method (2 seeds) & $3.33\pm0.10$ & $4.98\pm0.17$ & $17.32\pm0.46$ & -- & -- & -- & $29.41\pm0.32$ \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

@@ -29,9 +29,12 @@ export FOMO_WORKER_NAME="gruenau-${SLURM_ARRAY_JOB_ID:-0}-${SLURM_ARRAY_TASK_ID:
 export FOMO_QUEUE_DEADLINE_SECONDS=345600
 export FOMO_QUEUE_RESERVE_SECONDS=9000
 
-# The smallest cards in the gpu partition are 24 GB; require nearly all of it
-# so a worker never lands on a card another user is already occupying.
-export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}"
+# These nodes run MPS, so Slurm hands out cards that other tenants are already
+# sharing.  Evaluation needs far less than a full 24 GB card, and demanding a
+# nearly empty one made workers quit without claiming any cell.  Wait up to an
+# hour for a neighbour to finish rather than abandoning an allocation we hold.
+export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-12000}"
+export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-60}"
 
 mkdir -p "$BASE_CACHE_DIR/logs/full_metric_queue"
 bash "$FOMO_REPO_DIR/jobs/rebuttal/full_metric_queue_worker.sh"

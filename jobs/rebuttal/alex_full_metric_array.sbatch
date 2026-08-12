@@ -26,7 +26,7 @@ export FOMO_QUEUE_RESERVE_SECONDS=10800
 
 # A100s are exclusive per job here, so the free-memory guard only needs to
 # catch a genuinely broken card rather than a competing tenant.
-export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}"
+export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-12000}"
 
 mkdir -p "$BASE_CACHE_DIR/logs/full_metric_queue"
 bash "$FOMO_REPO_DIR/jobs/rebuttal/full_metric_queue_worker.sh"
