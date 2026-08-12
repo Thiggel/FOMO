@@ -62,6 +62,11 @@ PRIORITY_PREFIXES = [
     ),
     ("11", ("rebuttal_full5e100_", "iclr_fullpolicy5e100_")),
     ("12", ("rebuttal_percentile_",)),
+    # The matched-volume random-addition arms answer the reviewers' central
+    # objection -- that re-population performs close to generative repair, so
+    # the gains may just be extra data.  That evidence belongs near the front
+    # of the queue, not in the appendix tail.
+    ("12b", ("rebuttal_cycles_",)),
     ("13", ("rebuttal_feedback_", "rebuttal_adaptive_")),
     ("14", ("rebuttal_compat_", "rebuttal_factorial_")),
     # The generator sweeps are what let the paper withdraw the "SD3 beats
@@ -71,7 +76,7 @@ PRIORITY_PREFIXES = [
     ("16", ("rebuttal_sd3_", "rebuttal_diffaug_", "rebuttal_causal_geometry_")),
     ("20", ("rebuttal_selector_",)),
     ("21", ("rebuttal_scale_",)),
-    ("22", ("rebuttal_cycles_", "rebuttal_ts_")),
+    ("22", ("rebuttal_ts_",)),
 ]
 
 
