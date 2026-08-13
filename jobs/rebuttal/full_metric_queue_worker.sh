@@ -37,7 +37,14 @@ gpu_wait_seconds="${FOMO_GPU_WAIT_SECONDS:-60}"
 
 # Concurrent PyTorch workers exhaust a node's shared /tmp; use node-local
 # memory instead, which also avoids stale .nfs files on teardown.
-export TMPDIR="/dev/shm/fomo_${USER:-user}_${worker}"
+#
+# Use exactly the path load_cluster_environment.sh derives, because
+# backfill_full_metrics.sh sources that script again per cell and would
+# otherwise point the run at a second directory.  Keeping two paths meant the
+# exit trap below deleted one of them while a run was still using the other,
+# which surfaced as tempfile.mkdtemp failing with ENOENT a few seconds into a
+# cell -- reliably so for pass_subset, whose loader stages an archive there.
+export TMPDIR="/dev/shm/fomo_${USER:-user}_gpu_${worker}"
 export TEMP="$TMPDIR"
 export TMP="$TMPDIR"
 mkdir -p "$TMPDIR"
