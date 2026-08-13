@@ -5,7 +5,6 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=4-00:00:00
-#SBATCH --exclude=guppi1,guppi4
 #SBATCH --output=/vol/home-vol2/ml/laitenbf/FOMO_runtime/logs/full_metric_queue/gruenau_%A_%a.out
 #
 # One worker per allocated GPU.  Slurm itself is the "find a free GPU" loop:
@@ -13,8 +12,10 @@
 # exactly one device, which is the configuration the benchmark stage requires.
 #
 # Site policy rewrites GPU jobs onto wbimlgpu (guppi[1,4-8]), so the partition
-# is named explicitly.  guppi1 and guppi4 are excluded because their TaskProlog
-# fails with status 127 and silently kills every task placed on them.
+# is named explicitly.  guppi1 and guppi4 used to be excluded here because
+# their TaskProlog failed with status 127 and silently killed every task placed
+# on them; both have since been removed from the partition, and naming a node
+# that no longer exists makes sbatch reject the submission outright.
 
 set -uo pipefail
 
