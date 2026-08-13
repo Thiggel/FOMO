@@ -21,13 +21,27 @@ human() { numfmt --to=iec --suffix=B "${1:-0}" 2>/dev/null || echo "${1:-0}"; }
 
 total=0
 
-report() {
+# Sum the matched files themselves.
+report_files() {
     local label="$1"; shift
     local bytes count
     bytes="$("$@" -printf '%s\n' 2>/dev/null | awk '{s+=$1} END {print s+0}')"
     count="$("$@" -printf '.\n' 2>/dev/null | wc -l)"
     printf '%-42s %10s  %s files\n' "$label" "$(human "$bytes")" "$count"
     total=$(( total + bytes ))
+}
+
+# Sum what the matched directories *contain*.  find -printf '%s' on a
+# directory reports its inode size, a few KB, not the tree beneath it, so
+# using report_files here would understate this category by ~29 GB.
+report_dirs() {
+    local label="$1"; shift
+    local bytes count
+    bytes="$("$@" -print0 2>/dev/null | du -sc --files0-from=- --block-size=1 2>/dev/null |
+        tail -1 | cut -f1)"
+    count="$("$@" -printf '.\n' 2>/dev/null | wc -l)"
+    printf '%-42s %10s  %s dirs\n' "$label" "$(human "${bytes:-0}")" "$count"
+    total=$(( total + ${bytes:-0} ))
 }
 
 # 1. Benchmark checkpoints Lightning wrote and nothing reads.  The leak itself
@@ -47,9 +61,9 @@ superseded=(find "$RUNTIME/checkpoints" -mindepth 1 -maxdepth 1 -type d
     \( -name 'smoke_*' -o -name 'screen_*' -o -name 'deadline_*' \))
 
 echo "=== reclaimable ==="
-report "lightning benchmark checkpoints" "${lightning_ckpt[@]}"
-report "generated image shards (.h5)" "${generated_h5[@]}"
-report "superseded checkpoint families" "${superseded[@]}"
+report_files "lightning benchmark checkpoints" "${lightning_ckpt[@]}"
+report_files "generated image shards (.h5)" "${generated_h5[@]}"
+report_dirs "superseded checkpoint families" "${superseded[@]}"
 echo "---"
 printf '%-42s %10s\n' "total" "$(human "$total")"
 
