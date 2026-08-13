@@ -1,0 +1,36 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm$ standard deviation over three seeds. $k$NN accuracy.}
+\label{tab:selector-robustness-full-knn}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccccc}
+\toprule
+Method & Cars & Aircraft & Flowers & Pets & CIFAR-10 & CIFAR-100 & IN100-LT \\
+\midrule
+Candidate pool $\alpha=1$ & -- & -- & -- & -- & -- & -- & -- \\
+Candidate pool $\alpha=2$ & -- & -- & -- & -- & -- & -- & -- \\
+Candidate pool $\alpha=4$ (default) & -- & -- & -- & -- & -- & -- & -- \\
+Candidate pool $\alpha=8$ & -- & -- & -- & -- & -- & -- & -- \\
+Upper cutoff $q=0.95$ & -- & -- & -- & -- & -- & -- & -- \\
+Upper cutoff $q=0.99$ (default) & -- & -- & -- & -- & -- & -- & -- \\
+Upper cutoff $q=0.995$ & -- & -- & -- & -- & -- & -- & -- \\
+Upper cutoff $q=1.0$ & -- & -- & -- & -- & -- & -- & -- \\
+Neighbourhood $k=10$ & -- & -- & -- & -- & -- & -- & -- \\
+Neighbourhood $k=25$ & -- & -- & -- & -- & -- & -- & -- \\
+Neighbourhood $k=50$ & -- & -- & -- & -- & -- & -- & -- \\
+Neighbourhood $k=200$ & -- & -- & -- & -- & -- & -- & -- \\
+Distance: normalized $L_2$ (default) & -- & -- & -- & -- & -- & -- & -- \\
+Distance: cosine & -- & -- & -- & -- & -- & -- & -- \\
+Distance: raw $L_2$ & -- & -- & -- & -- & -- & -- & -- \\
+Strategy: mode window (default) & -- & -- & -- & -- & -- & -- & -- \\
+Strategy: sparse band with FPS & -- & -- & -- & -- & -- & -- & -- \\
+Strategy: sparse band, random & -- & -- & -- & -- & -- & -- & -- \\
+Strategy: inverse-cluster & -- & -- & -- & -- & -- & -- & -- \\
+Strategy: densest window & -- & -- & -- & -- & -- & -- & -- \\
+Strategy: top tail, no diversity & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

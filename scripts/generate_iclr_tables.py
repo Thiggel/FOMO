@@ -141,7 +141,49 @@ PERCENTILE_BANDS = [
 
 PERCENTILE_ROWS = [(label, [name] * 3) for label, name in PERCENTILE_BANDS]
 
+# Selector robustness: one row per setting, grouped by the knob it varies.
+# Most conditions were rerun under the iclr2027_full_v2 wave; alpha4,
+# cutoff100 and k10 exist only from the earlier gruenau retry, so they are
+# named explicitly rather than resolved by a fallback rule that could silently
+# mix waves.
+SELECTOR_SETTINGS = [
+    ("Candidate pool $\\alpha=1$", "rebuttal_selector_alpha1_iclr2027_full_v2"),
+    ("Candidate pool $\\alpha=2$", "rebuttal_selector_alpha2_iclr2027_full_v2"),
+    ("Candidate pool $\\alpha=4$ (default)", "rebuttal_selector_alpha4_gruenau_retry1"),
+    ("Candidate pool $\\alpha=8$", "rebuttal_selector_alpha8_iclr2027_full_v2"),
+    ("Upper cutoff $q=0.95$", "rebuttal_selector_cutoff95_iclr2027_full_v2"),
+    ("Upper cutoff $q=0.99$ (default)", "rebuttal_selector_cutoff99_iclr2027_full_v2"),
+    ("Upper cutoff $q=0.995$", "rebuttal_selector_cutoff995_iclr2027_full_v2"),
+    ("Upper cutoff $q=1.0$", "rebuttal_selector_cutoff100_gruenau_retry1"),
+    ("Neighbourhood $k=10$", "rebuttal_selector_k10_gruenau_retry1"),
+    ("Neighbourhood $k=25$", "rebuttal_selector_k25_iclr2027_full_v2"),
+    ("Neighbourhood $k=50$", "rebuttal_selector_k50_iclr2027_full_v2"),
+    ("Neighbourhood $k=200$", "rebuttal_selector_k200_iclr2027_full_v2"),
+    ("Distance: normalized $L_2$ (default)", "rebuttal_selector_metric_normalized_iclr2027_full_v2"),
+    ("Distance: cosine", "rebuttal_selector_metric_cosine_iclr2027_full_v2"),
+    ("Distance: raw $L_2$", "rebuttal_selector_metric_raw_iclr2027_full_v2"),
+    ("Strategy: mode window (default)", "rebuttal_selector_strategy_mode_iclr2027_full_v2"),
+    ("Strategy: sparse band with FPS", "rebuttal_selector_strategy_band_fps_iclr2027_full_v2"),
+    ("Strategy: sparse band, random", "rebuttal_selector_strategy_band_random_iclr2027_full_v2"),
+    ("Strategy: inverse-cluster", "rebuttal_selector_strategy_cluster_iclr2027_full_v2"),
+    ("Strategy: densest window", "rebuttal_selector_strategy_densest_iclr2027_full_v2"),
+    ("Strategy: top tail, no diversity", "rebuttal_selector_strategy_top_iclr2027_full_v2"),
+]
+
+SELECTOR_ROWS = [(label, [name] * 3) for label, name in SELECTOR_SETTINGS]
+
 TABLES = {
+    "app_selector_robustness_full": {
+        "rows": SELECTOR_ROWS,
+        "caption": (
+            "Selector robustness on ImageNet-100-LT. Each row changes one "
+            "component of the acquisition rule -- candidate pool multiplier, "
+            "upper cutoff, neighbourhood size, distance, or selection "
+            "strategy -- and holds the rest of the loop fixed. Mean $\\pm$ "
+            "standard deviation over three seeds."
+        ),
+        "label": "tab:selector-robustness-full",
+    },
     "main_percentile_utility_full": {
         "rows": PERCENTILE_ROWS,
         "caption": (
