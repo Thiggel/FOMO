@@ -1,10 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-metrics
-#SBATCH --partition=a100
-#SBATCH --gres=gpu:a100:1
+#SBATCH --partition=a40
+#SBATCH --gres=gpu:a40:1
 #SBATCH --cpus-per-task=16
 #SBATCH --time=24:00:00
 #SBATCH --output=/home/atuin/c107fa/c107fa12/FOMO_runtime/logs/full_metric_queue/alex_%A_%a.out
+#
+# Gruenau is the preferred cluster.  Run here only for cells whose checkpoints
+# exist only on Alex, and keep the footprint small: the account is capped at
+# 16 GPUs total and another project needs an 8-GPU block at a time, so submit
+# at most 2-4 single-GPU tasks and never enough to starve that block.  Default
+# to a40 rather than a100 for the same reason -- the 8-GPU job wants a100s.
 #
 # Alex caps jobs at 24 hours.  The worker therefore stops claiming new cells
 # once less than FOMO_QUEUE_RESERVE_SECONDS of walltime remain, so a job is
