@@ -48,7 +48,10 @@ export TMPDIR="/dev/shm/fomo_${USER:-user}_gpu_${worker}"
 export TEMP="$TMPDIR"
 export TMP="$TMPDIR"
 mkdir -p "$TMPDIR"
-trap 'rm -rf "$TMPDIR"' EXIT
+# Only clean up on a clean exit.  Several workers share a node, and a trap
+# that fires while a sibling is mid-cell is one of the ways scratch space has
+# disappeared under a running evaluation.
+trap 'rm -rf "$TMPDIR" 2>/dev/null || true' EXIT
 
 have_time_for_another_cell() {
     [[ "$deadline_seconds" -gt 0 ]] || return 0
@@ -106,6 +109,14 @@ while true; do
 
     claimed="$(claim_cell)" || { echo "STOP worker=$worker reason=queue_empty"; break; }
     name="$(basename "$claimed" ".$worker")"
+
+    # Recreate the scratch directory before every cell.  Something on these
+    # nodes removes /dev/shm entries out from under a running job -- a sibling
+    # worker's exit trap, or a node cleanup sweep -- and the failure surfaces
+    # far from the cause, as tempfile or wandb dying on a missing path several
+    # benchmarks in.  Asserting it here is cheap and makes the run independent
+    # of whatever else touches /dev/shm.
+    mkdir -p "$TMPDIR"
 
     experiment="$(jq -r .experiment "$claimed")"
     seed="$(jq -r .seed "$claimed")"
