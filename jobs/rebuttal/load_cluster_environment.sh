@@ -21,7 +21,12 @@ case "${FOMO_CLUSTER:-}" in
         # directory.  Concurrent torch shm sockets then collided there, which
         # kills a run with "torch_shm_manager: could not generate a random
         # directory for manager socket" or a DataLoader worker timeout.
-        fomo_tmp_gpu="${FOMO_WORKER_NAME:-${CUDA_VISIBLE_DEVICES:-cpu}}"
+        # Only the queue worker sets FOMO_WORKER_NAME.  Every array launcher
+        # fell through to CUDA_VISIBLE_DEVICES, which Slurm sets to 0 for any
+        # job holding a single card, so all concurrent tasks on a node shared
+        # one directory and deleted it from under each other.  Slurm gives
+        # every array task its own job id, so prefer that.
+        fomo_tmp_gpu="${FOMO_WORKER_NAME:-${SLURM_JOB_ID:-$$}}"
         export TMPDIR="/dev/shm/fomo_${USER:-user}_gpu_${fomo_tmp_gpu}"
         export TEMP="$TMPDIR"
         export TMP="$TMPDIR"
