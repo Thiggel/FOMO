@@ -7,6 +7,7 @@
 set -euo pipefail
 cd "${FOMO_REPO_DIR:-$PWD}"
 . jobs/rebuttal/load_cluster_environment.sh
+. jobs/rebuttal/full_metric_suite.sh
 
 conditions=(
   no_repair adaptive static one_shot uniform top_tail conventional
@@ -58,6 +59,8 @@ run_suffix="${FOMO_RUN_SUFFIX:-}"
 run_tag="rebuttal_fullpolicy3e60_${condition}_${seed}${run_suffix}"
 run_root="$BASE_CACHE_DIR/rebuttal_runs/$run_tag"
 mkdir -p "$run_root"
+
+fomo_wait_for_gpu
 
 python -m experiment \
   dataset=imagenet100_imbalanced model=resnet50 ssl=simclr \
