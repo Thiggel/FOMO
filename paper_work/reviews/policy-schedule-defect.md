@@ -1,9 +1,24 @@
 # The repair-schedule conditions are not distinguishable as run
 
-`selection_reuse_policy` and `repair_once` do not change the trained model.
-Every experiment that varies only those two parameters produces a checkpoint
-bit-identical to the adaptive baseline, so the paper's adaptive-versus-frozen
-and repeated-versus-one-shot comparisons compare a model against itself.
+In every paper-facing experiment, varying `selection_reuse_policy` or
+`repair_once` produces a checkpoint bit-identical to the adaptive baseline, so
+the adaptive-versus-frozen and repeated-versus-one-shot comparisons compare a
+model against itself.
+
+**The parameters themselves work.** A minimal reproduction -- three cycles,
+one epoch, twenty anchors, conventional augmentation -- diverges correctly,
+with a maximum weight difference of 2.9e-01 between the two policies. An
+earlier version of this note claimed the parameters were inert in general;
+that was wrong. Selection also demonstrably differs in the real runs: the
+repair manifests for adaptive and frozen overlap on only 14 of 500 anchors
+from cycle 1 onward.
+
+So the divergence is real at selection time and real at small scale, but is
+lost before it reaches the weights in the full configuration. The reproduction
+differs from those runs in scale, schedule and repair operator; the operator is
+the prime suspect, because Stable Diffusion 3 is the one component that
+persists state across cycles through the HDF5 image store. A second
+reproduction fixes everything except the generator to test that directly.
 
 This matters because those comparisons are priority-1 in `REVISION_PLAN.md`
 and are the evidence cited for Proposition 4 in `REVIEWER_RISK_AUDIT.md`.
@@ -36,6 +51,8 @@ the data volume. The schedule parameter itself contributes nothing.
 
 ## What this rules out
 
+- **Not the parameters being unimplemented.** The minimal reproduction shows
+  them working; see above.
 - **Not a general pipeline fault.** Conditions that change *which* samples are
   selected (`dense`, `top`) and how much data is added take effect normally.
   Only the parameters governing *when* selection is recomputed are inert.
