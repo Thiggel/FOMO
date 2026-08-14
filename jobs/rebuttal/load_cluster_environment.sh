@@ -27,7 +27,13 @@ case "${FOMO_CLUSTER:-}" in
         # one directory and deleted it from under each other.  Slurm gives
         # every array task its own job id, so prefer that.
         fomo_tmp_gpu="${FOMO_WORKER_NAME:-${SLURM_JOB_ID:-$$}}"
-        export TMPDIR="/dev/shm/fomo_${USER:-user}_gpu_${fomo_tmp_gpu}"
+        # /dev/shm is the fast default, but something at node level removes
+        # entries from it mid-run on these machines -- the directory is present
+        # when python starts, is unique per task, and /dev/shm is nearly empty,
+        # yet tempfile calls fail on the missing parent seconds later.  Set
+        # FOMO_TMPDIR_ROOT to fall back to ordinary disk when that matters more
+        # than speed.
+        export TMPDIR="${FOMO_TMPDIR_ROOT:-/dev/shm}/fomo_${USER:-user}_gpu_${fomo_tmp_gpu}"
         export TEMP="$TMPDIR"
         export TMP="$TMPDIR"
         mkdir -p "$TMPDIR"
