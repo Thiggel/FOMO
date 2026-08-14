@@ -57,6 +57,8 @@ mkdir -p "$run_root"
 
 # Baseline arm only: no repair, so this measures the encoder the DINO recipe
 # produces rather than anything about BRIDGE.
+fomo_wait_for_gpu
+
 python -m experiment \
     dataset=imagenet100_imbalanced model=vit_small ssl=dino \
     ssl.lr="$lr" \

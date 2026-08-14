@@ -60,6 +60,8 @@ fi
 run_root="$BASE_CACHE_DIR/rebuttal_runs/selgen/${arm}/seed_${seed}${run_suffix}"
 mkdir -p "$run_root"
 
+fomo_wait_for_gpu
+
 python -m experiment \
     dataset=imagenet100_imbalanced model=resnet50 ssl=simclr \
     logger=false pretrain=true finetune=true \

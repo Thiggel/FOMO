@@ -1,5 +1,36 @@
 #!/bin/bash
 
+# Wait until the allocated GPU actually has room before starting a run.
+#
+# These nodes run MPS and other tenants attach to the same cards outside
+# Slurm's accounting, so an allocation regularly comes with only a couple of
+# GB free.  A run that starts anyway dies with a CUDA OOM part-way through and
+# loses everything it had computed.  Waiting costs nothing -- the allocation is
+# already ours -- and a job that never gets room exits before doing work, so it
+# can simply be resubmitted.
+fomo_wait_for_gpu() {
+  local required="${FOMO_MIN_FREE_GPU_MIB:-12000}"
+  local attempts="${FOMO_GPU_WAIT_ATTEMPTS:-60}"
+  local delay="${FOMO_GPU_WAIT_SECONDS:-60}"
+  command -v nvidia-smi >/dev/null 2>&1 || return 0
+
+  local attempt free
+  for (( attempt = 1; attempt <= attempts; attempt++ )); do
+    free="$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null |
+      head -n 1 | tr -d '[:space:]')"
+    [[ "$free" =~ ^[0-9]+$ ]] || return 0
+    if (( free >= required )); then
+      return 0
+    fi
+    echo "Waiting for GPU memory: ${free} MiB free, need ${required} MiB" \
+         "(attempt ${attempt}/${attempts})"
+    sleep "$delay"
+  done
+
+  echo "Giving up: GPU never had ${required} MiB free. Resubmit this task." >&2
+  return 75
+}
+
 # Canonical result contract for paper-facing experiments. Keep this in sync
 # with FinetuningBenchmarks.benchmark_suites["paper_full"].
 fomo_has_full_metric_suite() {

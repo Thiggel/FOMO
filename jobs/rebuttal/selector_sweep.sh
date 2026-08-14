@@ -58,6 +58,8 @@ if fomo_has_full_metric_suite "$result"; then
     echo "Complete result already exists at $result; skipping."
     exit 0
 fi
+fomo_wait_for_gpu
+
 python -m experiment \
     dataset=imagenet100_imbalanced model=resnet50 ssl=simclr \
     logger=false pretrain=true finetune=true \
