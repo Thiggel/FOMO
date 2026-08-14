@@ -31,8 +31,20 @@ should not cite a five-cycle optimum as if both protocols supported it.
 ## The arms are separated at c5 by less than seed noise
 
 At five cycles the three arms span 0.85 points under linear probe and 0.09
-under kNN. Reviewer QPxu's objection was precisely that re-population performs
-close to generative repair; on this family, it does.
+under kNN.
+
+Note that this is *not* the re-population comparison Reviewer QPxu objected
+to, and that objection rests on a misreading the paper invited. Real
+re-population is an **oracle**: it restores the exact images withheld when the
+long tail was built, so it knows the true identity and location of the missing
+support, which the method only estimates. Matching it is the ceiling, and
+generative repair approaching it is the strong outcome. The Experimental Setup
+previously described that arm as a "sanity check [isolating] semantically
+guided generation from merely increasing the amount of data", which reads as a
+baseline; it now states the oracle framing wherever the arm is introduced.
+
+The arms compared here are different: `random_add` uses random selection with
+conventional augmentation, not restored real data.
 
 ## The random-add arm confounds two changes
 
