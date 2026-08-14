@@ -12,6 +12,15 @@ fomo_wait_for_gpu() {
   local required="${FOMO_MIN_FREE_GPU_MIB:-12000}"
   local attempts="${FOMO_GPU_WAIT_ATTEMPTS:-60}"
   local delay="${FOMO_GPU_WAIT_SECONDS:-60}"
+
+  # Assert the scratch directory immediately before the run starts.  Torch's
+  # shm manager creates its socket directory under TMPDIR and fails with
+  # "could not generate a random directory for manager socket" if the path is
+  # missing, which has repeatedly killed jobs seconds after launch.  Something
+  # on these nodes removes /dev/shm entries between job setup and execution,
+  # so recreating it here rather than trusting setup is the reliable fix.
+  [[ -n "${TMPDIR:-}" ]] && mkdir -p "$TMPDIR"
+
   command -v nvidia-smi >/dev/null 2>&1 || return 0
 
   local attempt free
