@@ -24,6 +24,7 @@
 set -euo pipefail
 cd "${FOMO_REPO_DIR:?FOMO_REPO_DIR must point at the staged repository}"
 . jobs/rebuttal/load_cluster_environment.sh
+. jobs/rebuttal/full_metric_suite.sh
 
 # The small configuration below reproduces *correct* behaviour: the two
 # policies diverge as they should (max weight difference 2.9e-01).  The real
@@ -40,6 +41,8 @@ checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed
 run_root="$BASE_CACHE_DIR/rebuttal_runs/debug_reuse/${policy}_${generator}"
 rm -rf "$run_root" "$CHECKPOINT_ROOT_DIR/$tag"
 mkdir -p "$run_root"
+
+fomo_wait_for_gpu
 
 python -m experiment \
     dataset=imagenet100_imbalanced model=resnet50 ssl=simclr \
