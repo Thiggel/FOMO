@@ -1,4 +1,15 @@
 #!/bin/bash
+#SBATCH --job-name=fomo-policy
+#SBATCH --partition=wbimlgpu
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --time=24:00:00
+#
+# This script carried no SBATCH directives and relied on every caller passing
+# them, so a submission without --gres landed on a CPU-only allocation and
+# every arm died deserializing the source checkpoint onto an absent device.
+#
 # Unified repeated-repair causal comparison from paired source checkpoints.
 # Every arm receives three 60-epoch stages capped at 4,850 updates per stage.
 # Repair arms add 7,500 items in total.  The one-shot arm adds the complete
