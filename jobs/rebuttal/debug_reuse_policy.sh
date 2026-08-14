@@ -25,13 +25,19 @@ set -euo pipefail
 cd "${FOMO_REPO_DIR:?FOMO_REPO_DIR must point at the staged repository}"
 . jobs/rebuttal/load_cluster_environment.sh
 
+# The small configuration below reproduces *correct* behaviour: the two
+# policies diverge as they should (max weight difference 2.9e-01).  The real
+# runs that come out bit-identical differ from it in scale, schedule and, most
+# suspiciously, the repair operator.  FOMO_DEBUG_GENERATOR selects which one to
+# test so the difference can be bisected.
 policies=(adaptive static_first_cycle)
 task="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
 policy="${policies[$task]}"
-tag="debug_reuse_${policy}"
+generator="${FOMO_DEBUG_GENERATOR:-strong_augmentation}"
+tag="debug_reuse_${policy}_${generator}"
 
 checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed_0/last.ckpt"
-run_root="$BASE_CACHE_DIR/rebuttal_runs/debug_reuse/${policy}"
+run_root="$BASE_CACHE_DIR/rebuttal_runs/debug_reuse/${policy}_${generator}"
 rm -rf "$run_root" "$CHECKPOINT_ROOT_DIR/$tag"
 mkdir -p "$run_root"
 
@@ -44,7 +50,7 @@ python -m experiment \
     num_ood_samples=20 num_generations_per_ood_sample=2 \
     sample_selection=ood ood_selection_strategy=mode_window \
     selection_reuse_policy="$policy" \
-    ood_augmentation=true generation_model=strong_augmentation \
+    ood_augmentation=true generation_model="$generator" \
     ood_distance_metric=normalized_l2 \
     additional_data_path="$run_root/generated" \
     experiment_name="$tag"
