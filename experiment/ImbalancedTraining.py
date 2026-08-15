@@ -2234,7 +2234,11 @@ class ImbalancedTraining:
         results = {}
 
         self.trainer_args.pop("callbacks")
-        torch.multiprocessing.set_sharing_strategy("file_system")
+        # Honour the same override as __main__; see the note there on why the
+        # file_system strategy is fragile on these nodes.
+        torch.multiprocessing.set_sharing_strategy(
+            os.environ.get("FOMO_SHARING_STRATEGY", "file_system")
+        )
 
         for benchmark in benchmarks:
             print(f"\n -- Finetuning benchmark: {benchmark.__name__} --\n")

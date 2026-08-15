@@ -39,7 +39,16 @@ from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.ImbalancedTraining import ImbalancedTraining
 
 mp.set_start_method("spawn")
-torch.multiprocessing.set_sharing_strategy("file_system")
+# "file_system" avoids the open-file-descriptor limits that large dataloaders
+# hit, but it stakes the run on a temp directory surviving for its whole
+# duration.  On these nodes that assumption does not hold: /dev/shm entries are
+# swept mid-run and an NFS scratch leaves busy .nfs handles at teardown, either
+# of which kills a job hours in.  FOMO_SHARING_STRATEGY=file_descriptor passes
+# handles instead of staging files, which sidesteps the temp directory
+# entirely and is safe while worker counts stay small.
+torch.multiprocessing.set_sharing_strategy(
+    os.environ.get("FOMO_SHARING_STRATEGY", "file_system")
+)
 import shutil
 from pathlib import Path
 import warnings
