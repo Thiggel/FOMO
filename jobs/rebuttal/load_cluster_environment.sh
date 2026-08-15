@@ -26,7 +26,17 @@ case "${FOMO_CLUSTER:-}" in
         # job holding a single card, so all concurrent tasks on a node shared
         # one directory and deleted it from under each other.  Slurm gives
         # every array task its own job id, so prefer that.
-        fomo_tmp_gpu="${FOMO_WORKER_NAME:-${SLURM_JOB_ID:-$$}}"
+        # Include the array task id explicitly.  SLURM_JOB_ID is not reliably
+        # distinct across the tasks of one array here -- task 8 of array 458805
+        # reported the same id as task 6 -- so keying on it alone let sibling
+        # tasks share a scratch directory and delete it from under each other.
+        # That, not any node-level sweeping, is why temp paths kept vanishing:
+        # a direct probe showed /dev/shm entries surviving untouched.
+        fomo_tmp_slot="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-$$}}"
+        if [ -n "${SLURM_ARRAY_TASK_ID:-}" ]; then
+            fomo_tmp_slot="${fomo_tmp_slot}_${SLURM_ARRAY_TASK_ID}"
+        fi
+        fomo_tmp_gpu="${FOMO_WORKER_NAME:-$fomo_tmp_slot}"
         # /dev/shm is the fast default, but something at node level removes
         # entries from it mid-run on these machines -- the directory is present
         # when python starts, is unique per task, and /dev/shm is nearly empty,
