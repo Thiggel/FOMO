@@ -1,3 +1,9 @@
 ssl_method: Dino
-lr: 1e-3
-weight_decay: 1e-4
+# DINO's reference ViT recipe is lr = 5e-4 * effective_batch / 256.  The DINO
+# arm runs train_batch_size=16 with grad_acc_steps=8, so the effective batch is
+# 128 and the scaled learning rate is 2.5e-4.  The previous 1e-3 was unscaled
+# and ten times every other objective in this repository.
+lr: 2.5e-4
+# Start of the cosine weight-decay ramp; Dino schedules it up to
+# weight_decay_end (0.4) over the run, as in the reference implementation.
+weight_decay: 0.04

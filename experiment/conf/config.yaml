@@ -84,7 +84,7 @@ pred_emb_dim: 192
 ipe_scale: 1.0
 use_bfloat16: false
 ema: [0.996, 1.0]
-dino_local_crops: 6
+dino_local_crops: 8
 
 # Run configuration
 # default to three seeds; SLURM job arrays run one seed per task

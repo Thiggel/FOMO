@@ -1,5 +1,6 @@
 import lightning.pytorch as L
 import torch
+import torch.distributed as dist
 from torch import nn
 from torch.optim import Optimizer, SGD
 import torch.nn.functional as F
@@ -10,20 +11,73 @@ import math
 from ._scheduling import ContinuousScheduleMixin
 
 
+class DinoHead(nn.Module):
+    """Reference DINO projection head (Caron et al., 2021).
+
+    The MLP narrows to a low-dimensional bottleneck, the bottleneck is L2
+    normalized, and the prototype layer is weight normalized with a fixed unit
+    magnitude.  That normalization pair is what keeps the 65536-way softmax from
+    collapsing; an unnormalized ``Linear`` straight to ``out_dim`` trains far
+    less stably, which is what this head previously did.
+    """
+
+    def __init__(
+        self,
+        in_dim: int,
+        hidden_dim: int = 2048,
+        bottleneck_dim: int = 256,
+        out_dim: int = 65536,
+    ):
+        super().__init__()
+        self.mlp = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, bottleneck_dim),
+        )
+        self.apply(self._init_weights)
+
+        self.last_layer = nn.utils.weight_norm(
+            nn.Linear(bottleneck_dim, out_dim, bias=False)
+        )
+        self.last_layer.weight_g.data.fill_(1)
+        # DINO keeps the prototype magnitudes fixed at one.
+        self.last_layer.weight_g.requires_grad = False
+
+    @staticmethod
+    def _init_weights(module: nn.Module) -> None:
+        if isinstance(module, nn.Linear):
+            nn.init.trunc_normal_(module.weight, std=0.02)
+            if module.bias is not None:
+                nn.init.constant_(module.bias, 0)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.mlp(x)
+        x = F.normalize(x, dim=-1, p=2)
+        return self.last_layer(x)
+
+
 class Dino(ContinuousScheduleMixin, L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        lr: float = 1e-4,
+        lr: float = 5e-4,
         weight_decay: float = 0.04,
+        weight_decay_end: float = 0.4,
         momentum_teacher: float = 0.996,
         warmup_epochs: int = 10,
         max_epochs: int = 100,
         out_dim: int = 65536,
-        hidden_dim: int = 2048,  # Added hidden_dim parameter
-        teacher_temp: float = 0.04,
+        hidden_dim: int = 2048,
+        bottleneck_dim: int = 256,
+        warmup_teacher_temp: float = 0.04,
+        teacher_temp: float = 0.07,
+        warmup_teacher_temp_epochs: int = 30,
         student_temp: float = 0.1,
         center_momentum: float = 0.9,
+        clip_grad: float = 3.0,
+        freeze_last_layer_epochs: int = 1,
         n_local_crops: int = 2,
         *args,
         **kwargs,
@@ -34,19 +88,16 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
         # Create student and teacher networks
         self.model = model
         self.teacher = copy.deepcopy(model)
-        self.teacher.eval()
 
         # Get the actual output dimension from the model
-        # Try to get it from different possible attributes
-        # If we can't find the dimension, we'll need to do a forward pass
         with torch.no_grad():
             dummy_input = torch.randn(1, 3, 224, 224)
             out = model(dummy_input)
             in_dim = out.shape[1]
 
         # Create projection heads for student and teacher
-        self.student_head = self._build_projection_head(in_dim, hidden_dim, out_dim)
-        self.teacher_head = self._build_projection_head(in_dim, hidden_dim, out_dim)
+        self.student_head = DinoHead(in_dim, hidden_dim, bottleneck_dim, out_dim)
+        self.teacher_head = DinoHead(in_dim, hidden_dim, bottleneck_dim, out_dim)
 
         # Disable gradient updates for teacher
         for param in self.teacher.parameters():
@@ -64,24 +115,35 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
         self.n_global_crops = 2
         self.n_local_crops = n_local_crops
 
+    # ------------------------------------------------------------------
+    # Schedules
+    # ------------------------------------------------------------------
+    @property
+    def _current_epoch(self) -> int:
+        """Epoch index that keeps counting across BRIDGE's per-cycle trainers."""
+        return int(self.total_epochs_completed)
 
-    def _build_projection_head(
-        self, in_dim: int, hidden_dim: int, out_dim: int
-    ) -> nn.Module:
+    def _teacher_temp(self) -> float:
+        """Linear warmup from ``warmup_teacher_temp`` to ``teacher_temp``.
+
+        A cold teacher early on is what stops the student from chasing a sharp,
+        arbitrary target before the prototypes mean anything.
         """
-        Builds a 3-layer projection head.
-        Args:
-            in_dim: Input dimension from the backbone
-            hidden_dim: Hidden dimension of the projection head
-            out_dim: Output dimension (number of dimensions in the learned representation)
-        """
-        return nn.Sequential(
-            nn.Linear(in_dim, hidden_dim),
-            nn.GELU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.GELU(),
-            nn.Linear(hidden_dim, out_dim),
-        )
+        warm_epochs = max(1, int(self.hparams.warmup_teacher_temp_epochs))
+        if self._current_epoch >= warm_epochs:
+            return float(self.hparams.teacher_temp)
+        progress = self._current_epoch / warm_epochs
+        start = float(self.hparams.warmup_teacher_temp)
+        end = float(self.hparams.teacher_temp)
+        return start + (end - start) * progress
+
+    def _weight_decay(self) -> float:
+        """Cosine ramp from ``weight_decay`` to ``weight_decay_end``."""
+        total = max(1, int(self.hparams.max_epochs))
+        progress = min(1.0, self._current_epoch / total)
+        start = float(self.hparams.weight_decay)
+        end = float(self.hparams.weight_decay_end)
+        return end + (start - end) * (1 + math.cos(math.pi * progress)) / 2
 
     @torch.no_grad()
     def _update_teacher(self):
@@ -104,6 +166,7 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
 
     def _get_teacher_output(self, global_views):
         """Get teacher output for global views only."""
+        temp = self._teacher_temp()
         with torch.no_grad():
             teacher_probs = []
             teacher_logits = []
@@ -111,13 +174,17 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
                 feat = self.teacher(view)
                 logits = self.teacher_head(feat)
                 teacher_logits.append(logits)
-                centered = (logits - self.center) / self.hparams.teacher_temp
+                centered = (logits - self.center) / temp
                 probs = F.softmax(centered, dim=-1)
                 teacher_probs.append(probs)
         return teacher_probs, teacher_logits
 
     def _get_student_output(self, views):
-        """Get student output for all views."""
+        """Get student output for all views.
+
+        Global and local crops have different spatial sizes, so they are run as
+        two batched groups rather than one concatenated tensor.
+        """
         student_output = []
         for view in views:
             feat = self.model(view)
@@ -155,8 +222,21 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
 
     @torch.no_grad()
     def _update_center(self, teacher_output):
-        """Update center used for teacher output."""
-        batch_center = torch.cat(teacher_output).mean(dim=0, keepdim=True)
+        """Update center used for teacher output.
+
+        The mean is reduced across ranks so every replica keeps an identical
+        center; a rank-local center makes the centering term depend on how the
+        batch happened to be sharded.
+        """
+        stacked = torch.cat(teacher_output)
+        batch_sum = stacked.sum(dim=0, keepdim=True)
+        count = torch.tensor(
+            [stacked.shape[0]], dtype=batch_sum.dtype, device=batch_sum.device
+        )
+        if dist.is_available() and dist.is_initialized():
+            dist.all_reduce(batch_sum)
+            dist.all_reduce(count)
+        batch_center = batch_sum / count.clamp(min=1)
         self.center = self.center * self.hparams.center_momentum + batch_center * (
             1 - self.hparams.center_momentum
         )
@@ -180,11 +260,9 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
         # Compute loss
         loss = self._compute_dino_loss(student_output, teacher_output)
 
-        # Update teacher
-        self._update_teacher()
-
         # Log loss
         self.log("train_loss", loss, sync_dist=True)
+        self.log("teacher_temp", self._teacher_temp(), sync_dist=True)
 
         # Log average student output norm for monitoring collapse
         student_out_norm = torch.cat(
@@ -195,16 +273,59 @@ class Dino(ContinuousScheduleMixin, L.LightningModule):
 
         return loss
 
+    def on_before_optimizer_step(self, optimizer):
+        """Clip gradients, freeze the prototype layer, and step the decay schedule.
+
+        DINO cancels the prototype-layer gradient for the first epochs because
+        those weights otherwise race ahead of a still-random backbone.
+        """
+        clip = float(self.hparams.clip_grad or 0.0)
+        if clip > 0:
+            torch.nn.utils.clip_grad_norm_(
+                [p for p in self.model.parameters() if p.grad is not None], clip
+            )
+            torch.nn.utils.clip_grad_norm_(
+                [p for p in self.student_head.parameters() if p.grad is not None],
+                clip,
+            )
+
+        if self._current_epoch < int(self.hparams.freeze_last_layer_epochs):
+            for param in self.student_head.last_layer.parameters():
+                param.grad = None
+
+        # Weight decay follows its own cosine schedule, independent of the lr.
+        decay = self._weight_decay()
+        for group in optimizer.param_groups:
+            if group.get("weight_decay", 0.0) > 0 or group.get("apply_wd", False):
+                group["weight_decay"] = decay
+
+    def on_train_batch_end(self, outputs, batch, batch_idx):
+        # The teacher trails the *updated* student, so the momentum update runs
+        # after the optimizer step rather than before it.
+        self._update_teacher()
+
     def configure_optimizers(self):
-        # Set up optimizer with weight decay
+        # Only the student is optimized; the teacher is momentum-updated.
+        # DINO exempts every 1-d parameter (biases and norm weights) from decay,
+        # not just parameters whose name contains "bias".
+        trainable = [
+            (n, p)
+            for n, p in self.named_parameters()
+            if p.requires_grad and not n.startswith(("teacher.", "teacher_head."))
+        ]
+        decay_params = [p for n, p in trainable if p.ndim > 1]
+        no_decay_params = [p for n, p in trainable if p.ndim <= 1]
+
         param_groups = [
             {
-                "params": [p for n, p in self.named_parameters() if "bias" not in n],
+                "params": decay_params,
                 "weight_decay": self.hparams.weight_decay,
+                "apply_wd": True,
             },
             {
-                "params": [p for n, p in self.named_parameters() if "bias" in n],
+                "params": no_decay_params,
                 "weight_decay": 0.0,
+                "apply_wd": False,
             },
         ]
 

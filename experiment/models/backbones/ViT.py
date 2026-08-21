@@ -44,10 +44,20 @@ class ViT(nn.Module):
         return model, config
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
-        output = self.model(images).last_hidden_state[:, 0, :]
+        output = self._encode(images)
         output = self.head(output)
 
         return output
 
     def extract_features(self, images: torch.Tensor) -> torch.Tensor:
-        return self.model(images).last_hidden_state[:, 0, :]
+        return self._encode(images)
+
+    def _encode(self, images: torch.Tensor) -> torch.Tensor:
+        # DINO's local crops are 96 pixels, so the backbone has to accept inputs
+        # smaller than the 224 the position embeddings were sized for.
+        # ``interpolate_pos_encoding`` resamples them, exactly as the reference
+        # DINO ViT does, and is a no-op at 224 (verified bit-identical), so
+        # enabling it unconditionally leaves the other ViT experiments alone.
+        return self.model(
+            images, interpolate_pos_encoding=True
+        ).last_hidden_state[:, 0, :]
