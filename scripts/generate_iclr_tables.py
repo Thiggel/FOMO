@@ -221,23 +221,56 @@ TABLES = {
 }
 
 
-def seed_result(checkpoint_root: Path, experiment: str, seed: int) -> dict | None:
+def training_completed(result_path: Path) -> bool:
+    """Whether the run behind a result finished all of its repair cycles.
+
+    ``last.ckpt`` is rewritten after every completed cycle, so a run that dies
+    partway leaves the encoder from an earlier cycle in place, and the metric
+    backfill scores it as though it were final.  Conditions that only diverge
+    in later cycles then share one encoder while still printing distinct
+    linear-probe numbers, because the probe is stochastic.  Runs that predate
+    the progress marker have no file; treat those as unknown rather than
+    complete, so they have to be re-run or explicitly waived.
+    """
+    progress = result_path.parent / "training_progress.json"
+    try:
+        payload = json.loads(progress.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    return bool(payload.get("complete"))
+
+
+def seed_result(
+    checkpoint_root: Path,
+    experiment: str,
+    seed: int,
+    require_complete: bool = False,
+) -> dict | None:
     matches = sorted(checkpoint_root.glob(f"{experiment}/*/seed_{seed}/result.json"))
     for path in matches:
         try:
             payload = json.loads(path.read_text())
         except (OSError, json.JSONDecodeError):
             continue
+        if require_complete and not training_completed(path):
+            continue
         if isinstance(payload, dict):
             return payload
     return None
 
 
-def collect(checkpoint_root: Path, experiments: list[str], metric: str) -> list[float]:
+def collect(
+    checkpoint_root: Path,
+    experiments: list[str],
+    metric: str,
+    require_complete: bool = False,
+) -> list[float]:
     """Return one value per seed, or [] if any seed is missing the metric."""
     values = []
     for seed, experiment in enumerate(experiments):
-        payload = seed_result(checkpoint_root, experiment, seed)
+        payload = seed_result(
+            checkpoint_root, experiment, seed, require_complete=require_complete
+        )
         if payload is None:
             return []
         value = payload.get(metric)
@@ -257,7 +290,12 @@ def cell(values: list[float]) -> str:
     return f"${mean(values):.2f}\\pm{stdev(values):.2f}$"
 
 
-def render(checkpoint_root: Path, spec: dict, protocol: str) -> tuple[str, int, int]:
+def render(
+    checkpoint_root: Path,
+    spec: dict,
+    protocol: str,
+    require_complete: bool = False,
+) -> tuple[str, int, int]:
     index = 1 if protocol == "linear" else 2
     header = " & ".join(name for name, _, _ in DATASETS)
 
@@ -284,7 +322,14 @@ def render(checkpoint_root: Path, spec: dict, protocol: str) -> tuple[str, int, 
     complete_rows = 0
     for label, experiments in spec["rows"]:
         cells = [
-            cell(collect(checkpoint_root, experiments, dataset[index]))
+            cell(
+                collect(
+                    checkpoint_root,
+                    experiments,
+                    dataset[index],
+                    require_complete=require_complete,
+                )
+            )
             for dataset in DATASETS
         ]
         if all(value != "--" for value in cells):
@@ -305,7 +350,12 @@ def render(checkpoint_root: Path, spec: dict, protocol: str) -> tuple[str, int, 
     return "\n".join(lines), complete_rows, len(spec["rows"])
 
 
-def duplicate_rows(checkpoint_root: Path, spec: dict, protocol: str) -> list[str]:
+def duplicate_rows(
+    checkpoint_root: Path,
+    spec: dict,
+    protocol: str,
+    require_complete: bool = False,
+) -> list[str]:
     """Report rows whose numbers are identical across every dataset.
 
     Two conditions that agree to the last digit on all seven datasets did not
@@ -318,7 +368,14 @@ def duplicate_rows(checkpoint_root: Path, spec: dict, protocol: str) -> list[str
     fingerprints: dict[tuple, list[str]] = {}
     for label, experiments in spec["rows"]:
         values = tuple(
-            tuple(collect(checkpoint_root, experiments, dataset[index]))
+            tuple(
+                collect(
+                    checkpoint_root,
+                    experiments,
+                    dataset[index],
+                    require_complete=require_complete,
+                )
+            )
             for dataset in DATASETS
         )
         if all(values):
@@ -332,6 +389,15 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint-root", type=Path, required=True)
     parser.add_argument("--tables-dir", type=Path, required=True)
+    parser.add_argument(
+        "--require-complete-cycles",
+        action="store_true",
+        help=(
+            "Only use results whose run recorded finishing every repair "
+            "cycle.  Runs from before the progress marker existed count as "
+            "incomplete, so this blanks any row not yet re-run."
+        ),
+    )
     args = parser.parse_args()
 
     assert len(PAPER_METRICS) == 2 * len(DATASETS), (
@@ -341,11 +407,21 @@ def main() -> None:
     args.tables_dir.mkdir(parents=True, exist_ok=True)
     for name, spec in TABLES.items():
         for protocol in ("linear", "knn"):
-            body, complete, total = render(args.checkpoint_root, spec, protocol)
+            body, complete, total = render(
+                args.checkpoint_root,
+                spec,
+                protocol,
+                require_complete=args.require_complete_cycles,
+            )
             path = args.tables_dir / f"{name}_{protocol}.tex"
             path.write_text(body)
             print(f"{path.name}: {complete}/{total} rows complete")
-            for collision in duplicate_rows(args.checkpoint_root, spec, protocol):
+            for collision in duplicate_rows(
+                args.checkpoint_root,
+                spec,
+                protocol,
+                require_complete=args.require_complete_cycles,
+            ):
                 print(f"  WARNING identical on every dataset: {collision}")
 
 

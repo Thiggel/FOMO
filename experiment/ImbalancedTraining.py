@@ -1288,6 +1288,28 @@ class ImbalancedTraining:
                 f"Saved completed cycle {cycle_idx + 1} checkpoint to "
                 f"{checkpoint_path}"
             )
+            # Record how far the run actually got, beside the checkpoint the
+            # cycle produced.  A run that dies partway leaves last.ckpt holding
+            # an earlier cycle, and nothing in the checkpoint says so: the
+            # per-cycle trainers each restart their own epoch counter, so the
+            # stored epoch cannot distinguish "cycle 4 of 4" from "cycle 1 of
+            # 4".  Without this marker a crashed run is scored as a finished
+            # one, and conditions that only diverge in later cycles collapse
+            # onto the same pre-repair encoder while still reporting distinct
+            # linear-probe numbers.
+            progress_path = os.path.join(
+                str(checkpoint_dir), "training_progress.json"
+            )
+            with open(progress_path, "w") as handle:
+                json.dump(
+                    {
+                        "completed_cycles": cycle_idx + 1,
+                        "num_cycles": int(self.num_cycles),
+                        "complete": (cycle_idx + 1) >= int(self.num_cycles),
+                    },
+                    handle,
+                    indent=2,
+                )
 
     def _write_repair_manifest(
         self,
