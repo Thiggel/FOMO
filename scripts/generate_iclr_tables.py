@@ -142,10 +142,12 @@ PERCENTILE_BANDS = [
 PERCENTILE_ROWS = [(label, [name] * 3) for label, name in PERCENTILE_BANDS]
 
 # Selector robustness: one row per setting, grouped by the knob it varies.
-# Most conditions were rerun under the iclr2027_full_v2 wave; alpha4,
-# cutoff100 and k10 exist only from the earlier gruenau retry, so they are
-# named explicitly rather than resolved by a fallback rule that could silently
-# mix waves.
+# Most conditions were rerun under the iclr2027_full_v2 wave; alpha4 exists
+# only from the earlier gruenau retry, so it is named explicitly rather than
+# resolved by a fallback rule that could silently mix waves.  cutoff100 and k10
+# were in that same position until their v2 seeds landed; their v2 protocols
+# were checked field for field against the retry runs before repointing, and
+# v2 carries all three seeds where the retry had two and one.
 SELECTOR_SETTINGS = [
     ("Candidate pool $\\alpha=1$", "rebuttal_selector_alpha1_iclr2027_full_v2"),
     ("Candidate pool $\\alpha=2$", "rebuttal_selector_alpha2_iclr2027_full_v2"),
@@ -154,8 +156,8 @@ SELECTOR_SETTINGS = [
     ("Upper cutoff $q=0.95$", "rebuttal_selector_cutoff95_iclr2027_full_v2"),
     ("Upper cutoff $q=0.99$ (default)", "rebuttal_selector_cutoff99_iclr2027_full_v2"),
     ("Upper cutoff $q=0.995$", "rebuttal_selector_cutoff995_iclr2027_full_v2"),
-    ("Upper cutoff $q=1.0$", "rebuttal_selector_cutoff100_gruenau_retry1"),
-    ("Neighbourhood $k=10$", "rebuttal_selector_k10_gruenau_retry1"),
+    ("Upper cutoff $q=1.0$", "rebuttal_selector_cutoff100_iclr2027_full_v2"),
+    ("Neighbourhood $k=10$", "rebuttal_selector_k10_iclr2027_full_v2"),
     ("Neighbourhood $k=25$", "rebuttal_selector_k25_iclr2027_full_v2"),
     ("Neighbourhood $k=50$", "rebuttal_selector_k50_iclr2027_full_v2"),
     ("Neighbourhood $k=200$", "rebuttal_selector_k200_iclr2027_full_v2"),
