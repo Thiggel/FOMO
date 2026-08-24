@@ -37,13 +37,20 @@ case "${FOMO_CLUSTER:-}" in
             fomo_tmp_slot="${fomo_tmp_slot}_${SLURM_ARRAY_TASK_ID}"
         fi
         fomo_tmp_gpu="${FOMO_WORKER_NAME:-$fomo_tmp_slot}"
-        # /dev/shm is the fast default, but something at node level removes
-        # entries from it mid-run on these machines -- the directory is present
-        # when python starts, is unique per task, and /dev/shm is nearly empty,
-        # yet tempfile calls fail on the missing parent seconds later.  Set
-        # FOMO_TMPDIR_ROOT to fall back to ordinary disk when that matters more
-        # than speed.
-        export TMPDIR="${FOMO_TMPDIR_ROOT:-/dev/shm}/fomo_${USER:-user}_gpu_${fomo_tmp_gpu}"
+        # Scratch must not live in /dev/shm here.  systemd-logind runs with the
+        # default RemoveIPC=yes, so when any login session of this uid on the
+        # node ends -- another job of ours finishing, or even a stray srun --
+        # logind wipes every /dev/shm object owned by the uid, including the
+        # scratch directories of jobs that are still running.  That, and not
+        # any keying collision, is why temp paths kept vanishing mid-run.
+        #
+        # The site task prolog hands every job SLURM_TMPDIR on node-local ext4
+        # (/tmp/$USER/slurm_$SLURM_JOB_ID) and the epilog removes it, so it is
+        # both immune to RemoveIPC and self-cleaning.  Only a few kilobytes of
+        # tempfiles land here -- datasets go to FOMO_DATASET_TMPDIR -- so the
+        # small /tmp partition is ample.  FOMO_TMPDIR_ROOT still overrides.
+        fomo_tmp_root="${FOMO_TMPDIR_ROOT:-${SLURM_TMPDIR:-/tmp/${USER:-user}/slurm_${SLURM_JOB_ID:-$$}}}"
+        export TMPDIR="${fomo_tmp_root}/fomo_${USER:-user}_gpu_${fomo_tmp_gpu}"
         export TEMP="$TMPDIR"
         export TMP="$TMPDIR"
         mkdir -p "$TMPDIR"
