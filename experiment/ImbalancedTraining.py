@@ -969,6 +969,19 @@ class ImbalancedTraining:
                 cycle_trainer_args["limit_val_batches"] = 0
                 cycle_trainer_args["num_sanity_val_steps"] = 0
 
+            # Every cycle gets a fresh Trainer whose global_step restarts at
+            # zero, and every cycle stops at the same ``max_steps``.  The
+            # ModelCheckpoint callbacks are reused across those Trainers, and
+            # Lightning skips a save whenever ``_last_global_step_saved``
+            # equals the current global step -- so after the first cycle saved
+            # at step N, every later cycle also ended at step N and its save
+            # was silently treated as a duplicate.  ``last.ckpt`` then stayed
+            # frozen at the first cycle for the whole run, which is what made
+            # conditions that only diverge later appear bit-identical.
+            for callback in callbacks:
+                if hasattr(callback, "_last_global_step_saved"):
+                    callback._last_global_step_saved = 0
+
             trainer = L.Trainer(**cycle_trainer_args)
             fit_kwargs = {
                 "model": self.ssl_method,
