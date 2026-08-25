@@ -102,16 +102,21 @@ def figure_tsne(cycles, out: Path, budget: int, seed: int) -> None:
         feats, under = c["features"][keep], c["underlying"][keep]
         emb = TSNE(n_components=2, init="pca", perplexity=30,
                    random_state=seed, max_iter=750).fit_transform(feats)
-        is_new = np.array([u not in original for u in under])
+        # Colour by the acquisition score, not by anchor membership.  FPS
+        # deliberately spreads the anchors across the candidate pool for
+        # diversity, so plotting the anchors alone shows a near-uniform
+        # scatter and hides the band they were drawn from.
+        radii = c["radii"][keep]
+        lo, hi = np.quantile(radii, BAND_LO), np.quantile(radii, BAND_HI)
+        band = (radii >= lo) & (radii <= hi)
+        ax.scatter(emb[~band, 0], emb[~band, 1], s=2, c=GREY, lw=0,
+                   label="below q75")
+        ax.scatter(emb[band, 0], emb[band, 1], s=4, c=GENERATED, lw=0,
+                   alpha=0.75, label="acquisition band q75--q99")
         is_anchor = np.array([u in c["anchors"] for u in under])
-        base = ~is_new & ~is_anchor
-        ax.scatter(emb[base, 0], emb[base, 1], s=2, c=GREY, lw=0, label="source")
-        if is_new.any():
-            ax.scatter(emb[is_new, 0], emb[is_new, 1], s=3, c=GENERATED, lw=0,
-                       alpha=0.7, label="added by repair")
         if is_anchor.any():
-            ax.scatter(emb[is_anchor, 0], emb[is_anchor, 1], s=9, c=ANCHOR,
-                       lw=0, label="selected anchor")
+            ax.scatter(emb[is_anchor, 0], emb[is_anchor, 1], s=11, c=ANCHOR,
+                       lw=0, label="selected anchor (after FPS)")
         ax.set_title(f"cycle {c['cycle']}", fontsize=9)
         ax.set_xticks([])
         ax.set_yticks([])

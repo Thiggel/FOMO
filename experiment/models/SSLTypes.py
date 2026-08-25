@@ -9,6 +9,7 @@ from experiment.dataset.MultiCropTransformation import MultiCropTransformation
 from experiment.models.SSLMethods.SimCLR import SimCLR
 from experiment.models.SSLMethods.SDCLR import SDCLR
 from experiment.models.SSLMethods.Dino import Dino
+from experiment.models.SSLMethods.DinoV2 import DinoV2
 from experiment.models.SSLMethods.MoCo import MoCo, moco_transform
 from experiment.models.SSLMethods.MAE import MAE
 from experiment.models.SSLMethods.DiffAug import DiffAug
@@ -159,6 +160,25 @@ class SSLTypes(Enum):
                     size=parserargs.crop_size,
                     global_crops_scale=(0.4, 1.0),
                     local_crops_scale=(0.05, 0.4),
+                    local_crops_number=int(parserargs.dino_local_crops),
+                ),
+                collate_fn=lambda parserargs: dino_collate,
+            ),
+            "DinoV2": SSLType(
+                module=lambda model, lr, weight_decay, max_epochs, *args, **kwargs: DinoV2(
+                    model=model,
+                    lr=lr,
+                    weight_decay=weight_decay,
+                    max_epochs=max_epochs,
+                    *args,
+                    **kwargs
+                ),
+                # DINOv2 keeps DINO's multi-crop; the patch objective masks the
+                # global crops after cropping, so the transform is unchanged.
+                transforms=lambda parserargs: MultiCropTransformation(
+                    size=parserargs.crop_size,
+                    global_crops_scale=(0.32, 1.0),
+                    local_crops_scale=(0.05, 0.32),
                     local_crops_number=int(parserargs.dino_local_crops),
                 ),
                 collate_fn=lambda parserargs: dino_collate,

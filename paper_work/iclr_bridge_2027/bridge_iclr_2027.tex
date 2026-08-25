@@ -287,6 +287,20 @@ We read this as the central empirical result of the paper. The value of a target
 \subsection{Representation analysis}
 We use a fixed panel of original images to keep the evaluation population unchanged across checkpoints. With MoCo v3 and ViT-S, effective rank increases by $21.97\pm1.58$, spectral entropy by $0.296\pm0.019$, and 1-NN accuracy by $3.80\pm0.80$. The rank and entropy changes remain significant after Holm correction. SimCLR improves transfer while its global effective rank decreases, so increasing global rank is not a universal account of the method.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{figures/cycle_tsne.pdf}
+\caption{Where the acquisition budget is spent, projected to two dimensions with t-SNE, for one ImageNet-100-LT run. Grey marks scores below the 75th percentile, blue the q75--q99 acquisition band, and red the anchors farthest-point sampling selects from that band. The band occupies the periphery of the projection: over the panel shown, the rank correlation between $k$NN score and distance from the projection centre is $+0.51$, and band members sit at mean radius 34.6 against 25.5 for the rest. The anchors are spread across the band and not clustered inside it, which is the behaviour farthest-point sampling is included to produce. Each panel is projected separately because the encoder changes between cycles, so positions are comparable within a panel and not across panels. The panel contains original images only, so it shows which regions are targeted and not what the inserted samples do to them; Table~\ref{tab:fixed-support} measures the latter directly.}
+\label{fig:cycle-tsne}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/cycle_score_histograms.pdf}
+\caption{Score distribution over repair cycles for the same run, with the q75--q99 acquisition band shaded and the modal bin marked. The distribution stays right-skewed while its scale grows, so the band tracks a moving target and the selector re-derives it from the current representation at every cycle.}
+\label{fig:cycle-histograms-main}
+\end{figure}
+
 We separately test the local intervention in the frozen cycle-0 representation. First-cycle anchors are matched one-to-one within class to untreated images with the same initial $k$NN radius. After inserting generated samples, the radius falls more around treated anchors in every seed, with a mean difference-in-differences of $-0.00134\pm0.00067$. Neighborhood purity changes by $+0.0134\pm0.0032$ relative to the matched controls. This verifies that the repair operator places support near the selected regions. It does not by itself establish that subsequent SSL must preserve that local geometry, and the learned-space anchor comparison is mixed for SimCLR. We therefore use the transfer results as the primary measure of utility and report the full fixed-space and learned-space analyses in the appendix.
 
 \FloatBarrier

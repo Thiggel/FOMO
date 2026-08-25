@@ -39,6 +39,11 @@ class ViT(nn.Module):
                 hidden_dropout_prob=0.0,
                 attention_probs_dropout_prob=0.0,
             )
+        # Deliberately constructed without ``use_mask_token``.  That flag adds a
+        # parameter to the embedding module, which would change the state dict
+        # of every ViT run in this repository and break loading of checkpoints
+        # written before it.  Only the iBOT-style patch objective needs the
+        # token, so DinoV2 installs it on the instance it owns.
         model = ViTModel(config)
 
         return model, config
@@ -51,6 +56,22 @@ class ViT(nn.Module):
 
     def extract_features(self, images: torch.Tensor) -> torch.Tensor:
         return self._encode(images)
+
+    def extract_tokens(
+        self, images: torch.Tensor, bool_masked_pos: torch.Tensor = None
+    ) -> torch.Tensor:
+        """Return every token, ``[B, 1 + num_patches, D]``, CLS first.
+
+        ``_encode`` keeps only the CLS token, which is all the image-level
+        objectives need.  Patch-level objectives need the rest, and need to be
+        able to replace selected patches with the [MASK] embedding before the
+        transformer runs, which is what ``bool_masked_pos`` does.
+        """
+        return self.model(
+            images,
+            bool_masked_pos=bool_masked_pos,
+            interpolate_pos_encoding=True,
+        ).last_hidden_state
 
     def _encode(self, images: torch.Tensor) -> torch.Tensor:
         # DINO's local crops are 96 pixels, so the backbone has to accept inputs
