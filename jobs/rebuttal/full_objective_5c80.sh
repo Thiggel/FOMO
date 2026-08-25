@@ -1,10 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-obj5c80
-#SBATCH --partition=wbimlgpu
+#SBATCH --partition=longgpu
 #SBATCH --gres=gpu:1
+# 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
+#SBATCH --exclude=gruenau1,gruenau2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=144:00:00
+#SBATCH --time=6-00:00:00
 #SBATCH --array=0-11
 #
 # Full-schedule MAE and DINOv2 comparison, five cycles at 80 epochs.

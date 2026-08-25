@@ -1,10 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-dinov2-src
-#SBATCH --partition=wbimlgpu
+#SBATCH --partition=longgpu
 #SBATCH --gres=gpu:1
+# 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
+#SBATCH --exclude=gruenau1,gruenau2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=48:00:00
+#SBATCH --time=3-00:00:00
 #
 # Common source checkpoints for the DINOv2 arm.
 #

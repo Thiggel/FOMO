@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021/TeX Live for SUSE Linux) (preloaded format=pdflatex 2024.9.9)  25 AUG 2026 15:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021/TeX Live for SUSE Linux) (preloaded format=pdflatex 2024.9.9)  25 AUG 2026 16:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -645,17 +645,30 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 Underfull \vbox (badness 1038) has occurred while \output is active []
 
  [10]
-(./tables/main_percentile_utility_full_linear.tex) [11] (./bridge_iclr_2027.bbl
+(./tables/main_percentile_utility_full_linear.tex)
+<figures/cycle_tsne.pdf, id=929, 888.92097pt x 209.22542pt>
+File: figures/cycle_tsne.pdf Graphic file (type pdf)
+<use figures/cycle_tsne.pdf>
+Package pdftex.def Info: figures/cycle_tsne.pdf  used on input line 292.
+(pdftex.def)             Requested size: 389.53358pt x 91.68274pt.
+<figures/cycle_score_histograms.pdf, id=932, 889.55585pt x 172.01201pt>
+File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
+<use figures/cycle_score_histograms.pdf>
+Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
+ 299.
+(pdftex.def)             Requested size: 341.83733pt x 66.10014pt.
+ [11] [12 <./figures/cycle_tsne.pdf>] (./bridge_iclr_2027.bbl
 LaTeX Font Info:    Trying to load font information for T1+pcr on input line 15
 .
-(/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
+ (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `pcr' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
- [12] [13]
+
+[13 <./figures/cycle_score_histograms.pdf>] [14]
 Underfull \hbox (badness 10000) in paragraph at lines 215--222
 \T1/ptm/m/n/10 (+20) URL []$\T1/pcr/m/n/10 https : / / openaccess . thecvf . co
 m / content / ICCV2023W / LIMIT / html /
@@ -667,52 +680,45 @@ Underfull \hbox (badness 10000) in paragraph at lines 215--222
 arning _ ICCVW _
  []
 
-[14] [15])
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[16] (./tables/fixed_support_geometry.tex) [17] [18]
-<figures/cycle_histories_example.pdf, id=1033, 801.66377pt x 233.93259pt>
+[15] [16]) [17] (./tables/fixed_support_geometry.tex) [18] [19]
+<figures/cycle_histories_example.pdf, id=1128, 801.66377pt x 233.93259pt>
 File: figures/cycle_histories_example.pdf Graphic file (type pdf)
 <use figures/cycle_histories_example.pdf>
 Package pdftex.def Info: figures/cycle_histories_example.pdf  used on input lin
-e 428.
+e 442.
 (pdftex.def)             Requested size: 381.58824pt x 111.35114pt.
 
 (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [19])
-(./tables/app_pretraining_linear.tex
+ [20 <./figures/cycle_histories_example.pdf>]) (./tables/app_pretraining_linear
+.tex)
+(./tables/app_pretraining_knn.tex
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [20 <./figures/cycle_histories_example.pdf>]) (./tables/app_pretraining_knn.te
-x)
+ [21])
 (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
-(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex [21])
+(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex)
 (./tables/app_cycles_linear.tex) (./tables/app_cycles_knn.tex)
-(./tables/app_architecture_linear.tex) (./tables/app_architecture_knn.tex)
+(./tables/app_architecture_linear.tex [22]) (./tables/app_architecture_knn.tex)
 (./tables/app_selector_robustness_full_linear.tex)
 (./tables/app_selector_robustness_full_knn.tex)
 (./tables/main_percentile_utility_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 450.
+put line 464.
 
-Underfull \vbox (badness 2744) has occurred while \output is active []
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [22]
-Overfull \vbox (107.7965pt too high) has occurred while \output is active []
-
-
-[23] [24] (./bridge_iclr_2027.aux)
+ [23]
+[24] (./bridge_iclr_2027.aux)
 Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 (rerunfilecheck)             Checksum: 73EEC5C7DEC44DA3F51952A34AB4366E;4415.
  ) 
 Here is how much of TeX's memory you used:
- 15651 strings out of 480028
- 234580 string characters out of 5884413
- 658719 words of memory out of 5000000
- 32091 multiletter control sequences out of 15000+600000
+ 15667 strings out of 480028
+ 235063 string characters out of 5884413
+ 662779 words of memory out of 5000000
+ 32103 multiletter control sequences out of 15000+600000
  474522 words of font info for 295 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
  98i,13n,102p,1747b,708s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -732,10 +738,10 @@ e/texmf/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/
 urw/courier/ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></
 usr/share/texmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/
 urw/times/utmr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (24 pages, 759805 bytes).
+Output written on bridge_iclr_2027.pdf (24 pages, 1048201 bytes).
 PDF statistics:
- 1241 PDF objects out of 1440 (max. 8388607)
- 892 compressed objects within 9 object streams
- 192 named destinations out of 1000 (max. 500000)
- 63187 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 1332 PDF objects out of 1440 (max. 8388607)
+ 910 compressed objects within 10 object streams
+ 194 named destinations out of 1000 (max. 500000)
+ 63197 words of extra memory for PDF output out of 74296 (max. 10000000)
 
