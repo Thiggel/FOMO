@@ -1,3 +1,34 @@
+# RESOLVED: the repair-schedule conditions were not distinguishable as run
+
+**Cause found (commit a29d244).** The schedule parameters were never inert.
+Each cycle builds a fresh `L.Trainer`, so `global_step` restarts at zero, and
+every cycle stops at the same `max_steps`. The `ModelCheckpoint` callbacks are
+reused across those trainers, and Lightning skips a save whenever
+`_last_global_step_saved` equals the current `global_step`. Cycle 1 saved at
+step 4850; every later cycle also ended at 4850, so its save was treated as a
+duplicate and silently dropped. `last.ckpt` therefore held the cycle-1 encoder
+for the whole run, and any two arms that share cycle 1 published the same
+weights no matter how far their later cycles diverged.
+
+This explains every observation below, including the two that ruled out the
+obvious hypotheses: selection genuinely diverged (14/500 anchor overlap from
+cycle 1), and the minimal reproduction diverged correctly (it ran few enough
+steps that the guard never fired).
+
+The fix resets the callbacks' `_last_global_step_saved` to 0 before each
+cycle's trainer is constructed. `scripts/check_duplicate_encoders.py` gates
+table generation on encoder fingerprints so this class of fault cannot reach a
+table again.
+
+**Scope of the damage.** Only runs with two or more training fits were
+affected: `main_generalization_vits_full` and
+`main_policy_repair_controls_full`. The selector-robustness and
+percentile-utility sweeps run a single fit and are unaffected.
+
+The original diagnosis is kept below for the record.
+
+---
+
 # The repair-schedule conditions are not distinguishable as run
 
 In every paper-facing experiment, varying `selection_reuse_policy` or

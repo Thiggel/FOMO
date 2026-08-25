@@ -162,7 +162,13 @@ SELECTOR_SETTINGS = [
     ("Neighbourhood $k=50$", "rebuttal_selector_k50_iclr2027_full_v2"),
     ("Neighbourhood $k=200$", "rebuttal_selector_k200_iclr2027_full_v2"),
     ("Distance: normalized $L_2$ (default)", "rebuttal_selector_metric_normalized_iclr2027_full_v2"),
-    ("Distance: cosine", "rebuttal_selector_metric_cosine_iclr2027_full_v2"),
+    # Cosine scoring divides the normalized-L2 distance by a positive
+    # constant, which cannot change a ranking or a quantile position, so this
+    # row selects exactly the same anchors as the normalized-L2 row above.  It
+    # is kept deliberately: two rows that are provably the same experiment
+    # measure the run-to-run spread of the whole pipeline, which calibrates
+    # how large a difference elsewhere in this table is readable.
+    ("Distance: cosine (null control)", "rebuttal_selector_metric_cosine_iclr2027_full_v2"),
     ("Distance: raw $L_2$", "rebuttal_selector_metric_raw_iclr2027_full_v2"),
     ("Strategy: mode window (default)", "rebuttal_selector_strategy_mode_iclr2027_full_v2"),
     ("Strategy: sparse band with FPS", "rebuttal_selector_strategy_band_fps_iclr2027_full_v2"),
@@ -182,7 +188,11 @@ TABLES = {
             "component of the acquisition rule -- candidate pool multiplier, "
             "upper cutoff, neighbourhood size, distance, or selection "
             "strategy -- and holds the rest of the loop fixed. Mean $\\pm$ "
-            "standard deviation over three seeds."
+            "standard deviation over three seeds. Cosine scoring rescales the "
+            "normalized $L_2$ score by a positive constant and therefore "
+            "selects the identical anchor set; that row is a null control, and "
+            "its distance from the normalized $L_2$ row measures the "
+            "end-to-end run-to-run spread of the pipeline."
         ),
         "label": "tab:selector-robustness-full",
     },

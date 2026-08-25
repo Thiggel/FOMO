@@ -2,7 +2,7 @@
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
-\caption{Pretraining objective ablation with full linear-probe results.}
+\caption{Pretraining objective ablation on the default ResNet-50 backbone, full linear-probe results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table~\ref{tab:main_generalization}.}
 \label{tab:app_pretraining_linear}
 \begin{adjustbox}{width=\textwidth}
 \begin{tabular}{l c c c c c c c c}
@@ -11,7 +11,6 @@ Setting & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
 \midrule
 SimCLR (default) & \textbf{76.0 {\scriptsize$\pm$ 0.3}} & \textbf{49.1 {\scriptsize$\pm$ 0.2}} & \textbf{15.2 {\scriptsize$\pm$ 1.2}} & \textbf{22.4 {\scriptsize$\pm$ 0.4}} & \textbf{36.8 {\scriptsize$\pm$ 1.9}} & \textbf{42.9 {\scriptsize$\pm$ 1.0}} & \textbf{53.8 {\scriptsize$\pm$ 0.1}} & \textbf{42.3 {\scriptsize$\pm$ 0.7}} \\
 MoCo & 50.5 {\scriptsize$\pm$ 1.0} & 20.6 {\scriptsize$\pm$ 2.7} & 3.0 {\scriptsize$\pm$ 0.2} & 5.7 {\scriptsize$\pm$ 0.5} & 11.5 {\scriptsize$\pm$ 3.0} & 15.3 {\scriptsize$\pm$ 0.3} & 28.2 {\scriptsize$\pm$ 0.7} & 19.3 {\scriptsize$\pm$ 1.2} \\
-DINO & 43.5 {\scriptsize$\pm$ 1.6} & 18.3 {\scriptsize$\pm$ 1.0} & 1.8 {\scriptsize$\pm$ 0.7} & 1.7 {\scriptsize$\pm$ 0.1} & 12.4 {\scriptsize$\pm$ 3.6} & 9.1 {\scriptsize$\pm$ 1.1} & 20.3 {\scriptsize$\pm$ 0.6} & 15.3 {\scriptsize$\pm$ 1.2} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

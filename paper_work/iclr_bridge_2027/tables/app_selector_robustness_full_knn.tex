@@ -2,7 +2,7 @@
 \centering
 \small
 \setlength{\tabcolsep}{4pt}
-\caption{Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm$ standard deviation over three seeds. $k$NN accuracy.}
+\caption{Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm$ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. $k$NN accuracy.}
 \label{tab:selector-robustness-full-knn}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lccccccc}
@@ -22,7 +22,7 @@ Neighbourhood $k=25$ & $4.97\pm0.14$ & $8.59\pm0.21$ & $19.05\pm0.29$ & $15.04\p
 Neighbourhood $k=50$ & $5.06\pm0.17$ & $8.62\pm0.77$ & $19.26\pm0.67$ & $14.92\pm0.03$ & $62.63\pm0.40$ & $31.71\pm0.59$ & $31.88\pm0.57$ \\
 Neighbourhood $k=200$ & $5.17\pm0.15$ & $8.65\pm0.59$ & $19.22\pm1.02$ & $15.17\pm0.10$ & $62.80\pm0.31$ & $31.90\pm0.13$ & $33.91\pm0.54$ \\
 Distance: normalized $L_2$ (default) & $4.97\pm0.18$ & $8.55\pm0.67$ & $19.42\pm0.49$ & $14.85\pm0.50$ & $62.27\pm0.52$ & $31.86\pm0.16$ & $32.60\pm0.96$ \\
-Distance: cosine & $4.90\pm0.13$ & $8.52\pm0.69$ & $19.35\pm0.54$ & $14.75\pm0.44$ & $62.31\pm0.53$ & $31.78\pm0.28$ & $32.44\pm0.83$ \\
+Distance: cosine (null control) & $4.90\pm0.13$ & $8.52\pm0.69$ & $19.35\pm0.54$ & $14.75\pm0.44$ & $62.31\pm0.53$ & $31.78\pm0.28$ & $32.44\pm0.83$ \\
 Distance: raw $L_2$ & -- & -- & -- & -- & -- & -- & -- \\
 Strategy: mode window (default) & $4.90\pm0.12$ & $8.52\pm0.69$ & $19.34\pm0.54$ & $14.75\pm0.45$ & $62.31\pm0.52$ & $31.78\pm0.28$ & $32.73\pm0.75$ \\
 Strategy: sparse band with FPS & $5.19\pm0.04$ & $8.12\pm0.39$ & $19.53\pm0.49$ & $14.95\pm0.75$ & $62.43\pm0.17$ & $31.62\pm0.32$ & $33.38\pm1.46$ \\
