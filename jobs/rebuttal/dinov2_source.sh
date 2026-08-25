@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 # 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
 #SBATCH --exclude=gruenau1,gruenau2
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=3-00:00:00
 #
@@ -22,6 +22,17 @@
 set -euo pipefail
 cd "${FOMO_REPO_DIR:-$PWD}"
 . jobs/rebuttal/load_cluster_environment.sh
+
+# The cluster default of 2 dataloader workers starves the GPU: multi-crop
+# augmentation decodes and transforms ten views per sample on the CPU, and a
+# survey of our running jobs found most GPUs at 0 percent utilisation with
+# memory resident.  Persistent workers matter as much as the count, because an
+# epoch here is only a few hundred steps and the pool was otherwise being torn
+# down and rebuilt every epoch.
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-12}"
+export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-1}"
+export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-6}"
+
 
 seed="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
 

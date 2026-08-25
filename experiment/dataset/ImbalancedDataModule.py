@@ -1,3 +1,4 @@
+import os
 import lightning.pytorch as L
 import torch
 from torch import Tensor
@@ -93,6 +94,28 @@ class ImbalancedDataModule(L.LightningDataModule):
     def num_workers(self) -> int:
         return min(12, get_num_workers())
 
+    @property
+    def _persistent_workers(self) -> bool:
+        """Keep dataloader workers alive between epochs.
+
+        Off by default because respawning was the safe choice while resumed
+        runs were tearing down combined loaders after a checkpoint restore.
+        The cost of that choice is large here: an epoch is a few hundred steps,
+        so the pool is torn down and rebuilt hundreds of times per run, and
+        each rebuild re-forks and re-imports before a single batch is produced.
+        FOMO_PERSISTENT_WORKERS=1 opts a launcher into keeping them.
+        """
+        if self.num_workers <= 0:
+            return False
+        return os.environ.get("FOMO_PERSISTENT_WORKERS", "0") == "1"
+
+    @property
+    def _prefetch_factor(self):
+        """Batches each worker runs ahead. ``None`` is required at 0 workers."""
+        if self.num_workers <= 0:
+            return None
+        return int(os.environ.get("FOMO_PREFETCH_FACTOR", "4"))
+
     def set_dataloaders_none(self):
         self._train_dataloader = None
         self._val_dataloader = None
@@ -104,9 +127,9 @@ class ImbalancedDataModule(L.LightningDataModule):
             batch_size=self.train_batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            # Persistent workers have been unstable when resumed Lightning runs
-            # tear down combined loaders after checkpoint restore.
-            persistent_workers=False,
+            persistent_workers=self._persistent_workers,
+            prefetch_factor=self._prefetch_factor,
+            pin_memory=torch.cuda.is_available(),
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -118,7 +141,9 @@ class ImbalancedDataModule(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=self._persistent_workers,
+            prefetch_factor=self._prefetch_factor,
+            pin_memory=torch.cuda.is_available(),
             collate_fn=self.collate_fn,
             drop_last=True,
         )
@@ -129,7 +154,9 @@ class ImbalancedDataModule(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=False,
+            persistent_workers=self._persistent_workers,
+            prefetch_factor=self._prefetch_factor,
+            pin_memory=torch.cuda.is_available(),
             collate_fn=self.collate_fn,
             drop_last=True,
         )
