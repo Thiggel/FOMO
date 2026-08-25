@@ -3,44 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: bridge_iclr_2027.aux
 The style file: plainnat.bst
 Database file #1: references.bib
-You've used 47 entries,
+You've used 50 entries,
             2773 wiz_defined-function locations,
-            855 strings with 17152 characters,
-and the built_in function-call counts, 33515 in all, are:
-= -- 2884
-> -- 2657
-< -- 36
-+ -- 883
-- -- 836
-* -- 2909
-:= -- 5024
-add.period$ -- 186
-call.type$ -- 47
-change.case$ -- 413
-chr.to.int$ -- 47
-cite$ -- 94
-duplicate$ -- 1336
-empty$ -- 2242
-format.name$ -- 889
-if$ -- 7133
+            869 strings with 17741 characters,
+and the built_in function-call counts, 35090 in all, are:
+= -- 3018
+> -- 2747
+< -- 40
++ -- 913
+- -- 863
+* -- 3032
+:= -- 5246
+add.period$ -- 195
+call.type$ -- 50
+change.case$ -- 431
+chr.to.int$ -- 50
+cite$ -- 100
+duplicate$ -- 1419
+empty$ -- 2381
+format.name$ -- 921
+if$ -- 7478
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 43
-newline$ -- 271
-num.names$ -- 200
-pop$ -- 906
+missing$ -- 46
+newline$ -- 286
+num.names$ -- 212
+pop$ -- 951
 preamble$ -- 1
-purify$ -- 366
+purify$ -- 381
 quote$ -- 0
-skip$ -- 1193
+skip$ -- 1257
 stack$ -- 0
-substring$ -- 1105
-swap$ -- 363
-text.length$ -- 31
+substring$ -- 1151
+swap$ -- 383
+text.length$ -- 34
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 517
+type$ -- 550
 warning$ -- 0
-while$ -- 222
+while$ -- 234
 width$ -- 0
-write$ -- 679
+write$ -- 718

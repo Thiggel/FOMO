@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021/TeX Live for SUSE Linux) (preloaded format=pdflatex 2024.9.9)  25 AUG 2026 15:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021/TeX Live for SUSE Linux) (preloaded format=pdflatex 2024.9.9)  25 AUG 2026 15:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -636,76 +636,84 @@ See the caption package documentation for explanation.
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
  <./figures/BRIDGE.pdf>]
-[2] [3] [4] [5] (./tables/main_sota_label_sources.tex) [6]
-(./tables/main_sota_web_sources.tex) [7] (./tables/main_generalization.tex)
-[8] (./tables/main_policy_repair_controls.tex) [9] (./tables/main_mechanism.tex
-) [10] (./tables/main_percentile_utility_full_linear.tex) [11]
-(./bridge_iclr_2027.bbl
+[2] [3] [4] [5] [6] (./tables/main_sota_label_sources.tex) [7]
+(./tables/main_sota_web_sources.tex) (./tables/main_generalization.tex)
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [8]
+[9] (./tables/main_policy_repair_controls.tex) (./tables/main_mechanism.tex)
+Underfull \vbox (badness 1038) has occurred while \output is active []
+
+ [10]
+(./tables/main_percentile_utility_full_linear.tex) [11] (./bridge_iclr_2027.bbl
 LaTeX Font Info:    Trying to load font information for T1+pcr on input line 15
 .
- (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
+(/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `pcr' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
- [12]
-Underfull \hbox (badness 10000) in paragraph at lines 207--214
+ [12] [13]
+Underfull \hbox (badness 10000) in paragraph at lines 215--222
 \T1/ptm/m/n/10 (+20) URL []$\T1/pcr/m/n/10 https : / / openaccess . thecvf . co
 m / content / ICCV2023W / LIMIT / html /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 207--214
+Underfull \hbox (badness 10000) in paragraph at lines 215--222
 \T1/pcr/m/n/10 Lin _ Frequency-[]Aware _ Self-[]Supervised _ Long-[]Tailed _ Le
 arning _ ICCVW _
  []
 
-[13] [14])
+[14] [15])
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[15] (./tables/fixed_support_geometry.tex) [16] [17]
-<figures/cycle_histories_example.pdf, id=1002, 801.66377pt x 233.93259pt>
+[16] (./tables/fixed_support_geometry.tex) [17] [18]
+<figures/cycle_histories_example.pdf, id=1033, 801.66377pt x 233.93259pt>
 File: figures/cycle_histories_example.pdf Graphic file (type pdf)
 <use figures/cycle_histories_example.pdf>
 Package pdftex.def Info: figures/cycle_histories_example.pdf  used on input lin
-e 380.
+e 428.
 (pdftex.def)             Requested size: 381.58824pt x 111.35114pt.
 
 (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [18 <./figures/cycle_histories_example.pdf>]) (./tables/app_pretraining_linear
-.tex)
-(./tables/app_pretraining_knn.tex
+ [19])
+(./tables/app_pretraining_linear.tex
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [19])
+ [20 <./figures/cycle_histories_example.pdf>]) (./tables/app_pretraining_knn.te
+x)
 (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
-(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex)
+(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex [21])
 (./tables/app_cycles_linear.tex) (./tables/app_cycles_knn.tex)
-(./tables/app_architecture_linear.tex [20]) (./tables/app_architecture_knn.tex)
+(./tables/app_architecture_linear.tex) (./tables/app_architecture_knn.tex)
 (./tables/app_selector_robustness_full_linear.tex)
 (./tables/app_selector_robustness_full_knn.tex)
 (./tables/main_percentile_utility_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 402.
+put line 450.
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 2744) has occurred while \output is active []
 
- [21]
-[22] (./bridge_iclr_2027.aux)
+ [22]
+Overfull \vbox (107.7965pt too high) has occurred while \output is active []
+
+
+[23] [24] (./bridge_iclr_2027.aux)
 Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 (rerunfilecheck)             Checksum: 73EEC5C7DEC44DA3F51952A34AB4366E;4415.
  ) 
 Here is how much of TeX's memory you used:
- 15613 strings out of 480028
- 234020 string characters out of 5884413
- 655387 words of memory out of 5000000
- 32080 multiletter control sequences out of 15000+600000
- 473593 words of font info for 285 fonts, out of 8000000 for 9000
+ 15651 strings out of 480028
+ 234580 string characters out of 5884413
+ 658719 words of memory out of 5000000
+ 32091 multiletter control sequences out of 15000+600000
+ 474522 words of font info for 295 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
  98i,13n,102p,1747b,708s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/base/8r.enc}</usr/share/texmf/fonts/type1/p
@@ -724,10 +732,10 @@ e/texmf/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/
 urw/courier/ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></
 usr/share/texmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/
 urw/times/utmr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (22 pages, 746913 bytes).
+Output written on bridge_iclr_2027.pdf (24 pages, 759805 bytes).
 PDF statistics:
- 1203 PDF objects out of 1440 (max. 8388607)
- 856 compressed objects within 9 object streams
- 180 named destinations out of 1000 (max. 500000)
+ 1241 PDF objects out of 1440 (max. 8388607)
+ 892 compressed objects within 9 object streams
+ 192 named destinations out of 1000 (max. 500000)
  63187 words of extra memory for PDF output out of 74296 (max. 10000000)
 

@@ -62,6 +62,9 @@ We make three contributions. First, we formulate data repair as recoverability-w
 \paragraph{Skewed SSL and representation-driven data selection.}
 Long-tailed SSL methods modify training while leaving the source set fixed. SDCLR emphasizes persistently difficult samples, Temperature Schedules changes contrastive optimization, and COLT introduces external OOD data~\citep{sdclr,ts,colt}. Other studies examine hidden imbalance, frequency-aware learning, and uncurated data~\citep{tian2021divide,assran2210hidden,fassl}. Data curation uses representations to retain informative subsets or remove redundancy~\citep{whang2023data,sorscher2022beyond,abbas2024effective}. Earlier augmentation methods instead add support. SMOTE interpolates labeled minority examples, while DOPING oversamples low-density latent regions for unsupervised anomaly detection~\citep{chawla2002smote,lim2018doping}. BRIDGE uses the current SSL representation to decide where new source images should be added, then recomputes that decision after learning from them.
 
+\paragraph{Budgeted acquisition and coverage.}
+Active learning studies the allocation of a finite acquisition budget and supplies the closest formal precedent for our selection rule. The core-set formulation treats acquisition as $k$-center coverage of the representation and selects with the same greedy farthest-first traversal we use, under the approximation guarantee of \citet{gonzalez1985clustering}, though it acquires labels for existing images and does not create new ones~\citep{sener2018active}. ProbCover reformulates the objective as maximizing covered probability mass at a fixed ball radius~\citep{yehuda2022covering}. Most relevant to our results, \citet{hacohen2022budget} show that the best acquisition strategy reverses with budget: dense and typical regions are preferable when the budget is small relative to the corpus, and sparse or uncertain regions become preferable only once it is large. Our single-stage sweep in Section~\ref{sec:one-stage} is consistent with that reversal, since one repair stage leaves every score band indistinguishable, and the advantage of the sparse band appears only as repeated stages accumulate. Two differences separate our setting from this literature. Acquisition here adds generated images and consumes no labels, so the budget is limited by generation cost and not by annotation, and the scoring model is the SSL encoder being trained, so each acquisition changes the function that selects the next one.
+
 \paragraph{Generative augmentation.}
 Diffusion models make image-conditioned repair possible through controlled denoising~\citep{ho2020denoising,rombach2022highresolution,meng2022sdedit}. DA-Fusion applies this mechanism to few-shot supervised recognition, and TADA targets examples learned slowly under a supervised objective~\citep{trabucco2023effective,nguyen2026tada}. Larger studies show that synthetic-data utility depends on prompt design, filtering, diversity, generator configuration, and domain gap~\citep{azizi2023synthetic,he2023synthetic,fan2024scaling}. BRIDGE uses neither class identity nor supervised learning speed. It allocates a fixed generation budget from local support in an unlabeled representation.
 
@@ -111,7 +114,19 @@ g(d)=\frac{b'(d)}{b(d)+\lambda}+\frac{\rho'(d)}{\rho(d)}.
 \end{equation}
 If $g$ is strictly decreasing, $g(d_{\min})>0$, and $g(d_{\max})<0$, then $u$ has a unique maximizer $d^\star$ in the interior, characterized by $g(d^\star)=0$.
 \end{proposition}
-The condition compares the relative growth of support value with the relative decay of repairability. Dense regions are preferred while value grows faster, and utility begins to fall once reliability decays faster. The maximizing score depends on the source distribution and generator through $b$ and $\rho$. BRIDGE operationalizes this interior preference with a trimmed score band, while the experiments test lower and upper cutoffs, $k$, distance normalization, candidate-pool size, and diversity sampling.
+The condition compares the relative growth of support value with the relative decay of repairability. Dense regions are preferred while value grows faster, and utility begins to fall once reliability decays faster. The maximizing score depends on the source distribution and generator through $b$ and $\rho$.
+
+Proposition~\ref{prop:interior} assumes that $g$ is strictly decreasing, which is close to assuming the conclusion. The assumption is discharged for a natural parametric family.
+
+\begin{proposition}[Closed-form interior optimum]
+\label{prop:closed-form}
+Let $b(d)=b_0d^{\beta}$ with $b_0>0$ and $\beta\in(0,1]$, and let $\rho(d)=\rho_0e^{-\gamma d}$ with $\gamma>0$. Then $g$ is strictly decreasing on $(0,\infty)$ for every $\lambda\geq0$, so Proposition~\ref{prop:interior} applies whenever $g$ changes sign on the interval. If $\lambda=0$ the maximizer is
+\begin{equation}
+d^{\star}=\beta/\gamma,
+\end{equation}
+independent of $b_0$ and $\rho_0$.
+\end{proposition}
+Concave support value and exponential decay of repairability are therefore sufficient on their own, and the interior optimum is not an artifact of the monotonicity condition. The optimum moves outward when support value is closer to linear and inward when repair fidelity decays faster, which is the qualitative dependence the percentile sweeps probe. BRIDGE operationalizes this interior preference with a trimmed score band, while the experiments test lower and upper cutoffs, $k$, distance normalization, candidate-pool size, and diversity sampling.
 
 Finally, consider a separable budget objective $U(\mathbf m)=\sum_j U_j(n_j+m_j)$, where each $U_j$ is increasing and discretely concave and $\sum_jm_j=B$.
 
@@ -119,7 +134,19 @@ Finally, consider a separable budget objective $U(\mathbf m)=\sum_j U_j(n_j+m_j)
 \label{prop:adaptive}
 For integer allocations, repeatedly assigning one repair to the region with the largest current marginal gain maximizes $U(\mathbf m)$. A fixed allocation can become suboptimal after a region's marginal gain falls below that of another region.
 \end{proposition}
-The result follows by selecting the $B$ largest elements from the nonincreasing marginal-gain sequences of all regions. Recomputing the acquisition signal lets the policy follow these changing values, whereas a frozen policy continues to spend according to its initial ordering. Within a candidate region, farthest-first traversal gives a factor-two approximation to metric $k$-center coverage~\citep{gonzalez1985clustering}, providing a coverage interpretation for diversity-aware selection.
+The result follows by selecting the $B$ largest elements from the nonincreasing marginal-gain sequences of all regions. Recomputing the acquisition signal lets the policy follow these changing values, whereas a frozen policy continues to spend according to its initial ordering.
+
+The same model bounds how much any acquisition rule can achieve when it is applied only once.
+
+\begin{proposition}[Single-stage insensitivity]
+\label{prop:one-stage}
+Let $\mathbf m$ and $\mathbf m'$ be any two allocations of the same budget $B$ under Equation~\ref{eq:regional-bound}, computed from the same representation and applied without re-estimation. Then
+\begin{equation}
+\bigl|\mathcal B(\mathbf m)-\mathcal B(\mathbf m')\bigr|\;\leq\;B\,\gamma\max_j p_ja_j\,(n_j+\kappa)^{-\gamma-1}.
+\end{equation}
+In particular, if every region carries support at least $n_{\min}$, the two allocations differ by at most $B\gamma\,\max_jp_ja_j\,(n_{\min}+\kappa)^{-\gamma-1}$, which tends to zero as $B/n_{\min}\to0$.
+\end{proposition}
+Under one intervention, the choice of acquisition rule is therefore bounded by the ratio of budget to existing support, and no rule can separate from any other when that ratio is small. Section~\ref{sec:one-stage} measures a budget of 2{,}500 generated images against a source of roughly 10{,}000, and finds every score band from the densest quartile to the extreme tail within 1.32 points. The separation that does appear over five stages is outside the scope of this bound, because re-estimation makes the support entering the score depend on earlier allocations, so the composite map over stages is not covered by a single application of the inequality. We state the bound because it predicts the regime in which acquisition rules are indistinguishable, and we do not claim a matching lower bound for the repeated regime. Within a candidate region, farthest-first traversal gives a factor-two approximation to metric $k$-center coverage~\citep{gonzalez1985clustering}, providing a coverage interpretation for diversity-aware selection.
 
 The analysis yields four requirements for a practical acquisition policy. It should estimate local support, avoid sparse regions whose samples cannot be repaired faithfully, cover the chosen region without redundant anchors, and recompute its allocation after learning from each intervention. Appendix~\ref{app:proofs} proves Propositions~\ref{prop:local-support}--\ref{prop:adaptive}. Equation~\ref{eq:regional-bound} and the monotonic behavior assumed for $b$ and $\rho$ are modeling assumptions and not consequences of those proofs. Their observable predictions are tested by the selection, repair, cycle, and policy controls in Section~\ref{sec:results} and the appendix. The next section turns the framework into a label-free algorithm.
 
@@ -329,6 +356,27 @@ u'(d)=\rho(d)(b(d)+\lambda)\left[\frac{b'(d)}{b(d)+\lambda}+\frac{\rho'(d)}{\rho
 =\rho(d)(b(d)+\lambda)g(d).
 \]
 The factor preceding $g(d)$ is positive. Since $g$ is strictly decreasing and changes sign across the interval, it has one root $d^\star$ by continuity. Hence $u$ increases before $d^\star$ and decreases after it, making $d^\star$ the unique global maximizer.
+
+\paragraph{Proof of Proposition~\ref{prop:closed-form}.}
+With $b(d)=b_0d^{\beta}$ and $\rho(d)=\rho_0e^{-\gamma d}$ we have $\rho'(d)/\rho(d)=-\gamma$, so
+\[
+g(d)=\frac{b_0\beta d^{\beta-1}}{b_0d^{\beta}+\lambda}-\gamma
+=\frac{\beta d^{\beta-1}}{d^{\beta}+c}-\gamma,
+\qquad c=\lambda/b_0\geq0.
+\]
+Write $h(d)=\beta d^{\beta-1}(d^{\beta}+c)^{-1}$. Differentiating,
+\[
+h'(d)=\frac{\beta d^{\beta-2}\bigl[(\beta-1)(d^{\beta}+c)-\beta d^{\beta}\bigr]}{(d^{\beta}+c)^{2}}
+=\frac{\beta d^{\beta-2}\bigl[(\beta-1)c-d^{\beta}\bigr]}{(d^{\beta}+c)^{2}}.
+\]
+For $\beta\in(0,1]$ we have $(\beta-1)c\leq0<d^{\beta}$ for all $d>0$, so the bracket is strictly negative and $h'(d)<0$. Hence $g=h-\gamma$ is strictly decreasing for every $\lambda\geq0$. When $\lambda=0$ we have $c=0$ and $g(d)=\beta/d-\gamma$, whose unique root is $d^{\star}=\beta/\gamma$; $g$ is positive below it and negative above it, so $d^{\star}$ is the maximizer by the argument of Proposition~\ref{prop:interior}.
+
+\paragraph{Proof of Proposition~\ref{prop:one-stage}.}
+Write $f(x)=x^{-\gamma}$. For $x>0$ the mean value theorem gives $f(x)-f(x+1)=\gamma\xi^{-\gamma-1}$ for some $\xi\in(x,x+1)$, so
+\[
+0<\Delta_j(m_j)=p_ja_j\bigl[f(n_j+m_j+\kappa)-f(n_j+m_j+1+\kappa)\bigr]\leq p_ja_j\gamma(n_j+\kappa)^{-\gamma-1},
+\]
+using $\xi>n_j+m_j+\kappa\geq n_j+\kappa$ and $m_j\geq0$. Both $\mathcal B(\mathbf m)$ and $\mathcal B(\mathbf m')$ are obtained from the common baseline $\mathcal B(\mathbf 0)$ by subtracting sums of at most $B$ such marginals, since $\sum_jm_j=\sum_jm_j'=B$. Each sum therefore lies in $[0,\,B\gamma\max_jp_ja_j(n_j+\kappa)^{-\gamma-1}]$, and the difference of two numbers drawn from an interval is bounded by its length. The stated bound follows, and monotonicity of $(n+\kappa)^{-\gamma-1}$ in $n$ gives the $n_{\min}$ form.
 
 \paragraph{Proof of Proposition~\ref{prop:adaptive}.}
 For region $j$, define the marginal sequence $\delta_{j,t}=U_j(n_j+t)-U_j(n_j+t-1)$ for $t\geq1$. Discrete concavity makes each sequence nonincreasing. Any feasible allocation of $B$ repairs selects a prefix of length $m_j$ from each sequence. Greedy allocation repeatedly chooses the largest available next element. After $B$ steps it has selected the $B$ largest prefix-feasible marginals. If another allocation had larger utility, it would contain a selected marginal smaller than an available unselected marginal, and exchanging them would improve that allocation. This contradicts optimality. A frozen allocation can fail this rule because it preserves the initial ordering after selected regions move to smaller marginals.
