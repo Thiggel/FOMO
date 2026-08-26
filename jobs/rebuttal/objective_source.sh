@@ -5,7 +5,7 @@
 # 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
 #SBATCH --exclude=gruenau1,gruenau2
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=64G
+#SBATCH --mem=110G
 #SBATCH --time=3-00:00:00
 #
 # Common source checkpoints for the DINOv2 arm.
@@ -29,9 +29,13 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 # memory resident.  Persistent workers matter as much as the count, because an
 # epoch here is only a few hundred steps and the pool was otherwise being torn
 # down and rebuilt every epoch.
-export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-12}"
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
 export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-1}"
-export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-6}"
+export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
+# 12 workers at prefetch 6 aborted the MAE loaders: each worker holds its own
+# copy of the dataset state and six batches of 64 images ahead, which
+# exhausted the job memory rather than /dev/shm, which was 99 percent free.
+export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-40000}"
 
 
 # Both objectives need a source here.  DINOv2 is new, and the MAE

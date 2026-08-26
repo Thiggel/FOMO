@@ -37,7 +37,14 @@ class DinoV2(Dino):
         *args,
         ibot_loss_weight: float = 1.0,
         koleo_loss_weight: float = 0.1,
-        ibot_out_dim: int = 65536,
+        # The patch head is applied to every patch of every global crop, so its
+        # Sinkhorn tensor is (batch x patches) x prototypes.  At 65536
+        # prototypes and 196 patches that is a 784 MiB allocation per crop,
+        # which is what made this arm die of CUDA OOM beside an MPS co-tenant.
+        # DINOv2 uses a smaller prototype count for the patch objective than
+        # for the image-level one; 8192 keeps that distinction and cuts the
+        # allocation eightfold.
+        ibot_out_dim: int = 8192,
         mask_ratio_min: float = 0.1,
         mask_ratio_max: float = 0.5,
         mask_probability: float = 0.5,

@@ -5,7 +5,7 @@
 # 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
 #SBATCH --exclude=gruenau1,gruenau2
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=64G
+#SBATCH --mem=110G
 #SBATCH --time=6-00:00:00
 #SBATCH --array=0-11
 #
@@ -38,9 +38,9 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 # memory resident.  Persistent workers matter as much as the count, because an
 # epoch here is only a few hundred steps and the pool was otherwise being torn
 # down and rebuilt every epoch.
-export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-12}"
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
 export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-1}"
-export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-6}"
+export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 
 
 conditions=(
