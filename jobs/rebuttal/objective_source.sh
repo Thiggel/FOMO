@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=fomo-dinov2-src
+#SBATCH --job-name=fomo-obj-src
 #SBATCH --partition=longgpu
 #SBATCH --gres=gpu:1
 # 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
@@ -34,20 +34,35 @@ export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-1}"
 export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-6}"
 
 
-seed="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
+# Both objectives need a source here.  DINOv2 is new, and the MAE
+# compatibility runs kept only result.json, so no MAE weights survive to branch
+# from.  Tasks 0-2 are MAE seeds, tasks 3-5 are DINOv2 seeds.
+task="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
+seed="$((task % 3))"
+if (( task < 3 )); then
+  family=mae
+  ssl=mae
+  batch=64
+  accum=2
+else
+  family=dinov2
+  ssl=dinov2
+  batch=16
+  accum=8
+fi
 
 run_suffix="${FOMO_RUN_SUFFIX:-}"
-run_tag="rebuttal_source_dinov2_vits${run_suffix}"
+run_tag="rebuttal_source_${family}_vits${run_suffix}"
 run_root="$BASE_CACHE_DIR/rebuttal_runs/$run_tag/seed_$seed"
 mkdir -p "$run_root"
 
 python -m experiment \
-  dataset=imagenet100_imbalanced model=vit_small ssl=dinov2 \
+  dataset=imagenet100_imbalanced model=vit_small ssl="$ssl" \
   logger=false pretrain=true finetune=true \
   finetune_benchmark_suite=paper_full \
   num_runs=1 seed="$seed" \
   max_cycles=1 n_epochs_per_cycle=80 \
-  train_batch_size=16 grad_acc_steps=8 val_batch_size=256 \
+  train_batch_size="$batch" grad_acc_steps="$accum" val_batch_size=256 \
   ood_augmentation=false \
   additional_data_path="$run_root/generated" \
   experiment_name="$run_tag"

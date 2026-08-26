@@ -67,7 +67,11 @@ case "$family" in
     ssl=mae
     batch=64
     accum=2
-    checkpoint="$checkpoint_root/rebuttal_compat_mae_vits_base/clane9_imagenet-100/seed_${seed}/last.ckpt"
+    checkpoint="$(
+      find "$checkpoint_root" -path \
+        "*source_mae_vits*/clane9_imagenet-100/seed_${seed}/last.ckpt" \
+        -type f -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-
+    )"
     ;;
   dinov2)
     ssl=dinov2
@@ -87,7 +91,7 @@ esac
 
 if [[ -z "$checkpoint" || ! -s "$checkpoint" ]]; then
   echo "Missing common source checkpoint for $condition: $checkpoint" >&2
-  echo "For dinov2, run jobs/rebuttal/dinov2_source.sh first." >&2
+  echo "Run jobs/rebuttal/objective_source.sh first." >&2
   exit 3
 fi
 

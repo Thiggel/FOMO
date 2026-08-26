@@ -88,6 +88,22 @@ class DinoV2(Dino):
             self.student_ibot_head = self.student_head
             self.teacher_ibot_head = self.teacher_head
 
+    @staticmethod
+    def _split_tokens(net, images, bool_masked_pos=None):
+        """Return ``(cls, patches)`` in the same space as ``net(images)``.
+
+        ``ViT.forward`` runs the encoder output through a projection head, so
+        the CLS feature the image-level objective consumes is that projection
+        and not the raw hidden state.  ``extract_tokens`` deliberately stops
+        before it.  Applying the head here keeps both objectives in one space
+        and keeps the CLS branch identical to what DINO v1 sees; without it the
+        two differ by exactly that projection, which is a silent width
+        mismatch when ``output_size`` and ``hidden_size`` disagree.
+        """
+        tokens = net.extract_tokens(images, bool_masked_pos=bool_masked_pos)
+        projected = net.head(tokens)
+        return projected[:, 0], projected[:, 1:]
+
     # ------------------------------------------------------------------
     # Teacher normalization
     # ------------------------------------------------------------------
@@ -167,8 +183,7 @@ class DinoV2(Dino):
         with torch.no_grad():
             for view in global_views:
                 if supports_tokens:
-                    tokens = teacher_backbone.extract_tokens(view)
-                    cls_feat, patch_feat = tokens[:, 0], tokens[:, 1:]
+                    cls_feat, patch_feat = self._split_tokens(teacher_backbone, view)
                 else:
                     cls_feat, patch_feat = teacher_backbone(view), None
                 teacher_cls_targets.append(
@@ -191,8 +206,9 @@ class DinoV2(Dino):
                     view.shape[-2] // backbone.config.patch_size
                 )
                 mask = self._sample_masks(view.shape[0], num_patches, view.device)
-                tokens = backbone.extract_tokens(view, bool_masked_pos=mask)
-                cls_feat, patch_feat = tokens[:, 0], tokens[:, 1:]
+                cls_feat, patch_feat = self._split_tokens(
+                    backbone, view, bool_masked_pos=mask
+                )
                 if mask.any() and teacher_patch_targets:
                     target = teacher_patch_targets[idx][mask]
                     pred = self.student_ibot_head(patch_feat[mask])
