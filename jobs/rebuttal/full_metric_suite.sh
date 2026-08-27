@@ -23,10 +23,27 @@ fomo_wait_for_gpu() {
 
   command -v nvidia-smi >/dev/null 2>&1 || return 0
 
-  local attempt free
+  # Read the card this job was actually given.  ``head -n 1`` reported card 0
+  # of the node no matter which one Slurm allocated, so a task holding a busy
+  # card three slots along saw a neighbour's free memory and walked straight
+  # into a CUDA OOM, while a task holding an empty card could sit in the wait
+  # loop until it gave up.  Slurm's cgroup usually narrows the listing to the
+  # allocated device, in which case the index is renumbered to 0 and the
+  # lookup below falls through to the single row; where it does not, the
+  # CUDA_VISIBLE_DEVICES index selects the right row.
+  local attempt free query visible
+  visible="${CUDA_VISIBLE_DEVICES%%,*}"
   for (( attempt = 1; attempt <= attempts; attempt++ )); do
-    free="$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null |
-      head -n 1 | tr -d '[:space:]')"
+    query="$(nvidia-smi --query-gpu=index,memory.free \
+      --format=csv,noheader,nounits 2>/dev/null)"
+    free=""
+    if [[ -n "$visible" ]]; then
+      free="$(awk -F', *' -v i="$visible" '$1 == i { print $2 }' <<<"$query" |
+        head -n 1 | tr -d '[:space:]')"
+    fi
+    if [[ -z "$free" ]]; then
+      free="$(awk -F', *' 'NR == 1 { print $2 }' <<<"$query" | tr -d '[:space:]')"
+    fi
     [[ "$free" =~ ^[0-9]+$ ]] || return 0
     if (( free >= required )); then
       return 0

@@ -31,6 +31,7 @@
 set -euo pipefail
 cd "${FOMO_REPO_DIR:-$PWD}"
 . jobs/rebuttal/load_cluster_environment.sh
+. jobs/rebuttal/full_metric_suite.sh
 
 # The cluster default of 2 dataloader workers starves the GPU: multi-crop
 # augmentation decodes and transforms ten views per sample on the CPU, and a
@@ -41,6 +42,13 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
 export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-1}"
 export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
+# DINOv2 seeds 1 and 2 died of CUDA OOM beside a co-tenant that held 42 of the
+# card's 47 GiB.  The failing request was 20 MiB, so the card was not full, it
+# was fragmented: multi-crop sends ten views of differing spatial size through
+# the backbone every step, and the caching allocator cannot reuse a block sized
+# for a 224 crop to serve a 96 one.
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
+export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-40000}"
 
 
 conditions=(
@@ -108,6 +116,8 @@ run_suffix="${FOMO_RUN_SUFFIX:-}"
 run_tag="rebuttal_full5e80_${condition}${run_suffix}"
 run_root="$BASE_CACHE_DIR/rebuttal_runs/$run_tag"
 mkdir -p "$run_root"
+
+fomo_wait_for_gpu
 
 python -m experiment \
   dataset=imagenet100_imbalanced model="$model" ssl="$ssl" \

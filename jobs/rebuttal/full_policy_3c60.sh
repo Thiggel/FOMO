@@ -3,7 +3,13 @@
 #SBATCH --partition=wbimlgpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
+# 64G was not enough.  Every one of the 21 conditions died within two minutes
+# of start, at the point where Stable Diffusion 3 is deserialized, and left no
+# Python traceback at all, which is the signature of a cgroup kill rather than
+# an exception.  SD3 holds the transformer and three text encoders in host
+# memory before anything moves to the card, and the dataloader workers hold a
+# copy of the dataset wrapper each.
+#SBATCH --mem=110G
 #SBATCH --time=24:00:00
 #
 # This script carried no SBATCH directives and relied on every caller passing
@@ -19,6 +25,20 @@ set -euo pipefail
 cd "${FOMO_REPO_DIR:-$PWD}"
 . jobs/rebuttal/load_cluster_environment.sh
 . jobs/rebuttal/full_metric_suite.sh
+
+# Two workers leave the card idle: a survey of the running jobs found the
+# 5-cycle SimCLR arms spiking to 78 percent for one sample in ten and sitting
+# at zero for the rest, which is a duty cycle around eight percent.  Persistent
+# workers matter as much as the count here, because a stage is a few hundred
+# steps and the pool was otherwise rebuilt every epoch.
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
+export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-1}"
+export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
+# SD3 and the encoder alternate large short-lived allocations, which fragments
+# the caching allocator badly enough to fail a 20 MiB request on a card with
+# gigabytes free.
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
+export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
 
 conditions=(
   no_repair adaptive static one_shot uniform top_tail conventional
