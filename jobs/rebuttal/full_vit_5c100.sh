@@ -82,6 +82,7 @@ python -m experiment \
   sample_selection=ood ood_selection_strategy=mode_window \
   selection_reuse_policy=adaptive ood_distance_metric=normalized_l2 \
   ood_augmentation="$augment" generation_model=stable_diffusion_3 \
-  representation_diagnostics_each_cycle=false \
+  representation_diagnostics_each_cycle=true \
+  representation_diagnostics_save_samples=true \
   additional_data_path="$run_root/generated" \
   experiment_name="$run_tag"
