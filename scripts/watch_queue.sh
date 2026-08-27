@@ -16,7 +16,12 @@ while :; do
     log="slurm-${id}.out"
     sig="$(grep -hoE 'unable to open shared memory|torch.OutOfMemoryError|CUDA error|Giving up: GPU|DataLoader worker.*(killed|exited)|Missing common source|CANCELLED|DUE TO TIME LIMIT' "$log" 2>/dev/null | sort -u | tr '\n' ' ')"
     name="$(grep -hoE 'experiment_name=[A-Za-z0-9_]+' "$log" 2>/dev/null | tail -1 | cut -d= -f2)"
-    if [[ -n "$sig" ]]; then
+    # A task cancelled before it ever ran leaves no output file at all.  That
+    # is a deliberate act, not a fault, and reporting it as an unexplained
+    # disappearance buries the real failures in noise over a multi-day run.
+    if [[ ! -e "$log" ]]; then
+      echo "CANCELLED $id (never started, no log)"
+    elif [[ -n "$sig" ]]; then
       echo "FAILED  $id  ${name:-?}  -> $sig"
     elif grep -q 'print_mean_std' "$log" 2>/dev/null; then
       echo "DONE    $id  ${name:-?}"
