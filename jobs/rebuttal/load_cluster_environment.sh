@@ -61,6 +61,17 @@ case "${FOMO_CLUSTER:-}" in
         ;;
 esac
 
+# Pass shared-tensor handles by file descriptor rather than staging files in
+# /dev/shm.  systemd-logind runs with RemoveIPC=yes on these nodes, so it wipes
+# every /dev/shm object owned by this uid the moment any login session of ours
+# on the node ends -- another array task finishing is enough.  A run whose
+# worker tensors live there then dies with "unable to open shared memory
+# object", hours in and through no fault of its own.  The file_descriptor
+# strategy unlinks immediately and keeps the memory alive through the open
+# descriptor, so a sweep has nothing to take.  It was avoided because of
+# descriptor limits, which do not bind here: the limit is 524288 and these jobs
+# run six workers.
+export FOMO_SHARING_STRATEGY="${FOMO_SHARING_STRATEGY:-file_descriptor}"
 export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-2}"
 export FOMO_ALLOW_DATA_DOWNLOAD=1
 export PYTHONUNBUFFERED=1
