@@ -32,7 +32,14 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 # workers matter as much as the count here, because a stage is a few hundred
 # steps and the pool was otherwise rebuilt every epoch.
 export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
-export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-1}"
+# Persistent workers are off again.  Keeping the pool alive across a cycle
+# boundary races with the teardown of the previous cycle's combined loader:
+# the run prints "terminate called without an active exception" as the stage
+# ends and the worker dies of SIGABRT.  Seven runs were lost to this in one
+# morning, every one of them at a cycle boundary and none inside a stage.  The
+# throughput this was meant to buy comes mostly from the worker count and the
+# prefetch depth below, which are unaffected.
+export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-0}"
 export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 # SD3 and the encoder alternate large short-lived allocations, which fragments
 # the caching allocator badly enough to fail a 20 MiB request on a card with
