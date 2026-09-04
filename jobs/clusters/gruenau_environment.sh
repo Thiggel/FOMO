@@ -4,7 +4,13 @@ set -eu
 REPO_DIR="${FOMO_REPO_DIR:-/vol/home-vol2/ml/laitenbf/FOMO}"
 export BASE_CACHE_DIR="${BASE_CACHE_DIR:-/vol/home-vol2/ml/laitenbf/FOMO_runtime}"
 export CHECKPOINT_ROOT_DIR="${CHECKPOINT_ROOT_DIR:-$BASE_CACHE_DIR/checkpoints}"
-export HF_HOME="${HF_HOME:-$BASE_CACHE_DIR/hf}"
+# Set, not defaulted.  sbatch propagates the submitting shell, and ~/.bashrc
+# exports HF_HOME=/vol/tmp/laitenbf for interactive work, so every job so far
+# has been reading its weights and datasets from /vol/tmp.  That volume is
+# being retired and its contents are not guaranteed to survive the upgrade.
+# The caches a run needs all live under BASE_CACHE_DIR, so point there
+# regardless of what the submitting environment carried in.
+export HF_HOME="$BASE_CACHE_DIR/hf"
 export HF_HUB_CACHE="${HF_HUB_CACHE:-$HF_HOME/hub}"
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-$HF_HOME/datasets}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME/transformers}"
