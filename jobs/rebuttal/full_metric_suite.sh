@@ -31,6 +31,15 @@ fomo_wait_for_gpu() {
   # allocated device, in which case the index is renumbered to 0 and the
   # lookup below falls through to the single row; where it does not, the
   # CUDA_VISIBLE_DEVICES index selects the right row.
+  # One passing reading is not enough.  A co-tenant that dips while it frees a
+  # buffer and then reallocates lets a run start and kills it minutes later:
+  # dinov2 bridge seed 2 waited out sixteen readings at 9.5 GiB free, was let
+  # through on the seventeenth, and hit OutOfMemory in cycle 1 with the
+  # neighbour back at 38 GiB.  Require the headroom to hold across several
+  # readings before committing.
+  local streak=0
+  local needed_streak="${FOMO_GPU_STABLE_CHECKS:-3}"
+  local stable_delay="${FOMO_GPU_STABLE_SECONDS:-20}"
   local attempt free query visible
   visible="${CUDA_VISIBLE_DEVICES%%,*}"
   for (( attempt = 1; attempt <= attempts; attempt++ )); do
@@ -46,8 +55,14 @@ fomo_wait_for_gpu() {
     fi
     [[ "$free" =~ ^[0-9]+$ ]] || return 0
     if (( free >= required )); then
-      return 0
+      streak=$(( streak + 1 ))
+      if (( streak >= needed_streak )); then
+        return 0
+      fi
+      sleep "$stable_delay"
+      continue
     fi
+    streak=0
     echo "Waiting for GPU memory: ${free} MiB free, need ${required} MiB" \
          "(attempt ${attempt}/${attempts})"
     sleep "$delay"
