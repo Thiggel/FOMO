@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-policy
-#SBATCH --partition=wbimlgpu
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 # 64G was not enough.  Every one of the 21 conditions died within two minutes

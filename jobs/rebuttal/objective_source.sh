@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-obj-src
-#SBATCH --partition=longgpu
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 # 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
 #SBATCH --exclude=gruenau1,gruenau2

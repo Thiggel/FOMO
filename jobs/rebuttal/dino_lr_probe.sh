@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-dinolr
-#SBATCH --partition=wbimlgpu
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
