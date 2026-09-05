@@ -14,7 +14,7 @@ while :; do
   while read -r id; do
     [[ -z "$id" ]] && continue
     log="slurm-${id}.out"
-    sig="$(grep -hoE 'unable to open shared memory|torch.OutOfMemoryError|CUDA error|Giving up: GPU|DataLoader worker.*(killed|exited)|Missing common source|CANCELLED|DUE TO TIME LIMIT' "$log" 2>/dev/null | sort -u | tr '\n' ' ')"
+    sig="$(grep -hoE 'unable to open shared memory|torch.OutOfMemoryError|CUDA error|Giving up: GPU|DataLoader worker.*(killed|exited)|Missing common source|CANCELLED|DUE TO TIME LIMIT|terminate called without an active exception|Cannot allocate memory|oom-kill' "$log" 2>/dev/null | sort -u | tr '\n' ' ')"
     name="$(grep -hoE 'experiment_name=[A-Za-z0-9_]+' "$log" 2>/dev/null | tail -1 | cut -d= -f2)"
     # A task cancelled before it ever ran leaves no output file at all.  That
     # is a deliberate act, not a fault, and reporting it as an unexplained
