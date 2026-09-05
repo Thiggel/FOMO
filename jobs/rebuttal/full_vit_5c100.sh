@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-vit5c100
-#SBATCH --partition=gpu
+#SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
 # DINO carries multi-crop at batch 16 with 8 accumulation steps.  The rtx6000
 # cards on gruenau1 and gruenau2 hold 24 GiB and cannot take that beside an MPS
@@ -33,7 +33,6 @@ export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
 export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-0}"
 export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
-export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-40000}"
 # Wait out a co-tenant rather than hand back a slot a multi-day run needs.
 export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-240}"
 
@@ -77,6 +76,12 @@ case "$family" in
     echo "Unknown family $family" >&2
     exit 2
     ;;
+esac
+
+# DINO carries multi-crop, MoCo v3 a plain batch of 64.
+case "$family" in
+  dino) export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-30000}" ;;
+  *)    export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}" ;;
 esac
 
 if [[ -z "$checkpoint" || ! -s "$checkpoint" ]]; then

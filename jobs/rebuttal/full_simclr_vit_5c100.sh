@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-simclr5c100
-#SBATCH --partition=gpu
+#SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=110G

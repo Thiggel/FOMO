@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-obj5c80
-#SBATCH --partition=gpu
+#SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
 # 24GB cards cannot hold the multi-crop batch alongside an MPS co-tenant.
 #SBATCH --exclude=gruenau1,gruenau2
@@ -55,7 +55,14 @@ export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 # the backbone every step, and the caching allocator cannot reuse a block sized
 # for a 224 crop to serve a 96 one.
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
-export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-40000}"
+# Set per family below.  A flat 40000 was written for DINOv2 and applied to
+# MAE as well, which does not need it: MAE runs a plain batch of 64 while
+# DINOv2 sends ten crops of two spatial sizes through the backbone each step.
+# The nodes now carry processes started outside Slurm -- gruenau7 card 0 held
+# 34 GiB of one when this was written -- so a threshold above what the run
+# actually needs is a threshold that never clears.
+# Wait out a squatter instead of handing back a slot a multi-day run needs.
+export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-240}"
 
 
 conditions=(
@@ -102,6 +109,11 @@ case "$family" in
     echo "Unknown family $family" >&2
     exit 2
     ;;
+esac
+
+case "$family" in
+  mae) export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-16000}" ;;
+  *)   export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-30000}" ;;
 esac
 
 if [[ -z "$checkpoint" || ! -s "$checkpoint" ]]; then
