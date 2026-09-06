@@ -2,6 +2,12 @@
 #SBATCH --job-name=fomo-simclr5c100
 #SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
+# The 24 GiB rtx6000 cards on gruenau1 and gruenau2 do not hold this run.
+# simclr bridge seed 2 reached 19.1 GiB itself on gruenau1 and died at cycle
+# 2 with three worker CUDA contexts of ~900 MiB each on top of it, on a card
+# whose usable capacity is 21.98 GiB.  Seed 0 was on a 46 GiB card at the
+# same point in the same schedule and was fine.
+#SBATCH --exclude=gruenau1,gruenau2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=110G
 # SimCLR bridge measured 28 hours.
@@ -23,7 +29,8 @@ export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
 export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-0}"
 export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
-export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
+# 19.1 GiB for the process plus roughly 2.7 GiB of worker contexts.
+export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-24000}"
 # Wait out a co-tenant rather than hand back a slot a multi-day run needs.
 export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-240}"
 
