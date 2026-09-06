@@ -8,6 +8,7 @@ from .StanfordCarsDataset import (
     HuggingFaceStanfordCarsDataset,
 )
 from .DatasetRoots import get_stanford_cars_root
+from experiment.utils.mp_context import start_method
 
 
 class CarsKNNClassifier(BaseKNNClassifier):
@@ -53,7 +54,7 @@ class CarsKNNClassifier(BaseKNNClassifier):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -63,5 +64,5 @@ class CarsKNNClassifier(BaseKNNClassifier):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )

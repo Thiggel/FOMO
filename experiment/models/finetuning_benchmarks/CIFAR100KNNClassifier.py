@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader
 from .BaseKNNClassifier import BaseKNNClassifier
 from .DatasetRoots import get_data_root
 from .CIFARDatasets import get_cifar_dataset
+from experiment.utils.mp_context import start_method
 
 
 class CIFAR100KNNClassifier(BaseKNNClassifier):
@@ -29,7 +30,7 @@ class CIFAR100KNNClassifier(BaseKNNClassifier):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -39,5 +40,5 @@ class CIFAR100KNNClassifier(BaseKNNClassifier):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )

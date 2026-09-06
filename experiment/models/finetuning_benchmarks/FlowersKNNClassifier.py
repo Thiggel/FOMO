@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import Flowers102
 from .BaseKNNClassifier import BaseKNNClassifier
 from .DatasetRoots import get_data_root, allow_data_downloads
+from experiment.utils.mp_context import start_method
 
 
 class FlowersKNNClassifier(BaseKNNClassifier):
@@ -30,7 +31,7 @@ class FlowersKNNClassifier(BaseKNNClassifier):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -40,5 +41,5 @@ class FlowersKNNClassifier(BaseKNNClassifier):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )

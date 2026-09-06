@@ -3,6 +3,7 @@ from experiment.dataset.ImbalancedDataModule import ImbalancedDataModule
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.models.finetuning_benchmarks.BaseKNNClassifier import BaseKNNClassifier
 from experiment.utils.set_seed import set_seed
+from experiment.utils.mp_context import start_method
 
 
 class ImageNet100KNNClassifier(BaseKNNClassifier):
@@ -34,7 +35,7 @@ class ImageNet100KNNClassifier(BaseKNNClassifier):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -44,5 +45,5 @@ class ImageNet100KNNClassifier(BaseKNNClassifier):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )

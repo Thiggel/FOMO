@@ -37,8 +37,12 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
 )
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.ImbalancedTraining import ImbalancedTraining
+from experiment.utils.mp_context import start_method
 
-mp.set_start_method("spawn")
+# See experiment/utils/mp_context: spawn workers rebuild the parent's POSIX
+# semaphores by name, and these nodes sweep those out from under a running
+# job.  FOMO_START_METHOD=fork makes the children inherit them instead.
+mp.set_start_method(start_method(), force=True)
 # "file_system" avoids the open-file-descriptor limits that large dataloaders
 # hit, but it stakes the run on a temp directory surviving for its whole
 # duration.  On these nodes that assumption does not hold: /dev/shm entries are

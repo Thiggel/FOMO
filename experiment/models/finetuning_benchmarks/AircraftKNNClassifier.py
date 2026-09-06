@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from .BaseKNNClassifier import BaseKNNClassifier
 from .AircraftFineTune import FGVCAircraft
 from .DatasetRoots import get_data_root, allow_data_downloads
+from experiment.utils.mp_context import start_method
 
 
 class AircraftKNNClassifier(BaseKNNClassifier):
@@ -31,7 +32,7 @@ class AircraftKNNClassifier(BaseKNNClassifier):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -41,5 +42,5 @@ class AircraftKNNClassifier(BaseKNNClassifier):
             shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
-            multiprocessing_context="spawn",
+            multiprocessing_context=start_method(),
         )
