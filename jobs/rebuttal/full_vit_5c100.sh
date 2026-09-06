@@ -80,7 +80,7 @@ esac
 
 # DINO carries multi-crop, MoCo v3 a plain batch of 64.
 case "$family" in
-  dino) export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-30000}" ;;
+  dino) export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}" ;;
   *)    export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}" ;;
 esac
 

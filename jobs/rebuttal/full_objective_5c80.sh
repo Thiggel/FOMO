@@ -113,7 +113,7 @@ esac
 
 case "$family" in
   mae) export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-16000}" ;;
-  *)   export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-30000}" ;;
+  *)   export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}" ;;
 esac
 
 if [[ -z "$checkpoint" || ! -s "$checkpoint" ]]; then
