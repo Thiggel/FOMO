@@ -114,11 +114,11 @@ esac
 case "$family" in
   mae)
     export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-16000}"
-    export FOMO_GPU_RESERVE_MIB="${FOMO_GPU_RESERVE_MIB:-12000}"
+    export FOMO_GPU_PEAK_MIB="${FOMO_GPU_PEAK_MIB:-12000}"
     ;;
   *)
     export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}"
-    export FOMO_GPU_RESERVE_MIB="${FOMO_GPU_RESERVE_MIB:-18000}"
+    export FOMO_GPU_PEAK_MIB="${FOMO_GPU_PEAK_MIB:-18000}"
     ;;
 esac
 
