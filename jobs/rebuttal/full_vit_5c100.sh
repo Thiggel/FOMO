@@ -80,8 +80,15 @@ esac
 
 # DINO carries multi-crop, MoCo v3 a plain batch of 64.
 case "$family" in
-  dino) export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}" ;;
-  *)    export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}" ;;
+  dino)
+    export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}"
+    # Peak seen on a healthy dino bridge run was 34 GiB.
+    export FOMO_GPU_RESERVE_MIB="${FOMO_GPU_RESERVE_MIB:-34000}"
+    ;;
+  *)
+    export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
+    export FOMO_GPU_RESERVE_MIB="${FOMO_GPU_RESERVE_MIB:-14000}"
+    ;;
 esac
 
 if [[ -z "$checkpoint" || ! -s "$checkpoint" ]]; then

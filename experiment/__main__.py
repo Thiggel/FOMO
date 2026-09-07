@@ -38,6 +38,7 @@ from experiment.models.finetuning_benchmarks.FinetuningBenchmarks import (
 from experiment.dataset.imbalancedness.ImbalanceMethods import ImbalanceMethods
 from experiment.ImbalancedTraining import ImbalancedTraining
 from experiment.utils.mp_context import start_method
+from experiment.utils.reserve_gpu import reserve_gpu_memory
 
 # See experiment/utils/mp_context: spawn workers rebuild the parent's POSIX
 # semaphores by name, and these nodes sweep those out from under a running
@@ -622,6 +623,8 @@ def run_app(args: DictConfig) -> None:
     if args.logger:
         api_key = os.getenv("WANDB_API_KEY")
         wandb.login(key=api_key)
+
+    reserve_gpu_memory()
 
     all_results = run_different_seeds(args)
 
