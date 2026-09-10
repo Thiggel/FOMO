@@ -2,7 +2,7 @@
 \centering
 \small
 \setlength{\tabcolsep}{5pt}
-\caption{Evaluation beyond the default SimCLR/ResNet-50 linear-probe setting. Panel A reports each downstream accuracy separately for three paired ViT-S runs. Panel B reports three paired seeds for low-label full fine-tuning and PASCAL VOC semantic segmentation.}
+\caption{Evaluation beyond the default SimCLR/ResNet-50 linear-probe setting. Panel A reports linear-probe accuracy on four of the seven downstream datasets for five paired ViT-S objectives, three seeds each; Table~\ref{tab:generalization-vits-full-linear} carries all seven and Table~\ref{tab:generalization-vits-full-knn} the $k$NN protocol. Panel B reports three paired seeds for low-label full fine-tuning and PASCAL VOC semantic segmentation.}
 \label{tab:main_generalization}
 \begin{adjustbox}{max width=\linewidth}
 \begin{tabular}{llcccc}
@@ -10,10 +10,16 @@
 \multicolumn{6}{l}{\textit{A. Frozen ViT-S transfer}} \\
 Objective & Method & Cars & Aircraft & Flowers & IN100-LT \\
 \midrule
-SimCLR & SSL baseline & $7.27\pm0.15$ & $10.59\pm0.44$ & $31.81\pm3.35$ & $40.63\pm0.76$ \\
- & With BRIDGE & $\mathbf{7.76\pm0.58}$ & $\mathbf{11.93\pm0.38}$ & $\mathbf{35.95\pm1.31}$ & $\mathbf{42.67\pm1.17}$ \\
-MoCo v3 & SSL baseline & $7.75\pm0.29$ & $10.48\pm0.82$ & $\mathbf{35.73\pm2.30}$ & $45.17\pm0.66$ \\
- & With BRIDGE & $\mathbf{9.29\pm0.32}$ & $\mathbf{12.93\pm1.78}$ & $34.86\pm3.22$ & $\mathbf{47.58\pm1.73}$ \\
+SimCLR & SSL baseline & $7.15\pm0.19$ & $10.92\pm0.40$ & $32.90\pm2.72$ & $41.95\pm1.43$ \\
+ & With BRIDGE & $\mathbf{8.18\pm0.42}$ & $\mathbf{11.82\pm0.43}$ & $\mathbf{36.60\pm2.85}$ & $\mathbf{43.93\pm1.09}$ \\
+MoCo v3 & SSL baseline & $7.57\pm0.23$ & $11.05\pm1.31$ & $30.28\pm1.36$ & $44.79\pm1.17$ \\
+ & With BRIDGE & $\mathbf{9.55\pm0.34}$ & $\mathbf{13.42\pm0.98}$ & $\mathbf{36.82\pm6.07}$ & $\mathbf{47.55\pm0.86}$ \\
+DINO & SSL baseline & $8.10\pm0.25$ & $11.40\pm1.03$ & $\mathbf{38.13\pm5.24}$ & $44.63\pm1.47$ \\
+ & With BRIDGE & $\mathbf{9.49\pm0.88}$ & $\mathbf{13.28\pm0.58}$ & $37.25\pm2.61$ & $\mathbf{46.78\pm0.77}$ \\
+DINOv2 & SSL baseline & $\mathbf{2.13\pm0.35}$ & $\mathbf{3.32\pm0.47}$ & $\mathbf{14.16\pm2.64}$ & $18.68\pm1.21$ \\
+ & With BRIDGE & $2.06\pm0.16$ & $3.25\pm0.15$ & $12.42\pm3.46$ & $\mathbf{19.35\pm1.34}$ \\
+MAE & SSL baseline & $1.54\pm0.19$ & $2.44\pm1.00$ & $\mathbf{10.46\pm5.88}$ & $19.93\pm2.13$ \\
+ & With BRIDGE & $\mathbf{1.56\pm0.43}$ & $\mathbf{3.18\pm0.70}$ & $8.50\pm2.26$ & $\mathbf{22.19\pm2.35}$ \\
 \bottomrule
 \end{tabular}
 

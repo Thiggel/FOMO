@@ -83,42 +83,89 @@ POLICY_REPAIR_ROWS = [
     ),
 ]
 
-# Paired full-schedule ViT-S runs.  mocov3_bridge seed 1 was attempted three
-# times; retry1 stopped before writing a result and retry2 produced nothing,
-# so retry3 is the only completed run and is the one reported here.
+# Paired full-schedule ViT-S runs, one directory per seed.  Names are spelled
+# out because the cells were finished across four waves: the ckptfix runs of
+# late August, the two objective waves that carry no suffix, and the sep05 wave
+# that replaced every cell still standing on a pre-fix encoder.  Each entry is
+# the newest run of that cell holding all fourteen paper metrics.
+#
+# Every cell here postdates commit a29d244.  Before it, Lightning skipped the
+# save whenever ``_last_global_step_saved`` equalled ``global_step``, which is
+# the state every cycle after the first arrives in, so a five-cycle run
+# published its first-cycle encoder.  A pre-fix repair arm therefore understates
+# the method rather than flattering it.
 GENERALIZATION_ROWS = [
     (
         "SimCLR, SSL baseline",
-        [f"rebuttal_full5e100_simclr_vits_base_{s}_gruenau_retry1" for s in (0, 1, 2)],
+        [
+            "rebuttal_full5e100_simclr_vits_base_0_ckptfix2",
+            "rebuttal_full5e100_simclr_vits_base_1_ckptfix",
+            "rebuttal_full5e100_simclr_vits_base_2_ckptfix2",
+        ],
     ),
     (
         "SimCLR, with \\method",
         [
-            f"rebuttal_full5e100_simclr_vits_bridge_{s}_gruenau_retry1"
-            for s in (0, 1, 2)
+            "rebuttal_full5e100_simclr_vits_bridge_0_sep05",
+            "rebuttal_full5e100_simclr_vits_bridge_1_ckptfix",
+            "rebuttal_full5e100_simclr_vits_bridge_2_sep05",
         ],
     ),
     (
         "MoCo v3, SSL baseline",
-        [f"rebuttal_full5e100_mocov3_base_{s}_gruenau_retry1" for s in (0, 1, 2)],
+        [f"rebuttal_full5e100_mocov3_base_{s}_ckptfix" for s in (0, 1, 2)],
     ),
     (
         "MoCo v3, with \\method",
         [
-            "rebuttal_full5e100_mocov3_bridge_0_gruenau_retry1",
-            "rebuttal_full5e100_mocov3_bridge_1_gruenau_retry3",
-            "rebuttal_full5e100_mocov3_bridge_2_gruenau_retry1",
+            "rebuttal_full5e100_mocov3_bridge_0_ckptfix",
+            "rebuttal_full5e100_mocov3_bridge_1_sep05",
+            "rebuttal_full5e100_mocov3_bridge_2_ckptfix",
         ],
     ),
-    # DINO completed only two seeds and the paper reports it as inconclusive
-    # rather than as evidence for or against the method.
     (
         "DINO, SSL baseline",
-        [f"rebuttal_full5e100_dino_base_{s}_gruenau_retry1" for s in (0, 1)],
+        [f"rebuttal_full5e100_dino_base_{s}_ckptfix2" for s in (0, 1, 2)],
     ),
     (
         "DINO, with \\method",
-        [f"rebuttal_full5e100_dino_bridge_{s}_gruenau_retry1" for s in (0, 1)],
+        [
+            "rebuttal_full5e100_dino_bridge_0_ckptfix2",
+            "rebuttal_full5e100_dino_bridge_1_sep05",
+            "rebuttal_full5e100_dino_bridge_2_sep05",
+        ],
+    ),
+    (
+        "DINOv2, SSL baseline",
+        [
+            "rebuttal_full5e80_dinov2_base_0_sep05",
+            "rebuttal_full5e80_dinov2_base_1",
+            "rebuttal_full5e80_dinov2_base_2",
+        ],
+    ),
+    (
+        "DINOv2, with \\method",
+        [
+            "rebuttal_full5e80_dinov2_bridge_0",
+            "rebuttal_full5e80_dinov2_bridge_1",
+            "rebuttal_full5e80_dinov2_bridge_2_sep05",
+        ],
+    ),
+    (
+        "MAE, SSL baseline",
+        [
+            "rebuttal_full5e80_mae_base_0",
+            "rebuttal_full5e80_mae_base_1_sep05",
+            "rebuttal_full5e80_mae_base_2_sep05",
+        ],
+    ),
+    (
+        "MAE, with \\method",
+        [
+            "rebuttal_full5e80_mae_bridge_0",
+            "rebuttal_full5e80_mae_bridge_1_sep05",
+            "rebuttal_full5e80_mae_bridge_2_sep05",
+        ],
     ),
 ]
 
@@ -213,7 +260,13 @@ TABLES = {
             "Paired full-schedule ViT-S transfer on ImageNet-100-LT, with "
             "every downstream dataset reported separately. Both arms of each "
             "pair start from the same source checkpoint and receive the same "
-            "number of post-branch optimizer updates."
+            "number of post-branch optimizer updates. Five objectives span "
+            "contrastive (SimCLR, MoCo v3), self-distillation (DINO, "
+            "DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, "
+            "MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE "
+            "run five of 80, since DINOv2 carries multi-crop at batch 16 and "
+            "does not finish otherwise. Mean $\\pm$ standard deviation over "
+            "three seeds."
         ),
         "label": "tab:generalization-vits-full",
     },

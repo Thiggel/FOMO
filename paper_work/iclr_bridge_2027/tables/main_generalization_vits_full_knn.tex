@@ -2,19 +2,23 @@
 \centering
 \small
 \setlength{\tabcolsep}{4pt}
-\caption{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. $k$NN accuracy.}
+\caption{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Five objectives span contrastive (SimCLR, MoCo v3), self-distillation (DINO, DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE run five of 80, since DINOv2 carries multi-crop at batch 16 and does not finish otherwise. Mean $\pm$ standard deviation over three seeds. $k$NN accuracy.}
 \label{tab:generalization-vits-full-knn}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lccccccc}
 \toprule
 Method & Cars & Aircraft & Flowers & Pets & CIFAR-10 & CIFAR-100 & IN100-LT \\
 \midrule
-SimCLR, SSL baseline & $5.49\pm0.28$ & $6.69\pm0.34$ & $32.07\pm1.43$ & $16.17\pm0.75$ & $64.30\pm0.78$ & $34.49\pm0.22$ & $35.49\pm0.73$ \\
-SimCLR, with \method & $5.47\pm0.34$ & $6.94\pm0.38$ & $32.63\pm1.13$ & $16.22\pm0.55$ & $64.04\pm0.76$ & $34.51\pm0.79$ & $36.49\pm0.77$ \\
-MoCo v3, SSL baseline & $5.61\pm0.41$ & $7.28\pm0.02$ & $31.71\pm0.12$ & $16.53\pm0.56$ & $65.22\pm0.89$ & $35.41\pm0.74$ & $36.31\pm1.02$ \\
-MoCo v3, with \method & $5.43\pm0.23$ & $7.42\pm0.18$ & $32.25\pm0.53$ & $17.63\pm0.60$ & $66.46\pm0.70$ & $36.48\pm0.21$ & $38.12\pm1.08$ \\
-DINO, SSL baseline (2 seeds) & $4.09\pm0.06$ & $4.92\pm0.47$ & $23.86\pm0.46$ & $10.67\pm0.98$ & $56.39\pm0.43$ & $27.50\pm0.13$ & $31.18\pm1.94$ \\
-DINO, with \method (2 seeds) & $4.02\pm0.17$ & $4.71\pm0.04$ & $23.36\pm0.54$ & $10.48\pm0.29$ & $55.93\pm0.04$ & $27.66\pm0.26$ & $30.67\pm0.63$ \\
+SimCLR, SSL baseline & $6.26\pm0.17$ & $7.09\pm0.17$ & $36.53\pm0.89$ & $19.16\pm0.64$ & $66.05\pm0.48$ & $36.72\pm0.36$ & $41.21\pm0.72$ \\
+SimCLR, with \method & $6.52\pm0.22$ & $7.56\pm0.23$ & $38.29\pm0.83$ & $19.93\pm0.53$ & $65.70\pm0.85$ & $36.46\pm0.33$ & $42.91\pm0.78$ \\
+MoCo v3, SSL baseline & $6.65\pm0.38$ & $7.71\pm0.16$ & $38.91\pm1.03$ & $23.56\pm1.12$ & $69.29\pm0.25$ & $39.98\pm0.44$ & $45.14\pm0.46$ \\
+MoCo v3, with \method & $6.74\pm0.26$ & $8.21\pm0.18$ & $40.51\pm1.45$ & $24.91\pm0.45$ & $65.41\pm0.21$ & $36.24\pm0.46$ & $47.71\pm1.53$ \\
+DINO, SSL baseline & $6.05\pm0.27$ & $7.73\pm0.52$ & $38.52\pm1.19$ & $19.26\pm0.16$ & $62.69\pm2.42$ & $33.98\pm2.80$ & $45.28\pm0.98$ \\
+DINO, with \method & $6.39\pm0.22$ & $8.16\pm0.26$ & $40.72\pm0.31$ & $21.79\pm1.15$ & $64.38\pm3.51$ & $35.59\pm2.51$ & $47.14\pm0.29$ \\
+DINOv2, SSL baseline & $2.28\pm0.37$ & $3.49\pm0.15$ & $18.02\pm1.15$ & $5.53\pm0.36$ & $33.90\pm1.34$ & $13.68\pm0.45$ & $14.79\pm1.66$ \\
+DINOv2, with \method & $2.55\pm0.05$ & $3.46\pm0.46$ & $18.43\pm1.66$ & $6.21\pm0.35$ & $35.33\pm1.43$ & $14.53\pm0.70$ & $14.85\pm0.92$ \\
+MAE, SSL baseline & $1.00\pm0.14$ & $2.24\pm0.29$ & $5.30\pm0.52$ & $4.58\pm0.17$ & $31.34\pm1.65$ & $10.96\pm0.44$ & $11.75\pm0.38$ \\
+MAE, with \method & $1.38\pm0.37$ & $2.50\pm0.70$ & $7.54\pm2.13$ & $5.35\pm0.76$ & $35.58\pm7.14$ & $13.44\pm3.46$ & $15.46\pm2.68$ \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

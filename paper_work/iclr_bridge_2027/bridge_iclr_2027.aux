@@ -1,27 +1,12 @@
 \relax 
 \providecommand\hyper@newdestlabel[2]{}
-\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
-\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
-\global\let\oldcontentsline\contentsline
-\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
-\global\let\oldnewlabel\newlabel
-\gdef\newlabel#1#2{\newlabelxx{#1}#2}
-\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
-\AtEndDocument{\ifx\hyper@anchor\@undefined
-\let\contentsline\oldcontentsline
-\let\newlabel\oldnewlabel
-\fi}
-\fi}
-\global\let\hyper@last\relax 
-\gdef\HyperFirstAtBeginDocument#1{#1}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \citation{chen2020simple,he2020momentum,he2022masked,DINO,oquab2023dinov2,dinov3}
 \citation{tian2021divide,assran2210hidden,ts,sdclr}
 \providecommand \oddpage@label [2]{}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Conceptual overview of BRIDGE. We alternate between SSL pretraining, sparsity scoring in representation space, and targeted image-to-image diffusion augmentation. BRIDGE augments a mode-centered band inside the upper OOD tail and not the extreme tail itself.\relax }}{1}{figure.1}\protected@file@percent }
-\newlabel{fig:bridge-overview}{{1}{1}{Conceptual overview of BRIDGE. We alternate between SSL pretraining, sparsity scoring in representation space, and targeted image-to-image diffusion augmentation. BRIDGE augments a mode-centered band inside the upper OOD tail and not the extreme tail itself.\relax }{figure.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Conceptual overview of BRIDGE. We alternate between SSL pretraining, sparsity scoring in representation space, and targeted image-to-image diffusion augmentation. BRIDGE augments a mode-centered band inside the upper OOD tail and not the extreme tail itself.}}{1}{figure.1}\protected@file@percent }
+\newlabel{fig:bridge-overview}{{1}{1}{Conceptual overview of BRIDGE. We alternate between SSL pretraining, sparsity scoring in representation space, and targeted image-to-image diffusion augmentation. BRIDGE augments a mode-centered band inside the upper OOD tail and not the extreme tail itself}{figure.1}{}}
 \citation{ts}
 \citation{sdclr}
 \citation{sdclr,ts,colt}
@@ -32,10 +17,10 @@
 \citation{sener2018active}
 \citation{yehuda2022covering}
 \citation{hacohen2022budget}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2}Background and Related Work}{2}{section.2}\protected@file@percent }
 \newlabel{sec:background}{{2}{2}{Background and Related Work}{section.2}{}}
 \@writefile{toc}{\contentsline {paragraph}{Skewed SSL and representation-driven data selection.}{2}{section*.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Budgeted acquisition and coverage.}{2}{section*.2}\protected@file@percent }
 \citation{ho2020denoising,rombach2022highresolution,meng2022sdedit}
 \citation{trabucco2023effective,nguyen2026tada}
 \citation{azizi2023synthetic,he2023synthetic,fan2024scaling}
@@ -43,25 +28,24 @@
 \citation{zang2024diffaug}
 \citation{liang2024aide,worker2022omniverse}
 \citation{li2023dreamteacher,tang2023dift,yu2025repa}
+\@writefile{toc}{\contentsline {paragraph}{Budgeted acquisition and coverage.}{3}{section*.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Generative augmentation.}{3}{section*.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Synthetic representation learning and data engines.}{3}{section*.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{External representation priors.}{3}{section*.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3}Theoretical Framework}{3}{section.3}\protected@file@percent }
 \newlabel{sec:theory}{{3}{3}{Theoretical Framework}{section.3}{}}
 \newlabel{prop:local-support}{{1}{3}{Local support monotonicity}{proposition.1}{}}
-\newlabel{eq:regional-bound}{{1}{3}{Theoretical Framework}{equation.3.1}{}}
-\citation{gonzalez1985clustering}
+\newlabel{eq:regional-bound}{{1}{4}{Theoretical Framework}{equation.1}{}}
 \newlabel{prop:sparse-value}{{2}{4}{Sparse-region marginal value}{proposition.2}{}}
-\newlabel{eq:repair-utility}{{3}{4}{Theoretical Framework}{equation.3.3}{}}
+\newlabel{eq:repair-utility}{{3}{4}{Theoretical Framework}{equation.3}{}}
 \newlabel{prop:interior}{{3}{4}{Interior recoverable-support optimum}{proposition.3}{}}
 \newlabel{prop:closed-form}{{4}{4}{Closed-form interior optimum}{proposition.4}{}}
 \newlabel{prop:adaptive}{{5}{4}{Adaptive allocation under diminishing returns}{proposition.5}{}}
-\newlabel{prop:one-stage}{{6}{4}{Single-stage insensitivity}{proposition.6}{}}
+\citation{gonzalez1985clustering}
 \citation{sun2022out}
+\newlabel{prop:one-stage}{{6}{5}{Single-stage insensitivity}{proposition.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}BRIDGE}{5}{section.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Cyclic acquisition and continued pretraining}{5}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Sparse and recoverable anchor selection}{5}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:mode-window}{{4.2}{5}{Sparse and recoverable anchor selection}{subsection.4.2}{}}
 \citation{imagenet-lt}
 \citation{krizhevsky2009learning}
 \citation{pass}
@@ -70,57 +54,59 @@
 \citation{aircraft}
 \citation{flowers}
 \citation{pets}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Sparse and recoverable anchor selection}{6}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:mode-window}{{4.2}{6}{Sparse and recoverable anchor selection}{subsection.4.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Local generative repair}{6}{subsection.4.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Setup}{6}{section.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Source datasets.}{6}{section*.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Downstream evaluation.}{6}{section*.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Linear-probe transfer for the three label-derived long-tailed source regimes. The average is computed over all seven downstream linear-probe tasks.\relax }}{7}{table.caption.11}\protected@file@percent }
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{tab:main_sota_label_sources}{{1}{7}{Linear-probe transfer for the three label-derived long-tailed source regimes. The average is computed over all seven downstream linear-probe tasks.\relax }{table.caption.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{Downstream evaluation.}{7}{section*.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Training protocol.}{7}{section*.8}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Compared methods.}{7}{section*.9}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Ablation protocol.}{7}{section*.10}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {6}Results}{7}{section.6}\protected@file@percent }
 \newlabel{sec:results}{{6}{7}{Results}{section.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Comparison across source datasets}{7}{subsection.6.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Linear-probe transfer for the two web-source regimes. PASS is a natural web-image corpus, while DiffusionDB is fully synthetic. The average is computed over all seven downstream linear-probe tasks.\relax }}{8}{table.caption.12}\protected@file@percent }
-\newlabel{tab:main_sota_web_sources}{{2}{8}{Linear-probe transfer for the two web-source regimes. PASS is a natural web-image corpus, while DiffusionDB is fully synthetic. The average is computed over all seven downstream linear-probe tasks.\relax }{table.caption.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Linear-probe transfer for the three label-derived long-tailed source regimes. The average is computed over all seven downstream linear-probe tasks.}}{8}{table.caption.11}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:main_sota_label_sources}{{1}{8}{Linear-probe transfer for the three label-derived long-tailed source regimes. The average is computed over all seven downstream linear-probe tasks}{table.caption.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Linear-probe transfer for the two web-source regimes. PASS is a natural web-image corpus, while DiffusionDB is fully synthetic. The average is computed over all seven downstream linear-probe tasks.}}{8}{table.caption.12}\protected@file@percent }
+\newlabel{tab:main_sota_web_sources}{{2}{8}{Linear-probe transfer for the two web-source regimes. PASS is a natural web-image corpus, while DiffusionDB is fully synthetic. The average is computed over all seven downstream linear-probe tasks}{table.caption.12}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Evaluation beyond the default protocol}{8}{subsection.6.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Evaluation beyond the default SimCLR/ResNet-50 linear-probe setting. Panel A reports each downstream accuracy separately for three paired ViT-S runs. Panel B reports three paired seeds for low-label full fine-tuning and PASCAL VOC semantic segmentation.\relax }}{9}{table.caption.13}\protected@file@percent }
-\newlabel{tab:main_generalization}{{3}{9}{Evaluation beyond the default SimCLR/ResNet-50 linear-probe setting. Panel A reports each downstream accuracy separately for three paired ViT-S runs. Panel B reports three paired seeds for low-label full fine-tuning and PASCAL VOC semantic segmentation.\relax }{table.caption.13}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Evaluation beyond the default SimCLR/ResNet-50 linear-probe setting. Panel A reports linear-probe accuracy on four of the seven downstream datasets for five paired ViT-S objectives, three seeds each; Table~\ref {tab:generalization-vits-full-linear} carries all seven and Table~\ref {tab:generalization-vits-full-knn} the $k$NN protocol. Panel B reports three paired seeds for low-label full fine-tuning and PASCAL VOC semantic segmentation.}}{9}{table.caption.13}\protected@file@percent }
+\newlabel{tab:main_generalization}{{3}{9}{Evaluation beyond the default SimCLR/ResNet-50 linear-probe setting. Panel A reports linear-probe accuracy on four of the seven downstream datasets for five paired ViT-S objectives, three seeds each; Table~\ref {tab:generalization-vits-full-linear} carries all seven and Table~\ref {tab:generalization-vits-full-knn} the $k$NN protocol. Panel B reports three paired seeds for low-label full fine-tuning and PASCAL VOC semantic segmentation}{table.caption.13}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Ablations}{9}{subsection.6.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{SSL objective and backbone.}{9}{section*.14}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Generation mechanism.}{9}{section*.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Is the gain transfer from the generator?}{9}{section*.16}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Cost of the loop.}{9}{section*.17}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Each entry is downstream linear-probe accuracy reported as mean $\pm $ standard deviation over three seeds.\relax }}{10}{table.caption.19}\protected@file@percent }
-\newlabel{tab:policy-repair-controls}{{4}{10}{Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Each entry is downstream linear-probe accuracy reported as mean $\pm $ standard deviation over three seeds.\relax }{table.caption.19}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Each entry is downstream linear-probe accuracy reported as mean $\pm $ standard deviation over three seeds.}}{10}{table.caption.19}\protected@file@percent }
+\newlabel{tab:policy-repair-controls}{{4}{10}{Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Each entry is downstream linear-probe accuracy reported as mean $\pm $ standard deviation over three seeds}{table.caption.19}{}}
+\@writefile{toc}{\contentsline {paragraph}{Is the gain transfer from the generator?}{10}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cost of the loop.}{10}{section*.17}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Feedback and alternative repair pipelines.}{10}{section*.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Sample selection.}{10}{section*.20}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Reading the robustness sweep.}{10}{section*.21}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Cycle count.}{10}{section*.22}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Selection and cycle ablations on ImageNet-100-LT. This matched ablation family is independent of the source-regime runs in Table\nobreakspace  {}\ref  {tab:main_sota_label_sources}. Values average all seven downstream tasks over three seeds. The nearby mode-window results show that the exact lower percentile is not critical. Uniform and top-tail selection test the dense-allocation and extreme-sparsity alternatives.\relax }}{11}{table.caption.23}\protected@file@percent }
-\newlabel{tab:main_mechanism}{{5}{11}{Selection and cycle ablations on ImageNet-100-LT. This matched ablation family is independent of the source-regime runs in Table~\ref {tab:main_sota_label_sources}. Values average all seven downstream tasks over three seeds. The nearby mode-window results show that the exact lower percentile is not critical. Uniform and top-tail selection test the dense-allocation and extreme-sparsity alternatives.\relax }{table.caption.23}{}}
+\@writefile{toc}{\contentsline {paragraph}{Sample selection.}{11}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reading the robustness sweep.}{11}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cycle count.}{11}{section*.22}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Selection and cycle ablations on ImageNet-100-LT. This matched ablation family is independent of the source-regime runs in Table~\ref {tab:main_sota_label_sources}. Values average all seven downstream tasks over three seeds. The nearby mode-window results show that the exact lower percentile is not critical. Uniform and top-tail selection test the dense-allocation and extreme-sparsity alternatives.}}{11}{table.caption.23}\protected@file@percent }
+\newlabel{tab:main_mechanism}{{5}{11}{Selection and cycle ablations on ImageNet-100-LT. This matched ablation family is independent of the source-regime runs in Table~\ref {tab:main_sota_label_sources}. Values average all seven downstream tasks over three seeds. The nearby mode-window results show that the exact lower percentile is not critical. Uniform and top-tail selection test the dense-allocation and extreme-sparsity alternatives}{table.caption.23}{}}
 \@writefile{toc}{\contentsline {paragraph}{Encoder architecture.}{11}{section*.24}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{$k$NN corroboration.}{11}{section*.25}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Where the acquisition rule acquires its effect}{11}{subsection.6.4}\protected@file@percent }
 \newlabel{sec:one-stage}{{6.4}{11}{Where the acquisition rule acquires its effect}{subsection.6.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Representation analysis}{11}{subsection.6.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. Linear-probe accuracy.\relax }}{12}{table.caption.26}\protected@file@percent }
-\newlabel{tab:percentile-utility-full-linear}{{6}{12}{Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. Linear-probe accuracy.\relax }{table.caption.26}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Where the acquisition budget is spent, projected to two dimensions with t-SNE, for one ImageNet-100-LT run. Grey marks scores below the 75th percentile, blue the q75--q99 acquisition band, and red the anchors farthest-point sampling selects from that band. The band occupies the periphery of the projection: over the panel shown, the rank correlation between $k$NN score and distance from the projection centre is $+0.51$, and band members sit at mean radius 34.6 against 25.5 for the rest. The anchors are spread across the band and not clustered inside it, which is the behaviour farthest-point sampling is included to produce. Each panel is projected separately because the encoder changes between cycles, so positions are comparable within a panel and not across panels. The panel contains original images only, so it shows which regions are targeted and not what the inserted samples do to them; Table\nobreakspace  {}\ref  {tab:fixed-support} measures the latter directly.\relax }}{12}{figure.caption.27}\protected@file@percent }
-\newlabel{fig:cycle-tsne}{{2}{12}{Where the acquisition budget is spent, projected to two dimensions with t-SNE, for one ImageNet-100-LT run. Grey marks scores below the 75th percentile, blue the q75--q99 acquisition band, and red the anchors farthest-point sampling selects from that band. The band occupies the periphery of the projection: over the panel shown, the rank correlation between $k$NN score and distance from the projection centre is $+0.51$, and band members sit at mean radius 34.6 against 25.5 for the rest. The anchors are spread across the band and not clustered inside it, which is the behaviour farthest-point sampling is included to produce. Each panel is projected separately because the encoder changes between cycles, so positions are comparable within a panel and not across panels. The panel contains original images only, so it shows which regions are targeted and not what the inserted samples do to them; Table~\ref {tab:fixed-support} measures the latter directly.\relax }{figure.caption.27}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. Linear-probe accuracy.}}{12}{table.caption.26}\protected@file@percent }
+\newlabel{tab:percentile-utility-full-linear}{{6}{12}{Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. Linear-probe accuracy}{table.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Where the acquisition budget is spent, projected to two dimensions with t-SNE, for one ImageNet-100-LT run. Grey marks scores below the 75th percentile, blue the q75--q99 acquisition band, and red the anchors farthest-point sampling selects from that band. The band occupies the periphery of the projection: over the panel shown, the rank correlation between $k$NN score and distance from the projection centre is $+0.51$, and band members sit at mean radius 34.6 against 25.5 for the rest. The anchors are spread across the band and not clustered inside it, which is the behaviour farthest-point sampling is included to produce. Each panel is projected separately because the encoder changes between cycles, so positions are comparable within a panel and not across panels. The panel contains original images only, so it shows which regions are targeted and not what the inserted samples do to them; Table~\ref {tab:fixed-support} measures the latter directly.}}{12}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:cycle-tsne}{{2}{12}{Where the acquisition budget is spent, projected to two dimensions with t-SNE, for one ImageNet-100-LT run. Grey marks scores below the 75th percentile, blue the q75--q99 acquisition band, and red the anchors farthest-point sampling selects from that band. The band occupies the periphery of the projection: over the panel shown, the rank correlation between $k$NN score and distance from the projection centre is $+0.51$, and band members sit at mean radius 34.6 against 25.5 for the rest. The anchors are spread across the band and not clustered inside it, which is the behaviour farthest-point sampling is included to produce. Each panel is projected separately because the encoder changes between cycles, so positions are comparable within a panel and not across panels. The panel contains original images only, so it shows which regions are targeted and not what the inserted samples do to them; Table~\ref {tab:fixed-support} measures the latter directly}{figure.caption.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Representation analysis}{12}{subsection.6.5}\protected@file@percent }
 \bibstyle{plainnat}
 \bibdata{references}
 \bibcite{abbas2024effective}{{1}{2024}{{Abbas et~al.}}{{Abbas, Rusak, Tirumala, Brendel, Chaudhuri, and Morcos}}}
 \bibcite{pass}{{2}{2021}{{Asano et~al.}}{{Asano, Rupprecht, Zisserman, and Vedaldi}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Score distribution over repair cycles for the same run, with the q75--q99 acquisition band shaded and the modal bin marked. The distribution stays right-skewed while its scale grows, so the band tracks a moving target and the selector re-derives it from the current representation at every cycle.}}{13}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:cycle-histograms-main}{{3}{13}{Score distribution over repair cycles for the same run, with the q75--q99 acquisition band shaded and the modal bin marked. The distribution stays right-skewed while its scale grows, so the band tracks a moving target and the selector re-derives it from the current representation at every cycle}{figure.caption.28}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Scope and Limitations}{13}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{13}{section.8}\protected@file@percent }
 \bibcite{assran2210hidden}{{3}{2023}{{Assran et~al.}}{{Assran, Balestriero, Duval, Bordes, Misra, Bojanowski, Vincent, Rabbat, and Ballas}}}
 \bibcite{azizi2023synthetic}{{4}{2023}{{Azizi et~al.}}{{Azizi, Kornblith, Saharia, Norouzi, and Fleet}}}
 \bibcite{colt}{{5}{2023}{{Bai et~al.}}{{Bai, Liu, Wang, Hao, Feng, Chu, and Hu}}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Score distribution over repair cycles for the same run, with the q75--q99 acquisition band shaded and the modal bin marked. The distribution stays right-skewed while its scale grows, so the band tracks a moving target and the selector re-derives it from the current representation at every cycle.\relax }}{13}{figure.caption.28}\protected@file@percent }
-\newlabel{fig:cycle-histograms-main}{{3}{13}{Score distribution over repair cycles for the same run, with the q75--q99 acquisition band shaded and the modal bin marked. The distribution stays right-skewed while its scale grows, so the band tracks a moving target and the selector re-derives it from the current representation at every cycle.\relax }{figure.caption.28}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Scope and Limitations}{13}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{13}{section.8}\protected@file@percent }
 \bibcite{baradad2021noise}{{6}{2021}{{Baradad et~al.}}{{Baradad, Wulff, Wang, Isola, and Torralba}}}
 \bibcite{baradad2022procedural}{{7}{2022}{{Baradad et~al.}}{{Baradad, Chen, Wulff, Wang, Feris, Torralba, and Isola}}}
 \bibcite{DINO}{{8}{2021}{{Caron et~al.}}{{Caron, Touvron, Misra, J{\'e}gou, Mairal, Bojanowski, and Joulin}}}
@@ -176,20 +162,20 @@
 \citation{liang2024aide}
 \@writefile{toc}{\contentsline {section}{\numberline {A}Comparison with Related Acquisition Methods}{17}{appendix.A}\protected@file@percent }
 \newlabel{app:prior-art}{{A}{17}{Comparison with Related Acquisition Methods}{appendix.A}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Closest methods and the dimensions relevant to the acquisition problem. ``Feedback'' means that the learner or task model changes the next acquisition decision.\relax }}{17}{table.caption.30}\protected@file@percent }
-\newlabel{tab:prior-art}{{7}{17}{Closest methods and the dimensions relevant to the acquisition problem. ``Feedback'' means that the learner or task model changes the next acquisition decision.\relax }{table.caption.30}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Local support added in the frozen cycle-0 representation, reported as mean $\pm $ standard deviation over three seeds. Controls are matched one-to-one within class on initial $k$NN radius and are never selected. Negative radius DiD and positive purity DiD favor treated anchors.\relax }}{18}{table.caption.31}\protected@file@percent }
-\newlabel{tab:fixed-support}{{8}{18}{Local support added in the frozen cycle-0 representation, reported as mean $\pm $ standard deviation over three seeds. Controls are matched one-to-one within class on initial $k$NN radius and are never selected. Negative radius DiD and positive purity DiD favor treated anchors.\relax }{table.caption.31}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Closest methods and the dimensions relevant to the acquisition problem. ``Feedback'' means that the learner or task model changes the next acquisition decision.}}{18}{table.caption.30}\protected@file@percent }
+\newlabel{tab:prior-art}{{7}{18}{Closest methods and the dimensions relevant to the acquisition problem. ``Feedback'' means that the learner or task model changes the next acquisition decision}{table.caption.30}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Local support added in the frozen cycle-0 representation, reported as mean $\pm $ standard deviation over three seeds. Controls are matched one-to-one within class on initial $k$NN radius and are never selected. Negative radius DiD and positive purity DiD favor treated anchors.}}{18}{table.caption.31}\protected@file@percent }
+\newlabel{tab:fixed-support}{{8}{18}{Local support added in the frozen cycle-0 representation, reported as mean $\pm $ standard deviation over three seeds. Controls are matched one-to-one within class on initial $k$NN radius and are never selected. Negative radius DiD and positive purity DiD favor treated anchors}{table.caption.31}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {B}Representation Diagnostics}{18}{appendix.B}\protected@file@percent }
 \newlabel{app:geometry}{{B}{18}{Representation Diagnostics}{appendix.B}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {C}Proofs for the Support-Allocation Framework}{18}{appendix.C}\protected@file@percent }
 \newlabel{app:proofs}{{C}{18}{Proofs for the Support-Allocation Framework}{appendix.C}{}}
-\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition\nobreakspace  {}\ref  {prop:local-support}.}{18}{section*.32}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition\nobreakspace  {}\ref  {prop:sparse-value}.}{18}{section*.33}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition\nobreakspace  {}\ref  {prop:interior}.}{18}{section*.34}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition\nobreakspace  {}\ref  {prop:closed-form}.}{18}{section*.35}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition\nobreakspace  {}\ref  {prop:one-stage}.}{18}{section*.36}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition\nobreakspace  {}\ref  {prop:adaptive}.}{19}{section*.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition~\ref {prop:local-support}.}{18}{section*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition~\ref {prop:sparse-value}.}{18}{section*.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition~\ref {prop:interior}.}{18}{section*.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition~\ref {prop:closed-form}.}{18}{section*.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition~\ref {prop:one-stage}.}{19}{section*.36}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Proof of Proposition~\ref {prop:adaptive}.}{19}{section*.37}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {D}Implementation and Reproducibility}{19}{appendix.D}\protected@file@percent }
 \newlabel{app:implementation}{{D}{19}{Implementation and Reproducibility}{appendix.D}{}}
 \@writefile{toc}{\contentsline {paragraph}{Core training configuration.}{19}{section*.38}\protected@file@percent }
@@ -198,48 +184,52 @@
 \@writefile{toc}{\contentsline {paragraph}{Source data specifics.}{19}{section*.41}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Seeds and reporting.}{19}{section*.42}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Code availability.}{19}{section*.43}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {E}Compute Resources and Runtime}{19}{appendix.E}\protected@file@percent }
-\newlabel{app:compute}{{E}{19}{Compute Resources and Runtime}{appendix.E}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Representative OOD histograms across BRIDGE cycles from an ImageNet-100-LT run. Solid blue lines mark the mean distance and dashed orange lines mark the 99th percentile. The acquisition distribution and its modal shoulder change as training and repair progress.\relax }}{20}{figure.caption.46}\protected@file@percent }
-\newlabel{fig:cycle-histories}{{4}{20}{Representative OOD histograms across BRIDGE cycles from an ImageNet-100-LT run. Solid blue lines mark the mean distance and dashed orange lines mark the 99th percentile. The acquisition distribution and its modal shoulder change as training and repair progress.\relax }{figure.caption.46}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {E}Compute Resources and Runtime}{20}{appendix.E}\protected@file@percent }
+\newlabel{app:compute}{{E}{20}{Compute Resources and Runtime}{appendix.E}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {F}Assets and Terms of Use}{20}{appendix.F}\protected@file@percent }
 \newlabel{app:assets}{{F}{20}{Assets and Terms of Use}{appendix.F}{}}
 \@writefile{toc}{\contentsline {paragraph}{Source datasets.}{20}{section*.44}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Generators.}{20}{section*.45}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {G}Broader Impact}{20}{appendix.G}\protected@file@percent }
 \newlabel{app:impact}{{G}{20}{Broader Impact}{appendix.G}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Representative OOD histograms across BRIDGE cycles from an ImageNet-100-LT run. Solid blue lines mark the mean distance and dashed orange lines mark the 99th percentile. The acquisition distribution and its modal shoulder change as training and repair progress.}}{21}{figure.caption.46}\protected@file@percent }
+\newlabel{fig:cycle-histories}{{4}{21}{Representative OOD histograms across BRIDGE cycles from an ImageNet-100-LT run. Solid blue lines mark the mean distance and dashed orange lines mark the 99th percentile. The acquisition distribution and its modal shoulder change as training and repair progress}{figure.caption.46}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {H}Full Results}{21}{appendix.H}\protected@file@percent }
 \newlabel{app:full-results}{{H}{21}{Full Results}{appendix.H}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Full linear-probe transfer results across all source datasets and comparison methods.\relax }}{21}{table.caption.47}\protected@file@percent }
-\newlabel{tab:app_sota_linear_full}{{9}{21}{Full linear-probe transfer results across all source datasets and comparison methods.\relax }{table.caption.47}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Full $k$NN transfer results across all source datasets and comparison methods.\relax }}{21}{table.caption.48}\protected@file@percent }
-\newlabel{tab:app_sota_knn_full}{{10}{21}{Full $k$NN transfer results across all source datasets and comparison methods.\relax }{table.caption.48}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Pretraining objective ablation on the default ResNet-50 backbone, full linear-probe results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table\nobreakspace  {}\ref  {tab:main_generalization}.\relax }}{22}{table.caption.49}\protected@file@percent }
-\newlabel{tab:app_pretraining_linear}{{11}{22}{Pretraining objective ablation on the default ResNet-50 backbone, full linear-probe results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table~\ref {tab:main_generalization}.\relax }{table.caption.49}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Pretraining objective ablation on the default ResNet-50 backbone, full $k$NN results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table\nobreakspace  {}\ref  {tab:main_generalization}.\relax }}{22}{table.caption.50}\protected@file@percent }
-\newlabel{tab:app_pretraining_knn}{{12}{22}{Pretraining objective ablation on the default ResNet-50 backbone, full $k$NN results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table~\ref {tab:main_generalization}.\relax }{table.caption.50}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Augmentation mechanism ablation with full linear-probe results.\relax }}{22}{table.caption.51}\protected@file@percent }
-\newlabel{tab:app_generation_linear}{{13}{22}{Augmentation mechanism ablation with full linear-probe results.\relax }{table.caption.51}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Augmentation mechanism ablation with full $k$NN results.\relax }}{22}{table.caption.52}\protected@file@percent }
-\newlabel{tab:app_generation_knn}{{14}{22}{Augmentation mechanism ablation with full $k$NN results.\relax }{table.caption.52}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Selection rule ablation with full linear-probe results.\relax }}{22}{table.caption.53}\protected@file@percent }
-\newlabel{tab:app_selection_linear}{{15}{22}{Selection rule ablation with full linear-probe results.\relax }{table.caption.53}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Selection rule ablation with full $k$NN results.\relax }}{22}{table.caption.54}\protected@file@percent }
-\newlabel{tab:app_selection_knn}{{16}{22}{Selection rule ablation with full $k$NN results.\relax }{table.caption.54}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Cycle count ablation with full linear-probe results.\relax }}{22}{table.caption.55}\protected@file@percent }
-\newlabel{tab:app_cycles_linear}{{17}{22}{Cycle count ablation with full linear-probe results.\relax }{table.caption.55}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. Linear-probe accuracy.\relax }}{23}{table.caption.59}\protected@file@percent }
-\newlabel{tab:selector-robustness-full-linear}{{21}{23}{Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. Linear-probe accuracy.\relax }{table.caption.59}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces Cycle count ablation with full $k$NN results.\relax }}{23}{table.caption.56}\protected@file@percent }
-\newlabel{tab:app_cycles_knn}{{18}{23}{Cycle count ablation with full $k$NN results.\relax }{table.caption.56}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Backbone architecture ablation with full linear-probe results.\relax }}{23}{table.caption.57}\protected@file@percent }
-\newlabel{tab:app_architecture_linear}{{19}{23}{Backbone architecture ablation with full linear-probe results.\relax }{table.caption.57}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Backbone architecture ablation with full $k$NN results.\relax }}{23}{table.caption.58}\protected@file@percent }
-\newlabel{tab:app_architecture_knn}{{20}{23}{Backbone architecture ablation with full $k$NN results.\relax }{table.caption.58}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. $k$NN accuracy.\relax }}{24}{table.caption.60}\protected@file@percent }
-\newlabel{tab:selector-robustness-full-knn}{{22}{24}{Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. $k$NN accuracy.\relax }{table.caption.60}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. $k$NN accuracy.\relax }}{24}{table.caption.61}\protected@file@percent }
-\newlabel{tab:percentile-utility-full-knn}{{23}{24}{Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. $k$NN accuracy.\relax }{table.caption.61}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {I}Algorithm}{24}{appendix.I}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces BRIDGE training loop with mode-window selection\relax }}{24}{algorithm.1}\protected@file@percent }
-\gdef \@abspage@last{24}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Full linear-probe transfer results across all source datasets and comparison methods.}}{21}{table.caption.47}\protected@file@percent }
+\newlabel{tab:app_sota_linear_full}{{9}{21}{Full linear-probe transfer results across all source datasets and comparison methods}{table.caption.47}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Full $k$NN transfer results across all source datasets and comparison methods.}}{22}{table.caption.48}\protected@file@percent }
+\newlabel{tab:app_sota_knn_full}{{10}{22}{Full $k$NN transfer results across all source datasets and comparison methods}{table.caption.48}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Pretraining objective ablation on the default ResNet-50 backbone, full linear-probe results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table~\ref {tab:main_generalization}.}}{22}{table.caption.49}\protected@file@percent }
+\newlabel{tab:app_pretraining_linear}{{11}{22}{Pretraining objective ablation on the default ResNet-50 backbone, full linear-probe results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table~\ref {tab:main_generalization}}{table.caption.49}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Pretraining objective ablation on the default ResNet-50 backbone, full $k$NN results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table~\ref {tab:main_generalization}.}}{22}{table.caption.50}\protected@file@percent }
+\newlabel{tab:app_pretraining_knn}{{12}{22}{Pretraining objective ablation on the default ResNet-50 backbone, full $k$NN results. DINO is excluded here because its reference recipe is defined for ViT backbones; the DINO comparison is reported with ViT-S in Table~\ref {tab:main_generalization}}{table.caption.50}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Augmentation mechanism ablation with full linear-probe results.}}{22}{table.caption.51}\protected@file@percent }
+\newlabel{tab:app_generation_linear}{{13}{22}{Augmentation mechanism ablation with full linear-probe results}{table.caption.51}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Augmentation mechanism ablation with full $k$NN results.}}{22}{table.caption.52}\protected@file@percent }
+\newlabel{tab:app_generation_knn}{{14}{22}{Augmentation mechanism ablation with full $k$NN results}{table.caption.52}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Selection rule ablation with full linear-probe results.}}{23}{table.caption.53}\protected@file@percent }
+\newlabel{tab:app_selection_linear}{{15}{23}{Selection rule ablation with full linear-probe results}{table.caption.53}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Selection rule ablation with full $k$NN results.}}{23}{table.caption.54}\protected@file@percent }
+\newlabel{tab:app_selection_knn}{{16}{23}{Selection rule ablation with full $k$NN results}{table.caption.54}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Cycle count ablation with full linear-probe results.}}{23}{table.caption.55}\protected@file@percent }
+\newlabel{tab:app_cycles_linear}{{17}{23}{Cycle count ablation with full linear-probe results}{table.caption.55}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces Cycle count ablation with full $k$NN results.}}{23}{table.caption.56}\protected@file@percent }
+\newlabel{tab:app_cycles_knn}{{18}{23}{Cycle count ablation with full $k$NN results}{table.caption.56}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Backbone architecture ablation with full linear-probe results.}}{23}{table.caption.57}\protected@file@percent }
+\newlabel{tab:app_architecture_linear}{{19}{23}{Backbone architecture ablation with full linear-probe results}{table.caption.57}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Backbone architecture ablation with full $k$NN results.}}{23}{table.caption.58}\protected@file@percent }
+\newlabel{tab:app_architecture_knn}{{20}{23}{Backbone architecture ablation with full $k$NN results}{table.caption.58}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. Linear-probe accuracy.}}{24}{table.caption.59}\protected@file@percent }
+\newlabel{tab:selector-robustness-full-linear}{{21}{24}{Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. Linear-probe accuracy}{table.caption.59}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. $k$NN accuracy.}}{24}{table.caption.60}\protected@file@percent }
+\newlabel{tab:selector-robustness-full-knn}{{22}{24}{Selector robustness on ImageNet-100-LT. Each row changes one component of the acquisition rule -- candidate pool multiplier, upper cutoff, neighbourhood size, distance, or selection strategy -- and holds the rest of the loop fixed. Mean $\pm $ standard deviation over three seeds. Cosine scoring rescales the normalized $L_2$ score by a positive constant and therefore selects the identical anchor set; that row is a null control, and its distance from the normalized $L_2$ row measures the end-to-end run-to-run spread of the pipeline. $k$NN accuracy}{table.caption.60}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. $k$NN accuracy.}}{25}{table.caption.61}\protected@file@percent }
+\newlabel{tab:percentile-utility-full-knn}{{23}{25}{Repair utility by sparsity band on ImageNet-100-LT. Each row spends the identical acquisition budget on a different quantile range of the $k$NN score distribution, holding every other part of the loop fixed. Mean $\pm $ standard deviation over three seeds. $k$NN accuracy}{table.caption.61}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Five objectives span contrastive (SimCLR, MoCo v3), self-distillation (DINO, DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE run five of 80, since DINOv2 carries multi-crop at batch 16 and does not finish otherwise. Mean $\pm $ standard deviation over three seeds. Linear-probe accuracy.}}{25}{table.caption.62}\protected@file@percent }
+\newlabel{tab:generalization-vits-full-linear}{{24}{25}{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Five objectives span contrastive (SimCLR, MoCo v3), self-distillation (DINO, DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE run five of 80, since DINOv2 carries multi-crop at batch 16 and does not finish otherwise. Mean $\pm $ standard deviation over three seeds. Linear-probe accuracy}{table.caption.62}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Algorithm}{25}{appendix.I}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces BRIDGE training loop with mode-window selection}}{25}{algorithm.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Five objectives span contrastive (SimCLR, MoCo v3), self-distillation (DINO, DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE run five of 80, since DINOv2 carries multi-crop at batch 16 and does not finish otherwise. Mean $\pm $ standard deviation over three seeds. $k$NN accuracy.}}{26}{table.caption.63}\protected@file@percent }
+\newlabel{tab:generalization-vits-full-knn}{{25}{26}{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Five objectives span contrastive (SimCLR, MoCo v3), self-distillation (DINO, DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE run five of 80, since DINOv2 carries multi-crop at batch 16 and does not finish otherwise. Mean $\pm $ standard deviation over three seeds. $k$NN accuracy}{table.caption.63}{}}
+\gdef \@abspage@last{26}

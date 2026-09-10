@@ -193,3 +193,7 @@ outputs
 class_dists
 *.swp
 *.job.*
+
+# latexmk build database, regenerated on every build
+paper_work/**/*.fdb_latexmk
+paper_work/**/*.fls
