@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-policy
-#SBATCH --partition=gpu
+#SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 # 64G was not enough.  Every one of the 21 conditions died within two minutes
@@ -10,7 +10,9 @@
 # memory before anything moves to the card, and the dataloader workers hold a
 # copy of the dataset wrapper each.
 #SBATCH --mem=110G
-#SBATCH --time=24:00:00
+# Measured at 20 hours, and the partition now allows 14 days, so there is no
+# reason to sit one wall-clock hour away from a kill.
+#SBATCH --time=3-00:00:00
 #
 # This script carried no SBATCH directives and relied on every caller passing
 # them, so a submission without --gres landed on a CPU-only allocation and
@@ -46,6 +48,9 @@ export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 # gigabytes free.
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
+# Hold the spare memory for the life of the run.  Two objective runs were lost
+# to a process arriving on the card hours after the guard had checked it.
+export FOMO_GPU_PEAK_MIB="${FOMO_GPU_PEAK_MIB:-18000}"
 # A 24 GB card fits exactly one of these arms, so a task that lands beside a
 # co-tenant has to wait for it rather than fail.  The default gives up after an
 # hour, which threw away a whole allocation for a 20-hour job.  Four hours of
