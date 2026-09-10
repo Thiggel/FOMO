@@ -48,9 +48,6 @@ export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 # gigabytes free.
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
-# Hold the spare memory for the life of the run.  Two objective runs were lost
-# to a process arriving on the card hours after the guard had checked it.
-export FOMO_GPU_PEAK_MIB="${FOMO_GPU_PEAK_MIB:-18000}"
 # A 24 GB card fits exactly one of these arms, so a task that lands beside a
 # co-tenant has to wait for it rather than fail.  The default gives up after an
 # hour, which threw away a whole allocation for a 20-hour job.  Four hours of

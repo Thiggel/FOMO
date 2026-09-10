@@ -31,8 +31,6 @@ export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 # 19.1 GiB for the process plus roughly 2.7 GiB of worker contexts.
 export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-24000}"
-# 19.1 GiB was the observed peak of the bridge arm; leave it room to fluctuate.
-export FOMO_GPU_PEAK_MIB="${FOMO_GPU_PEAK_MIB:-20000}"
 # Wait out a co-tenant rather than hand back a slot a multi-day run needs.
 export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-240}"
 

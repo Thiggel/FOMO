@@ -82,12 +82,9 @@ esac
 case "$family" in
   dino)
     export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-20000}"
-    # 33.5 GiB was the peak seen on a healthy dino bridge run.
-    export FOMO_GPU_PEAK_MIB="${FOMO_GPU_PEAK_MIB:-34000}"
     ;;
   *)
     export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
-    export FOMO_GPU_PEAK_MIB="${FOMO_GPU_PEAK_MIB:-14000}"
     ;;
 esac
 

@@ -1,22 +1,26 @@
 """Hold the card's spare memory so a co-tenant cannot take it mid-run.
 
-These nodes let several processes share one GPU, and not all of them come
-through Slurm: a card that was empty when the guard checked it can pick up
-neighbours hours later.  DINO bridge seed 2 died that way at cycle 3 of 5 after
-44 hours, and SimCLR bridge seed 2 at cycle 4 of 5 after 25.  Checking free
-memory at startup cannot prevent either, because the memory is taken while the
-run is already going.
+Off unless FOMO_GPU_PEAK_MIB is set, and no launcher sets it.  Read the whole
+of this before turning it on.
 
-Allocating a block and freeing it is not enough.  The pages go back to torch's
-caching allocator, and this codebase calls ``torch.cuda.empty_cache`` at ten
-points, mostly to make room for the diffusion model between cycles.  Each of
-those hands the reservation back to the driver, which is why a run that
-reserved 34 GiB was later seen holding 5.7 GiB with 39.7 GiB free beside it.
+The problem is real: several processes share one GPU here, not all of them
+arrive through Slurm, and a card that was empty when the startup guard checked
+it can pick up neighbours hours later.  Two long objective runs were lost that
+way, one at cycle 3 of 5 after 44 hours and one at cycle 4 of 5 after 25.
 
-So the block is kept alive for the life of the process.  It is sized to leave
-the run the peak it actually needs and to make the rest of the card
-unavailable, so a later arrival finds no room instead of taking memory this run
-is going to want.  FOMO_GPU_PEAK_MIB is what to leave free; unset means off.
+Holding the spare memory does prevent that, and it also caused seven of eight
+policy runs to die of CUDA OOM inside an hour.  Those eight were the only jobs
+on a ten-card node, so each one claimed the spare on its own card, and the sum
+of what they held plus what they needed exceeded the node.  The reservation
+turns a card another process might have taken into a card this process has
+certainly taken, which is an improvement only while the peak passed in here is
+larger than the run's true peak.  The policy arms were given 18000 and grew to
+19.6 GiB, so the reservation was the difference between a run that fits and one
+that does not.
+
+Use it for a single long run on a contested card, with a peak measured from a
+healthy run of that same arm and rounded up.  Do not use it for an array whose
+tasks land on one node together.
 """
 
 import os
