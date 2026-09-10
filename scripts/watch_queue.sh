@@ -32,6 +32,12 @@ while :; do
     # A task cancelled before it ever ran leaves no output file at all.  That
     # is a deliberate act, not a fault, and reporting it as an unexplained
     # disappearance buries the real failures in noise over a multi-day run.
+    # Another project shares this account and resubmits every few minutes.
+    # A task of ours is named fomo-* and writes its log here, so a task with
+    # neither is not ours and reporting it only buries what is.
+    if [[ ! -e "$log" && "${jobname[$id]:-}" != fomo-* ]]; then
+      continue
+    fi
     if [[ ! -e "$log" ]]; then
       echo "GONE    $id  ${name:-?}  -> left the queue with no log here"
     elif [[ -n "$sig" ]]; then
