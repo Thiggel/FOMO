@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=110G
 #SBATCH --time=4-00:00:00
-#SBATCH --array=0-8
+#SBATCH --array=0-17
 #
 # Closest prior acquisition rules against BRIDGE on the protocol the paper
 # reports: five cycles of 100 epochs, the frozen SD3 image-to-image operator,
@@ -42,7 +42,7 @@ export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
 export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-240}"
 
 conditions=(
-  bridge tada cluster_inverse
+  bridge tada cluster_inverse aide_vlm caption_t2i captioned_img2img
 )
 task="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
 seed="$((task % 3))"
@@ -54,11 +54,24 @@ test -s "$checkpoint"
 augment=true
 selection=ood
 strategy=mode_window
+encoder=ssl
+generator=stable_diffusion_3
 
 case "$condition" in
   bridge)          ;;
   tada)            selection=early_loss ;;
   cluster_inverse) strategy=cluster_inverse ;;
+  # AIDE clusters frozen CLIP features, selects inversely to cluster occupancy,
+  # captions the selection and generates from text.  All three steps at once.
+  aide_vlm)
+    encoder=clip
+    strategy=cluster_inverse
+    generator=stable_diffusion_3_t2i
+    ;;
+  # The two language-mediated repair operators, on our own anchors, separating
+  # the caption from the image condition.
+  caption_t2i)        generator=stable_diffusion_3_t2i ;;
+  captioned_img2img)  generator=stable_diffusion_3_captioned_img2img ;;
   *)
     echo "Unknown condition $condition" >&2
     exit 2
@@ -82,9 +95,10 @@ python -m experiment \
   train_batch_size=128 grad_acc_steps=1 val_batch_size=256 \
   num_ood_samples=500 num_generations_per_ood_sample=5 \
   sample_selection="$selection" ood_selection_strategy="$strategy" \
+  selection_encoder="$encoder" \
   selection_reuse_policy=adaptive repair_once=false \
   ood_distance_metric=normalized_l2 ood_augmentation="$augment" \
-  generation_model=stable_diffusion_3 \
+  generation_model="$generator" \
   representation_diagnostics_each_cycle=true \
   representation_diagnostics_save_samples=true \
   additional_data_path="$run_root/generated" \
