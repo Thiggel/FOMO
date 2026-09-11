@@ -12,7 +12,6 @@ Amro Kamal~Mohamed Abbas, Evgenia Rusak, Kushal Tirumala, Wieland Brendel,
 \newblock Effective pruning of web-scale datasets based on complexity of
   concept clusters.
 \newblock In \emph{International Conference on Learning Representations}, 2024.
-\newblock URL \url{https://openreview.net/forum?id=CtOA9aN8fr}.
 
 \bibitem[Asano et~al.(2021)Asano, Rupprecht, Zisserman, and Vedaldi]{pass}
 Yuki Asano, Christian Rupprecht, Andrew Zisserman, and Andrea Vedaldi.
@@ -29,7 +28,6 @@ Mahmoud Assran, Randall Balestriero, Quentin Duval, Florian Bordes, Ishan
 \newblock The hidden uniform cluster prior in self-supervised learning.
 \newblock In \emph{The Eleventh International Conference on Learning
   Representations}, 2023.
-\newblock URL \url{https://openreview.net/forum?id=04K3PMtMckp}.
 
 \bibitem[Azizi et~al.(2023)Azizi, Kornblith, Saharia, Norouzi, and
   Fleet]{azizi2023synthetic}
@@ -46,7 +44,6 @@ Jianhong Bai, Zuozhu Liu, Hualiang Wang, Jin Hao, Yan Feng, Huanpeng Chu, and
   long-tail learning.
 \newblock In \emph{The Eleventh International Conference on Learning
   Representations}, 2023.
-\newblock URL \url{https://openreview.net/forum?id=v8JIQdiN9Sh}.
 
 \bibitem[Baradad et~al.(2021)Baradad, Wulff, Wang, Isola, and
   Torralba]{baradad2021noise}
@@ -78,7 +75,6 @@ Nitesh~V. Chawla, Kevin~W. Bowyer, Lawrence~O. Hall, and W.~Philip Kegelmeyer.
 \newblock \emph{Journal of Artificial Intelligence Research}, 16:\penalty0
   321--357, 2002.
 \newblock \doi{10.1613/jair.953}.
-\newblock URL \url{https://jair.org/index.php/jair/article/view/10302}.
 
 \bibitem[Chen et~al.(2020)Chen, Kornblith, Norouzi, and Hinton]{chen2020simple}
 Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton.
@@ -88,7 +84,6 @@ Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton.
   the 37th International Conference on Machine Learning}, volume 119 of
   \emph{Proceedings of Machine Learning Research}, pages 1597--1607. PMLR,
   13--18 Jul 2020.
-\newblock URL \url{https://proceedings.mlr.press/v119/chen20j.html}.
 
 \bibitem[Fan et~al.(2024)Fan, Chen, Krishnan, Katabi, Isola, and
   Tian]{fan2024scaling}
@@ -133,7 +128,6 @@ Ruifei He, Shuyang Sun, Xin Yu, Chuhui Xue, Wenqing Zhang, Philip Torr, Song
   Bai, and Xiaojuan Qi.
 \newblock Is synthetic data from generative models ready for image recognition?
 \newblock In \emph{International Conference on Learning Representations}, 2023.
-\newblock URL \url{https://openreview.net/forum?id=nUmCcZ5RKF}.
 
 \bibitem[Ho et~al.(2020)Ho, Jain, and Abbeel]{ho2020denoising}
 Jonathan Ho, Ajay Jain, and Pieter Abbeel.
@@ -149,7 +143,6 @@ Ali Jahanian, Xavier Puig, Yonglong Tian, and Phillip Isola.
 \newblock Generative models as a data source for multiview representation
   learning.
 \newblock In \emph{International Conference on Learning Representations}, 2022.
-\newblock URL \url{https://openreview.net/forum?id=qhAeZjs7dCL}.
 
 \bibitem[Jiang et~al.(2021)Jiang, Chen, Mortazavi, and Wang]{sdclr}
 Ziyu Jiang, Tianlong Chen, Bobak~J. Mortazavi, and Zhangyang Wang.
@@ -158,7 +151,6 @@ Ziyu Jiang, Tianlong Chen, Bobak~J. Mortazavi, and Zhangyang Wang.
   38th International Conference on Machine Learning}, volume 139 of
   \emph{Proceedings of Machine Learning Research}, pages 4927--4939. PMLR,
   18--24 Jul 2021.
-\newblock URL \url{https://proceedings.mlr.press/v139/jiang21a.html}.
 
 \bibitem[Krause et~al.(2013)Krause, Stark, Deng, and Fei-Fei]{cars}
 Jonathan Krause, Michael Stark, Jia Deng, and Li~Fei-Fei.
@@ -209,7 +201,6 @@ Swee~Kiat Lim, Yi~Loo, Ngoc-Trung Tran, Ngai-Man Cheung, Gemma Roig, and Yuval
 \newblock In \emph{2018 IEEE International Conference on Data Mining (ICDM)},
   pages 1122--1127. IEEE, 2018.
 \newblock \doi{10.1109/ICDM.2018.00146}.
-\newblock URL \url{https://ieeexplore.ieee.org/document/8594955}.
 
 \bibitem[Lin et~al.(2023)Lin, Chen, and Wang]{fassl}
 Ci-Siang Lin, Min-Hung Chen, and Yu-Chiang~Frank Wang.
@@ -217,8 +208,6 @@ Ci-Siang Lin, Min-Hung Chen, and Yu-Chiang~Frank Wang.
 \newblock In \emph{Proceedings of the IEEE/CVF International Conference on
   Computer Vision (ICCV) Workshops}, pages 963--972. IEEE, October 2023.
 \newblock \doi{10.1109/ICCVW60793.2023.00103}.
-\newblock URL
-  \url{https://openaccess.thecvf.com/content/ICCV2023W/LIMIT/html/Lin_Frequency-Aware_Self-Supervised_Long-Tailed_Learning_ICCVW_2023_paper.html}.
 
 \bibitem[Liu et~al.(2019)Liu, Miao, Zhan, Wang, Gong, and Yu]{imagenet-lt}
 Ziwei Liu, Zhongqi Miao, Xiaohang Zhan, Jiayun Wang, Boqing Gong, and Stella~X.
@@ -249,7 +238,7 @@ Dang Nguyen, Jiping Li, Jinghao Zheng, and Baharan Mirzasoleiman.
   diffusion models.
 \newblock In \emph{The Fourteenth International Conference on Learning
   Representations}, 2026.
-\newblock URL \url{https://openreview.net/forum?id=VaGvbAgBmd}.
+\newblock \doi{10.48550/arXiv.2505.21574}.
 
 \bibitem[Nilsback and Zisserman(2008)]{flowers}
 Maria-Elena Nilsback and Andrew Zisserman.
@@ -338,7 +327,6 @@ Yiyou Sun, Yifei Ming, Xiaojin Zhu, and Yixuan Li.
   39th International Conference on Machine Learning}, volume 162 of
   \emph{Proceedings of Machine Learning Research}, pages 20827--20840. PMLR,
   17--23 Jul 2022.
-\newblock URL \url{https://proceedings.mlr.press/v162/sun22d.html}.
 
 \bibitem[Tang et~al.(2023)Tang, Jia, Wang, Phoo, and Hariharan]{tang2023dift}
 Luming Tang, Menglin Jia, Qianqian Wang, Cheng~Perng Phoo, and Bharath
@@ -365,7 +353,6 @@ Brandon Trabucco, Kyle Doherty, Max Gurinas, and Ruslan Salakhutdinov.
 \newblock Effective data augmentation with diffusion models.
 \newblock In \emph{The Twelfth International Conference on Learning
   Representations}, 2024.
-\newblock URL \url{https://openreview.net/forum?id=ZWzUA9zeAg}.
 
 \bibitem[Wang et~al.(2023)Wang, Montoya, Munechika, Yang, Hoover, and
   Chau]{diffusiondb}
@@ -378,7 +365,6 @@ Zijie~J. Wang, Evan Montoya, David Munechika, Haoyang Yang, Benjamin Hoover,
   Computational Linguistics (Volume 1: Long Papers)}, pages 893--911, Toronto,
   Canada, July 2023. Association for Computational Linguistics.
 \newblock \doi{10.18653/v1/2023.acl-long.51}.
-\newblock URL \url{https://aclanthology.org/2023.acl-long.51/}.
 
 \bibitem[Whang et~al.(2023)Whang, Roh, Song, and Lee]{whang2023data}
 Steven~Euijong Whang, Yuji Roh, Hwanjun Song, and Jae-Gil Lee.
@@ -418,6 +404,5 @@ Zelin Zang, Hao Luo, Kai Wang, Panpan Zhang, Fan Wang, Stan~Z. Li, and Yang
 \newblock In \emph{Proceedings of the 41st International Conference on Machine
   Learning}, volume 235 of \emph{Proceedings of Machine Learning Research},
   pages 58174--58196. PMLR, 2024.
-\newblock URL \url{https://proceedings.mlr.press/v235/zang24a.html}.
 
 \end{thebibliography}
