@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 16:21
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 17:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -697,21 +697,21 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-
-
-[13] (./tables/fixed_support_geometry.tex)
-<figures/cycle_score_histograms.pdf, id=964, 889.55585pt x 172.01201pt>
+(./tables/fixed_support_geometry.tex)
+<figures/cycle_score_histograms.pdf, id=957, 889.55585pt x 172.01201pt>
 File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
 <use figures/cycle_score_histograms.pdf>
 Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
  282.
 (pdftex.def)             Requested size: 341.83733pt x 66.10014pt.
-<figures/cycle_tsne.pdf, id=965, 888.92097pt x 209.22542pt>
+<figures/cycle_tsne.pdf, id=958, 888.92097pt x 209.22542pt>
 File: figures/cycle_tsne.pdf Graphic file (type pdf)
 <use figures/cycle_tsne.pdf>
 Package pdftex.def Info: figures/cycle_tsne.pdf  used on input line 288.
 (pdftex.def)             Requested size: 389.53358pt x 91.68274pt.
 
+
+[13]
 
 LaTeX Warning: Reference `prop:local-support' on page 14 undefined on input lin
 e 309.
@@ -790,7 +790,7 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 Here is how much of TeX's memory you used:
  17434 strings out of 474233
  277745 string characters out of 5742684
- 803193 words of memory out of 5000000
+ 803827 words of memory out of 5000000
  39637 multiletter control sequences out of 15000+600000
  630310 words of font info for 310 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
@@ -810,10 +810,10 @@ onts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/sh
 are/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type1/urw
 /times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></usr/shar
 e/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (23 pages, 1034760 bytes).
+Output written on bridge_iclr_2027.pdf (23 pages, 1034597 bytes).
 PDF statistics:
- 1320 PDF objects out of 1440 (max. 8388607)
- 877 compressed objects within 9 object streams
+ 1319 PDF objects out of 1440 (max. 8388607)
+ 876 compressed objects within 9 object streams
  189 named destinations out of 1000 (max. 500000)
  63197 words of extra memory for PDF output out of 74296 (max. 10000000)
 
