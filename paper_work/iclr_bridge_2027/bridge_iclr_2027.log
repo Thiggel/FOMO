@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 15:09
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 15:43
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -675,9 +675,6 @@ Underfull \vbox (badness 7796) has occurred while \output is active []
 [6] (./tables/main_generalization.tex)
 
 [7]
-Underfull \vbox (badness 1019) has occurred while \output is active []
-
-
 
 [8] (./bridge_iclr_2027.bbl
 LaTeX Font Info:    Trying to load font information for T1+pcr on input line 15
@@ -797,7 +794,7 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 Here is how much of TeX's memory you used:
  17439 strings out of 474233
  277792 string characters out of 5742684
- 820138 words of memory out of 5000000
+ 819138 words of memory out of 5000000
  39637 multiletter control sequences out of 15000+600000
  630437 words of font info for 312 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
@@ -817,7 +814,7 @@ onts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/sh
 are/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type1/urw
 /times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></usr/shar
 e/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (24 pages, 1044376 bytes).
+Output written on bridge_iclr_2027.pdf (24 pages, 1044828 bytes).
 PDF statistics:
  1353 PDF objects out of 1440 (max. 8388607)
  908 compressed objects within 10 object streams
