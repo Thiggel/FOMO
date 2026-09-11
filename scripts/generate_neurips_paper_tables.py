@@ -92,7 +92,7 @@ ABLATION_GROUPS = OrderedDict(
                 [
                     ("ablations/generation/stable_diffusion_3", "Stable Diffusion 3 (default)"),
                     ("ablations/generation/flux", "FLUX"),
-                    ("ablations/generation/repopulation", "No-generation re-population"),
+                    ("ablations/generation/repopulation", "Oracle re-population (upper bound)"),
                 ]
             ),
         ),

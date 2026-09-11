@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 06:12
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 14:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -753,12 +753,20 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 [21 <./figures/cycle_histories_example.pdf>]) (./tables/app_pretraining_knn.tex
 ) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
-(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex
+(./tables/app_selection_linear.tex
+Underfull \vbox (badness 2486) has occurred while \output is active []
 
-[22]) (./tables/app_cycles_linear.tex) (./tables/app_cycles_knn.tex)
-(./tables/app_architecture_linear.tex) (./tables/app_architecture_knn.tex)
-(./tables/app_selector_robustness_full_linear.tex)
-(./tables/app_selector_robustness_full_knn.tex)
+
+
+[22]) (./tables/app_selection_knn.tex) (./tables/app_cycles_linear.tex)
+(./tables/app_cycles_knn.tex) (./tables/app_architecture_linear.tex)
+(./tables/app_architecture_knn.tex)
+(./tables/app_selector_robustness_full_linear.tex
+Underfull \vbox (badness 1412) has occurred while \output is active []
+
+
+
+[23]) (./tables/app_selector_robustness_full_knn.tex)
 (./tables/main_percentile_utility_full_knn.tex)
 (./tables/main_generalization_vits_full_linear.tex)
 (./tables/main_generalization_vits_full_knn.tex)
@@ -767,11 +775,6 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 469.
 
-Underfull \vbox (badness 6016) has occurred while \output is active []
-
-
-
-[23]
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
@@ -791,7 +794,7 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 Here is how much of TeX's memory you used:
  17456 strings out of 474233
  278810 string characters out of 5742684
- 834940 words of memory out of 5000000
+ 821165 words of memory out of 5000000
  39651 multiletter control sequences out of 15000+600000
  629929 words of font info for 304 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
@@ -812,7 +815,7 @@ fb></usr/share/texmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texmf/fonts
 /type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmb8a.p
 fb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf/fonts/t
 ype1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (26 pages, 1068751 bytes).
+Output written on bridge_iclr_2027.pdf (26 pages, 1070264 bytes).
 PDF statistics:
  1378 PDF objects out of 1440 (max. 8388607)
  929 compressed objects within 10 object streams

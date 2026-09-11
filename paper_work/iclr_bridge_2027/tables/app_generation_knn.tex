@@ -2,7 +2,7 @@
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
-\caption{Augmentation mechanism ablation with full $k$NN results.}
+\caption{Augmentation mechanism ablation with full $k$NN results. Oracle re-population is not a competing generator: it re-adds the exact real images withheld when the long tail was built, so it has access to the identity and location of the missing support, which the method only estimates. It is the upper bound on what any repair operator can achieve at this budget, and a generator that approaches it is recovering most of the benefit of the withheld real data without access to it.}
 \label{tab:app_generation_knn}
 \begin{adjustbox}{width=\textwidth}
 \begin{tabular}{l c c c c c c c c}
@@ -11,7 +11,7 @@ Setting & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
 \midrule
 Stable Diffusion 3 (default) & 68.6 {\scriptsize$\pm$ 0.1} & 37.2 {\scriptsize$\pm$ 0.2} & 6.4 {\scriptsize$\pm$ 0.6} & \textbf{11.5 {\scriptsize$\pm$ 0.2}} & \textbf{35.2 {\scriptsize$\pm$ 0.3}} & \textbf{24.3 {\scriptsize$\pm$ 0.6}} & \textbf{46.8 {\scriptsize$\pm$ 0.7}} & \textbf{32.9 {\scriptsize$\pm$ 0.4}} \\
 FLUX & 65.8 {\scriptsize$\pm$ 1.0} & 35.4 {\scriptsize$\pm$ 0.8} & 5.7 {\scriptsize$\pm$ 0.7} & 9.4 {\scriptsize$\pm$ 0.9} & 27.7 {\scriptsize$\pm$ 1.0} & 18.8 {\scriptsize$\pm$ 1.3} & 38.7 {\scriptsize$\pm$ 1.2} & 28.8 {\scriptsize$\pm$ 1.0} \\
-No-generation re-population & \textbf{68.8 {\scriptsize$\pm$ 0.2}} & \textbf{37.7 {\scriptsize$\pm$ 0.3}} & \textbf{6.6 {\scriptsize$\pm$ 0.5}} & 11.4 {\scriptsize$\pm$ 0.5} & 32.7 {\scriptsize$\pm$ 0.1} & 23.6 {\scriptsize$\pm$ 0.6} & 44.4 {\scriptsize$\pm$ 0.4} & 32.2 {\scriptsize$\pm$ 0.4} \\
+Oracle re-population (upper bound) & \textbf{68.8 {\scriptsize$\pm$ 0.2}} & \textbf{37.7 {\scriptsize$\pm$ 0.3}} & \textbf{6.6 {\scriptsize$\pm$ 0.5}} & 11.4 {\scriptsize$\pm$ 0.5} & 32.7 {\scriptsize$\pm$ 0.1} & 23.6 {\scriptsize$\pm$ 0.6} & 44.4 {\scriptsize$\pm$ 0.4} & 32.2 {\scriptsize$\pm$ 0.4} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
