@@ -2,6 +2,10 @@
 #SBATCH --job-name=fomo-diffaug5c100
 #SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
+# DiffAug carries a learned generator beside the encoder, so it does not fit a
+# 24 GiB card beside a co-tenant: seed 1 of the repair arm reached 10.5 GiB and
+# died next to a neighbour holding 11.5 GiB of a 21.98 GiB card.
+#SBATCH --exclude=gruenau1,gruenau2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=110G
 #SBATCH --time=4-00:00:00
@@ -27,7 +31,7 @@ export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-6}"
 export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-0}"
 export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
-export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
+export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-22000}"
 export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-240}"
 
 task="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
