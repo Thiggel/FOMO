@@ -34,76 +34,10 @@ DATASETS = [
     ),
 ]
 
-# Each row lists the experiment directory per seed, in seed order.  Naming is
-# irregular across waves, so it is spelled out rather than derived.
-# Matched three-stage controls, one directory per seed.  Every acquisition and
-# repair condition here is a post-a29d244 run: before that commit the checkpoint
-# callback skipped a save whenever the step counter matched one it had already
-# written, which is every cycle after the first, so each condition published its
-# first-cycle encoder and the adaptive and frozen arms came out bit-identical.
-# The three generation-policy rows below are named separately because two of
-# them are still waiting on reruns.
-POLICY_REPAIR_ROWS = [
-    (
-        "Adaptive \\method",
-        [
-            "rebuttal_fullpolicy3e60_adaptive_0_sep10",
-            "rebuttal_fullpolicy3e60_adaptive_1_fix2",
-            "rebuttal_fullpolicy3e60_adaptive_2_sep10",
-        ],
-    ),
-    (
-        "Frozen first-cycle selector",
-        [f"rebuttal_fullpolicy3e60_static_{s}_fix2" for s in (0, 1, 2)],
-    ),
-    (
-        "One-shot repair",
-        [f"rebuttal_fullpolicy3e60_one_shot_{s}_ckptfix" for s in (0, 1, 2)],
-    ),
-    (
-        "No repair",
-        [f"rebuttal_fullpolicy3e60_no_repair_{s}_sep10" for s in (0, 1, 2)],
-    ),
-    (
-        "Mode-window conventional augmentation",
-        [
-            "rebuttal_fullpolicy3e60_conventional_0_fix2",
-            "rebuttal_fullpolicy3e60_conventional_1_sep10",
-            "rebuttal_fullpolicy3e60_conventional_2_sep10",
-        ],
-    ),
-    (
-        "Uniform acquisition",
-        [f"rebuttal_fullpolicy3e60_uniform_{s}_fix2" for s in (0, 1, 2)],
-    ),
-    (
-        "Top-tail acquisition",
-        [
-            "rebuttal_fullpolicy3e60_top_tail_0_fix2",
-            "rebuttal_fullpolicy3e60_top_tail_1_fix2",
-            "rebuttal_fullpolicy3e60_top_tail_2_sep10",
-        ],
-    ),
-    (
-        "AIDE-style VLM acquisition and text-to-image",
-        [f"iclr_aide_ssl_clip_cluster_{s}_ckptfix" for s in (0, 1, 2)],
-    ),
-    # Awaiting reruns.  Seeds 1 and 2 of the captioned image-to-image arm and
-    # all three of the text-to-image arm still resolve to pre-fix directories,
-    # so these two rows are left pointing at runs that will be replaced.
-    (
-        "Mode-window caption and text-to-image",
-        [f"iclr_generation_policy_vlm_t2i_{s}_iclr2027" for s in (0, 1, 2)],
-    ),
-    (
-        "Mode-window captioned image-to-image",
-        [
-            "iclr_captioned_img2img_0_ckptfix",
-            "iclr_captioned_img2img_1_v1",
-            "iclr_captioned_img2img_2_v1",
-        ],
-    ),
-]
+# The matched three-stage policy controls were cut from the manuscript.  At
+# three stages nothing in that table separated, a no-repair arm included, which
+# is the regime the one-stage bound already covers.  Their runs stay on disk.
+
 
 # Paired full-schedule ViT-S runs, one directory per seed.  Names are spelled
 # out because the cells were finished across four waves: the ckptfix runs of
@@ -155,22 +89,6 @@ GENERALIZATION_ROWS = [
             "rebuttal_full5e100_dino_bridge_0_ckptfix2",
             "rebuttal_full5e100_dino_bridge_1_sep05",
             "rebuttal_full5e100_dino_bridge_2_sep05",
-        ],
-    ),
-    (
-        "DINOv2, SSL baseline",
-        [
-            "rebuttal_full5e80_dinov2_base_0_sep05",
-            "rebuttal_full5e80_dinov2_base_1",
-            "rebuttal_full5e80_dinov2_base_2",
-        ],
-    ),
-    (
-        "DINOv2, with \\method",
-        [
-            "rebuttal_full5e80_dinov2_bridge_0",
-            "rebuttal_full5e80_dinov2_bridge_1",
-            "rebuttal_full5e80_dinov2_bridge_2_sep05",
         ],
     ),
     (
@@ -282,26 +200,13 @@ TABLES = {
             "Paired full-schedule ViT-S transfer on ImageNet-100-LT, with "
             "every downstream dataset reported separately. Both arms of each "
             "pair start from the same source checkpoint and receive the same "
-            "number of post-branch optimizer updates. Five objectives span "
-            "contrastive (SimCLR, MoCo v3), self-distillation (DINO, "
-            "DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, "
-            "MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE "
-            "run five of 80, since DINOv2 carries multi-crop at batch 16 and "
-            "does not finish otherwise. Mean $\\pm$ standard deviation over "
-            "three seeds."
+            "number of post-branch optimizer updates. Four objectives span "
+            "contrastive (SimCLR, MoCo v3), self-distillation (DINO) and "
+            "masked-reconstruction (MAE) pretraining. The first three run "
+            "five cycles of 100 epochs and MAE five of 80. Mean $\\pm$ "
+            "standard deviation over three seeds."
         ),
         "label": "tab:generalization-vits-full",
-    },
-    "main_policy_repair_controls_full": {
-        "rows": POLICY_REPAIR_ROWS,
-        "caption": (
-            "Matched feedback and repair controls on ImageNet-100-LT. All "
-            "methods start from paired source checkpoints and receive three "
-            "60-epoch stages with the same update cap. Generation methods add "
-            "7,500 images in total. Each entry is mean $\\pm$ standard "
-            "deviation over three seeds."
-        ),
-        "label": "tab:policy-repair-controls-full",
     },
 }
 

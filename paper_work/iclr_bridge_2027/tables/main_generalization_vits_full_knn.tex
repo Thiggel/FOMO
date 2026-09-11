@@ -2,7 +2,7 @@
 \centering
 \small
 \setlength{\tabcolsep}{4pt}
-\caption{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Five objectives span contrastive (SimCLR, MoCo v3), self-distillation (DINO, DINOv2) and masked-reconstruction (MAE) pretraining. SimCLR, MoCo v3 and DINO run five cycles of 100 epochs; DINOv2 and MAE run five of 80, since DINOv2 carries multi-crop at batch 16 and does not finish otherwise. Mean $\pm$ standard deviation over three seeds. $k$NN accuracy.}
+\caption{Paired full-schedule ViT-S transfer on ImageNet-100-LT, with every downstream dataset reported separately. Both arms of each pair start from the same source checkpoint and receive the same number of post-branch optimizer updates. Four objectives span contrastive (SimCLR, MoCo v3), self-distillation (DINO) and masked-reconstruction (MAE) pretraining. The first three run five cycles of 100 epochs and MAE five of 80. Mean $\pm$ standard deviation over three seeds. $k$NN accuracy.}
 \label{tab:generalization-vits-full-knn}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lccccccc}
@@ -15,8 +15,6 @@ MoCo v3, SSL baseline & $6.65\pm0.38$ & $7.71\pm0.16$ & $38.91\pm1.03$ & $23.56\
 MoCo v3, with \method & $6.74\pm0.26$ & $8.21\pm0.18$ & $40.51\pm1.45$ & $24.91\pm0.45$ & $65.41\pm0.21$ & $36.24\pm0.46$ & $47.71\pm1.53$ \\
 DINO, SSL baseline & $6.05\pm0.27$ & $7.73\pm0.52$ & $38.52\pm1.19$ & $19.26\pm0.16$ & $62.69\pm2.42$ & $33.98\pm2.80$ & $45.28\pm0.98$ \\
 DINO, with \method & $6.39\pm0.22$ & $8.16\pm0.26$ & $40.72\pm0.31$ & $21.79\pm1.15$ & $64.38\pm3.51$ & $35.59\pm2.51$ & $47.14\pm0.29$ \\
-DINOv2, SSL baseline & $2.28\pm0.37$ & $3.49\pm0.15$ & $18.02\pm1.15$ & $5.53\pm0.36$ & $33.90\pm1.34$ & $13.68\pm0.45$ & $14.79\pm1.66$ \\
-DINOv2, with \method & $2.55\pm0.05$ & $3.46\pm0.46$ & $18.43\pm1.66$ & $6.21\pm0.35$ & $35.33\pm1.43$ & $14.53\pm0.70$ & $14.85\pm0.92$ \\
 MAE, SSL baseline & $1.00\pm0.14$ & $2.24\pm0.29$ & $5.30\pm0.52$ & $4.58\pm0.17$ & $31.34\pm1.65$ & $10.96\pm0.44$ & $11.75\pm0.38$ \\
 MAE, with \method & $1.38\pm0.37$ & $2.50\pm0.70$ & $7.54\pm2.13$ & $5.35\pm0.76$ & $35.58\pm7.14$ & $13.44\pm3.46$ & $15.46\pm2.68$ \\
 \bottomrule

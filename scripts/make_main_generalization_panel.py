@@ -20,7 +20,7 @@ from pathlib import Path
 # Column header in the full table, and the header to print here.
 COLUMNS = [("Cars", "Cars"), ("Aircraft", "Aircraft"), ("Flowers", "Flowers"), ("IN100-LT", "IN100-LT")]
 
-OBJECTIVES = ["SimCLR", "MoCo v3", "DINO", "DINOv2", "MAE"]
+OBJECTIVES = ["SimCLR", "MoCo v3", "DINO", "MAE"]
 
 
 def parse(table: Path) -> tuple[list[str], dict[str, list[str]]]:

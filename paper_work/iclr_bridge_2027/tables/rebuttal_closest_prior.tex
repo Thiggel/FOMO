@@ -1,3 +1,9 @@
+\begin{table}[h]
+\centering
+\small
+\caption{Empirical comparison with the closest acquisition and repair pipelines on ImageNet-100-LT, all under one matched protocol with a single repair stage, identical anchors budget and identical optimizer budget. Four-task transfer averages Cars, Aircraft, Flowers and Pets under a linear probe; representation 1-NN is measured on the source set. No pipeline separates from any other, \method\ included, which is the single-stage regime bounded by Proposition~\ref{prop:one-stage}. The five-cycle comparisons in Section~\ref{sec:one-stage} are where acquisition rules do separate.}
+\label{tab:closest-prior-empirical}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lccc}
 \toprule
 Method & Seeds & Four-task transfer & Representation 1-NN \\
@@ -14,3 +20,5 @@ SD3 feature distillation & 3 & 18.02 $\pm$ 0.47 & 26.27 $\pm$ 2.29 \\
 SD3 feature distillation + BRIDGE & 3 & 18.87 $\pm$ 0.45 & 29.45 $\pm$ 2.26 \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
+\end{table}
