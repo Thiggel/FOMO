@@ -36,50 +36,72 @@ DATASETS = [
 
 # Each row lists the experiment directory per seed, in seed order.  Naming is
 # irregular across waves, so it is spelled out rather than derived.
+# Matched three-stage controls, one directory per seed.  Every acquisition and
+# repair condition here is a post-a29d244 run: before that commit the checkpoint
+# callback skipped a save whenever the step counter matched one it had already
+# written, which is every cycle after the first, so each condition published its
+# first-cycle encoder and the adaptive and frozen arms came out bit-identical.
+# The three generation-policy rows below are named separately because two of
+# them are still waiting on reruns.
 POLICY_REPAIR_ROWS = [
     (
         "Adaptive \\method",
-        [f"rebuttal_fullpolicy3e60_adaptive_{s}_iclr2027" for s in (0, 1, 2)],
+        [
+            "rebuttal_fullpolicy3e60_adaptive_0_sep10",
+            "rebuttal_fullpolicy3e60_adaptive_1_fix2",
+            "rebuttal_fullpolicy3e60_adaptive_2_sep10",
+        ],
     ),
     (
         "Frozen first-cycle selector",
-        [f"rebuttal_fullpolicy3e60_static_{s}_iclr2027" for s in (0, 1, 2)],
+        [f"rebuttal_fullpolicy3e60_static_{s}_fix2" for s in (0, 1, 2)],
     ),
     (
         "One-shot repair",
-        [f"rebuttal_fullpolicy3e60_one_shot_{s}_iclr2027" for s in (0, 1, 2)],
+        [f"rebuttal_fullpolicy3e60_one_shot_{s}_ckptfix" for s in (0, 1, 2)],
+    ),
+    (
+        "No repair",
+        [f"rebuttal_fullpolicy3e60_no_repair_{s}_sep10" for s in (0, 1, 2)],
     ),
     (
         "Mode-window conventional augmentation",
-        [f"rebuttal_fullpolicy3e60_conventional_{s}_iclr2027" for s in (0, 1, 2)],
+        [
+            "rebuttal_fullpolicy3e60_conventional_0_fix2",
+            "rebuttal_fullpolicy3e60_conventional_1_sep10",
+            "rebuttal_fullpolicy3e60_conventional_2_sep10",
+        ],
     ),
     (
         "Uniform acquisition",
-        [
-            "rebuttal_fullpolicy3e60_uniform_0_gruenau_retry1",
-            "rebuttal_fullpolicy3e60_uniform_1_gruenau_retry1",
-            "rebuttal_fullpolicy3e60_uniform_2_gruenau_retry1",
-        ],
+        [f"rebuttal_fullpolicy3e60_uniform_{s}_fix2" for s in (0, 1, 2)],
     ),
     (
         "Top-tail acquisition",
         [
-            "rebuttal_fullpolicy3e60_top_tail_0_iclr2027",
-            "rebuttal_fullpolicy3e60_top_tail_1_gruenau_retry1",
-            "rebuttal_fullpolicy3e60_top_tail_2_gruenau_retry1",
+            "rebuttal_fullpolicy3e60_top_tail_0_fix2",
+            "rebuttal_fullpolicy3e60_top_tail_1_fix2",
+            "rebuttal_fullpolicy3e60_top_tail_2_sep10",
         ],
     ),
     (
         "AIDE-style VLM acquisition and text-to-image",
-        [f"iclr_aide_ssl_clip_cluster_{s}_v1" for s in (0, 1, 2)],
+        [f"iclr_aide_ssl_clip_cluster_{s}_ckptfix" for s in (0, 1, 2)],
     ),
+    # Awaiting reruns.  Seeds 1 and 2 of the captioned image-to-image arm and
+    # all three of the text-to-image arm still resolve to pre-fix directories,
+    # so these two rows are left pointing at runs that will be replaced.
     (
         "Mode-window caption and text-to-image",
         [f"iclr_generation_policy_vlm_t2i_{s}_iclr2027" for s in (0, 1, 2)],
     ),
     (
         "Mode-window captioned image-to-image",
-        [f"iclr_captioned_img2img_{s}_v1" for s in (0, 1, 2)],
+        [
+            "iclr_captioned_img2img_0_ckptfix",
+            "iclr_captioned_img2img_1_v1",
+            "iclr_captioned_img2img_2_v1",
+        ],
     ),
 ]
 

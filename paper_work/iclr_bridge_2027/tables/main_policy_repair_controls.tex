@@ -2,20 +2,23 @@
 \centering
 \small
 \setlength{\tabcolsep}{4.5pt}
-\caption{Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. Each entry is downstream linear-probe accuracy reported as mean $\pm$ standard deviation over three seeds.}
+\caption{Matched feedback and repair controls on ImageNet-100-LT. All methods start from paired source checkpoints and receive three 60-epoch stages with the same update cap. Generation methods add 7,500 images in total. A no-repair arm receives the same optimizer budget and adds nothing. Each entry is downstream linear-probe accuracy as mean $\pm$ standard deviation over three seeds; Table~\ref{tab:policy-repair-controls-full-linear} carries all seven datasets and Table~\ref{tab:policy-repair-controls-full-knn} the $k$NN protocol.}
 \label{tab:policy-repair-controls}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lcccc}
 \toprule
 Method & Cars & Aircraft & Flowers & IN100-LT \\
 \midrule
-Adaptive BRIDGE & $12.76\pm0.76$ & $\mathbf{18.39\pm0.42}$ & $\mathbf{29.63\pm3.22}$ & $42.30\pm0.33$ \\
-Frozen first-cycle selector & $12.42\pm0.65$ & $17.66\pm0.67$ & $28.54\pm6.55$ & $42.67\pm0.41$ \\
-One-shot repair & $\mathbf{13.19\pm0.63}$ & $17.30\pm0.41$ & $25.27\pm2.00$ & $42.74\pm0.28$ \\
-Mode-window conventional augmentation & $12.71\pm0.24$ & $18.25\pm0.67$ & $24.84\pm1.73$ & $42.71\pm0.09$ \\
-AIDE-style VLM acquisition and text-to-image & $12.43\pm0.37$ & $18.05\pm1.13$ & $24.62\pm1.00$ & $43.39\pm0.96$ \\
-Mode-window caption and text-to-image & $12.42\pm1.13$ & $17.51\pm1.47$ & $25.05\pm3.72$ & $\mathbf{43.64\pm0.79}$ \\
-Mode-window captioned image-to-image & $12.84\pm0.25$ & $17.55\pm0.26$ & $25.27\pm2.95$ & $42.37\pm0.70$ \\
+No repair & $12.33\pm0.53$ & $16.49\pm1.01$ & $28.76\pm1.96$ & $42.56\pm0.74$ \\
+Adaptive BRIDGE & $12.68\pm0.88$ & $17.14\pm0.92$ & $27.89\pm4.99$ & $42.34\pm0.69$ \\
+Frozen first-cycle selector & $12.70\pm0.78$ & $16.89\pm0.98$ & $25.93\pm4.73$ & $43.64\pm0.45$ \\
+One-shot repair & $12.73\pm0.43$ & $\mathbf{18.13\pm0.46}$ & $\mathbf{28.98\pm2.72}$ & $\mathbf{43.66\pm0.76}$ \\
+Uniform acquisition & $\mathbf{12.83\pm0.42}$ & $17.73\pm0.80$ & $27.23\pm6.07$ & $43.10\pm0.78$ \\
+Top-tail acquisition & $12.12\pm0.35$ & $17.18\pm0.90$ & $27.89\pm2.64$ & $43.27\pm0.77$ \\
+Mode-window conventional augmentation & $12.04\pm0.18$ & $17.01\pm1.05$ & $22.66\pm4.35$ & $41.28\pm0.46$ \\
+AIDE-style VLM acquisition and text-to-image & $12.28\pm0.15$ & $17.86\pm0.55$ & $28.76\pm0.65$ & $43.36\pm0.08$ \\
+Mode-window caption and text-to-image & $12.42\pm1.13$ & $17.51\pm1.47$ & $25.05\pm3.72$ & $43.64\pm0.79$ \\
+Mode-window captioned image-to-image & $12.66\pm0.56$ & $17.59\pm0.30$ & $25.27\pm2.95$ & $43.13\pm0.61$ \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

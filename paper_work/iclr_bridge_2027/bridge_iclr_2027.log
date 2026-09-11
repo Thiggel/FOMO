@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  10 SEP 2026 12:09
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 06:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -681,14 +681,17 @@ Underfull \vbox (badness 1394) has occurred while \output is active []
 [9] (./tables/main_policy_repair_controls.tex)
 
 [10] (./tables/main_mechanism.tex)
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
 
 [11] (./tables/main_percentile_utility_full_linear.tex)
-<figures/cycle_tsne.pdf, id=943, 888.92097pt x 209.22542pt>
+<figures/cycle_tsne.pdf, id=950, 888.92097pt x 209.22542pt>
 File: figures/cycle_tsne.pdf Graphic file (type pdf)
 <use figures/cycle_tsne.pdf>
 Package pdftex.def Info: figures/cycle_tsne.pdf  used on input line 293.
 (pdftex.def)             Requested size: 389.53358pt x 91.68274pt.
-<figures/cycle_score_histograms.pdf, id=946, 889.55585pt x 172.01201pt>
+<figures/cycle_score_histograms.pdf, id=953, 889.55585pt x 172.01201pt>
 File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
 <use figures/cycle_score_histograms.pdf>
 Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
@@ -696,11 +699,13 @@ Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
 (pdftex.def)             Requested size: 341.83733pt x 66.10014pt.
 
 
-[12 <./figures/cycle_tsne.pdf>] (./bridge_iclr_2027.bbl
+[12]
+
+[13 <./figures/cycle_tsne.pdf> <./figures/cycle_score_histograms.pdf>]
+(./bridge_iclr_2027.bbl
 LaTeX Font Info:    Trying to load font information for T1+pcr on input line 15
 .
-
-(/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
+ (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
 Package microtype Info: Loading generic protrusion settings for font family
@@ -708,8 +713,6 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-
-[13 <./figures/cycle_score_histograms.pdf>]
 
 [14]
 Underfull \hbox (badness 10000) in paragraph at lines 215--222
@@ -729,27 +732,21 @@ arning _ ICCVW _
 
 [16])
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-
 [17] (./tables/fixed_support_geometry.tex)
 
 [18]
 
 [19]
-<figures/cycle_histories_example.pdf, id=1135, 801.66377pt x 233.93259pt>
+
+[20]
+<figures/cycle_histories_example.pdf, id=1149, 801.66377pt x 233.93259pt>
 File: figures/cycle_histories_example.pdf Graphic file (type pdf)
 <use figures/cycle_histories_example.pdf>
 Package pdftex.def Info: figures/cycle_histories_example.pdf  used on input lin
 e 443.
 (pdftex.def)             Requested size: 381.58824pt x 111.35114pt.
- (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
-
-[20]) (./tables/app_pretraining_linear.tex
+ (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex)
+(./tables/app_pretraining_linear.tex
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
@@ -765,8 +762,10 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 (./tables/main_percentile_utility_full_knn.tex)
 (./tables/main_generalization_vits_full_linear.tex)
 (./tables/main_generalization_vits_full_knn.tex)
+(./tables/main_policy_repair_controls_full_linear.tex)
+(./tables/main_policy_repair_controls_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 467.
+put line 469.
 
 Underfull \vbox (badness 6016) has occurred while \output is active []
 
@@ -790,13 +789,13 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 (rerunfilecheck)             Checksum: 73EEC5C7DEC44DA3F51952A34AB4366E;4415.
  ) 
 Here is how much of TeX's memory you used:
- 17436 strings out of 474233
- 277859 string characters out of 5742684
- 814386 words of memory out of 5000000
- 39639 multiletter control sequences out of 15000+600000
+ 17456 strings out of 474233
+ 278810 string characters out of 5742684
+ 834940 words of memory out of 5000000
+ 39651 multiletter control sequences out of 15000+600000
  629929 words of font info for 304 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
- 82i,13n,98p,1880b,710s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 82i,13n,98p,2148b,710s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf
 /fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texmf/fonts/type1/public/
 amsfonts/cm/cmex10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cmextra/cm
@@ -813,10 +812,10 @@ fb></usr/share/texmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texmf/fonts
 /type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmb8a.p
 fb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf/fonts/t
 ype1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (26 pages, 1066131 bytes).
+Output written on bridge_iclr_2027.pdf (26 pages, 1068751 bytes).
 PDF statistics:
- 1369 PDF objects out of 1440 (max. 8388607)
- 922 compressed objects within 10 object streams
- 198 named destinations out of 1000 (max. 500000)
+ 1378 PDF objects out of 1440 (max. 8388607)
+ 929 compressed objects within 10 object streams
+ 200 named destinations out of 1000 (max. 500000)
  63197 words of extra memory for PDF output out of 74296 (max. 10000000)
 
