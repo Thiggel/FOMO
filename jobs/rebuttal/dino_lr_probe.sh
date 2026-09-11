@@ -6,7 +6,7 @@
 #SBATCH --mem=64G
 #SBATCH --time=24:00:00
 #SBATCH --array=0-1
-#SBATCH --output=/vol/home-vol2/ml/laitenbf/FOMO_runtime/logs/full_metric_queue/dinolr_%A_%a.out
+#SBATCH --output=/vol/tmp2/laitenbf/FOMO_runtime/logs/full_metric_queue/dinolr_%A_%a.out
 #
 # Is the DINO arm undertrained because of its learning rate?
 #

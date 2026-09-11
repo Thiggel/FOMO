@@ -7,7 +7,7 @@
 
 set -uo pipefail
 
-GRUENAU_QUEUE="${GRUENAU_QUEUE:-/vol/home-vol2/ml/laitenbf/FOMO_runtime/full_metric_queue}"
+GRUENAU_QUEUE="${GRUENAU_QUEUE:-/vol/tmp2/laitenbf/FOMO_runtime/full_metric_queue}"
 ALEX_HOST="${ALEX_HOST:-alex}"
 ALEX_QUEUE="${ALEX_QUEUE:-/home/atuin/c107fa/c107fa12/FOMO_runtime/full_metric_queue}"
 

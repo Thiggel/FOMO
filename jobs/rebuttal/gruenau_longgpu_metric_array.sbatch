@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=4-00:00:00
-#SBATCH --output=/vol/home-vol2/ml/laitenbf/FOMO_runtime/logs/full_metric_queue/longgpu_%A_%a.out
+#SBATCH --output=/vol/tmp2/laitenbf/FOMO_runtime/logs/full_metric_queue/longgpu_%A_%a.out
 #
 # Second pool of workers on the same shared queue.
 #
@@ -30,7 +30,7 @@ set -uo pipefail
 
 export FOMO_CLUSTER=gruenau
 export FOMO_REPO_DIR="${FOMO_REPO_DIR:-/vol/home-vol2/ml/laitenbf/FOMO}"
-export BASE_CACHE_DIR="${BASE_CACHE_DIR:-/vol/home-vol2/ml/laitenbf/FOMO_runtime}"
+export BASE_CACHE_DIR="${BASE_CACHE_DIR:-/vol/tmp2/laitenbf/FOMO_runtime}"
 export FOMO_METRIC_QUEUE="${FOMO_METRIC_QUEUE:-$BASE_CACHE_DIR/full_metric_queue}"
 export FOMO_WORKER_NAME="longgpu-${SLURM_ARRAY_JOB_ID:-0}-${SLURM_ARRAY_TASK_ID:-0}"
 

@@ -13,7 +13,7 @@
 
 set -uo pipefail
 
-queue="${FOMO_METRIC_QUEUE:-/vol/home-vol2/ml/laitenbf/FOMO_runtime/full_metric_queue}"
+queue="${FOMO_METRIC_QUEUE:-/vol/tmp2/laitenbf/FOMO_runtime/full_metric_queue}"
 # A live worker appends to its cell log continuously; anything untouched for
 # this long has lost its worker.
 stale_seconds="${FOMO_RECLAIM_STALE_SECONDS:-1800}"

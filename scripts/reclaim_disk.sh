@@ -13,7 +13,7 @@
 
 set -uo pipefail
 
-RUNTIME="${BASE_CACHE_DIR:-/vol/home-vol2/ml/laitenbf/FOMO_runtime}"
+RUNTIME="${BASE_CACHE_DIR:-/vol/tmp2/laitenbf/FOMO_runtime}"
 apply=""
 [[ "${1:-}" == "--apply" ]] && apply=1
 

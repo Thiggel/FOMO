@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo="${FOMO_REPO_DIR:-/vol/home-vol2/ml/laitenbf/FOMO}"
-runtime="${BASE_CACHE_DIR:-/vol/home-vol2/ml/laitenbf/FOMO_runtime}"
+runtime="${BASE_CACHE_DIR:-/vol/tmp2/laitenbf/FOMO_runtime}"
 queue="${FOMO_RETRY_QUEUE:-$runtime/gruenau_retry_20260725}"
 retry_suffix="${FOMO_RUN_SUFFIX:-_gruenau_retry1}"
 

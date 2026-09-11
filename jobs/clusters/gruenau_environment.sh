@@ -2,7 +2,12 @@
 set -eu
 
 REPO_DIR="${FOMO_REPO_DIR:-/vol/home-vol2/ml/laitenbf/FOMO}"
-export BASE_CACHE_DIR="${BASE_CACHE_DIR:-/vol/home-vol2/ml/laitenbf/FOMO_runtime}"
+# Runtime data lives on /vol/tmp2, not in the home directory.  home-vol2 is a
+# small shared export with a per-user quota, and it filled to zero blocks on
+# 11 Sep: runs died at cycle boundaries with no traceback because they could
+# not write a checkpoint, tasks were killed two seconds after launch because
+# Slurm could not create their logs, and rm itself returned ENOSPC.
+export BASE_CACHE_DIR="${BASE_CACHE_DIR:-/vol/tmp2/laitenbf/FOMO_runtime}"
 export CHECKPOINT_ROOT_DIR="${CHECKPOINT_ROOT_DIR:-$BASE_CACHE_DIR/checkpoints}"
 # Set, not defaulted.  sbatch propagates the submitting shell, and ~/.bashrc
 # exports HF_HOME=/vol/tmp/laitenbf for interactive work, so every job so far
