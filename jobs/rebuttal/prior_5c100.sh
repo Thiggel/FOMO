@@ -1,15 +1,20 @@
 #!/bin/bash
-#SBATCH --job-name=fomo-prior5c80
+#SBATCH --job-name=fomo-prior5c100
 #SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=110G
 #SBATCH --time=4-00:00:00
-#SBATCH --array=0-17
+#SBATCH --array=0-8
 #
-# Closest prior acquisition rules against BRIDGE on the protocol that carries
-# the paper's claim: five repair stages, 80 epochs per cycle, the frozen SD3
-# image-to-image operator, one shared per-seed source checkpoint.
+# Closest prior acquisition rules against BRIDGE on the protocol the paper
+# reports: five cycles of 100 epochs, the frozen SD3 image-to-image operator,
+# k=100, 500 anchors and 5 generations per anchor, one shared per-seed source
+# checkpoint so that cycle-0 variance does not enter the comparison.
+#
+# Only the rules the paper does not already report are run.  BRIDGE is included
+# as the in-batch reference, because a TADA number is only readable against a
+# BRIDGE number produced by the same wave on the same encoders.
 #
 # The earlier comparison against TADA could not answer the question it was
 # built for.  One family ran a single repair stage, which Proposition 6 says no
@@ -37,7 +42,7 @@ export FOMO_MIN_FREE_GPU_MIB="${FOMO_MIN_FREE_GPU_MIB:-18000}"
 export FOMO_GPU_WAIT_ATTEMPTS="${FOMO_GPU_WAIT_ATTEMPTS:-240}"
 
 conditions=(
-  bridge no_repair uniform top_tail tada cluster_inverse
+  bridge tada cluster_inverse
 )
 task="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is required}"
 seed="$((task % 3))"
@@ -52,9 +57,6 @@ strategy=mode_window
 
 case "$condition" in
   bridge)          ;;
-  no_repair)       augment=false ;;
-  uniform)         selection=random ;;
-  top_tail)        strategy=top ;;
   tada)            selection=early_loss ;;
   cluster_inverse) strategy=cluster_inverse ;;
   *)
@@ -64,7 +66,7 @@ case "$condition" in
 esac
 
 run_suffix="${FOMO_RUN_SUFFIX:-}"
-run_tag="rebuttal_prior5c80_${condition}_${seed}${run_suffix}"
+run_tag="rebuttal_prior5c100_${condition}_${seed}${run_suffix}"
 run_root="$BASE_CACHE_DIR/rebuttal_runs/$run_tag"
 mkdir -p "$run_root"
 
@@ -76,7 +78,7 @@ python -m experiment \
   finetune_benchmark_suite=paper_full \
   num_runs=1 seed="$seed" checkpoint="$checkpoint" \
   skip_initial_training=true max_cycles=6 \
-  n_epochs_per_cycle=80 \
+  n_epochs_per_cycle=100 \
   train_batch_size=128 grad_acc_steps=1 val_batch_size=256 \
   num_ood_samples=500 num_generations_per_ood_sample=5 \
   sample_selection="$selection" ood_selection_strategy="$strategy" \

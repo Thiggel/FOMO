@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=fomo-diffaug5c80
+#SBATCH --job-name=fomo-diffaug5c100
 #SBATCH --partition=gpu,gpu-staff
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
@@ -7,8 +7,8 @@
 #SBATCH --time=4-00:00:00
 #SBATCH --array=0-5
 #
-# DiffAug, the closest iterative SSL antecedent, on the protocol that carries
-# the paper's claim.  DiffAug changes the SSL objective, learning a generator
+# DiffAug, the closest iterative SSL antecedent, on the protocol the paper reports,
+# five cycles of 100 epochs.  DiffAug changes the SSL objective, learning a generator
 # for positive views, so it cannot be an arm of the acquisition sweep in
 # prior_5c80.sh, which varies the anchor rule while holding the objective
 # fixed.  It gets its own paired comparison instead: DiffAug alone against
@@ -38,7 +38,7 @@ checkpoint="$CHECKPOINT_ROOT_DIR/rebuttal_branch_source/clane9_imagenet-100/seed
 test -s "$checkpoint"
 
 run_suffix="${FOMO_RUN_SUFFIX:-}"
-run_tag="rebuttal_diffaug5c80_${condition}_${seed}${run_suffix}"
+run_tag="rebuttal_diffaug5c100_${condition}_${seed}${run_suffix}"
 run_root="$BASE_CACHE_DIR/rebuttal_runs/$run_tag"
 mkdir -p "$run_root"
 
@@ -50,7 +50,7 @@ python -m experiment \
   finetune_benchmark_suite=paper_full \
   num_runs=1 seed="$seed" checkpoint="$checkpoint" \
   skip_initial_training=true max_cycles=6 \
-  n_epochs_per_cycle=80 \
+  n_epochs_per_cycle=100 \
   train_batch_size=128 grad_acc_steps=1 val_batch_size=256 \
   num_ood_samples=500 num_generations_per_ood_sample=5 \
   sample_selection=ood ood_selection_strategy=mode_window \
