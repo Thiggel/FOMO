@@ -140,6 +140,9 @@ save_visualization_data: false
 representation_diagnostics: true
 representation_diagnostics_max_samples: 20000
 representation_diagnostics_each_cycle: false
+# Which points may act as neighbours in the diagnostics: panel keeps the index
+# to the fixed original panel, all adds the generated repairs to it.
+representation_diagnostics_reference: panel
 representation_diagnostics_save_samples: false
 
 # Optional paths

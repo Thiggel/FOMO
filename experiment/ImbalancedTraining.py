@@ -1399,6 +1399,32 @@ class ImbalancedTraining:
     # be saved for backward".  ``no_grad`` provides the same memory benefit for
     # feature extraction without changing tensor provenance across stages.
     @torch.no_grad()
+    def _embed_positions(self, subset, base_dataset, device) -> np.ndarray:
+        """Normalized features for a subset, using the diagnostics transform."""
+        old_transform = getattr(base_dataset, "transform", None)
+        if hasattr(base_dataset, "transform"):
+            base_dataset.transform = self.transform
+        loader = DataLoader(
+            subset,
+            batch_size=self.args.val_batch_size,
+            shuffle=False,
+            num_workers=min(2, self.num_workers),
+            pin_memory=True,
+        )
+        chunks = []
+        try:
+            for loaded_batch in tqdm(loader, desc="Diagnostics reference set"):
+                embeddings = self.ssl_method.model.extract_features(
+                    loaded_batch[0].to(device=device, dtype=self.ssl_method.dtype)
+                )
+                chunks.append(embeddings.float().cpu())
+        finally:
+            if hasattr(base_dataset, "transform"):
+                base_dataset.transform = old_transform
+        if not chunks:
+            return np.zeros((0, 1), dtype=np.float32)
+        return F.normalize(torch.cat(chunks), dim=1).numpy().astype(np.float32)
+
     def compute_representation_diagnostics(self) -> dict:
         """Scale-invariant health and geometry metrics on fixed original images."""
         import faiss
@@ -1461,8 +1487,33 @@ class ImbalancedTraining:
         feature_variance = x.var(dim=0, unbiased=False)
         normalized = F.normalize(x, dim=1).numpy().astype(np.float32)
 
+        # Which points may count as neighbours.  The measured population is the
+        # fixed original panel either way, so the numbers stay comparable across
+        # cycles.  With "panel" the generated images are not in the index, so a
+        # repair cannot reduce the radius of the anchor it was generated for and
+        # the diagnostic cannot see the thing the method does.  With "all" the
+        # repairs join the reference set and the radius of an original answers
+        # the question the method actually poses: is this region better
+        # supported now.
+        reference = str(
+            getattr(self.args, "representation_diagnostics_reference", "panel")
+        )
+        extra = None
+        if reference == "all" and isinstance(train_dataset, Subset):
+            generated_positions = [
+                position
+                for position, dataset_index in enumerate(train_dataset.indices)
+                if int(dataset_index) >= original_pool_size
+            ]
+            if generated_positions:
+                extra = self._embed_positions(
+                    Subset(train_dataset, generated_positions), base_dataset, device
+                )
+
         index = faiss.IndexFlatL2(normalized.shape[1])
         index.add(normalized)
+        if extra is not None and len(extra):
+            index.add(extra)
         k = min(int(self.args.k) + 1, len(normalized))
         distances, neighbors = index.search(normalized, k)
         radii = distances[:, 1:].mean(axis=1)
