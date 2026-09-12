@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  11 SEP 2026 17:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  12 SEP 2026 07:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -671,7 +671,7 @@ LaTeX Warning: Reference `prop:local-support' on page 3 undefined on input line
 [3]
 
 [4]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 1199) has occurred while \output is active []
 
 
 
@@ -681,9 +681,9 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 [7] (./tables/main_mechanism.tex)
 
-[8]
+[8] (./bridge_iclr_2027.bbl
 
-[9] (./bridge_iclr_2027.bbl
+[9]
 
 [10]
 
@@ -717,15 +717,17 @@ LaTeX Warning: Reference `prop:local-support' on page 14 undefined on input lin
 e 309.
 
 
+Underfull \vbox (badness 1708) has occurred while \output is active []
+
+
 
 [14]
 
 [15 <./figures/cycle_score_histograms.pdf>]
-
-[16 <./figures/cycle_tsne.pdf>]
 LaTeX Font Info:    Trying to load font information for T1+pcr on input line 36
 2.
- (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
+
+(/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
 Package microtype Info: Loading generic protrusion settings for font family
@@ -734,15 +736,20 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
 
 
+[16 <./figures/cycle_tsne.pdf>]
+
 [17]
 <figures/cycle_histories_example.pdf, id=1096, 801.66377pt x 233.93259pt>
 File: figures/cycle_histories_example.pdf Graphic file (type pdf)
 <use figures/cycle_histories_example.pdf>
 Package pdftex.def Info: figures/cycle_histories_example.pdf  used on input lin
-e 394.
+e 396.
 (pdftex.def)             Requested size: 381.58824pt x 111.35114pt.
  (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex)
 (./tables/app_pretraining_linear.tex
+Underfull \vbox (badness 2393) has occurred while \output is active []
+
+
 
 [18 <./figures/cycle_histories_example.pdf>]) (./tables/app_pretraining_knn.tex
 ) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
@@ -765,9 +772,9 @@ Underfull \vbox (badness 1412) has occurred while \output is active []
 (./tables/main_generalization_vits_full_linear.tex)
 (./tables/main_generalization_vits_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 419.
+put line 421.
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 6396) has occurred while \output is active []
 
 
 
@@ -788,13 +795,13 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 (rerunfilecheck)             Checksum: 73EEC5C7DEC44DA3F51952A34AB4366E;4415.
  ) 
 Here is how much of TeX's memory you used:
- 17434 strings out of 474233
- 277745 string characters out of 5742684
- 803827 words of memory out of 5000000
+ 17438 strings out of 474233
+ 277780 string characters out of 5742684
+ 803623 words of memory out of 5000000
  39637 multiletter control sequences out of 15000+600000
- 630310 words of font info for 310 fonts, out of 8000000 for 9000
+ 630437 words of font info for 312 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
- 82i,13n,98p,1872b,710s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 82i,14n,98p,1872b,710s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf
 /fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texmf/fonts/type1/public/
 amsfonts/cm/cmex10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi10.
@@ -810,10 +817,10 @@ onts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/sh
 are/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type1/urw
 /times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></usr/shar
 e/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (23 pages, 1034597 bytes).
+Output written on bridge_iclr_2027.pdf (23 pages, 1035555 bytes).
 PDF statistics:
- 1319 PDF objects out of 1440 (max. 8388607)
- 876 compressed objects within 9 object streams
- 189 named destinations out of 1000 (max. 500000)
+ 1320 PDF objects out of 1440 (max. 8388607)
+ 877 compressed objects within 9 object streams
+ 190 named destinations out of 1000 (max. 500000)
  63197 words of extra memory for PDF output out of 74296 (max. 10000000)
 
