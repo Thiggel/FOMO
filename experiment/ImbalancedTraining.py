@@ -1404,11 +1404,17 @@ class ImbalancedTraining:
         old_transform = getattr(base_dataset, "transform", None)
         if hasattr(base_dataset, "transform"):
             base_dataset.transform = self.transform
+        # Single process on purpose.  A worker pool here has to hand tensors back
+        # over the file-descriptor sharing strategy this project runs with, and
+        # that path deadlocked: three of the six paired geometry runs sat at zero
+        # percent GPU for sixteen hours with the process alive, so Slurm reported
+        # them running and nothing complained.  The reference set is embedded once
+        # per cycle and is not worth a second worker pool.
         loader = DataLoader(
             subset,
             batch_size=self.args.val_batch_size,
             shuffle=False,
-            num_workers=min(2, self.num_workers),
+            num_workers=0,
             pin_memory=True,
         )
         chunks = []

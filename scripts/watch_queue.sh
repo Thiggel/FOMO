@@ -50,6 +50,18 @@ while :; do
   done < <(comm -23 <(echo "$prev") <(echo "$cur"))
   note_names
   prev="$cur"
+  # A hung run keeps its allocation and its process, so squeue calls it RUNNING
+  # and nothing here would ever fire.  Name any task whose log has been silent
+  # for longer than a cycle takes; the reader checks utilisation from there.
+  while read -r id; do
+    [[ -z "$id" ]] && continue
+    log="slurm-${id}.out"
+    [[ -e "$log" ]] || continue
+    idle=$(( ($(date +%s) - $(stat -c %Y "$log")) / 60 ))
+    if (( idle > ${WATCH_STALL_MINUTES:-360} )); then
+      echo "STALLED $id  log silent for ${idle} min; check GPU utilisation"
+    fi
+  done < <(squeue -u "$USER" -h -r -t RUNNING -o '%i' 2>/dev/null)
   n=$((n+1))
   if [[ -z "$cur" ]]; then echo "ALL DONE: queue empty at $(date '+%F %H:%M')"; exit 0; fi
   if (( n % beat == 0 )); then
