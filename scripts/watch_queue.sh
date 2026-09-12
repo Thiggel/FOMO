@@ -42,7 +42,7 @@ while :; do
       echo "GONE    $id  ${name:-?}  -> left the queue with no log here"
     elif [[ -n "$sig" ]]; then
       echo "FAILED  $id  ${name:-?}  -> $sig"
-    elif grep -q 'print_mean_std' "$log" 2>/dev/null; then
+    elif grep -qE 'print_mean_std|Saved [0-9]+ SD3-VAE targets' "$log" 2>/dev/null; then
       echo "DONE    $id  ${name:-?}"
     else
       echo "GONE    $id  ${name:-?}  -> no result and no known error; check $log"
