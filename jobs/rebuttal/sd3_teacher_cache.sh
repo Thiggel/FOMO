@@ -1,5 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=fomo-sd3-teacher-cache
+#SBATCH --partition=gpu,gpu-staff
+#SBATCH --mem=110G
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=08:00:00
