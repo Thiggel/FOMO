@@ -1523,7 +1523,16 @@ class ImbalancedTraining:
         k = min(int(self.args.k) + 1, len(normalized))
         distances, neighbors = index.search(normalized, k)
         radii = distances[:, 1:].mean(axis=1)
-        nearest_labels = y[neighbors[:, 1]]
+        # With the repairs in the reference set a nearest neighbour can be a
+        # generated image, which has no entry in the panel's label array.  Score
+        # purity over the originals that have an original nearest neighbour, and
+        # report separately how often the nearest neighbour is a repair, which is
+        # the quantity that says whether the inserted support actually landed
+        # next to the images it was generated for.
+        nearest = neighbors[:, 1]
+        nearest_is_original = nearest < len(normalized)
+        nearest_labels = y[np.where(nearest_is_original, nearest, 0)]
+        repaired_neighbor_fraction = float(1.0 - nearest_is_original.mean())
 
         centered = torch.nan_to_num(x - x.mean(dim=0, keepdim=True))
         covariance = centered.T @ centered / max(1, len(centered) - 1)
@@ -1556,7 +1565,12 @@ class ImbalancedTraining:
             prefix + "feature_variance_min": float(feature_variance.min()),
             prefix + "effective_rank": float(effective_rank),
             prefix + "spectral_entropy": float(spectral_entropy),
-            prefix + "knn_1_accuracy": float(np.mean(nearest_labels == y)),
+            prefix + "knn_1_accuracy": float(
+                np.mean((nearest_labels == y)[nearest_is_original])
+                if nearest_is_original.any()
+                else 0.0
+            ),
+            prefix + "repaired_neighbor_fraction": repaired_neighbor_fraction,
             prefix + "normalized_radius_median": float(np.median(radii)),
             prefix + "normalized_radius_p90": float(np.quantile(radii, 0.90)),
             prefix + "normalized_radius_p95": float(np.quantile(radii, 0.95)),
