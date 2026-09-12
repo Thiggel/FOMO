@@ -72,6 +72,15 @@ esac
 # descriptor limits, which do not bind here: the limit is 524288 and these jobs
 # run six workers.
 export FOMO_SHARING_STRATEGY="${FOMO_SHARING_STRATEGY:-file_descriptor}"
+# file_descriptor shortens the window but does not close it.  Torch still
+# creates a /dev/shm object and unlinks it immediately, and when logind sweeps
+# between those two calls the worker dies with "could not unlink the shared
+# memory file" and the parent blocks on a queue that will never be fed.  Three
+# runs sat at zero percent GPU for eleven to fifteen hours that way, with
+# Slurm reporting them RUNNING.  Fewer workers means fewer transfers and fewer
+# chances to lose that race; loginctl enable-linger is set for this account,
+# which should stop the sweep entirely, and this is the belt to that brace.
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-2}"
 export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-2}"
 export FOMO_ALLOW_DATA_DOWNLOAD=1
 export PYTHONUNBUFFERED=1
