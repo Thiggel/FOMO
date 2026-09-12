@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  12 SEP 2026 07:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  12 SEP 2026 07:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -671,19 +671,27 @@ LaTeX Warning: Reference `prop:local-support' on page 3 undefined on input line
 [3]
 
 [4]
-Underfull \vbox (badness 1199) has occurred while \output is active []
+
+[5] (./tables/main_sota_label_sources.tex) (./tables/main_sota_web_sources.tex)
 
 
-
-[5] (./tables/main_sota_label_sources.tex)
-
-[6] (./tables/main_sota_web_sources.tex) (./tables/main_generalization.tex)
+[6] (./tables/main_generalization.tex)
 
 [7] (./tables/main_mechanism.tex)
+<figures/one_stage_vs_five.pdf, id=900, 508.88771pt x 140.77919pt>
+File: figures/one_stage_vs_five.pdf Graphic file (type pdf)
+<use figures/one_stage_vs_five.pdf>
+Package pdftex.def Info: figures/one_stage_vs_five.pdf  used on input line 217.
+
+(pdftex.def)             Requested size: 294.14107pt x 81.37273pt.
+
 
 [8] (./bridge_iclr_2027.bbl
+Underfull \vbox (badness 5446) has occurred while \output is active []
 
-[9]
+
+
+[9 <./figures/one_stage_vs_five.pdf>]
 
 [10]
 
@@ -698,13 +706,13 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 (./tables/fixed_support_geometry.tex)
-<figures/cycle_score_histograms.pdf, id=957, 889.55585pt x 172.01201pt>
+<figures/cycle_score_histograms.pdf, id=997, 889.55585pt x 172.01201pt>
 File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
 <use figures/cycle_score_histograms.pdf>
 Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
  282.
 (pdftex.def)             Requested size: 341.83733pt x 66.10014pt.
-<figures/cycle_tsne.pdf, id=958, 888.92097pt x 209.22542pt>
+<figures/cycle_tsne.pdf, id=998, 888.92097pt x 209.22542pt>
 File: figures/cycle_tsne.pdf Graphic file (type pdf)
 <use figures/cycle_tsne.pdf>
 Package pdftex.def Info: figures/cycle_tsne.pdf  used on input line 288.
@@ -739,7 +747,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 [16 <./figures/cycle_tsne.pdf>]
 
 [17]
-<figures/cycle_histories_example.pdf, id=1096, 801.66377pt x 233.93259pt>
+<figures/cycle_histories_example.pdf, id=1136, 801.66377pt x 233.93259pt>
 File: figures/cycle_histories_example.pdf Graphic file (type pdf)
 <use figures/cycle_histories_example.pdf>
 Package pdftex.def Info: figures/cycle_histories_example.pdf  used on input lin
@@ -795,10 +803,10 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 (rerunfilecheck)             Checksum: 73EEC5C7DEC44DA3F51952A34AB4366E;4415.
  ) 
 Here is how much of TeX's memory you used:
- 17438 strings out of 474233
- 277780 string characters out of 5742684
- 803623 words of memory out of 5000000
- 39637 multiletter control sequences out of 15000+600000
+ 17446 strings out of 474233
+ 278077 string characters out of 5742684
+ 804234 words of memory out of 5000000
+ 39645 multiletter control sequences out of 15000+600000
  630437 words of font info for 312 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
  82i,14n,98p,1872b,710s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -817,10 +825,10 @@ onts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/sh
 are/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type1/urw
 /times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></usr/shar
 e/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (23 pages, 1035555 bytes).
+Output written on bridge_iclr_2027.pdf (23 pages, 1046697 bytes).
 PDF statistics:
- 1320 PDF objects out of 1440 (max. 8388607)
- 877 compressed objects within 9 object streams
+ 1361 PDF objects out of 1440 (max. 8388607)
+ 882 compressed objects within 9 object streams
  190 named destinations out of 1000 (max. 500000)
- 63197 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 63202 words of extra memory for PDF output out of 74296 (max. 10000000)
 
