@@ -89,7 +89,6 @@ export FOMO_SHARING_STRATEGY="${FOMO_SHARING_STRATEGY:-file_descriptor}"
 # chances to lose that race; loginctl enable-linger is set for this account,
 # which should stop the sweep entirely, and this is the belt to that brace.
 export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-0}"
-export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-0}"
 export FOMO_ALLOW_DATA_DOWNLOAD=1
 export PYTHONUNBUFFERED=1
 # Large source archives (notably PASS) must be shared across workers.  TMPDIR

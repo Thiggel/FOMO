@@ -28,7 +28,11 @@ export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-$BASE_CACHE_DIR/pycache}"
 export TORCH_HOME="${TORCH_HOME:-$BASE_CACHE_DIR/torch}"
 export CUBLAS_WORKSPACE_CONFIG="${CUBLAS_WORKSPACE_CONFIG:-:4096:8}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
-export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-2}"
+# Zero, and set here because this file is sourced first: a default further down
+# the chain can only lose to it.  Setting the later ones to zero while this
+# still said two is why four runs relaunched to escape the dataloader hangs
+# came up with two workers anyway and hung again.
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-0}"
 export FOMO_START_METHOD="${FOMO_START_METHOD:-fork}"
 
 mkdir -p "$CHECKPOINT_ROOT_DIR" "$HF_HUB_CACHE" "$HF_DATASETS_CACHE"
