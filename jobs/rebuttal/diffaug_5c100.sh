@@ -27,7 +27,7 @@ cd "${FOMO_REPO_DIR:-$PWD}"
 . jobs/rebuttal/load_cluster_environment.sh
 . jobs/rebuttal/full_metric_suite.sh
 
-export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-2}"
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-0}"
 export FOMO_PERSISTENT_WORKERS="${FOMO_PERSISTENT_WORKERS:-0}"
 export FOMO_PREFETCH_FACTOR="${FOMO_PREFETCH_FACTOR:-2}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"

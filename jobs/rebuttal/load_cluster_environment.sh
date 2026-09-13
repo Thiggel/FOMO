@@ -72,6 +72,14 @@ esac
 # descriptor limits, which do not bind here: the limit is 524288 and these jobs
 # run six workers.
 export FOMO_SHARING_STRATEGY="${FOMO_SHARING_STRATEGY:-file_descriptor}"
+# No dataloader workers.  Every attempt to keep them has failed here.  spawn
+# workers die when logind sweeps the POSIX semaphores they reopen by name;
+# fork workers with file_descriptor sharing hang at pool startup or when a
+# /dev/shm object is swept between creation and unlink.  Eight runs across four
+# launchers sat at zero percent GPU for four to fifteen hours while Slurm
+# reported them RUNNING, and reducing the pool from six workers to two did not
+# stop it.  Loading in the main process cannot deadlock, and the generator
+# dominates these runs anyway.
 # file_descriptor shortens the window but does not close it.  Torch still
 # creates a /dev/shm object and unlinks it immediately, and when logind sweeps
 # between those two calls the worker dies with "could not unlink the shared
@@ -80,8 +88,8 @@ export FOMO_SHARING_STRATEGY="${FOMO_SHARING_STRATEGY:-file_descriptor}"
 # Slurm reporting them RUNNING.  Fewer workers means fewer transfers and fewer
 # chances to lose that race; loginctl enable-linger is set for this account,
 # which should stop the sweep entirely, and this is the belt to that brace.
-export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-2}"
-export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-2}"
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-0}"
+export FOMO_NUM_WORKERS="${FOMO_NUM_WORKERS:-0}"
 export FOMO_ALLOW_DATA_DOWNLOAD=1
 export PYTHONUNBUFFERED=1
 # Large source archives (notably PASS) must be shared across workers.  TMPDIR
