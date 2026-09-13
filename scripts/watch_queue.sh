@@ -59,7 +59,8 @@ while :; do
     [[ -e "$log" ]] || continue
     idle=$(( ($(date +%s) - $(stat -c %Y "$log")) / 60 ))
     if (( idle > ${WATCH_STALL_MINUTES:-360} )); then
-      echo "STALLED $id  log silent for ${idle} min; check GPU utilisation"
+      echo "STALLED $id  log silent for ${idle} min; check CPU time, not just"\
+           " GPU: with no dataloader workers a healthy run sits at 0 percent GPU"
     fi
   done < <(squeue -u "$USER" -h -r -t RUNNING -o '%i' 2>/dev/null)
   n=$((n+1))
