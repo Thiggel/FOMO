@@ -54,8 +54,8 @@ Manel Baradad, Jonas Wulff, Tongzhou Wang, Phillip Isola, and Antonio Torralba.
 
 \bibitem[Baradad et~al.(2022)Baradad, Chen, Wulff, Wang, Feris, Torralba, and
   Isola]{baradad2022procedural}
-Manel Baradad, Richard Chen, Jonas Wulff, Tongzhou Wang, Rogerio Feris, Antonio
-  Torralba, and Phillip Isola.
+Manel Baradad, Chun-Fu~(Richard) Chen, Jonas Wulff, Tongzhou Wang, Rogerio
+  Feris, Antonio Torralba, and Phillip Isola.
 \newblock Procedural image programs for representation learning.
 \newblock In \emph{Advances in Neural Information Processing Systems}, 2022.
 
@@ -92,6 +92,7 @@ Lijie Fan, Kaifeng Chen, Dilip Krishnan, Dina Katabi, Phillip Isola, and
 \newblock Scaling laws of synthetic images for model training ... for now.
 \newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
   and Pattern Recognition (CVPR)}, pages 7382--7392, 2024.
+\newblock \doi{10.1109/CVPR52733.2024.00705}.
 
 \bibitem[Gonzalez(1985)]{gonzalez1985clustering}
 Teofilo~F. Gonzalez.
@@ -121,6 +122,7 @@ Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll{\'a}r, and Ross
 \newblock Masked autoencoders are scalable vision learners.
 \newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
   and Pattern Recognition (CVPR)}, pages 16000--16009. IEEE, June 2022.
+\newblock \doi{10.1109/CVPR52688.2022.01553}.
 
 \bibitem[He et~al.(2023)He, Sun, Yu, Xue, Zhang, Torr, Bai, and
   Qi]{he2023synthetic}
@@ -182,6 +184,7 @@ Daiqing Li, Huan Ling, Amlan Kar, David Acuna, Seung~Wook Kim, Karsten Kreis,
   models.
 \newblock In \emph{Proceedings of the IEEE/CVF International Conference on
   Computer Vision (ICCV)}, pages 16698--16708, 2023.
+\newblock \doi{10.1109/ICCV51070.2023.01531}.
 
 \bibitem[Liang et~al.(2024)Liang, Su, Schulter, Garg, Zhao, Wu, and
   Chandraker]{liang2024aide}
@@ -191,6 +194,7 @@ Mingfu Liang, Jong-Chyi Su, Samuel Schulter, Sparsh Garg, Shiyu Zhao, Ying Wu,
   driving.
 \newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
   and Pattern Recognition (CVPR)}, pages 14695--14706, 2024.
+\newblock \doi{10.1109/CVPR52733.2024.01392}.
 
 \bibitem[Lim et~al.(2018)Lim, Loo, Tran, Cheung, Roig, and
   Elovici]{lim2018doping}
@@ -274,6 +278,7 @@ Zhongzheng Ren and Yong~Jae Lee.
   synthetic imagery.
 \newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
   Pattern Recognition (CVPR)}, pages 762--771, 2018.
+\newblock \doi{10.1109/CVPR.2018.00086}.
 
 \bibitem[Rombach et~al.(2022)Rombach, Blattmann, Lorenz, Esser, and
   Ommer]{rombach2022highresolution}
@@ -282,6 +287,7 @@ Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj{\"o}rn
 \newblock High-resolution image synthesis with latent diffusion models.
 \newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
   and Pattern Recognition (CVPR)}, pages 10684--10695. IEEE, June 2022.
+\newblock \doi{10.1109/CVPR52688.2022.01042}.
 
 \bibitem[Sariyildiz et~al.(2023)Sariyildiz, Alahari, Larlus, and
   Kalantidis]{sariyildiz2023fake}
@@ -290,6 +296,7 @@ Mert~Bulent Sariyildiz, Karteek Alahari, Diane Larlus, and Yannis Kalantidis.
   synthetic {ImageNet} clones.
 \newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
   and Pattern Recognition (CVPR)}, pages 8011--8021, 2023.
+\newblock \doi{10.1109/CVPR52729.2023.00774}.
 
 \bibitem[Sener and Savarese(2018)]{sener2018active}
 Ozan Sener and Silvio Savarese.
@@ -308,8 +315,7 @@ Oriane Sim{\'e}oni, Huy~V. Vo, Maximilian Seitzer, Federico Baldassarre, Maxime
   Timoth{\'e}e Darcet, Th{\'e}o Moutakanni, L{\'e}o Sentana, Claire Roberts,
   Andrea Vedaldi, Jamie Tolan, John Brandt, Camille Couprie, Julien Mairal,
   Herv{\'e} J{\'e}gou, Patrick Labatut, and Piotr Bojanowski.
-\newblock {DINO}v3: Self-supervised learning for vision at unprecedented scale,
-  2025.
+\newblock {DINO}v3, 2025.
 
 \bibitem[Sorscher et~al.(2022)Sorscher, Geirhos, Shekhar, Ganguli, and
   Morcos]{sorscher2022beyond}
@@ -339,6 +345,7 @@ Yonglong Tian, Olivier~J. H{\'e}naff, and A{\"a}ron van~den Oord.
 \newblock Divide and contrast: Self-supervised learning from uncurated data.
 \newblock In \emph{Proceedings of the IEEE/CVF International Conference on
   Computer Vision (ICCV)}, pages 10063--10074. IEEE, October 2021.
+\newblock \doi{10.1109/ICCV48922.2021.00991}.
 
 \bibitem[Tian et~al.(2023)Tian, Fan, Isola, Chang, and
   Krishnan]{tian2023stablerep}

@@ -301,6 +301,11 @@ The fixed-space intervention test freezes the cycle-0 encoder and queries the sa
 \section{Proofs for the Support-Allocation Framework}
 \label{app:proofs}
 
+\begin{proposition}[Monotone local support]
+\label{prop:local-support}
+For any finite $A$, $r_k(z;Z\cup A)\leq r_k(z;Z)$. The inequality is strict when an added point enters the first $k$ neighbors of $z$ and displaces a neighbor at strictly larger distance.
+\end{proposition}
+
 \begin{proposition}[Sparse-region marginal value]
 \label{prop:sparse-value}
 $\Delta_j(m_j)$ is positive and strictly decreases with $n_j+m_j$. When two regions have equal transfer mass and difficulty, the region with less effective support has the larger marginal value.
