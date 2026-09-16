@@ -36,8 +36,24 @@ declare -A cardof utilof
 while IFS=, read -r i u util; do cardof[\$u]=\$i; utilof[\$u]=\$util; done < /tmp/hc_g.txt
 
 pids=(); : > /tmp/hc_s.txt
+# Enumerating through nvidia-smi alone hides a run that currently holds no GPU
+# memory.  These jobs release the card during CPU-bound phases, so the one most
+# worth checking is precisely the one that would be missing.  Seed the list with
+# our own training processes first, then let the GPU listing fill in card and
+# utilization for whichever of them hold memory.
+for p in \$(pgrep -u "\$(id -u)" -f 'python -m experiment' 2>/dev/null); do
+  cpu=\$(awk '{print \$14+\$15}' /proc/\$p/stat 2>/dev/null || echo 0)
+  rd=\$(awk '/^read_bytes/{print \$2}' /proc/\$p/io 2>/dev/null || echo 0)
+  wr=\$(awk '/^write_bytes/{print \$2}' /proc/\$p/io 2>/dev/null || echo 0)
+  echo "\$p - - 0 \$cpu \$rd \$wr" >> /tmp/hc_s.txt
+done
 while IFS=, read -r p u m; do
   [ "\$m" -gt 5000 ] 2>/dev/null || continue
+  # Already seeded above; replace the placeholder row with card and memory.
+  if grep -q "^\$p " /tmp/hc_s.txt; then
+    sed -i "s|^\$p - - 0 |\$p \${cardof[\$u]} \${utilof[\$u]} \$m |" /tmp/hc_s.txt
+    continue
+  fi
   cpu=\$(awk '{print \$14+\$15}' /proc/\$p/stat 2>/dev/null || echo 0)
   rd=\$(awk '/^read_bytes/{print \$2}' /proc/\$p/io 2>/dev/null || echo 0)
   wr=\$(awk '/^write_bytes/{print \$2}' /proc/\$p/io 2>/dev/null || echo 0)
