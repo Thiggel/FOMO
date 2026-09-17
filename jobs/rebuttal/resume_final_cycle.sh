@@ -43,6 +43,13 @@ ssl_name="${FOMO_RESUME_SSL:-simclr}"
 # leave the default.  Resuming under the other setting would leave a final
 # cycle of diagnostics not comparable to the five before it.
 diag_ref="${FOMO_RESUME_DIAG_REF:-panel}"
+# The repair condition must match the one the earlier cycles ran under.  These
+# default to the BRIDGE settings; a baseline arm overrides whichever knob
+# defines it, the way its own launcher does.
+selection="${FOMO_RESUME_SELECTION:-ood}"
+strategy="${FOMO_RESUME_STRATEGY:-mode_window}"
+encoder="${FOMO_RESUME_ENCODER:-ssl}"
+generator="${FOMO_RESUME_GENERATOR:-stable_diffusion_3}"
 
 run_root="$BASE_CACHE_DIR/rebuttal_runs/$run_tag"
 checkpoint="$CHECKPOINT_ROOT_DIR/$run_tag/clane9_imagenet-100/seed_${seed}/last.ckpt"
@@ -73,10 +80,11 @@ python -m experiment \
   n_epochs_per_cycle=100 \
   train_batch_size=128 grad_acc_steps=1 val_batch_size=256 \
   num_ood_samples=500 num_generations_per_ood_sample=5 \
-  sample_selection=ood ood_selection_strategy=mode_window \
+  sample_selection="$selection" ood_selection_strategy="$strategy" \
+  selection_encoder="$encoder" \
   selection_reuse_policy=adaptive repair_once=false \
   ood_distance_metric=normalized_l2 ood_augmentation="${FOMO_RESUME_AUGMENT:-true}" \
-  generation_model=stable_diffusion_3 \
+  generation_model="$generator" \
   representation_diagnostics_each_cycle=true \
   representation_diagnostics_save_samples=true \
   representation_diagnostics_reference="$diag_ref" \
