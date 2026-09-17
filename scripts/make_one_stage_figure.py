@@ -55,27 +55,35 @@ def main() -> None:
     rules = [("top tail", 34.3, 1.2), ("uniform", 35.5, 1.2), ("mode\nwindow", 42.3, 0.7)]
 
     fig, axes = plt.subplots(
-        1, 2, figsize=(7.2, 2.05), gridspec_kw={"width_ratios": [2.1, 1.0]}
+        1, 2, figsize=(7.2, 2.5), gridspec_kw={"width_ratios": [2.1, 1.0]}, sharey=True
     )
-    low = min(min(values), min(v for _, v, _ in rules)) - 2
-    high = max(max(values), max(v for _, v, _ in rules)) + 2
+    low = min(min(values), min(v for _, v, _ in rules)) - 2.5
+    high = max(max(values), max(v for _, v, _ in rules)) + 2.5
+
+    def spread_bracket(ax, x, lo_v, hi_v, text):
+        ax.annotate("", xy=(x, hi_v), xytext=(x, lo_v),
+                    arrowprops=dict(arrowstyle="<->", color="k", lw=1.0, shrinkA=0, shrinkB=0))
+        ax.text(x + 0.12, (lo_v + hi_v) / 2, text, fontsize=9, va="center", fontweight="bold")
 
     ax = axes[0]
     ax.bar(range(len(values)), values, color=BAND, width=0.68)
     ax.set_xticks(range(len(values)))
-    ax.set_xticklabels(labels, fontsize=6.5, rotation=45, ha="right")
+    ax.set_xticklabels(labels, fontsize=8, rotation=45, ha="right")
     ax.set_ylim(low, high)
-    ax.set_ylabel("seven-task linear probe", fontsize=8)
-    ax.set_title("one repair stage: nine score bands, spread 1.32", fontsize=8.5)
-    ax.tick_params(axis="y", labelsize=7)
+    ax.set_ylabel("seven-task linear probe", fontsize=9)
+    ax.set_xlabel("score band receiving the whole budget (percentiles)", fontsize=8)
+    ax.set_title("one repair stage: densest quartile to extreme tail", fontsize=9.5)
+    ax.tick_params(axis="y", labelsize=8)
     # The cosine row of the robustness table is provably the same experiment as
     # the normalized-L2 row, and the two differ by up to 1.3 points.  That is the
     # pipeline's own resolution, so a band inside this envelope is unreadable.
     centre = mean(values)
-    ax.axhspan(centre - 0.65, centre + 0.65, color=GREY, alpha=0.22, lw=0)
-    ax.axhline(centre, color=GREY, lw=0.8, ls="--")
-    ax.text(0.02, 0.93, "shaded: run-to-run resolution, 1.3 points",
-            transform=ax.transAxes, fontsize=6.5, color="#555555")
+    ax.axhspan(centre - 0.65, centre + 0.65, color=GREY, alpha=0.25, lw=0)
+    ax.text(len(values) - 0.5, centre + 0.9, "run-to-run resolution",
+            fontsize=7.5, color="#444444", ha="right")
+    spread_bracket(ax, len(values) - 0.45, min(values), max(values), f"{max(values)-min(values):.1f}")
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
 
     ax = axes[1]
     ax.bar(
@@ -87,10 +95,13 @@ def main() -> None:
         capsize=3,
     )
     ax.set_xticks(range(len(rules)))
-    ax.set_xticklabels([n for n, _, _ in rules], fontsize=7)
-    ax.set_ylim(low, high)
-    ax.set_yticklabels([])
-    ax.set_title("five stages: three rules, spread 8.0", fontsize=8.5)
+    ax.set_xticklabels([n for n, _, _ in rules], fontsize=8)
+    ax.set_title("five stages: same rules", fontsize=9.5)
+    ax.tick_params(axis="y", labelsize=8)
+    vals = [v for _, v, _ in rules]
+    spread_bracket(ax, len(rules) - 0.55, min(vals), max(vals), f"{max(vals)-min(vals):.1f}")
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
 
     fig.tight_layout()
     fig.savefig(args.out, bbox_inches="tight")

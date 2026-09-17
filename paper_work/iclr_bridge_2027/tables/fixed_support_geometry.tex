@@ -1,14 +1,19 @@
 \begin{table}[t]
 \centering
 \small
-\setlength{\tabcolsep}{4pt}
-\caption{Local support added in the frozen cycle-0 representation, reported as mean $\pm$ standard deviation over three seeds. Controls are matched one-to-one within class on initial $k$NN radius and are never selected. Negative radius DiD and positive purity DiD favor treated anchors.}
+\setlength{\tabcolsep}{5pt}
+\caption{Fixed-encoder intervention test behind Figure~\ref{fig:fixed-support}. The cycle-0 encoder is frozen, every generated image of the run is inserted into the $k$NN index ($k=20$), and the same original images are queried before and after. Anchors are the images selected at cycle 0, controls are matched one-to-one within class on initial radius and are never selected in any cycle. Radius change is relative to the initial radius, purity is the fraction of the 20 neighbors sharing the query label, and the last two columns are the anchor-minus-control differences.}
 \label{tab:fixed-support}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
- & $\Delta r$ anchor & $\Delta r$ control & Radius DiD & Purity DiD \\
+ & \multicolumn{2}{c}{Radius change (\%)} & \multicolumn{2}{c}{Purity change (pts)} & \multicolumn{2}{c}{Difference} \\
+Seed & Anchors & Controls & Anchors & Controls & Radius & Purity \\
 \midrule
-Mean $\pm$ SD & $-0.00273 \pm 0.00062$ & $-0.00139 \pm 0.00004$ & $-0.00134 \pm 0.00067$ & $+0.0134 \pm 0.0032$ \\
+0 & $-5.38$ & $-2.27$ & $-1.57$ & $-2.79$ & $-3.11$ & $+1.22$ \\
+1 & $-5.01$ & $-2.35$ & $-0.20$ & $-1.91$ & $-2.66$ & $+1.70$ \\
+2 & $-3.62$ & $-2.58$ & $-0.07$ & $-1.17$ & $-1.05$ & $+1.09$ \\
+\midrule
+Mean & $-4.67$ & $-2.40$ & $-0.61$ & $-1.96$ & $-2.27$ & $+1.34$ \\
 \bottomrule
 \end{tabular}
 \end{table}

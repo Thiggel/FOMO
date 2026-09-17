@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  14 SEP 2026 16:45
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  17 SEP 2026 22:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -533,48 +533,56 @@ Package: algorithmic 2009/08/24 v0.1 Document Style `algorithmic'
 \ALC@tlm=\skip78
 \algorithmicindent=\skip79
 )
-\c@proposition=\count321
-\c@assumption=\count322
+(/usr/share/texmf/tex/latex/wrapfig/wrapfig.sty
+\wrapoverhang=\dimen257
+\WF@size=\dimen258
+\c@WF@wrappedlines=\count321
+\WF@box=\box63
+\WF@everypar=\toks41
+Package: wrapfig 2003/01/31  v 3.6
+)
+\c@proposition=\count322
+\c@assumption=\count323
 
 (/usr/share/texmf/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count323
-\l__pdf_internal_box=\box63
+\l__color_backend_stack_int=\count324
+\l__pdf_internal_box=\box64
 )
 (./bridge_iclr_2027.aux)
 \openout1 = `bridge_iclr_2027.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
  (/usr/share/texmf/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count324
-\scratchdimen=\dimen257
-\scratchbox=\box64
-\nofMPsegments=\count325
-\nofMParguments=\count326
-\everyMPshowfont=\toks41
-\MPscratchCnt=\count327
-\MPscratchDim=\dimen258
-\MPnumerator=\count328
-\makeMPintoPDFobject=\count329
-\everyMPtoPDFconversion=\toks42
+\scratchcounter=\count325
+\scratchdimen=\dimen259
+\scratchbox=\box65
+\nofMPsegments=\count326
+\nofMParguments=\count327
+\everyMPshowfont=\toks42
+\MPscratchCnt=\count328
+\MPscratchDim=\dimen260
+\MPnumerator=\count329
+\makeMPintoPDFobject=\count330
+\everyMPtoPDFconversion=\toks43
 ) (/usr/share/texmf/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
@@ -584,29 +592,29 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring OFF on input line 35.
+Package hyperref Info: Link coloring OFF on input line 38.
 
 (./bridge_iclr_2027.out) (./bridge_iclr_2027.out)
 \@outlinefile=\write3
 \openout3 = `bridge_iclr_2027.out'.
 
 Package microtype Info: Patching varwidth to enable character protrusion.
-\MT@vwid@leftmargin=\dimen259
-\MT@vwid@rightmargin=\dimen260
-LaTeX Info: Redefining \microtypecontext on input line 35.
-Package microtype Info: Applying patch `item' on input line 35.
-Package microtype Info: Applying patch `toc' on input line 35.
-Package microtype Info: Applying patch `eqnum' on input line 35.
-Package microtype Info: Applying patch `footnote' on input line 35.
-Package microtype Info: Applying patch `verbatim' on input line 35.
-LaTeX Info: Redefining \microtypesetup on input line 35.
+\MT@vwid@leftmargin=\dimen261
+\MT@vwid@rightmargin=\dimen262
+LaTeX Info: Redefining \microtypecontext on input line 38.
+Package microtype Info: Applying patch `item' on input line 38.
+Package microtype Info: Applying patch `toc' on input line 38.
+Package microtype Info: Applying patch `eqnum' on input line 38.
+Package microtype Info: Applying patch `footnote' on input line 38.
+Package microtype Info: Applying patch `verbatim' on input line 38.
+LaTeX Info: Redefining \microtypesetup on input line 38.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
 Package microtype Info: Automatic font expansion enabled (level 2),
 (microtype)             stretch: 20, shrink: 20, step: 1, non-selected.
 Package microtype Info: Using default expansion set `alltext-nott'.
-LaTeX Info: Redefining \showhyphens on input line 35.
+LaTeX Info: Redefining \showhyphens on input line 38.
 Package microtype Info: No adjustment of tracking.
 Package microtype Info: No adjustment of interword spacing.
 Package microtype Info: No adjustment of character kerning.
@@ -616,13 +624,14 @@ File: mt-ptm.cfg 2006/04/20 v1.7 microtype config. file: Times (RS)
 )
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: float package is loaded.
+Package caption Info: wrapfig package is loaded.
 Package caption Info: End \AtBeginDocument code.
 
 (/usr/share/texmf/tex/latex/microtype/mt-cmr.cfg
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
 (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msa on input line 38.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 41.
 
 
 (/usr/share/texmf/tex/latex/amsfonts/umsa.fd
@@ -631,7 +640,7 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 (/usr/share/texmf/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 38.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 41.
 
 
 (/usr/share/texmf/tex/latex/amsfonts/umsb.fd
@@ -643,92 +652,94 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 <figures/BRIDGE.pdf, id=104, 774.895pt x 355.3275pt>
 File: figures/BRIDGE.pdf Graphic file (type pdf)
 <use figures/BRIDGE.pdf>
-Package pdftex.def Info: figures/BRIDGE.pdf  used on input line 44.
-(pdftex.def)             Requested size: 365.68546pt x 167.68709pt.
-
-
-Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 45.
-See the caption package documentation for explanation.
-
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
+Package pdftex.def Info: figures/BRIDGE.pdf  used on input line 48.
+(pdftex.def)             Requested size: 226.56935pt x 103.88814pt.
 
 
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/en
 c/dvips/base/8r.enc}
 
  <./figures/BRIDGE.pdf>]
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 6
+2.
+
+(/usr/share/texmf/tex/latex/psnfss/ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+)
 
 [2]
 
 [3]
 
 [4]
-
-[5] (./tables/main_sota_label_sources.tex) (./tables/main_sota_web_sources.tex)
-
-
-[6]
-<figures/objective_deltas.pdf, id=878, 656.53532pt x 149.09808pt>
-File: figures/objective_deltas.pdf Graphic file (type pdf)
-<use figures/objective_deltas.pdf>
-Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 187.
-(pdftex.def)             Requested size: 393.51231pt x 89.36624pt.
+<figures/mode_window_selection.pdf, id=839, 483.68678pt x 207.0824pt>
+File: figures/mode_window_selection.pdf Graphic file (type pdf)
+<use figures/mode_window_selection.pdf>
+Package pdftex.def Info: figures/mode_window_selection.pdf  used on input line 
+154.
+(pdftex.def)             Requested size: 174.89436pt x 74.87822pt.
 
 
-[7 <./figures/objective_deltas.pdf>] (./tables/main_mechanism.tex)
-<figures/one_stage_vs_five.pdf, id=940, 508.88771pt x 140.77919pt>
+[5 <./figures/mode_window_selection.pdf>]
+(./tables/main_transfer_all_linear.tex) (./tables/main_transfer_all_knn.tex)
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+
+[6] (./tables/main_vits_objectives.tex) (./tables/main_ablation_combined.tex)
+
+[7]
+<figures/one_stage_vs_five.pdf, id=968, 513.33517pt x 174.86372pt>
 File: figures/one_stage_vs_five.pdf Graphic file (type pdf)
 <use figures/one_stage_vs_five.pdf>
-Package pdftex.def Info: figures/one_stage_vs_five.pdf  used on input line 223.
+Package pdftex.def Info: figures/one_stage_vs_five.pdf  used on input line 199.
 
-(pdftex.def)             Requested size: 294.14107pt x 81.37273pt.
-
-Underfull \vbox (badness 3735) has occurred while \output is active []
+(pdftex.def)             Requested size: 270.28687pt x 92.07431pt.
 
 
+[8 <./figures/one_stage_vs_five.pdf>]
+<figures/fixed_support.pdf, id=1031, 540.90332pt x 130.28047pt>
+File: figures/fixed_support.pdf Graphic file (type pdf)
+<use figures/fixed_support.pdf>
+Package pdftex.def Info: figures/fixed_support.pdf  used on input line 213.
+(pdftex.def)             Requested size: 178.86702pt x 43.08214pt.
+<figures/cycle_score_histograms.pdf, id=1032, 889.55585pt x 172.01201pt>
+File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
+<use figures/cycle_score_histograms.pdf>
+Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
+ 219.
+(pdftex.def)             Requested size: 210.66655pt x 40.73515pt.
 
-[8] (./bridge_iclr_2027.bbl
 
-[9 <./figures/one_stage_vs_five.pdf>]
+[9 <./figures/fixed_support.pdf> <./figures/cycle_score_histograms.pdf>]
+(./bridge_iclr_2027.bbl
 
 [10]
 
 [11]
 
-[12]) (./tables/rebuttal_closest_prior.tex
+[12])
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
+[13] (./tables/rebuttal_closest_prior.tex) (./tables/fixed_support_geometry.tex
 )
+<figures/objective_deltas.pdf, id=1169, 656.53532pt x 149.09808pt>
+File: figures/objective_deltas.pdf Graphic file (type pdf)
+<use figures/objective_deltas.pdf>
+Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 307.
+(pdftex.def)             Requested size: 357.73405pt x 81.23976pt.
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-(./tables/fixed_support_geometry.tex)
-<figures/cycle_score_histograms.pdf, id=1040, 889.55585pt x 172.01201pt>
-File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
-<use figures/cycle_score_histograms.pdf>
-Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
- 288.
-(pdftex.def)             Requested size: 341.83733pt x 66.10014pt.
-<figures/cycle_tsne.pdf, id=1041, 888.92097pt x 209.22542pt>
-File: figures/cycle_tsne.pdf Graphic file (type pdf)
-<use figures/cycle_tsne.pdf>
-Package pdftex.def Info: figures/cycle_tsne.pdf  used on input line 294.
-(pdftex.def)             Requested size: 389.53358pt x 91.68274pt.
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
-[13]
 
 [14]
 
-[15 <./figures/cycle_score_histograms.pdf>]
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 37
-3.
+[15 <./figures/objective_deltas.pdf>]
 
-(/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
+[16]
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 37
+4.
+ (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
 Package microtype Info: Loading generic protrusion settings for font family
@@ -737,45 +748,35 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
 
 
-[16 <./figures/cycle_tsne.pdf>]
-
-[17]
-<figures/cycle_histories_example.pdf, id=1180, 801.66377pt x 233.93259pt>
-File: figures/cycle_histories_example.pdf Graphic file (type pdf)
-<use figures/cycle_histories_example.pdf>
-Package pdftex.def Info: figures/cycle_histories_example.pdf  used on input lin
-e 407.
-(pdftex.def)             Requested size: 381.58824pt x 111.35114pt.
- (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex)
-(./tables/app_pretraining_linear.tex
-Underfull \vbox (badness 2393) has occurred while \output is active []
+[17] (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex)
+(./tables/main_ablation_combined_knn.tex
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 
-[18 <./figures/cycle_histories_example.pdf>]) (./tables/app_pretraining_knn.tex
-) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
-(./tables/app_selection_linear.tex
-Underfull \vbox (badness 2486) has occurred while \output is active []
+[18]) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
+(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex
+Underfull \vbox (badness 1189) has occurred while \output is active []
 
 
 
-[19]) (./tables/app_selection_knn.tex) (./tables/app_cycles_linear.tex)
-(./tables/app_cycles_knn.tex) (./tables/app_architecture_linear.tex)
-(./tables/app_architecture_knn.tex)
-(./tables/app_selector_robustness_full_linear.tex
-Underfull \vbox (badness 1412) has occurred while \output is active []
-
-
-
-[20]) (./tables/app_selector_robustness_full_knn.tex)
+[19]) (./tables/app_cycles_linear.tex) (./tables/app_cycles_knn.tex)
+(./tables/app_architecture_linear.tex) (./tables/app_architecture_knn.tex)
+(./tables/app_selector_robustness_full_linear.tex)
+(./tables/app_selector_robustness_full_knn.tex)
 (./tables/main_percentile_utility_full_linear.tex)
 (./tables/main_percentile_utility_full_knn.tex)
 (./tables/main_generalization_vits_full_linear.tex)
 (./tables/main_generalization_vits_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 432.
+put line 418.
 
-Underfull \vbox (badness 6396) has occurred while \output is active []
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+
+[20]
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 
@@ -789,34 +790,37 @@ LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
-(rerunfilecheck)             Checksum: 73EEC5C7DEC44DA3F51952A34AB4366E;4415.
+(rerunfilecheck)             Checksum: DAFD8D9D9106631FAFF00304F0604BE4;4625.
  ) 
 Here is how much of TeX's memory you used:
- 17441 strings out of 474233
- 278015 string characters out of 5742684
- 805392 words of memory out of 5000000
- 39645 multiletter control sequences out of 15000+600000
- 627491 words of font info for 310 fonts, out of 8000000 for 9000
+ 17538 strings out of 474233
+ 279729 string characters out of 5742684
+ 821290 words of memory out of 5000000
+ 39740 multiletter control sequences out of 15000+600000
+ 630757 words of font info for 312 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
- 82i,14n,98p,1872b,710s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 82i,13n,98p,1839b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf
-/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf/fonts/type1/public
-/amsfonts/cm/cmmi10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi5.
-pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texm
-f/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texmf/fonts/type1/public
-/amsfonts/cm/cmr10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr5.pf
-b></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf/f
-onts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texmf/fonts/type1/public/ams
-fonts/cm/cmr9.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy10.pfb><
-/usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf/fon
-ts/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier
-/ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/t
-exmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/u
-tmr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (23 pages, 1048959 bytes).
+/fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr/share/texmf/fonts/type1/public/
+amsfonts/cm/cmex10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi10.
+pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texm
+f/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texmf/fonts/type1/public
+/amsfonts/cm/cmmi7.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi9.p
+fb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf
+/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/texmf/fonts/type1/public/a
+msfonts/cm/cmr6.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr7.pfb><
+/usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texmf/font
+s/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf/fonts/type1/public/amsf
+onts/cm/cmsy5.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy6.pfb></
+usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf/font
+s/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/
+ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/te
+xmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/ut
+mr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
+Output written on bridge_iclr_2027.pdf (23 pages, 832907 bytes).
 PDF statistics:
- 1401 PDF objects out of 1440 (max. 8388607)
- 888 compressed objects within 9 object streams
- 191 named destinations out of 1000 (max. 500000)
- 59111 words of extra memory for PDF output out of 61914 (max. 10000000)
+ 1455 PDF objects out of 1728 (max. 8388607)
+ 916 compressed objects within 10 object streams
+ 183 named destinations out of 1000 (max. 500000)
+ 65255 words of extra memory for PDF output out of 74296 (max. 10000000)
 
