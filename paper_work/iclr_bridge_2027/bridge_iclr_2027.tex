@@ -60,10 +60,10 @@ A finite generation budget must be placed somewhere in the representation, and t
 Our contributions are as follows.
 \begin{itemize}
 \setlength{\itemsep}{1pt}
-\item A theory of label-free data repair as recoverability-weighted allocation of local support (Section~\ref{sec:theory}), in which sparse regions carry the largest marginal value, greedy reallocation is optimal under a fixed separable objective, and a single-stage allocation has an effect bounded by the ratio of budget to existing support.
+\item A theory of label-free data repair as recoverability-weighted allocation of local support (Section~\ref{sec:theory}), in which sparse regions carry the largest marginal value, greedy reallocation is optimal under a fixed separable objective, and an allocation made from a fixed representation has an effect bounded by the ratio of budget to existing support.
 \item \method, a label-free feedback loop that instantiates this policy (Section~\ref{sec:method}) with mean $k$NN distance as the support estimate, a trimmed score band that holds sparse images the generator can still vary faithfully, farthest-point sampling against redundancy and a frozen image-to-image generator as the repair operator.
-\item An evaluation on five source regimes and seven transfer tasks under linear-probe and $k$NN protocols (Section~\ref{sec:results}), with paired ViT-S experiments across four SSL objectives, low-label fine-tuning, semantic segmentation, an oracle arm and matched controls for the closest prior methods.
-\item An account of where the effect comes from (Sections~\ref{sec:one-stage} and~\ref{sec:geometry}). Three acquisition rules are not separated after one cycle of repair and separate after five, and a fixed-encoder intervention test shows the generated support landing at the selected anchors.
+\item An evaluation on five source regimes and seven transfer tasks under linear-probe and $k$NN protocols (Section~\ref{sec:results}), with paired ViT-S experiments across four SSL objectives, low-label fine-tuning, semantic segmentation and an oracle arm.
+\item An account of where the effect comes from (Sections~\ref{sec:ablations} and~\ref{sec:geometry}). Three acquisition rules separate by eight points over five cycles of repair, and a fixed-encoder intervention test shows the generated support landing at the selected anchors.
 \end{itemize}
 
 \section{Related Work}
@@ -75,7 +75,7 @@ Contrastive, self-distillation and masked-reconstruction pretraining~\citep{chen
 Mean deep nearest-neighbor distance has been used as a nonparametric out-of-distribution score~\citep{sun2022out}, and we use it as a local-support estimate on the training set itself. Curation by prototype distance or concept-cluster complexity removes examples~\citep{sorscher2022beyond,abbas2024effective,whang2023data}, SMOTE interpolates labeled minority examples~\citep{chawla2002smote}, and DOPING oversamples the low-density edge of a learned latent distribution for anomaly detection with no image generator and no recomputed target~\citep{lim2018doping}, which our top-tail control reproduces under our generator and budget. Active learning spends a finite budget under a learned representation, its core-set form treating acquisition as $k$-center coverage under the greedy farthest-first traversal we use inside the mode window~\citep{sener2018active,gonzalez1985clustering}. ProbCover instead maximizes covered probability mass at a fixed radius~\citep{yehuda2022covering}, and \citet{hacohen2022budget} find dense regions the better target at small budgets.
 
 \paragraph{Generative augmentation and synthetic sources.}
-SDEdit adds noise to an image and denoises it under a diffusion prior~\citep{ho2020denoising,rombach2022highresolution,meng2022sdedit}, and that operator is our repair step. It has been applied to few-shot supervised recognition~\citep{trabucco2023effective}, class-conditional generation improves supervised ImageNet accuracy~\citep{azizi2023synthetic}, and synthetic-data utility depends on prompting, filtering, diversity and domain gap~\citep{he2023synthetic,fan2024scaling}. TADA generates faithful variants of the examples a supervised classifier learns slowly~\citep{nguyen2026tada}, and we adapt its criterion to a label-free learning-speed signal as a baseline. Synthetic imagery has also been a training source for self-supervised features since \citet{ren2018crossdomain}, from procedural noise and image programs~\citep{baradad2021noise,baradad2022procedural} to generator latents, synthetic ImageNet clones and text-to-image views~\citep{jahanian2022generative,sariyildiz2023fake,tian2023stablerep}, none allocating a budget over an observed skewed corpus. DiffAug jointly trains an encoder and a conditional diffusion generator so that generated positives improve contrastive learning~\citep{zang2024diffaug}, learning that generator from the small skewed source it is meant to repair, while \method\ holds a pretrained generator fixed and asks where it should intervene. Industrial data engines close a loop between a deployed model and its training data, diagnosing failures with vision-language and language models and then curating, auto-labeling and verifying~\citep{liang2024aide,worker2022omniverse}. They work from supervised task failures with annotation in the loop and acquire by semantic-cluster occupancy, which our inverse cluster-frequency control reproduces. A frozen generator also carries knowledge from its pretraining data~\citep{li2023dreamteacher,tang2023dift,yu2025repa}, so we report a control that distills its features. Appendix~\ref{app:prior-art} tabulates the closest methods.
+SDEdit adds noise to an image and denoises it under a diffusion prior~\citep{ho2020denoising,rombach2022highresolution,meng2022sdedit}, and that operator is our repair step. It has been applied to few-shot supervised recognition~\citep{trabucco2023effective}, class-conditional generation improves supervised ImageNet accuracy~\citep{azizi2023synthetic}, and synthetic-data utility depends on prompting, filtering, diversity and domain gap~\citep{he2023synthetic,fan2024scaling}. TADA generates faithful variants of the examples a supervised classifier learns slowly~\citep{nguyen2026tada}, and we adapt its criterion to a label-free learning-speed signal as a baseline. Synthetic imagery has also been a training source for self-supervised features since \citet{ren2018crossdomain}, from procedural noise and image programs~\citep{baradad2021noise,baradad2022procedural} to generator latents, synthetic ImageNet clones and text-to-image views~\citep{jahanian2022generative,sariyildiz2023fake,tian2023stablerep}, none allocating a budget over an observed skewed corpus. DiffAug jointly trains an encoder and a conditional diffusion generator so that generated positives improve contrastive learning~\citep{zang2024diffaug}, learning that generator from the small skewed source it is meant to repair, while \method\ holds a pretrained generator fixed and asks where it should intervene. Industrial data engines close a loop between a deployed model and its training data, diagnosing failures with vision-language and language models and then curating, auto-labeling and verifying~\citep{liang2024aide,worker2022omniverse}. They work from supervised task failures with annotation in the loop and acquire by semantic-cluster occupancy. A frozen generator also carries knowledge from its pretraining data~\citep{li2023dreamteacher,tang2023dift,yu2025repa}, so we report a control that distills its features. Appendix~\ref{app:prior-art} tabulates the closest methods.
 
 \section{Theoretical Framework}
 \label{sec:theory}
@@ -130,7 +130,7 @@ which tends to zero as $R/n_{\min}\to0$ for the least-supported region $n_{\min}
 \end{proposition}
 Both allocations subtract at most $R$ marginals from the same baseline, and the mean value theorem bounds every marginal.
 
-Proposition~\ref{prop:one-stage} bounds the single-stage gap between any two rules by the ratio of the budget to the support of the least-supported region. The constants are not estimated. The budget is $R=2{,}500$ repairs per repair stage, 500 anchors with five variants each, and the least-supported regions of a 10{,}000-image source hold far fewer images than that, so the ratio is large and the bound does not constrain the experiments quantitatively. Section~\ref{sec:one-stage} measures the gap directly and finds it inside the three-seed spread. The five-cycle separation lies outside this model, since re-estimation makes each score depend on earlier allocations.
+Proposition~\ref{prop:one-stage} bounds the single-stage gap between any two rules by the ratio of the budget to the support of the least-supported region. The constants are not estimated. The budget is $R=2{,}500$ repairs per repair stage, 500 anchors with five variants each, and the least-supported regions of a 10{,}000-image source hold far fewer images than that, so the ratio is large and the bound does not constrain the experiments quantitatively. The separation of acquisition rules over five cycles (Section~\ref{sec:ablations}) lies outside this model, since re-estimation makes each score depend on earlier allocations.
 
 \section{BRIDGE: Balancing Representations by Identifying Deficits and Generating Examples}
 \label{sec:method}
@@ -142,7 +142,7 @@ After training on $D^{(c)}$ we embed each image, $z_i^{(c)}=f_{\theta^{(c)}}(x_i
 d_i^{(c)}=\frac{1}{k}\sum_{z\in\mathcal N_k(z_i^{(c)};\,Z^{(c)}\setminus\{z_i^{(c)}\})}\lVert z_i^{(c)}-z\rVert_2^2,
 \label{eq:score}
 \end{equation}
-where $\mathcal N_k(z;Z)$ is the set of $k$ nearest neighbors of $z$ in $Z$, so a large score marks an image in a sparse part of the current representation. Scoring uses this squared form. The geometry diagnostic of Section~\ref{sec:geometry} uses the unsquared distance to the 20th neighbor under a separate index, a statistic used to measure insertion, with selection based on Equation~\ref{eq:score}. We use $k=100$, and $k$ between 10 and 200 moves the seven-task average by about one point (Appendix Table~\ref{tab:selector-robustness-full-linear}).
+where $\mathcal N_k(z;Z)$ is the set of $k$ nearest neighbors of $z$ in $Z$, so a large score marks an image in a sparse part of the current representation. Scoring uses this squared form. The geometry diagnostic of Section~\ref{sec:geometry} uses the unsquared distance to the 20th neighbor under a separate index, a statistic used to measure insertion, with selection based on Equation~\ref{eq:score}. We use $k=100$.
 
 \subsection{Sparse and recoverable anchor selection}
 \label{sec:mode-window}
@@ -163,7 +163,7 @@ For each anchor we generate $G=5$ variants with a frozen image-to-image diffusio
 \section{Experimental Setup}
 \label{sec:setup}
 \paragraph{Sources, targets and protocol.}
-We pretrain on five unlabeled source regimes, the long-tailed ImageNet-100-LT~\citep{imagenet-lt}, CIFAR-10-LT and CIFAR-100-LT~\citep{krizhevsky2009learning}, and 10{,}000-image subsets of the web corpora PASS~\citep{pass} and DiffusionDB~\citep{diffusiondb}. Transfer is measured on seven benchmarks, CIFAR-10-LT, CIFAR-100-LT, Stanford Cars~\citep{cars}, FGVC Aircraft~\citep{aircraft}, Oxford Flowers~\citep{flowers}, Oxford-IIIT Pets~\citep{pets} and ImageNet-100-LT, by linear probe and by $k$NN classification on frozen features. Every number is a three-seed mean and standard deviation, and paired comparisons share seeds and checkpoints. ResNet-50 is the default backbone, common to the baselines. The baselines train five cycles of 100 epochs on a source that does not grow, while \method\ trains the same epochs with $k=100$, $B=500$ and $G=5$ on a source that grows from about 10{,}000 to about 20{,}000 images, so it receives about 1.5 times the gradient updates of the baseline in Tables~\ref{tab:main_transfer_linear} and~\ref{tab:main_transfer_knn}. The cycle ablation, the paired ViT-S experiments and the single-stage controls match updates exactly, and the conventional-augmentation control adds the same number of images. The seed standard deviation of a seven-task average is 0.6 to 1.5 points under five cycles, so differences below about one point are inside seed variation. DINO and MAE follow their published ViT recipes on ViT-S. Appendix~\ref{app:implementation} gives implementation details.
+We pretrain on five unlabeled source regimes, the long-tailed ImageNet-100-LT~\citep{imagenet-lt}, CIFAR-10-LT and CIFAR-100-LT~\citep{krizhevsky2009learning}, and 10{,}000-image subsets of the web corpora PASS~\citep{pass} and DiffusionDB~\citep{diffusiondb}. Transfer is measured on seven benchmarks, CIFAR-10-LT, CIFAR-100-LT, Stanford Cars~\citep{cars}, FGVC Aircraft~\citep{aircraft}, Oxford Flowers~\citep{flowers}, Oxford-IIIT Pets~\citep{pets} and ImageNet-100-LT, by linear probe and by $k$NN classification on frozen features. Every number is a three-seed mean and standard deviation, and paired comparisons share seeds and checkpoints. ResNet-50 is the default backbone, common to the baselines. The baselines train five cycles of 100 epochs on a source that does not grow, while \method\ trains the same epochs with $k=100$, $B=500$ and $G=5$ on a source that grows from about 10{,}000 to about 20{,}000 images, so it receives about 1.5 times the gradient updates of the baseline in Tables~\ref{tab:main_transfer_linear} and~\ref{tab:main_transfer_knn}. The cycle ablation and the paired ViT-S experiments match updates exactly. The seed standard deviation of a seven-task average is 0.6 to 1.5 points under five cycles, so differences below about one point are inside seed variation. DINO and MAE follow their published ViT recipes on ViT-S. Appendix~\ref{app:implementation} gives implementation details.
 
 \paragraph{Compared methods and controls.}
 The source-regime comparison covers source-matched SimCLR, TS, SDCLR and \method, with hybrids in the appendix. All ablations use ImageNet-100-LT source pretraining, the same downstream suite and three seeds under the full five-cycle protocol. The generator ablation includes an oracle that restores 2{,}500 randomly chosen withheld real images per repair, the same count as the generated variants and never a duplicate of an anchor, placing true support at the true deficit. No label-free method has that information, and the comparison asks whether label-free repair does as well at the same budget.
@@ -183,25 +183,11 @@ Four objectives run paired on ViT-S under their reference recipes and one repair
 \label{sec:ablations}
 \input{tables/main_ablation_combined}
 
-\paragraph{Generator.} Generated repair with Stable Diffusion 3 matches the oracle of Section~\ref{sec:setup} within three-seed variation, 41.5 against 40.7. FLUX at its original sampling settings reaches 35.0. Under matched sampling the single-stage four-task difference between the two generators narrows to within seed variation (Appendix Table~\ref{tab:generator-sensitivity}), and the five-cycle gap is not decomposed further.
+\paragraph{Generator.} Generated repair with Stable Diffusion 3 matches the oracle of Section~\ref{sec:setup} within three-seed variation, 41.5 against 40.7. FLUX at six sampling steps and guidance 2.5 reaches 35.0.
 
 \paragraph{Selection.} The three mode windows with lower cutoffs at the 1st, 50th and 75th percentile reach 42.1 to 42.3 and are not separated at three seeds, while uniform acquisition reaches $35.5\pm1.2$ and the top tail $34.3\pm1.2$. Welch t-tests on three seeds per arm with Holm adjustment place every window ahead of both at adjusted $p\leq.011$. The experiment supports the upper trim of Proposition~\ref{prop:interior} and leaves its lower boundary unresolved, so the evidence is for a sparse band that excludes the extreme tail. The arms vary trimming and farthest-point diversification together, so the 6.6 to 8.0 points cover both. All five arms use the same generator settings and add the same number of images.
 
 \paragraph{Cycles and backbone.} At fixed total repair volume and optimizer budget, five cycles improve the seven-task average over two by 7.3 points and remain 8.2 points ahead of ten. Two cycles place most of the budget before the representation has changed and ten leave too little training between repairs. Within \method, ResNet-50 is the strongest backbone at this source size, and Table~\ref{tab:main_generalization} shows the repair effect on transformers.
-
-\paragraph{Sensitivity of the acquisition rule.} Appendix Table~\ref{tab:selector-robustness-full-linear} varies the candidate-pool multiplier, upper cutoff, neighborhood size, distance metric and selection strategy one at a time. Cosine and normalized $L_2$ scoring select the identical anchor set and differ by 0.4 points on the average, which bounds run-to-run spread, and the table spans 1.3 points with no variant separated from the default at three seeds. That table uses the single-stage protocol, so it bounds the sensitivity of the acquisition rule alone.
-
-\subsection{Single-stage against five-cycle acquisition}
-\label{sec:one-stage}
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.52\linewidth]{figures/one_stage_vs_five.pdf}
-\vspace{-4pt}
-\caption{Left, nine bands of the score distribution of unequal percentile widths each receive the whole budget after a single stage, and their averages span 1.3 points (Appendix Table~\ref{tab:percentile-utility-full-linear}). The shaded region is one seed standard deviation of a single band's seven-task mean, 0.66 points on average and between 0.35 and 0.93, so no pair of bands is separated at three seeds. Right, three acquisition rules under five cycles separate by 8.0 points, re-plotting the selection block of Table~\ref{tab:main_ablation_combined}. Single-stage averages lie near 28 and five-cycle averages between 34 and 42.}
-\label{fig:one-stage}
-\vspace{-4pt}
-\end{figure}
-Figure~\ref{fig:one-stage} spends one identical budget on each of nine score bands, and after a single stage the densest quartile and the extreme tail are not separated at three seeds, while over five cycles the top tail, uniform acquisition and the mode window separate by 8.0 points. The protocols also differ in repair volume and training, 2{,}500 images against 10{,}000, so the comparison does not isolate re-estimation as the cause. Under the single-stage protocol the mode window is not the leader, reaching 18.9 against 20.0 for the TADA-style rule and 19.5 for the top tail on the four-task average, whose per-arm seed standard deviation is 0.1 to 1.0, and no pair of rules separates at three seeds (Appendix Table~\ref{tab:closest-prior-empirical}). A targeted rule appears to gain value because each repair changes the representation from which the next anchors are chosen, while the single-stage arms decide once from a fixed model. The DiffAug adaptation learns its generator jointly with the encoder from the 10{,}000-image source. It reaches 11.5 and falls further with mode-window anchors, below every arm that adds no generated image, since a generator learned from a small skewed source is weak.
 
 \subsection{Representation geometry}
 \label{sec:geometry}
@@ -229,7 +215,7 @@ Under the frozen cycle-0 encoder (Figure~\ref{fig:fixed-support}) we ask whether
 
 \vspace{-6pt}
 \section{Conclusion}
-Under diminishing returns to local support and fidelity that decays in the extreme tail, the budget belongs in a sparse band away from that tail, and reallocation after each repair is optimal under a fixed objective. Without labels, \method\ improves transfer on five sources and four objectives, matches the oracle of Section~\ref{sec:setup} and shrinks the neighborhoods of the images it selects, and its acquisition rule has no measurable effect after one repair and an eight-point separation after five.
+Under diminishing returns to local support and fidelity that decays in the extreme tail, the budget belongs in a sparse band away from that tail, and reallocation after each repair is optimal under a fixed objective. Without labels, \method\ improves transfer on five sources and four objectives, matches the oracle of Section~\ref{sec:setup} and shrinks the neighborhoods of the images it selects, and its acquisition rule separates from uniform and top-tail acquisition by eight points over five cycles.
 
 \section*{Reproducibility statement}
 Section~\ref{sec:method} and Algorithm~\ref{alg:bridge} specify the loop, Section~\ref{sec:setup} and Appendix~\ref{app:implementation} give every operating parameter, schedule, generator setting and data split, and Appendix~\ref{app:proofs} contains complete proofs with their assumptions stated in Section~\ref{sec:theory}. Appendix~\ref{app:full-results} reports every per-task number behind the main-text averages. An anonymous code release with configuration files for every experiment is linked in Appendix~\ref{app:implementation}.
@@ -273,30 +259,6 @@ AIDE & task labels and failures & VLM and LLM failure analysis & curate, generat
 \end{tabular}
 \end{adjustbox}
 \end{table*}
-
-\input{tables/single_stage_pipelines}
-
-\begin{table}[h]
-\centering
-\small
-\caption{Generator sensitivity on the four-task diagnostic (Cars, Aircraft, Flowers, ImageNet-100-LT) after one repair stage from a common checkpoint, three paired seeds. The original FLUX setting of six steps and guidance 2.5 uses the same generator setting as the 35.0 FLUX run of Table~\ref{tab:main_ablation_combined}. Guidance under an empty prompt gives bit-identical images at 3.0, 5.0 and 7.5.}
-\label{tab:generator-sensitivity}
-\begin{tabular}{llc}
-\toprule
-Generator & Setting & Four-task transfer \\
-\midrule
-FLUX.1-dev & 6 steps, guidance 2.5 & $18.23\pm0.98$ \\
-FLUX.1-dev & 20 steps & $18.78\pm1.43$ \\
-FLUX.1-schnell & 20 steps & $18.85\pm1.30$ \\
-FLUX.1-schnell & guidance 3 & $19.68\pm0.81$ \\
-SD3 & 6 steps & $18.58\pm1.14$ \\
-SD3 & 20 steps (default) & $19.70\pm0.35$ \\
-\midrule
-SD3 & guidance 1.0 to 7.5 & 18.42 to 18.88 \\
-SD3 & strength 0.3 to 0.9 & 18.60 to 19.63 \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \section{Representation Diagnostics}
 \label{app:geometry}
@@ -368,12 +330,10 @@ using $\xi>n_j+m_j+\kappa\geq n_j+\kappa$ and $m_j\geq0$. Both $\mathcal B(\math
 The main experiments use ResNet-50 encoders, five cycles of 100 epochs, mean $k$NN distance with $k=100$, 500 anchors per cycle and five variants per anchor. The optimizer is AdamW with weight decay $10^{-4}$, and method-specific learning rates and temperatures follow the settings of each baseline. The paired ViT-S experiments use the reference recipe of each objective. DINO uses two global and eight local crops at $96\times96$ with a bottleneck projection head, and MAE runs five cycles of 80 epochs.
 
 \paragraph{Scoring and selection.}
-Scoring uses the mean squared normalized $\ell_2$ distance of Equation~\ref{eq:score}, and raw $\ell_2$, cosine and multiscale-$k$ variants are reported as a sensitivity study in Table~\ref{tab:selector-robustness-full-linear}. For unit vectors the squared distance is an affine function of the cosine, which is why the cosine row selects the identical anchor set. The mode-window selector restricts the score distribution to the 75th to 99th percentile range, builds a histogram with the automatic bin heuristic, forms a mode-centered candidate pool of size $4B$ and applies greedy farthest-point sampling on normalized features to select the final $B$ anchors.
+Scoring uses the mean squared normalized $\ell_2$ distance of Equation~\ref{eq:score}. For unit vectors the squared distance is an affine function of the cosine, so cosine scoring selects the identical anchor set. The mode-window selector restricts the score distribution to the 75th to 99th percentile range, builds a histogram with the automatic bin heuristic, forms a mode-centered candidate pool of size $4B$ and applies greedy farthest-point sampling on normalized features to select the final $B$ anchors.
 
 \paragraph{Generators.}
-The main method uses Stable Diffusion 3 Medium in image-to-image mode, where an empty prompt makes the guidance scale inert (Table~\ref{tab:generator-sensitivity}). The generation ablation replaces it with FLUX or with the oracle, which adds the withheld real images and runs no generator. In the PASS and DiffusionDB experiments the SD3 batch size is 12 to fit the 24-hour wall-time limit.
-
-\paragraph{Single-stage controls.} Every arm of Table~\ref{tab:closest-prior-empirical} branches from one SimCLR ResNet-50 checkpoint per seed, adds 2{,}500 images where it generates, and trains one stage of at most 100 epochs capped at 4{,}850 optimizer steps at batch 128. The TADA-style arm ranks source images by the decrease of their SSL loss over the first stage and selects the slowest-learned 500. The inverse cluster-frequency arm clusters the current embeddings and samples anchors with probability inverse to cluster occupancy. The conventional-augmentation arm applies the standard SimCLR augmentation pipeline five times to each mode-window anchor in place of the generator. The DiffAug arm trains a conditional diffusion generator jointly with the encoder on the source, following the published objective, and its \method\ variant conditions that generator on the mode-window anchors. The distillation arm adds a feature-matching loss between the encoder and frozen SD3 activations on the source images and adds no image.
+The main method uses Stable Diffusion 3 Medium in image-to-image mode, where an empty prompt makes the guidance scale inert. The generation ablation replaces it with FLUX or with the oracle, which adds the withheld real images and runs no generator. In the PASS and DiffusionDB experiments the SD3 batch size is 12 to fit the 24-hour wall-time limit.
 
 \paragraph{Source data.}
 PASS and DiffusionDB use \texttt{train[:10000]} with pretraining split override \texttt{[1.0, 0.0, 0.0]}. The long-tailed ImageNet-100, CIFAR-10 and CIFAR-100 sources use their standard long-tailed configurations without the 10{,}000-image restriction.
@@ -411,10 +371,6 @@ A method that improves representation quality under biased source data can reduc
 \input{tables/app_cycles_knn}
 \input{tables/app_architecture_linear}
 \input{tables/app_architecture_knn}
-\input{tables/app_selector_robustness_full_linear}
-\input{tables/app_selector_robustness_full_knn}
-\input{tables/main_percentile_utility_full_linear}
-\input{tables/main_percentile_utility_full_knn}
 \input{tables/main_generalization_vits_full_linear}
 \input{tables/main_generalization_vits_full_knn}
 
