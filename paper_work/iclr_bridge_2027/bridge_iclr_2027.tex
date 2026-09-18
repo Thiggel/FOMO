@@ -146,10 +146,10 @@ where $\mathcal N_k(z;Z)$ is the set of $k$ nearest neighbors of $z$ in $Z$, so 
 
 \subsection{Sparse and recoverable anchor selection}
 \label{sec:mode-window}
-\begin{wrapfigure}{r}{0.48\textwidth}
+\begin{wrapfigure}{r}{0.52\textwidth}
 \vspace{-8pt}
 \centering
-\includegraphics[width=0.47\textwidth]{figures/mode_window_selection.pdf}
+\includegraphics[width=0.51\textwidth]{figures/mode_window_selection.pdf}
 \vspace{-6pt}
 \caption{Score histogram of one ImageNet-100-LT run at cycle 0 with the 75th and 99th percentiles marked. The green pool holds the $4B$ scores nearest the modal bin of the band, which lies at its lower edge, the red region is the top-tail control, and the 500 selected anchors are overlaid.}
 \label{fig:mode-window}
@@ -183,6 +183,7 @@ Four objectives run paired on ViT-S under their reference recipes and one repair
 \subsection{Ablations}
 \label{sec:ablations}
 \input{tables/main_ablation_combined}
+\input{tables/main_ablation_combined_knn}
 
 \paragraph{Generator.} Generated repair with Stable Diffusion 3 matches the oracle of Section~\ref{sec:setup} within three-seed variation, 41.5 against 40.7. FLUX at six sampling steps and guidance 2.5 reaches 35.0.
 
@@ -202,7 +203,7 @@ Four objectives run paired on ViT-S under their reference recipes and one repair
 \end{minipage}\hfill
 \begin{minipage}[t]{0.53\linewidth}
 \centering
-\includegraphics[width=0.8\linewidth]{figures/cycle_score_histograms.pdf}
+\includegraphics[width=\linewidth]{figures/cycle_score_histograms.pdf}
 \caption{Score distribution over the four repair cycles of one ImageNet-100-LT run, with the 75th to 99th percentile band shaded and its modal bin marked. The distribution shifts to larger scores and broadens at every cycle, so the band is re-derived from the current representation.}
 \label{fig:cycle-histograms-main}
 \end{minipage}
@@ -377,7 +378,6 @@ A method that improves representation quality under biased source data can reduc
 \label{app:full-results}
 \input{tables/app_sota_linear_full}
 \input{tables/app_sota_knn_full}
-\input{tables/main_ablation_combined_knn}
 \input{tables/app_generation_linear}
 \input{tables/app_generation_knn}
 \input{tables/app_selection_linear}

@@ -1,8 +1,8 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  18 SEP 2026 17:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  18 SEP 2026 17:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**bridge_iclr_2027.tex
+**bridge_iclr_2027
 (./bridge_iclr_2027.tex
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
@@ -681,61 +681,54 @@ File: figures/mode_window_selection.pdf Graphic file (type pdf)
 <use figures/mode_window_selection.pdf>
 Package pdftex.def Info: figures/mode_window_selection.pdf  used on input line 
 152.
-(pdftex.def)             Requested size: 186.81842pt x 105.42871pt.
+(pdftex.def)             Requested size: 202.71515pt x 114.39948pt.
 
 
 [5 <./figures/mode_window_selection.pdf>]
 (./tables/main_transfer_all_linear.tex) (./tables/main_transfer_all_knn.tex)
 
 [6] (./tables/main_vits_objectives.tex) (./tables/main_ablation_combined.tex)
-<figures/fixed_support.pdf, id=964, 301.26802pt x 153.44702pt>
+(./tables/main_ablation_combined_knn.tex)
+
+[7]
+<figures/fixed_support.pdf, id=977, 301.26802pt x 153.44702pt>
 File: figures/fixed_support.pdf Graphic file (type pdf)
 <use figures/fixed_support.pdf>
-Package pdftex.def Info: figures/fixed_support.pdf  used on input line 199.
+Package pdftex.def Info: figures/fixed_support.pdf  used on input line 200.
 (pdftex.def)             Requested size: 178.86702pt x 91.10191pt.
-<figures/cycle_score_histograms.pdf, id=965, 470.38988pt x 88.9015pt>
+<figures/cycle_score_histograms.pdf, id=978, 470.38988pt x 88.9015pt>
 File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
 <use figures/cycle_score_histograms.pdf>
 Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
- 205.
-(pdftex.def)             Requested size: 168.53387pt x 31.85257pt.
+ 206.
+(pdftex.def)             Requested size: 210.66655pt x 39.81538pt.
 
 
-[7]
+[8]
 
-[8 <./figures/fixed_support.pdf> <./figures/cycle_score_histograms.pdf>]
+[9 <./figures/fixed_support.pdf> <./figures/cycle_score_histograms.pdf>]
 (./bridge_iclr_2027.bbl
-
-[9]
 
 [10]
 
 [11]
 
-[12])
+[12]
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-(./tables/fixed_support_geometry.tex
-
-[13])
-<figures/objective_deltas.pdf, id=1105, 656.53532pt x 181.21376pt>
+[13]) (./tables/fixed_support_geometry.tex)
+<figures/objective_deltas.pdf, id=1103, 656.53532pt x 181.21376pt>
 File: figures/objective_deltas.pdf Graphic file (type pdf)
 <use figures/objective_deltas.pdf>
-Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 283.
+Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 284.
 (pdftex.def)             Requested size: 357.73405pt x 98.73878pt.
 
-Underfull \vbox (badness 1377) has occurred while \output is active []
 
+[14 <./figures/objective_deltas.pdf>]
 
-
-[14]
-
-[15 <./figures/objective_deltas.pdf>]
+[15]
 LaTeX Font Info:    Trying to load font information for T1+pcr on input line 35
-4.
-
-(/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
+5.
+ (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
 Package microtype Info: Loading generic protrusion settings for font family
@@ -744,24 +737,27 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
 
 
-[16] (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex)
-(./tables/main_ablation_combined_knn.tex
-Underfull \vbox (badness 1454) has occurred while \output is active []
-
-
-
-[17]) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
-(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex
+[16] (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 
-[18]) (./tables/app_cycles_linear.tex) (./tables/app_cycles_knn.tex)
-(./tables/app_architecture_linear.tex) (./tables/app_architecture_knn.tex)
+[17]) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
+(./tables/app_selection_linear.tex
+Underfull \vbox (badness 1515) has occurred while \output is active []
+
+
+
+[18]) (./tables/app_selection_knn.tex) (./tables/app_cycles_linear.tex)
+(./tables/app_cycles_knn.tex) (./tables/app_architecture_linear.tex)
+(./tables/app_architecture_knn.tex)
 (./tables/main_generalization_vits_full_linear.tex)
 (./tables/main_generalization_vits_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 394.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
 
 
 [19]
@@ -777,32 +773,30 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 Here is how much of TeX's memory you used:
  17457 strings out of 474233
  277117 string characters out of 5742684
- 790278 words of memory out of 5000000
+ 804427 words of memory out of 5000000
  39703 multiletter control sequences out of 15000+600000
  630598 words of font info for 307 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
- 82i,13n,98p,2014b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 82i,13n,98p,2010b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf
-/fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr/share/texmf/fonts/type1/public/
+/fonts/type1/public/amsfonts/cm/cmbx7.pfb></usr/share/texmf/fonts/type1/public/
 amsfonts/cm/cmex10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi10.
 pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texm
-f/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texmf/fonts/type1/public
-/amsfonts/cm/cmmi7.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi9.p
-fb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf
-/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/texmf/fonts/type1/public/a
-msfonts/cm/cmr6.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr7.pfb><
-/usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texmf/font
-s/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf/fonts/type1/public/amsf
-onts/cm/cmsy5.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy6.pfb></
-usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf/font
-s/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/
-ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/te
-xmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/ut
-mr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (20 pages, 808046 bytes).
+f/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texmf/fonts/type1/public
+/amsfonts/cm/cmmi9.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr10.p
+fb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/texmf/
+fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texmf/fonts/type1/public/am
+sfonts/cm/cmr9.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
+</usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/share/texmf/fo
+nts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf/fonts/type1/public/ams
+fonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/s
+hare/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf/fonts/type1/ur
+w/times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></usr/sha
+re/texmf/fonts/type1/urw/times/utmri8a.pfb>
+Output written on bridge_iclr_2027.pdf (20 pages, 781000 bytes).
 PDF statistics:
- 1378 PDF objects out of 1440 (max. 8388607)
- 887 compressed objects within 9 object streams
+ 1363 PDF objects out of 1440 (max. 8388607)
+ 878 compressed objects within 9 object streams
  162 named destinations out of 1000 (max. 500000)
  65248 words of extra memory for PDF output out of 74296 (max. 10000000)
 
