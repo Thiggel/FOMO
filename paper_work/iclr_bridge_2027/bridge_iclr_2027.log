@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  17 SEP 2026 22:37
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  18 SEP 2026 10:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -653,7 +653,7 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 File: figures/BRIDGE.pdf Graphic file (type pdf)
 <use figures/BRIDGE.pdf>
 Package pdftex.def Info: figures/BRIDGE.pdf  used on input line 48.
-(pdftex.def)             Requested size: 226.56935pt x 103.88814pt.
+(pdftex.def)             Requested size: 246.43874pt x 138.62277pt.
 
 
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/en
@@ -661,7 +661,7 @@ c/dvips/base/8r.enc}
 
  <./figures/BRIDGE.pdf>]
 LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 6
-2.
+3.
 
 (/usr/share/texmf/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
@@ -670,45 +670,47 @@ File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
 [2]
 
 [3]
-
-[4]
-<figures/mode_window_selection.pdf, id=839, 483.68678pt x 207.0824pt>
+<figures/mode_window_selection.pdf, id=833, 253.53658pt x 143.07831pt>
 File: figures/mode_window_selection.pdf Graphic file (type pdf)
 <use figures/mode_window_selection.pdf>
 Package pdftex.def Info: figures/mode_window_selection.pdf  used on input line 
-154.
-(pdftex.def)             Requested size: 174.89436pt x 74.87822pt.
+152.
+(pdftex.def)             Requested size: 186.81842pt x 105.42871pt.
 
 
-[5 <./figures/mode_window_selection.pdf>]
-(./tables/main_transfer_all_linear.tex) (./tables/main_transfer_all_knn.tex)
-Underfull \vbox (badness 10000) has occurred while \output is active []
+[4] (./tables/main_transfer_all_linear.tex
+
+[5 <./figures/mode_window_selection.pdf>]) (./tables/main_transfer_all_knn.tex)
+(./tables/main_vits_objectives.tex
+
+[6]) (./tables/main_ablation_combined.tex)
+Underfull \vbox (badness 1152) has occurred while \output is active []
 
 
-
-[6] (./tables/main_vits_objectives.tex) (./tables/main_ablation_combined.tex)
 
 [7]
-<figures/one_stage_vs_five.pdf, id=968, 513.33517pt x 174.86372pt>
+<figures/one_stage_vs_five.pdf, id=989, 472.07375pt x 213.71936pt>
 File: figures/one_stage_vs_five.pdf Graphic file (type pdf)
 <use figures/one_stage_vs_five.pdf>
-Package pdftex.def Info: figures/one_stage_vs_five.pdf  used on input line 199.
+Package pdftex.def Info: figures/one_stage_vs_five.pdf  used on input line 196.
 
-(pdftex.def)             Requested size: 270.28687pt x 92.07431pt.
-
-
-[8 <./figures/one_stage_vs_five.pdf>]
-<figures/fixed_support.pdf, id=1031, 540.90332pt x 130.28047pt>
+(pdftex.def)             Requested size: 230.542pt x 104.3712pt.
+<figures/fixed_support.pdf, id=996, 301.26802pt x 153.44702pt>
 File: figures/fixed_support.pdf Graphic file (type pdf)
 <use figures/fixed_support.pdf>
-Package pdftex.def Info: figures/fixed_support.pdf  used on input line 213.
-(pdftex.def)             Requested size: 178.86702pt x 43.08214pt.
-<figures/cycle_score_histograms.pdf, id=1032, 889.55585pt x 172.01201pt>
+Package pdftex.def Info: figures/fixed_support.pdf  used on input line 210.
+(pdftex.def)             Requested size: 178.86702pt x 91.10191pt.
+<figures/cycle_score_histograms.pdf, id=997, 296.94186pt x 186.46602pt>
 File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
 <use figures/cycle_score_histograms.pdf>
 Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
- 219.
-(pdftex.def)             Requested size: 210.66655pt x 40.73515pt.
+ 216.
+(pdftex.def)             Requested size: 193.81284pt x 121.70506pt.
+
+
+[8 <./figures/one_stage_vs_five.pdf>]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
 
 
 [9 <./figures/fixed_support.pdf> <./figures/cycle_score_histograms.pdf>]
@@ -720,25 +722,25 @@ Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
 
 [12])
 
-[13] (./tables/rebuttal_closest_prior.tex) (./tables/fixed_support_geometry.tex
-)
-<figures/objective_deltas.pdf, id=1169, 656.53532pt x 149.09808pt>
+[13] (./tables/single_stage_pipelines.tex) (./tables/fixed_support_geometry.tex
+
+Underfull \vbox (badness 3792) has occurred while \output is active []
+
+
+
+[14])
+<figures/objective_deltas.pdf, id=1197, 656.53532pt x 181.21376pt>
 File: figures/objective_deltas.pdf Graphic file (type pdf)
 <use figures/objective_deltas.pdf>
-Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 307.
-(pdftex.def)             Requested size: 357.73405pt x 81.23976pt.
+Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 304.
+(pdftex.def)             Requested size: 357.73405pt x 98.73878pt.
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
-
-[14]
 
 [15 <./figures/objective_deltas.pdf>]
 
 [16]
 LaTeX Font Info:    Trying to load font information for T1+pcr on input line 37
-4.
+7.
  (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
@@ -756,7 +758,7 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 [18]) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
 (./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex
-Underfull \vbox (badness 1189) has occurred while \output is active []
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 
@@ -769,7 +771,7 @@ Underfull \vbox (badness 1189) has occurred while \output is active []
 (./tables/main_generalization_vits_full_linear.tex)
 (./tables/main_generalization_vits_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 418.
+put line 421.
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
@@ -790,16 +792,16 @@ LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
-(rerunfilecheck)             Checksum: DAFD8D9D9106631FAFF00304F0604BE4;4625.
+(rerunfilecheck)             Checksum: FC5ED776E9CE5357A8D269AF81C4432C;4601.
  ) 
 Here is how much of TeX's memory you used:
- 17538 strings out of 474233
- 279729 string characters out of 5742684
- 821290 words of memory out of 5000000
- 39740 multiletter control sequences out of 15000+600000
- 630757 words of font info for 312 fonts, out of 8000000 for 9000
+ 17532 strings out of 474233
+ 279700 string characters out of 5742684
+ 829544 words of memory out of 5000000
+ 39743 multiletter control sequences out of 15000+600000
+ 630855 words of font info for 312 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
- 82i,13n,98p,1839b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 82i,13n,98p,2070b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf
 /fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr/share/texmf/fonts/type1/public/
 amsfonts/cm/cmex10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi10.
@@ -817,10 +819,10 @@ s/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/
 ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/te
 xmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/ut
 mr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (23 pages, 832907 bytes).
+Output written on bridge_iclr_2027.pdf (23 pages, 837455 bytes).
 PDF statistics:
- 1455 PDF objects out of 1728 (max. 8388607)
- 916 compressed objects within 10 object streams
- 183 named destinations out of 1000 (max. 500000)
- 65255 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 1492 PDF objects out of 1728 (max. 8388607)
+ 936 compressed objects within 10 object streams
+ 174 named destinations out of 1000 (max. 500000)
+ 65261 words of extra memory for PDF output out of 74296 (max. 10000000)
 

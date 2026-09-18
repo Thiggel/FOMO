@@ -33,27 +33,24 @@ def main() -> None:
     pur = lambda g: np.array([100 * r[g]["purity_change"] for r in reps])
     groups = [("treated anchors", "anchors", ANCHOR), ("matched controls", "matched_controls", CTRL)]
 
-    fig, axes = plt.subplots(1, 2, figsize=(7.6, 1.9))
+    fig, axes = plt.subplots(1, 2, figsize=(4.6, 2.0), gridspec_kw={"wspace": 0.45})
     for ax, f, ylabel, title in (
-        (axes[0], rel, "change in $k$NN radius (%)", "Local radius"),
-        (axes[1], pur, "change in neighborhood purity (pts)", "Neighborhood purity"),
+        (axes[0], rel, "radius change (%)", "Local radius"),
+        (axes[1], pur, "purity change (pts)", "Neighborhood purity"),
     ):
         for i, (label, key, colour) in enumerate(groups):
             v = f(key)
             ax.bar(i, v.mean(), color=colour, width=0.6, alpha=0.9)
-            ax.scatter(np.full(len(v), i) + np.linspace(-0.12, 0.12, len(v)), v,
-                       color="k", s=12, zorder=3)
+            ax.scatter(np.full(len(v), i) + np.linspace(-0.16, 0.16, len(v)), v,
+                       color="k", s=14, zorder=3, alpha=0.85)
         ax.axhline(0, color="k", lw=0.6)
-        ax.set_xticks([0, 1]); ax.set_xticklabels([g[0] for g in groups], fontsize=8)
+        ax.set_xticks([0, 1]); ax.set_xticklabels(["anchors", "controls"], fontsize=8)
         ax.set_ylabel(ylabel, fontsize=8); ax.tick_params(axis="y", labelsize=7)
-        ax.set_title(title, fontsize=9)
         ax.spines[["top", "right"]].set_visible(False)
     d = rel("anchors") - rel("matched_controls")
-    axes[0].text(0.5, 0.94, f"paired difference {d.mean():.1f} pts, all seeds negative",
-                 transform=axes[0].transAxes, ha="center", va="top", fontsize=7)
+    axes[0].set_title("local radius", fontsize=8.5)
     p = pur("anchors") - pur("matched_controls")
-    axes[1].text(0.5, 0.94, f"paired difference +{p.mean():.1f} pts, all seeds positive",
-                 transform=axes[1].transAxes, ha="center", va="top", fontsize=7)
+    axes[1].set_title("neighborhood purity", fontsize=8.5)
     fig.tight_layout()
     fig.savefig(a.out, bbox_inches="tight", dpi=200)
     print("radius %:", rel("anchors").round(2), rel("matched_controls").round(2), "DiD", d.round(2))

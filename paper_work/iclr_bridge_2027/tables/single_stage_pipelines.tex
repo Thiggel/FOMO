@@ -3,7 +3,7 @@
 \footnotesize
 \setlength{\tabcolsep}{5pt}
 \renewcommand{\arraystretch}{0.95}
-\caption{Acquisition and repair pipelines under one matched single-stage protocol on ImageNet-100-LT. Every arm branches from the same source checkpoint, receives the same optimizer budget and, where it generates, adds the same number of images. Transfer averages linear-probe accuracy on Cars, Aircraft, Flowers and Pets, and 1-NN accuracy is measured on the source set. Mean $\pm$ standard deviation over three seeds.}
+\caption{Acquisition and repair pipelines under one matched single-stage protocol on ImageNet-100-LT. Every arm branches from the same source checkpoint, receives the same optimizer budget and, where it generates, adds the same number of images. Transfer averages linear-probe accuracy on Cars, Aircraft, Flowers and Pets, and 1-NN accuracy is measured on the source set. Mean $\pm$ standard deviation over three seeds. Four tasks and one stage, so the values are on a different scale from the five-cycle tables (Tables~\ref{tab:main_transfer_linear} and~\ref{tab:main_ablation_combined}). The shaded row is the default configuration. No value is bolded, since the arms lie within 1.7 points, inside single-arm seed variation.}
 \label{tab:closest-prior-empirical}
 \begin{adjustbox}{max width=\linewidth}
 \begin{tabular}{llcc}

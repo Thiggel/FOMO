@@ -48,7 +48,7 @@ def main() -> None:
     args = ap.parse_args()
 
     lin, knn = rows(args.linear), rows(args.knn)
-    fig, axes = plt.subplots(1, 4, figsize=(9.2, 2.15), sharey=True)
+    fig, axes = plt.subplots(1, 4, figsize=(9.2, 2.6), sharey=True)
     for ax, objective in zip(axes, OBJECTIVES):
         deltas, labels = [], []
         for table, tag in ((lin, "lp"), (knn, "kNN")):
@@ -59,7 +59,9 @@ def main() -> None:
         colours = [UP if d > 0 else DOWN for d in deltas]
         ax.bar(range(len(deltas)), deltas, color=colours, width=0.78)
         ax.axhline(0, color="#333333", lw=0.7)
-        ax.set_xticks([])
+        ax.set_xticks(range(len(deltas)))
+        ax.set_xticklabels(labels, rotation=90, fontsize=5)
+        ax.axvline(6.5, color="#999999", lw=0.6, ls=":")
         ax.set_title(
             f"{objective}\n{sum(1 for d in deltas if d > 0)}/14 up, "
             f"mean {mean(deltas):+.2f}",
@@ -67,7 +69,10 @@ def main() -> None:
         )
         ax.tick_params(axis="y", labelsize=7)
         ax.spines[["top", "right"]].set_visible(False)
-    axes[0].set_ylabel("repaired $-$ unrepaired", fontsize=8)
+    axes[0].set_ylabel("repaired $-$ unrepaired (points)", fontsize=8)
+    from matplotlib.patches import Patch
+    axes[-1].legend(handles=[Patch(color=UP, label="improvement"), Patch(color=DOWN, label="regression")],
+                    fontsize=6.5, frameon=False, loc="upper right")
     fig.tight_layout()
     fig.savefig(args.out, bbox_inches="tight")
     print(f"wrote {args.out}")
