@@ -218,14 +218,26 @@ Under the frozen cycle-0 encoder (Figure~\ref{fig:fixed-support}) we ask whether
 \section{Conclusion}
 Under diminishing returns to local support and fidelity that decays in the extreme tail, the budget belongs in a sparse band away from that tail, and reallocation after each repair is optimal under a fixed objective. Without labels, \method\ improves transfer on five sources and four objectives, matches the oracle of Section~\ref{sec:setup} and shrinks the neighborhoods of the images it selects, and its acquisition rule separates from uniform and top-tail acquisition by eight points over five cycles.
 
+\section*{AI use statement}
+In this work we used generative AI tools for writing and debugging the data generators, the training
+and evaluation scripts and the analysis code, for tabulating results, and
+for editing the text of the manuscript under the direction of
+the authors. We also used them to check the bibliography, and every entry
+was subsequently verified against its DOI by the authors. We have not used
+generative AI tools for generating research ideas. The generated images
+that enter pretraining come from the frozen image generator described in
+Section~\ref{sec:method}, and no assistant-written text or code is part of
+that data. All AI-assisted code was reviewed and
+tested by the authors, every number in the paper was checked against the
+evaluation outputs, and all text was reviewed and revised by the authors.
+We take responsibility for the final content of this work, including text,
+claims and artifacts produced with the aid of generative AI.
+
 \section*{Reproducibility statement}
 Section~\ref{sec:method} and Algorithm~\ref{alg:bridge} specify the loop, Section~\ref{sec:setup} and Appendix~\ref{app:implementation} give every operating parameter, schedule, generator setting and data split, and Appendix~\ref{app:proofs} contains complete proofs with their assumptions stated in Section~\ref{sec:theory}. Appendix~\ref{app:full-results} reports every per-task number behind the main-text averages. An anonymous code release with configuration files for every experiment is linked in Appendix~\ref{app:implementation}.
 
 \section*{Ethics statement}
 The work uses public datasets under their release terms and a frozen pretrained image generator, releases no new generator, scraped collection or generated corpus, and involves no human subjects. Generative repair inherits the biases and memorization risks of the generator's pretraining data, and a deployment would require a task-specific review of fairness, privacy and content safety, as Appendix~\ref{app:impact} discusses.
-
-\section*{AI use statement}
-Generative AI tools were used to assist with editing the manuscript text, with writing and refactoring analysis and plotting code, and with checking bibliographic metadata against publisher records. They were not used to generate research ideas, experimental results or any number reported in this paper. All AI-assisted text and code were reviewed by the authors, who take responsibility for the final content of this work.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
