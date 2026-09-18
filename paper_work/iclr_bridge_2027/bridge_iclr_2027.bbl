@@ -26,8 +26,7 @@ Yuki Asano, Christian Rupprecht, Andrew Zisserman, and Andrea Vedaldi.
 Mahmoud Assran, Randall Balestriero, Quentin Duval, Florian Bordes, Ishan
   Misra, Piotr Bojanowski, Pascal Vincent, Michael Rabbat, and Nicolas Ballas.
 \newblock The hidden uniform cluster prior in self-supervised learning.
-\newblock In \emph{The Eleventh International Conference on Learning
-  Representations}, 2023.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
 
 \bibitem[Azizi et~al.(2023)Azizi, Kornblith, Saharia, Norouzi, and
   Fleet]{azizi2023synthetic}
@@ -42,30 +41,33 @@ Jianhong Bai, Zuozhu Liu, Hualiang Wang, Jin Hao, Yan Feng, Huanpeng Chu, and
   Haoji Hu.
 \newblock On the effectiveness of out-of-distribution data in self-supervised
   long-tail learning.
-\newblock In \emph{The Eleventh International Conference on Learning
-  Representations}, 2023.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
 
 \bibitem[Baradad et~al.(2021)Baradad, Wulff, Wang, Isola, and
   Torralba]{baradad2021noise}
 Manel Baradad, Jonas Wulff, Tongzhou Wang, Phillip Isola, and Antonio Torralba.
 \newblock Learning to see by looking at noise.
-\newblock In \emph{Advances in Neural Information Processing Systems},
-  volume~34, pages 2556--2569, 2021.
+\newblock In M.~Ranzato, A.~Beygelzimer, Y.~Dauphin, P.S. Liang, and
+  J.~Wortman~Vaughan, editors, \emph{Advances in Neural Information Processing
+  Systems}, volume~34, pages 2556--2569. Curran Associates, Inc., 2021.
 
 \bibitem[Baradad et~al.(2022)Baradad, Chen, Wulff, Wang, Feris, Torralba, and
   Isola]{baradad2022procedural}
 Manel Baradad, Chun-Fu~(Richard) Chen, Jonas Wulff, Tongzhou Wang, Rogerio
   Feris, Antonio Torralba, and Phillip Isola.
 \newblock Procedural image programs for representation learning.
-\newblock In \emph{Advances in Neural Information Processing Systems}, 2022.
+\newblock In S.~Koyejo, S.~Mohamed, A.~Agarwal, D.~Belgrave, K.~Cho, and A.~Oh,
+  editors, \emph{Advances in Neural Information Processing Systems}, volume~35,
+  pages 6450--6462. Curran Associates, Inc., 2022.
+\newblock \doi{10.52202/068431-0467}.
 
 \bibitem[Caron et~al.(2021)Caron, Touvron, Misra, J{\'e}gou, Mairal,
   Bojanowski, and Joulin]{DINO}
 Mathilde Caron, Hugo Touvron, Ishan Misra, Herv{\'e} J{\'e}gou, Julien Mairal,
   Piotr Bojanowski, and Armand Joulin.
 \newblock Emerging properties in self-supervised vision transformers.
-\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
-  Computer Vision (ICCV)}, pages 9650--9660. IEEE, October 2021.
+\newblock In \emph{2021 IEEE/CVF International Conference on Computer Vision
+  (ICCV)}, pages 9630--9640. IEEE, 2021.
 \newblock \doi{10.1109/ICCV48922.2021.00951}.
 
 \bibitem[Chawla et~al.(2002)Chawla, Bowyer, Hall, and
@@ -90,8 +92,8 @@ Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton.
 Lijie Fan, Kaifeng Chen, Dilip Krishnan, Dina Katabi, Phillip Isola, and
   Yonglong Tian.
 \newblock Scaling laws of synthetic images for model training ... for now.
-\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, pages 7382--7392, 2024.
+\newblock In \emph{2024 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 7382--7392. IEEE, 2024.
 \newblock \doi{10.1109/CVPR52733.2024.00705}.
 
 \bibitem[Gonzalez(1985)]{gonzalez1985clustering}
@@ -104,15 +106,17 @@ Teofilo~F. Gonzalez.
 Guy Hacohen, Avihu Dekel, and Daphna Weinshall.
 \newblock Active learning on a budget: Opposite strategies suit high and low
   budgets.
-\newblock In \emph{Proceedings of the 39th International Conference on Machine
-  Learning (ICML)}, volume 162 of \emph{Proceedings of Machine Learning
-  Research}, pages 8175--8195, 2022.
+\newblock In Kamalika Chaudhuri, Stefanie Jegelka, Le~Song, Csaba Szepesvari,
+  Gang Niu, and Sivan Sabato, editors, \emph{Proceedings of the 39th
+  International Conference on Machine Learning}, volume 162 of
+  \emph{Proceedings of Machine Learning Research}, pages 8175--8195. PMLR,
+  17--23 Jul 2022.
 
 \bibitem[He et~al.(2020)He, Fan, Wu, Xie, and Girshick]{he2020momentum}
 Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and Ross Girshick.
 \newblock Momentum contrast for unsupervised visual representation learning.
-\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, pages 9729--9738. IEEE, June 2020.
+\newblock In \emph{2020 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 9726--9735. IEEE, 2020.
 \newblock \doi{10.1109/CVPR42600.2020.00975}.
 
 \bibitem[He et~al.(2022)He, Chen, Xie, Li, Doll{\'a}r, and
@@ -120,8 +124,8 @@ Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and Ross Girshick.
 Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll{\'a}r, and Ross
   Girshick.
 \newblock Masked autoencoders are scalable vision learners.
-\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, pages 16000--16009. IEEE, June 2022.
+\newblock In \emph{2022 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 15979--15988. IEEE, 2022.
 \newblock \doi{10.1109/CVPR52688.2022.01553}.
 
 \bibitem[He et~al.(2023)He, Sun, Yu, Xue, Zhang, Torr, Bai, and
@@ -156,7 +160,7 @@ Ziyu Jiang, Tianlong Chen, Bobak~J. Mortazavi, and Zhangyang Wang.
 
 \bibitem[Krause et~al.(2013)Krause, Stark, Deng, and Fei-Fei]{cars}
 Jonathan Krause, Michael Stark, Jia Deng, and Li~Fei-Fei.
-\newblock 3d object representations for fine-grained categorization.
+\newblock {3D} object representations for fine-grained categorization.
 \newblock In \emph{2013 IEEE International Conference on Computer Vision
   Workshops}, pages 554--561. IEEE, 2013.
 \newblock \doi{10.1109/ICCVW.2013.77}.
@@ -172,9 +176,7 @@ Anna Kukleva, Moritz B{\"o}hle, Bernt Schiele, Hilde Kuehne, and Christian
   Rupprecht.
 \newblock Temperature schedules for self-supervised contrastive methods on
   long-tail data.
-\newblock In \emph{The Eleventh International Conference on Learning
-  Representations}, 2023.
-\newblock Published as a conference paper at ICLR 2023.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
 
 \bibitem[Li et~al.(2023)Li, Ling, Kar, Acuna, Kim, Kreis, Torralba, and
   Fidler]{li2023dreamteacher}
@@ -182,8 +184,8 @@ Daiqing Li, Huan Ling, Amlan Kar, David Acuna, Seung~Wook Kim, Karsten Kreis,
   Antonio Torralba, and Sanja Fidler.
 \newblock {DreamTeacher}: Pretraining image backbones with deep generative
   models.
-\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
-  Computer Vision (ICCV)}, pages 16698--16708, 2023.
+\newblock In \emph{2023 IEEE/CVF International Conference on Computer Vision
+  (ICCV)}, pages 16652--16662. IEEE, 2023.
 \newblock \doi{10.1109/ICCV51070.2023.01531}.
 
 \bibitem[Liang et~al.(2024)Liang, Su, Schulter, Garg, Zhao, Wu, and
@@ -192,8 +194,8 @@ Mingfu Liang, Jong-Chyi Su, Samuel Schulter, Sparsh Garg, Shiyu Zhao, Ying Wu,
   and Manmohan Chandraker.
 \newblock {AIDE}: An automatic data engine for object detection in autonomous
   driving.
-\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, pages 14695--14706, 2024.
+\newblock In \emph{2024 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 14695--14706. IEEE, 2024.
 \newblock \doi{10.1109/CVPR52733.2024.01392}.
 
 \bibitem[Lim et~al.(2018)Lim, Loo, Tran, Cheung, Roig, and
@@ -209,23 +211,25 @@ Swee~Kiat Lim, Yi~Loo, Ngoc-Trung Tran, Ngai-Man Cheung, Gemma Roig, and Yuval
 \bibitem[Lin et~al.(2023)Lin, Chen, and Wang]{fassl}
 Ci-Siang Lin, Min-Hung Chen, and Yu-Chiang~Frank Wang.
 \newblock Frequency-aware self-supervised long-tailed learning.
-\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
-  Computer Vision (ICCV) Workshops}, pages 963--972. IEEE, October 2023.
+\newblock In \emph{2023 IEEE/CVF International Conference on Computer Vision
+  Workshops (ICCVW)}, pages 963--972. IEEE, 2023.
 \newblock \doi{10.1109/ICCVW60793.2023.00103}.
 
 \bibitem[Liu et~al.(2019)Liu, Miao, Zhan, Wang, Gong, and Yu]{imagenet-lt}
 Ziwei Liu, Zhongqi Miao, Xiaohang Zhan, Jiayun Wang, Boqing Gong, and Stella~X.
   Yu.
 \newblock Large-scale long-tailed recognition in an open world.
-\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, pages 2537--2546. IEEE, June 2019.
+\newblock In \emph{2019 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 2532--2541. IEEE, 2019.
 \newblock \doi{10.1109/CVPR.2019.00264}.
 
 \bibitem[Maji et~al.(2013)Maji, Rahtu, Kannala, Blaschko, and
   Vedaldi]{aircraft}
 Subhransu Maji, Esa Rahtu, Juho Kannala, Matthew~B. Blaschko, and Andrea
   Vedaldi.
-\newblock Fine-grained visual classification of aircraft, 2013.
+\newblock Fine-grained visual classification of aircraft.
+\newblock \emph{arXiv preprint arXiv:1306.5151}, 2013.
+\newblock \doi{10.48550/arXiv.1306.5151}.
 
 \bibitem[Meng et~al.(2022)Meng, He, Song, Song, Wu, Zhu, and
   Ermon]{meng2022sdedit}
@@ -238,11 +242,9 @@ Chenlin Meng, Yutong He, Yang Song, Jiaming Song, Jiajun Wu, Jun-Yan Zhu, and
 \bibitem[Nguyen et~al.(2026)Nguyen, Li, Zheng, and
   Mirzasoleiman]{nguyen2026tada}
 Dang Nguyen, Jiping Li, Jinghao Zheng, and Baharan Mirzasoleiman.
-\newblock Do we need all the synthetic data? targeted image augmentation via
+\newblock Do we need all the synthetic data? {T}argeted image augmentation via
   diffusion models.
-\newblock In \emph{The Fourteenth International Conference on Learning
-  Representations}, 2026.
-\newblock \doi{10.48550/arXiv.2505.21574}.
+\newblock In \emph{International Conference on Learning Representations}, 2026.
 
 \bibitem[Nilsback and Zisserman(2008)]{flowers}
 Maria-Elena Nilsback and Andrew Zisserman.
@@ -263,7 +265,6 @@ Maxime Oquab, Timoth{\'e}e Darcet, Th{\'e}o Moutakanni, Huy Vo, Marc
   Armand Joulin, and Piotr Bojanowski.
 \newblock {DINO}v2: Learning robust visual features without supervision.
 \newblock \emph{Transactions on Machine Learning Research}, 2024.
-\newblock Published 05/2024.
 
 \bibitem[Parkhi et~al.(2012)Parkhi, Vedaldi, Zisserman, and Jawahar]{pets}
 Omkar~M. Parkhi, Andrea Vedaldi, Andrew Zisserman, and C.~V. Jawahar.
@@ -276,8 +277,8 @@ Omkar~M. Parkhi, Andrea Vedaldi, Andrew Zisserman, and C.~V. Jawahar.
 Zhongzheng Ren and Yong~Jae Lee.
 \newblock Cross-domain self-supervised multi-task feature learning using
   synthetic imagery.
-\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
-  Pattern Recognition (CVPR)}, pages 762--771, 2018.
+\newblock In \emph{2018 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition}, pages 762--771. IEEE, 2018.
 \newblock \doi{10.1109/CVPR.2018.00086}.
 
 \bibitem[Rombach et~al.(2022)Rombach, Blattmann, Lorenz, Esser, and
@@ -285,8 +286,8 @@ Zhongzheng Ren and Yong~Jae Lee.
 Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj{\"o}rn
   Ommer.
 \newblock High-resolution image synthesis with latent diffusion models.
-\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, pages 10684--10695. IEEE, June 2022.
+\newblock In \emph{2022 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 10674--10685. IEEE, 2022.
 \newblock \doi{10.1109/CVPR52688.2022.01042}.
 
 \bibitem[Sariyildiz et~al.(2023)Sariyildiz, Alahari, Larlus, and
@@ -294,16 +295,15 @@ Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj{\"o}rn
 Mert~Bulent Sariyildiz, Karteek Alahari, Diane Larlus, and Yannis Kalantidis.
 \newblock Fake it till you make it: Learning transferable representations from
   synthetic {ImageNet} clones.
-\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
-  and Pattern Recognition (CVPR)}, pages 8011--8021, 2023.
+\newblock In \emph{2023 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 8011--8021. IEEE, 2023.
 \newblock \doi{10.1109/CVPR52729.2023.00774}.
 
 \bibitem[Sener and Savarese(2018)]{sener2018active}
 Ozan Sener and Silvio Savarese.
 \newblock Active learning for convolutional neural networks: A core-set
   approach.
-\newblock In \emph{International Conference on Learning Representations
-  (ICLR)}, 2018.
+\newblock In \emph{International Conference on Learning Representations}, 2018.
 
 \bibitem[Sim{\'e}oni et~al.(2025)Sim{\'e}oni, Vo, Seitzer, Baldassarre, Oquab,
   Jose, Khalidov, Szafraniec, Yi, Ramamonjisoa, Massa, Haziza, Wehrstedt, Wang,
@@ -315,7 +315,9 @@ Oriane Sim{\'e}oni, Huy~V. Vo, Maximilian Seitzer, Federico Baldassarre, Maxime
   Timoth{\'e}e Darcet, Th{\'e}o Moutakanni, L{\'e}o Sentana, Claire Roberts,
   Andrea Vedaldi, Jamie Tolan, John Brandt, Camille Couprie, Julien Mairal,
   Herv{\'e} J{\'e}gou, Patrick Labatut, and Piotr Bojanowski.
-\newblock {DINO}v3, 2025.
+\newblock {DINO}v3.
+\newblock \emph{arXiv preprint arXiv:2508.10104}, 2025.
+\newblock \doi{10.48550/arXiv.2508.10104}.
 
 \bibitem[Sorscher et~al.(2022)Sorscher, Geirhos, Shekhar, Ganguli, and
   Morcos]{sorscher2022beyond}
@@ -323,7 +325,10 @@ Ben Sorscher, Robert Geirhos, Shashank Shekhar, Surya Ganguli, and Ari~S.
   Morcos.
 \newblock Beyond neural scaling laws: Beating power law scaling via data
   pruning.
-\newblock In \emph{Advances in Neural Information Processing Systems}, 2022.
+\newblock In S.~Koyejo, S.~Mohamed, A.~Agarwal, D.~Belgrave, K.~Cho, and A.~Oh,
+  editors, \emph{Advances in Neural Information Processing Systems}, volume~35,
+  pages 19523--19536. Curran Associates, Inc., 2022.
+\newblock \doi{10.52202/068431-1419}.
 
 \bibitem[Sun et~al.(2022)Sun, Ming, Zhu, and Li]{sun2022out}
 Yiyou Sun, Yifei Ming, Xiaojin Zhu, and Yixuan Li.
@@ -338,13 +343,16 @@ Yiyou Sun, Yifei Ming, Xiaojin Zhu, and Yixuan Li.
 Luming Tang, Menglin Jia, Qianqian Wang, Cheng~Perng Phoo, and Bharath
   Hariharan.
 \newblock Emergent correspondence from image diffusion.
-\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+\newblock In A.~Oh, T.~Naumann, A.~Globerson, K.~Saenko, M.~Hardt, and
+  S.~Levine, editors, \emph{Advances in Neural Information Processing Systems},
+  volume~36, pages 1363--1389. Curran Associates, Inc., 2023.
+\newblock \doi{10.52202/075280-0068}.
 
 \bibitem[Tian et~al.(2021)Tian, H{\'e}naff, and van~den Oord]{tian2021divide}
 Yonglong Tian, Olivier~J. H{\'e}naff, and A{\"a}ron van~den Oord.
 \newblock Divide and contrast: Self-supervised learning from uncurated data.
-\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
-  Computer Vision (ICCV)}, pages 10063--10074. IEEE, October 2021.
+\newblock In \emph{2021 IEEE/CVF International Conference on Computer Vision
+  (ICCV)}, pages 10043--10054. IEEE, 2021.
 \newblock \doi{10.1109/ICCV48922.2021.00991}.
 
 \bibitem[Tian et~al.(2023)Tian, Fan, Isola, Chang, and
@@ -352,14 +360,16 @@ Yonglong Tian, Olivier~J. H{\'e}naff, and A{\"a}ron van~den Oord.
 Yonglong Tian, Lijie Fan, Phillip Isola, Huiwen Chang, and Dilip Krishnan.
 \newblock {StableRep}: Synthetic images from text-to-image models make strong
   visual representation learners.
-\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+\newblock In A.~Oh, T.~Naumann, A.~Globerson, K.~Saenko, M.~Hardt, and
+  S.~Levine, editors, \emph{Advances in Neural Information Processing Systems},
+  volume~36, pages 48382--48402. Curran Associates, Inc., 2023.
+\newblock \doi{10.52202/075280-2098}.
 
 \bibitem[Trabucco et~al.(2024)Trabucco, Doherty, Gurinas, and
   Salakhutdinov]{trabucco2023effective}
 Brandon Trabucco, Kyle Doherty, Max Gurinas, and Ruslan Salakhutdinov.
 \newblock Effective data augmentation with diffusion models.
-\newblock In \emph{The Twelfth International Conference on Learning
-  Representations}, 2024.
+\newblock In \emph{International Conference on Learning Representations}, 2024.
 
 \bibitem[Wang et~al.(2023)Wang, Montoya, Munechika, Yang, Hoover, and
   Chau]{diffusiondb}
@@ -384,15 +394,16 @@ Steven~Euijong Whang, Yuji Roh, Hwanjun Song, and Jae-Gil Lee.
 Nyla Worker and Bhumin Pathak.
 \newblock Build custom synthetic data generation pipelines with {Omniverse
   Replicator}.
-\newblock NVIDIA Technical Blog, 2022.
-\newblock Non-archival systems context.
+\newblock NVIDIA Technical Blog, June 2022.
 
 \bibitem[Yehuda et~al.(2022)Yehuda, Dekel, Hacohen, and
   Weinshall]{yehuda2022covering}
 Ofer Yehuda, Avihu Dekel, Guy Hacohen, and Daphna Weinshall.
 \newblock Active learning through a covering lens.
-\newblock In \emph{Advances in Neural Information Processing Systems
-  (NeurIPS)}, volume~35, 2022.
+\newblock In S.~Koyejo, S.~Mohamed, A.~Agarwal, D.~Belgrave, K.~Cho, and A.~Oh,
+  editors, \emph{Advances in Neural Information Processing Systems}, volume~35,
+  pages 22354--22367. Curran Associates, Inc., 2022.
+\newblock \doi{10.52202/068431-1624}.
 
 \bibitem[Yu et~al.(2025)Yu, Kwak, Jang, Jeong, Huang, Shin, and
   Xie]{yu2025repa}
@@ -408,8 +419,10 @@ Zelin Zang, Hao Luo, Kai Wang, Panpan Zhang, Fan Wang, Stan~Z. Li, and Yang
   You.
 \newblock {DiffAug}: Enhance unsupervised contrastive learning with
   domain-knowledge-free diffusion-based data augmentation.
-\newblock In \emph{Proceedings of the 41st International Conference on Machine
-  Learning}, volume 235 of \emph{Proceedings of Machine Learning Research},
-  pages 58174--58196. PMLR, 2024.
+\newblock In Ruslan Salakhutdinov, Zico Kolter, Katherine Heller, Adrian
+  Weller, Nuria Oliver, Jonathan Scarlett, and Felix Berkenkamp, editors,
+  \emph{Proceedings of the 41st International Conference on Machine Learning},
+  volume 235 of \emph{Proceedings of Machine Learning Research}, pages
+  58174--58196. PMLR, 21--27 Jul 2024.
 
 \end{thebibliography}
