@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  18 SEP 2026 17:01
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  18 SEP 2026 17:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -693,12 +693,12 @@ File: figures/fixed_support.pdf Graphic file (type pdf)
 <use figures/fixed_support.pdf>
 Package pdftex.def Info: figures/fixed_support.pdf  used on input line 199.
 (pdftex.def)             Requested size: 178.86702pt x 91.10191pt.
-<figures/cycle_score_histograms.pdf, id=965, 471.0058pt x 186.46602pt>
+<figures/cycle_score_histograms.pdf, id=965, 470.38988pt x 88.9015pt>
 File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
 <use figures/cycle_score_histograms.pdf>
 Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
  205.
-(pdftex.def)             Requested size: 168.53387pt x 66.72084pt.
+(pdftex.def)             Requested size: 168.53387pt x 31.85257pt.
 
 
 [7]
@@ -719,7 +719,7 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 (./tables/fixed_support_geometry.tex
 
 [13])
-<figures/objective_deltas.pdf, id=1111, 656.53532pt x 181.21376pt>
+<figures/objective_deltas.pdf, id=1105, 656.53532pt x 181.21376pt>
 File: figures/objective_deltas.pdf Graphic file (type pdf)
 <use figures/objective_deltas.pdf>
 Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 283.
@@ -777,7 +777,7 @@ Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
 Here is how much of TeX's memory you used:
  17457 strings out of 474233
  277117 string characters out of 5742684
- 790438 words of memory out of 5000000
+ 790278 words of memory out of 5000000
  39703 multiletter control sequences out of 15000+600000
  630598 words of font info for 307 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
@@ -799,9 +799,9 @@ s/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/
 ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/te
 xmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/ut
 mr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (20 pages, 816843 bytes).
+Output written on bridge_iclr_2027.pdf (20 pages, 808046 bytes).
 PDF statistics:
- 1384 PDF objects out of 1440 (max. 8388607)
+ 1378 PDF objects out of 1440 (max. 8388607)
  887 compressed objects within 9 object streams
  162 named destinations out of 1000 (max. 500000)
  65248 words of extra memory for PDF output out of 74296 (max. 10000000)

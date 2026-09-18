@@ -59,7 +59,7 @@ def main() -> None:
             ax.spines[["top", "right"]].set_visible(False)
             if r == nrow - 1:
                 ax.set_xlabel("mean $k$NN distance", fontsize=8)
-        axes[r][0].set_ylabel(label + "\nimages", fontsize=8)
+        axes[r][0].set_ylabel((label + "\nimages") if nrow > 1 else "images", fontsize=8)
     fig.tight_layout(); fig.savefig(a.out, bbox_inches="tight", dpi=200)
     for label, data in rows:
         print(label, "q75:", [round(float(np.quantile(d, 0.75)), 3) for d in data],

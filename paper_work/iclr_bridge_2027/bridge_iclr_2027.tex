@@ -203,7 +203,7 @@ Four objectives run paired on ViT-S under their reference recipes and one repair
 \begin{minipage}[t]{0.53\linewidth}
 \centering
 \includegraphics[width=0.8\linewidth]{figures/cycle_score_histograms.pdf}
-\caption{Score distribution over four cycles of one ImageNet-100-LT run with the repair loop running, above, and of a run from the same checkpoint on the same schedule with the loop switched off, below. The 75th to 99th percentile band is shaded and its modal bin is marked. The band moves to larger scores in both rows, so it is re-derived from the current representation at every cycle, and it moves slightly less when the loop is repairing.}
+\caption{Score distribution over the four repair cycles of one ImageNet-100-LT run, with the 75th to 99th percentile band shaded and its modal bin marked. The distribution shifts to larger scores and broadens at every cycle, so the band is re-derived from the current representation.}
 \label{fig:cycle-histograms-main}
 \end{minipage}
 \end{figure}
