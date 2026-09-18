@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  18 SEP 2026 14:03
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/TeX Live for SUSE Linux) (preloaded format=pdflatex 2026.9.2)  18 SEP 2026 17:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -653,7 +653,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 (/usr/share/texmf/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-<figures/BRIDGE.pdf, id=104, 774.895pt x 355.3275pt>
+<figures/BRIDGE.pdf, id=100, 774.895pt x 355.3275pt>
 File: figures/BRIDGE.pdf Graphic file (type pdf)
 <use figures/BRIDGE.pdf>
 Package pdftex.def Info: figures/BRIDGE.pdf  used on input line 48.
@@ -676,73 +676,64 @@ File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
 [3]
 
 [4]
-<figures/mode_window_selection.pdf, id=847, 253.53658pt x 143.07831pt>
+<figures/mode_window_selection.pdf, id=842, 253.53658pt x 143.07831pt>
 File: figures/mode_window_selection.pdf Graphic file (type pdf)
 <use figures/mode_window_selection.pdf>
 Package pdftex.def Info: figures/mode_window_selection.pdf  used on input line 
 152.
 (pdftex.def)             Requested size: 186.81842pt x 105.42871pt.
 
-Underfull \vbox (badness 1231) has occurred while \output is active []
-
-
 
 [5 <./figures/mode_window_selection.pdf>]
 (./tables/main_transfer_all_linear.tex) (./tables/main_transfer_all_knn.tex)
 
 [6] (./tables/main_vits_objectives.tex) (./tables/main_ablation_combined.tex)
-
-[7]
-<figures/one_stage_vs_five.pdf, id=987, 472.07375pt x 213.71936pt>
-File: figures/one_stage_vs_five.pdf Graphic file (type pdf)
-<use figures/one_stage_vs_five.pdf>
-Package pdftex.def Info: figures/one_stage_vs_five.pdf  used on input line 198.
-
-(pdftex.def)             Requested size: 206.69388pt x 93.57698pt.
-
-
-[8 <./figures/one_stage_vs_five.pdf>]
-<figures/fixed_support.pdf, id=1060, 301.26802pt x 153.44702pt>
+<figures/fixed_support.pdf, id=964, 301.26802pt x 153.44702pt>
 File: figures/fixed_support.pdf Graphic file (type pdf)
 <use figures/fixed_support.pdf>
-Package pdftex.def Info: figures/fixed_support.pdf  used on input line 212.
+Package pdftex.def Info: figures/fixed_support.pdf  used on input line 199.
 (pdftex.def)             Requested size: 178.86702pt x 91.10191pt.
-<figures/cycle_score_histograms.pdf, id=1061, 296.94186pt x 186.46602pt>
+<figures/cycle_score_histograms.pdf, id=965, 471.0058pt x 186.46602pt>
 File: figures/cycle_score_histograms.pdf Graphic file (type pdf)
 <use figures/cycle_score_histograms.pdf>
 Package pdftex.def Info: figures/cycle_score_histograms.pdf  used on input line
- 218.
-(pdftex.def)             Requested size: 168.53387pt x 105.83148pt.
+ 205.
+(pdftex.def)             Requested size: 168.53387pt x 66.72084pt.
 
 
-[9 <./figures/fixed_support.pdf> <./figures/cycle_score_histograms.pdf>]
+[7]
+
+[8 <./figures/fixed_support.pdf> <./figures/cycle_score_histograms.pdf>]
 (./bridge_iclr_2027.bbl
+
+[9]
 
 [10]
 
 [11]
 
-[12]
-
-[13]) (./tables/single_stage_pipelines.tex)
+[12])
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-(./tables/fixed_support_geometry.tex)
-<figures/objective_deltas.pdf, id=1189, 656.53532pt x 181.21376pt>
+(./tables/fixed_support_geometry.tex
+
+[13])
+<figures/objective_deltas.pdf, id=1111, 656.53532pt x 181.21376pt>
 File: figures/objective_deltas.pdf Graphic file (type pdf)
 <use figures/objective_deltas.pdf>
-Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 306.
+Package pdftex.def Info: figures/objective_deltas.pdf  used on input line 283.
 (pdftex.def)             Requested size: 357.73405pt x 98.73878pt.
+
+Underfull \vbox (badness 1377) has occurred while \output is active []
+
 
 
 [14]
 
-[15]
-
-[16 <./figures/objective_deltas.pdf>]
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 37
-9.
+[15 <./figures/objective_deltas.pdf>]
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 35
+4.
 
 (/usr/share/texmf/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
@@ -753,59 +744,44 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
 
 
-[17] (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex
+[16] (./tables/app_sota_linear_full.tex) (./tables/app_sota_knn_full.tex)
+(./tables/main_ablation_combined_knn.tex
+Underfull \vbox (badness 1454) has occurred while \output is active []
+
+
+
+[17]) (./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
+(./tables/app_selection_linear.tex) (./tables/app_selection_knn.tex
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 
-[18]) (./tables/main_ablation_combined_knn.tex)
-(./tables/app_generation_linear.tex) (./tables/app_generation_knn.tex)
-(./tables/app_selection_linear.tex
-Underfull \vbox (badness 1515) has occurred while \output is active []
-
-
-
-[19]) (./tables/app_selection_knn.tex) (./tables/app_cycles_linear.tex)
-(./tables/app_cycles_knn.tex) (./tables/app_architecture_linear.tex)
-(./tables/app_architecture_knn.tex)
-(./tables/app_selector_robustness_full_linear.tex
-
-[20]) (./tables/app_selector_robustness_full_knn.tex)
-(./tables/main_percentile_utility_full_linear.tex)
-(./tables/main_percentile_utility_full_knn.tex)
+[18]) (./tables/app_cycles_linear.tex) (./tables/app_cycles_knn.tex)
+(./tables/app_architecture_linear.tex) (./tables/app_architecture_knn.tex)
 (./tables/main_generalization_vits_full_linear.tex)
 (./tables/main_generalization_vits_full_knn.tex)
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 423.
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
+put line 394.
 
 
+[19]
 
-[21]
-
-[22]
-
-[23] (./bridge_iclr_2027.aux)
+[20] (./bridge_iclr_2027.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `bridge_iclr_2027.out' has not changed.
-(rerunfilecheck)             Checksum: FC5ED776E9CE5357A8D269AF81C4432C;4601.
+(rerunfilecheck)             Checksum: 5159F2B66CCE6B4D74127F9B5AFAEEA1;4432.
  ) 
 Here is how much of TeX's memory you used:
- 17537 strings out of 474233
- 279743 string characters out of 5742684
- 819854 words of memory out of 5000000
- 39743 multiletter control sequences out of 15000+600000
- 631106 words of font info for 315 fonts, out of 8000000 for 9000
+ 17457 strings out of 474233
+ 277117 string characters out of 5742684
+ 790438 words of memory out of 5000000
+ 39703 multiletter control sequences out of 15000+600000
+ 630598 words of font info for 307 fonts, out of 8000000 for 9000
  475 hyphenation exceptions out of 8191
- 82i,13n,98p,2070b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 82i,13n,98p,2014b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf
 /fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr/share/texmf/fonts/type1/public/
 amsfonts/cm/cmex10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi10.
@@ -823,10 +799,10 @@ s/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texmf/fonts/type1/urw/courier/
 ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/te
 xmf/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf/fonts/type1/urw/times/ut
 mr8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmri8a.pfb>
-Output written on bridge_iclr_2027.pdf (23 pages, 838485 bytes).
+Output written on bridge_iclr_2027.pdf (20 pages, 816843 bytes).
 PDF statistics:
- 1489 PDF objects out of 1728 (max. 8388607)
- 935 compressed objects within 10 object streams
- 175 named destinations out of 1000 (max. 500000)
- 65261 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 1384 PDF objects out of 1440 (max. 8388607)
+ 887 compressed objects within 9 object streams
+ 162 named destinations out of 1000 (max. 500000)
+ 65248 words of extra memory for PDF output out of 74296 (max. 10000000)
 

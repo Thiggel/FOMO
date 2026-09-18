@@ -5,9 +5,10 @@ Two panels from the frozen cycle-0 encoder, so nothing here reflects a change
 of coordinates.  Left: relative change in kNN radius after every generated
 image is inserted into the index, for the treated anchors and for controls
 matched one-to-one within class on initial radius.  Right: change in
-neighborhood label purity for the same two groups.  One marker per seed, bars
-are the three-seed mean.  Relative radius is used because the absolute radii
-are of order 0.06 and unreadable as raw differences.
+neighborhood label purity for the same two groups.  Bars are the mean over
+seeds and the error bars are one standard deviation.  Relative radius is used
+because the absolute radii are of order 0.06 and unreadable as raw
+differences.
 
 Inputs are the per-seed reports written by
 paper_work/analysis/fixed_support_injection.py.
@@ -40,9 +41,10 @@ def main() -> None:
     ):
         for i, (label, key, colour) in enumerate(groups):
             v = f(key)
-            ax.bar(i, v.mean(), color=colour, width=0.6, alpha=0.9)
-            ax.scatter(np.full(len(v), i) + np.linspace(-0.16, 0.16, len(v)), v,
-                       color="k", s=14, zorder=3, alpha=0.85)
+            ax.bar(i, v.mean(), yerr=v.std(ddof=1) if len(v) > 1 else None,
+                   color=colour, width=0.6, alpha=0.9,
+                   error_kw={"ecolor": "k", "elinewidth": 0.9, "capsize": 3,
+                             "capthick": 0.9, "zorder": 3})
         ax.axhline(0, color="k", lw=0.6)
         ax.set_xticks([0, 1]); ax.set_xticklabels(["anchors", "controls"], fontsize=8)
         ax.set_ylabel(ylabel, fontsize=8); ax.tick_params(axis="y", labelsize=7)
