@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\centering
+\tiny
+\setlength{\tabcolsep}{2.6pt}
+\renewcommand{\arraystretch}{0.9}
+\caption{Controlled imbalance on ImageNet-100. A balanced source and a purposefully long-tailed source of the same expected size are compared with \method\ on the long-tailed source, under the linear-probe and $k$NN protocols on seven downstream tasks, mean $\pm$ standard deviation over three seeds. The two source arms are SimCLR under an identical schedule and differ only in the class distribution of the source. The shaded rows are \method\ and bold marks the best value in a column within each protocol. These three arms form one matched comparison and are trained separately from the five source regimes of Table~\ref{tab:main_transfer_linear}.}
+\label{tab:main_controlled_imbalance}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{l l c c c c c c c c}
+\toprule
+Protocol & Source & C10 & C100 & Cars & Aircraft & Flowers & Pets & IN100-LT & Avg. \\
+\midrule
+Linear probe & Balanced & 65.3 {\scriptsize$\pm$ 1.2} & 37.0 {\scriptsize$\pm$ 0.8} & 8.0 {\scriptsize$\pm$ 0.5} & 15.1 {\scriptsize$\pm$ 0.7} & 22.4 {\scriptsize$\pm$ 1.6} & 31.2 {\scriptsize$\pm$ 2.0} & 39.0 {\scriptsize$\pm$ 1.0} & 31.1 {\scriptsize$\pm$ 1.1} \\
+ & Purposefully imbalanced & 65.4 {\scriptsize$\pm$ 4.2} & 38.6 {\scriptsize$\pm$ 1.4} & 7.6 {\scriptsize$\pm$ 1.1} & 15.3 {\scriptsize$\pm$ 0.9} & 23.7 {\scriptsize$\pm$ 1.0} & 28.4 {\scriptsize$\pm$ 1.3} & 39.6 {\scriptsize$\pm$ 0.3} & 31.2 {\scriptsize$\pm$ 1.4} \\
+\rowcolor{blue!10} & BRIDGE on the imbalanced source & \textbf{76.0 {\scriptsize$\pm$ 0.3}} & \textbf{49.1 {\scriptsize$\pm$ 0.2}} & \textbf{15.2 {\scriptsize$\pm$ 1.2}} & \textbf{22.4 {\scriptsize$\pm$ 0.4}} & \textbf{36.8 {\scriptsize$\pm$ 1.9}} & \textbf{42.9 {\scriptsize$\pm$ 1.0}} & \textbf{53.8 {\scriptsize$\pm$ 0.1}} & \textbf{42.3 {\scriptsize$\pm$ 0.7}} \\
+\midrule
+$k$NN & Balanced & 63.6 {\scriptsize$\pm$ 0.7} & 32.8 {\scriptsize$\pm$ 0.8} & 4.4 {\scriptsize$\pm$ 0.4} & 9.0 {\scriptsize$\pm$ 0.4} & 22.3 {\scriptsize$\pm$ 0.1} & 17.2 {\scriptsize$\pm$ 0.1} & 34.0 {\scriptsize$\pm$ 1.1} & 26.2 {\scriptsize$\pm$ 0.5} \\
+ & Purposefully imbalanced & 63.9 {\scriptsize$\pm$ 0.2} & 33.2 {\scriptsize$\pm$ 0.3} & 4.5 {\scriptsize$\pm$ 0.6} & 9.0 {\scriptsize$\pm$ 0.3} & 22.5 {\scriptsize$\pm$ 0.3} & 16.8 {\scriptsize$\pm$ 0.2} & 34.3 {\scriptsize$\pm$ 0.3} & 26.3 {\scriptsize$\pm$ 0.3} \\
+\rowcolor{blue!10} & BRIDGE on the imbalanced source & \textbf{69.0 {\scriptsize$\pm$ 0.5}} & \textbf{37.8 {\scriptsize$\pm$ 0.3}} & \textbf{6.7 {\scriptsize$\pm$ 0.3}} & \textbf{11.7 {\scriptsize$\pm$ 0.2}} & \textbf{36.5 {\scriptsize$\pm$ 0.4}} & \textbf{25.3 {\scriptsize$\pm$ 1.0}} & \textbf{48.1 {\scriptsize$\pm$ 0.6}} & \textbf{33.6 {\scriptsize$\pm$ 0.5}} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}

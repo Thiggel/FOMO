@@ -1,8 +1,8 @@
 \begin{table*}[t]
 \centering
-\scriptsize
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.0}
+\tiny
+\setlength{\tabcolsep}{2.6pt}
+\renewcommand{\arraystretch}{0.9}
 \caption{Paired five-cycle ViT-S experiments on ImageNet-100-LT across four SSL objectives, and end-to-end adaptation of the SimCLR ResNet-50 representations. Both arms of every pair branch from one source checkpoint and receive the same optimizer updates after the branch. Panel A reports per-task linear-probe accuracy with the seven-task linear-probe and $k$NN averages, mean $\pm$ standard deviation over three seeds, and per-task values are in Appendix Tables~\ref{tab:generalization-vits-full-linear} and~\ref{tab:generalization-vits-full-knn}. Panel B reports full fine-tuning with 1 and 10 percent of the ImageNet-100-LT labels and PASCAL VOC segmentation, each over three paired seeds. Bold marks the better arm of each pair, the shaded row is the arm with \method, and the two average columns are means of the seven task means without a standard deviation.}
 \label{tab:main_generalization}
 \begin{adjustbox}{max width=\textwidth}
@@ -24,7 +24,7 @@ MAE & SSL baseline & 37.7 {\scriptsize$\pm$ 3.7} & 13.2 {\scriptsize$\pm$ 1.9} &
 \end{adjustbox}
 
 \vspace{3pt}
-\begin{adjustbox}{max width=0.92\textwidth}
+\begin{adjustbox}{max width=0.7\textwidth}
 \begin{tabular}{l l c c c}
 \toprule
 \multicolumn{5}{l}{\textit{B. End-to-end downstream adaptation, SimCLR ResNet-50}} \\
